@@ -4,13 +4,6 @@ description: "Email and calendar management connector"
 icon: "/logo/outlook.png"
 ---
 
-<div className="flex flex-col items-center justify-center text-center pt-10">
-  <h1 className="text-4xl font-bold">✅ Outlook Connector Ready</h1>
-  <h3 className="text-xl mt-2">
-    Connector is live and ready to use. Documentation in process!
-  </h3>
-</div>
-
 <div className="max-w-2xl mx-auto mt-12">
   <div className="p-6 border rounded-lg bg-blue-50">
     <div className="flex items-center mb-4">
@@ -19,7 +12,7 @@ icon: "/logo/outlook.png"
         alt="Microsoft Outlook Logo" 
         className="w-8 h-8 mr-3 object-contain flex-shrink-0"
       />
-      <h2 className="text-2xl font-semibold m-0"> Microsoft Outlook</h2>
+      <h2 className="text-2xl font-semibold m-0">Microsoft Outlook</h2>
     </div>
     <p className="text-lg text-gray-700 mb-4">Email and calendar management</p>
     <div className="flex items-center gap-2">
@@ -27,16 +20,252 @@ icon: "/logo/outlook.png"
         ✅ Ready
       </span>
       <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
-        📝 Documentation in process
+        📖 Documentation Available
       </span>
     </div>
   </div>
 </div>
 
+## Configuration Guide
+
+<AccordionGroup type="single" collapsible>
+
+<Accordion title="Setup">
+
+<div className="mt-4">
+
+## Overview
+
+The Microsoft Outlook connector provides access to organizational email data through Microsoft Graph API. It syncs users, emails, attachments, and mail folders across your Microsoft 365 organization.
+
+### Authentication
+
+The Outlook connector uses OAuth 2.0 via Microsoft Graph API with Application Permissions. This allows background access to organizational mailboxes without requiring individual user sign-ins.
+
+## How to configure and enable the Outlook Connector
+
+### Step 1: Register Application in Azure Portal
+
+1. **Sign in to Azure Portal:**  
+   Navigate to [portal.azure.com](https://portal.azure.com) and sign in with your Microsoft 365 administrator account.
+
+2. **Access App Registrations:**
+   - Search for "App registrations" in the top search bar
+   - Or navigate to **Microsoft Entra ID** → **App registrations**
+
+3. **Create New Registration:**
+   - Click **"New registration"**
+    <div style={{ textAlign: "center" }}>
+      <img
+        src="/images/connectors/outlook/enterprise/new_app.png"
+        alt="Register Application"
+        style={{ display: 'block', margin: '0 auto' }}
+        width="90%"
+      />
+    </div>
+   - Enter application details:
+     - **Name**: Enter a meaningful name (e.g., "PipesHub Outlook Connector")
+     - **Supported account types**: Select "Accounts in this organizational directory only (Single tenant)"
+     - **Select a platform**: Web
+     - **Redirect URI**: (Get the redirect uri from pipeshub configure outlook dialog in connector settings)
+    <div style={{ textAlign: "center" }}>
+      <img
+        src="/images/connectors/outlook/enterprise/redirect_uri.png"
+        alt="Register Application"
+        style={{ display: 'block', margin: '0 auto' }}
+        width="90%"
+      />
+    </div>
+   - Click **"Register"**
+    <div style={{ textAlign: "center" }}>
+      <img
+        src="/images/connectors/outlook/enterprise/register_app.png"
+        alt="Register Application"
+        style={{ display: 'block', margin: '0 auto' }}
+        width="90%"
+      />
+    </div>
+
+
+
+<Info>
+  Single-tenant configuration ensures the application only works within your organization for better security.
+</Info>
+
+### Step 2: Copy Application Credentials
+
+1. After registration, you'll see the **Overview** page
+2. Copy the following values (you'll need these later):
+   - **Application (client) ID**: Found under "Essentials" section
+   - **Directory (tenant) ID**: Found under "Essentials" section
+
+<div style={{ textAlign: "center" }}>
+  <img
+    src="/images/connectors/outlook/enterprise/app_overview.png"
+    alt="Application Overview"
+    style={{ display: 'block', margin: '0 auto' }}
+    width="90%"
+  />
+</div>
+
+<Warning>
+  Copy the "Application (client) ID" NOT the "Object ID". These are different values.
+</Warning>
+
+### Step 3: Create Client Secret
+
+1. In the left sidebar, click **"Certificates & secrets"**
+2. Click **"New client secret"**
+3. Configure the secret:
+   - **Description**: Enter a description (e.g., "PipesHub Connector Secret")
+   - **Expires**: Choose expiration period (recommended: 24 months)
+4. Click **"Add"**
+5. **Immediately copy the secret value** from the "Value" column
+
+<div style={{ textAlign: "center" }}>
+  <img
+    src="/images/connectors/outlook/enterprise/client_secret.png"
+    alt="Create Client Secret"
+    style={{ display: 'block', margin: '0 auto' }}
+    width="90%"
+  />
+</div>
+
+<Warning>
+  The client secret value is only displayed once! If you navigate away, you cannot retrieve it again and must create a new secret.
+</Warning>
+
+### Step 4: Configure API Permissions
+
+1. In the left sidebar, click **"API permissions"**
+2. Click **"Add a permission"** → **"Microsoft Graph"**
+3. Choose **"Application permissions"** (not Delegated permissions)
+4. Add the following permissions:
+   - `User.Read.All`
+   - `Mail.Read`
+   - `MailboxSettings.Read`
+5. Click **"Add permissions"**
+
+<div style={{ textAlign: "center" }}>
+  <img
+    src="/images/connectors/outlook/enterprise/api_permissions.png"
+    alt="Configure API Permissions"
+    style={{ display: 'block', margin: '0 auto' }}
+    width="90%"
+  />
+</div>
+
+<Info>
+  Application permissions allow the connector to access data across your organization without requiring individual user sign-ins.
+</Info>
+
+### Step 5: Grant Admin Consent
+
+1. On the API permissions page, click **"Grant admin consent for [Your Organization]"**
+2. Confirm by clicking **"Yes"**
+3. Wait for the status to show green checkmarks
+
+<div style={{ textAlign: "center" }}>
+  <img
+    src="/images/connectors/outlook/enterprise/admin_consent.png"
+    alt="Grant Admin Consent"
+    style={{ display: 'block', margin: '0 auto' }}
+    width="90%"
+  />
+</div>
+
+<Warning>
+  Admin consent is required for application permissions. Only Global Administrators or Application Administrators can grant this consent.
+</Warning>
+
+### Step 6: Configure Connector in PipesHub
+
+1. Navigate to **Settings** → **Connectors** in PipesHub
+2. Find the **Outlook** connector and click **"Configure"**
+3. Enter the following details:
+   - **Application (Client) ID**: From Step 2
+   - **Client Secret**: From Step 3
+   - **Directory (Tenant) ID**: From Step 2
+   - **Redirect URI**: Pre-filled (verify it matches your environment)
+4. Check the **"Has Admin Consent"** checkbox
+5. Click **"Next"** or **"Save"**
+
+<div style={{ textAlign: "center" }}>
+  <img
+    src="/images/connectors/outlook/enterprise/config_dialog.png"
+    alt="Configure Connector in PipesHub"
+    style={{ display: 'block', margin: '0 auto' }}
+    width="90%"
+  />
+</div>
+
+### Step 7: Enable the Connector
+
+1. After saving the configuration, toggle the connector to **"Enable"**
+2. The connector will verify credentials and begin initial sync
+3. Wait for the status to show **"Connected"** or **"Syncing"**
+
+<Note>
+  Unlike user-facing OAuth flows, there's no login screen because the connector uses application permissions with client credentials.
+</Note>
+
+## Supported Features
+
+The Outlook connector syncs the following data:
+
+- **Users**: User profiles and mailbox information
+- **Emails**: All messages from organizational mailboxes
+- **Attachments**: Files attached to emails
+- **Mail Folders**: Folder structure (Inbox, Sent, Drafts, custom folders)
+
+## Data Sync Behavior
+
+### Initial Sync
+- Processes all existing emails and folders from all user mailboxes
+- Duration depends on mailbox sizes
+- Runs in the background without affecting mailbox performance
+
+### Incremental Sync
+- **Polling-based**: Checks for new/updated emails at regular intervals
+- Uses Microsoft Graph delta queries for efficient updates
+- Only syncs new or modified emails after initial sync
+
+## Troubleshooting
+
+### Common Issues
+
+**Invalid client credentials error:**
+- Verify Client ID, Client Secret, and Tenant ID are correct
+- Ensure Client Secret hasn't expired
+- Create new Client Secret if needed
+
+**Insufficient privileges error:**
+- Check all three API permissions are added: `User.Read.All`, `Mail.Read`, `MailboxSettings.Read`
+- Grant admin consent if status shows "Not granted"
+- Wait 5-10 minutes for permissions to propagate
+
+**Tenant ID not found error:**
+- This connector only works with Work or School accounts (Microsoft 365)
+- Personal accounts (outlook.com, hotmail.com) are not supported
+
+**Client Secret expired:**
+- Create new Client Secret in Azure Portal
+- Update configuration in PipesHub
+- Set reminders to rotate secrets before expiration
+
+<Info>
+  For personal Microsoft accounts, this connector is not supported as they lack Tenant IDs required for authentication.
+</Info>
+
+</div>
+
+</Accordion>
+
+</AccordionGroup>
+
 <div className="text-center mt-12 p-6 bg-gray-50 rounded-lg max-w-2xl mx-auto">
-  <h3 className="text-lg font-semibold mb-2">Need Help Getting Started?</h3>
+  <h3 className="text-lg font-semibold mb-2">Ready to Get Started?</h3>
   <p className="text-gray-600">
-    The Outlook connector is fully operational and ready for use. While we're finalizing the documentation, 
-    feel free to reach out to our support team for setup assistance.
+    The Outlook connector is fully operational and ready for use. Follow the configuration guide above, or reach out to our support team if you need assistance.
   </p>
 </div>

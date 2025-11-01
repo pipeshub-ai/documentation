@@ -1,11 +1,166 @@
 ---
-title: Deepseek
-description: "Configure PipesHub Workplace AI to use different Deepseek models"
+title: DeepSeek
+description: "Configure PipesHub Workplace AI to use DeepSeek AI models via OpenAI-compatible API"
 ---
 
-<div className="flex flex-col items-center justify-center text-center pt-10">
-  <h1 className=" font-bold">🚧 Coming Soon</h1>
-  <h3 className="text-xl mt-2">
-    We are working hard to bring you this content. Please check back shortly!
-  </h3>
-</div>
+# DeepSeek Configuration
+
+![OpenAI Compatible Configuration Interface](/images/ai-models/OpenAICompatible_LLMConfig.png)
+
+*The OpenAI API Compatible configuration screen in PipesHub where you'll enter your DeepSeek endpoint URL, API Key, and Model Name*
+
+PipesHub allows you to integrate with DeepSeek AI models using their OpenAI-compatible API endpoint. DeepSeek offers powerful AI models with advanced reasoning capabilities, making it ideal for complex problem-solving tasks.
+
+## What is DeepSeek?
+
+DeepSeek is an AI research company that develops advanced language models with enhanced reasoning capabilities. Their models are designed for:
+- Complex problem-solving and analytical tasks
+- Advanced reasoning and logical thinking
+- Mathematical and scientific computations
+- Code generation and analysis
+- Multi-step reasoning workflows
+
+## Prerequisites
+
+Before configuring DeepSeek in PipesHub, ensure you have:
+1. A DeepSeek account at [https://platform.deepseek.com](https://platform.deepseek.com)
+2. An active API key from the DeepSeek platform
+3. Sufficient API credits or an active subscription
+
+## Required Fields
+
+### Endpoint URL *
+
+The Endpoint URL for DeepSeek's API service.
+
+**DeepSeek API Endpoint:**
+```
+https://api.deepseek.com/v1/
+```
+
+**Important:** 
+- The endpoint URL must include the `/v1/` suffix
+- DeepSeek uses HTTPS for secure communication
+- The endpoint is globally accessible
+
+### API Key *
+
+The API Key is required to authenticate your requests to DeepSeek's services.
+
+**How to obtain a DeepSeek API Key:**
+1. Visit [https://platform.deepseek.com](https://platform.deepseek.com)
+2. Sign up or log in to your account
+3. Navigate to the API Keys section
+4. Create a new API key
+5. Copy the key immediately (it's only shown once)
+
+**Security Note:** Keep your API key secure and never share it publicly. PipesHub securely stores your API key and uses it only for authenticating requests to DeepSeek.
+
+### Model Name *
+
+The Model Name specifies which DeepSeek model you want to use.
+
+**Available DeepSeek Models:**
+- `deepseek-chat` - General-purpose conversational model
+- `deepseek-reasoner` - Enhanced reasoning capabilities for complex tasks
+
+**Recommended for most use cases:**
+```
+deepseek-chat
+```
+
+**For advanced reasoning tasks:**
+```
+deepseek-reasoner
+```
+
+**Important:** Verify the exact model name from the [DeepSeek documentation](https://platform.deepseek.com/docs) as model names may be updated.
+
+## Optional Features
+
+### Multimodal
+
+DeepSeek's current models primarily focus on text-based tasks.
+
+**When to enable:**
+- Only if using a DeepSeek model that explicitly supports vision/image understanding
+- Check the [DeepSeek documentation](https://platform.deepseek.com/docs) to confirm multimodal support for your chosen model
+
+**Note:** As of now, most DeepSeek models are text-focused. Leave this unchecked unless you're certain your model supports multimodal input.
+
+### Reasoning
+
+Enable this checkbox when using DeepSeek's reasoning-focused models.
+
+**When to enable:**
+- You're using `deepseek-reasoner` or similar reasoning-focused models
+- Your use case involves complex problem-solving
+- You need advanced mathematical, logical, or analytical capabilities
+- Your tasks require multi-step reasoning processes
+
+**Note:** Reasoning models take longer to generate responses as they perform additional internal reasoning steps before providing answers.
+
+## Configuration Steps
+
+As shown in the image above:
+
+1. Select "OpenAI API Compatible" as your Provider Type from the dropdown
+2. Enter the DeepSeek Endpoint URL: `https://api.deepseek.com/v1/`
+3. Enter your DeepSeek API Key
+4. Specify the Model Name (e.g., `deepseek-chat` or `deepseek-reasoner`)
+5. (Optional) Check "Multimodal" if your model supports image input
+6. (Optional) Check "Reasoning" if using a reasoning-focused model
+7. Click "Add Model" to complete the setup
+
+**All fields marked with an asterisk (*) are required to successfully configure the DeepSeek integration. You must complete these fields to proceed with the setup.**
+
+## Supported Models
+
+DeepSeek offers several model variants optimized for different use cases:
+
+- **deepseek-chat** - General-purpose conversational AI with strong performance across various tasks
+- **deepseek-reasoner** - Specialized model with enhanced reasoning capabilities for complex problem-solving
+
+For the most up-to-date list of available models and their capabilities, refer to the [DeepSeek documentation](https://platform.deepseek.com/docs).
+
+## Usage Considerations
+
+- API usage counts against your DeepSeek account quota and billing
+- Different models have different pricing structures
+- Check your account balance and rate limits regularly
+- Reasoning models may have higher latency due to their enhanced thinking process
+- Context window sizes vary by model - verify limits for your use case
+
+## Troubleshooting
+
+**Connection Issues:**
+- Verify the endpoint URL is correct: `https://api.deepseek.com/v1/`
+- Ensure you have internet connectivity
+- Check if DeepSeek's services are operational
+
+**Authentication Errors:**
+- Verify your API key is correct and has not expired
+- Ensure your API key has been properly copied without extra spaces
+- Check that your DeepSeek account has sufficient credits
+- Confirm your account is in good standing
+
+**Model Not Found:**
+- Verify the model name is spelled correctly (e.g., `deepseek-chat`)
+- Check that the model is available in your region
+- Ensure your account has access to the specified model
+- Refer to the latest DeepSeek documentation for current model names
+
+**Rate Limiting:**
+- Check your account's rate limits in the DeepSeek dashboard
+- Consider upgrading your plan if you frequently hit rate limits
+- Implement appropriate retry logic in your application
+
+**Response Errors:**
+- Ensure the selected model is currently available
+- Verify that multimodal/reasoning flags match the model's capabilities
+- Check the DeepSeek status page for any ongoing issues
+
+For additional support:
+- Visit the [DeepSeek documentation](https://platform.deepseek.com/docs)
+- Contact DeepSeek support through their platform
+- Reach out to PipesHub support for integration-specific questions

@@ -1,0 +1,141 @@
+---
+title: OpenAI API Compatible
+description: "Configure PipesHub Workplace AI to use OpenAI-compatible API providers"
+---
+
+# OpenAI API Compatible Configuration
+
+![OpenAI Compatible Configuration Interface](/images/ai-models/OpenAICompatible_LLMConfig.png)
+
+*The OpenAI API Compatible configuration screen in PipesHub where you'll enter your endpoint URL, API Key, and Model Name*
+
+PipesHub allows you to integrate with any LLM provider that supports the OpenAI API format, giving you flexibility to use various AI services including DeepSeek, OpenRouter, vLLM, and other compatible providers.
+
+## Required Fields
+
+### Endpoint URL *
+
+The Endpoint URL is the base API endpoint for your OpenAI-compatible service.
+
+**Common endpoint examples:**
+- Together AI: `https://api.together.xyz/v1/`
+- OpenRouter: `https://openrouter.ai/api/v1/`
+
+**Important:** The endpoint URL should include the base path (typically ending in `/v1/`). PipesHub will append the necessary paths for completions and other operations.
+
+### API Key *
+
+The API Key is required to authenticate your requests to the OpenAI-compatible service.
+
+**How to obtain an API Key:**
+1. Sign up or log in to your chosen provider's platform
+2. Navigate to the API Keys or Settings section
+3. Create a new API key
+4. Copy the key immediately (most providers only show it once)
+
+**Security Note:** Your API key should be kept secure and never shared publicly. PipesHub securely stores your API key and uses it only for authenticating requests to your chosen provider.
+
+### Model Name *
+
+The Model Name field defines which specific model you want to use from your provider.
+
+**Example model names by provider:**
+
+**Together AI:**
+- `meta-llama/Llama-4-Maverick-17B-128E-Instruct-FP8`
+- `Qwen/Qwen3-Next-80B-A3B-Instruct`
+- `openai/gpt-oss-120b`
+
+**DeepSeek (via compatible providers):**
+- `deepseek-ai/DeepSeek-R1`
+
+**How to choose a model:**
+- Check your provider's model catalog for available options
+- Consider factors like context length, speed, and cost
+- Verify the model name matches exactly as listed by the provider
+- Test with smaller models first before scaling to larger ones
+
+## Optional Features
+
+### Multimodal
+
+Enable this checkbox if your selected model supports multimodal input (text + images).
+
+**When to enable:**
+- Your model explicitly supports vision/image understanding
+- You need to process documents with images or screenshots
+- You want to analyze visual content alongside text
+
+**Note:** Not all models support multimodal capabilities. Check your provider's documentation to confirm whether your chosen model includes vision support.
+
+### Reasoning
+
+Enable this checkbox if your selected model has enhanced reasoning capabilities.
+
+**When to enable:**
+- Your model is designed for complex reasoning tasks (e.g., DeepSeek-V3, OpenAI o1-style models)
+- You need advanced problem-solving capabilities
+- Your use case involves mathematical or logical reasoning
+
+**Note:** Reasoning models typically have different pricing and may take longer to generate responses due to their enhanced thinking process.
+
+## Configuration Steps
+
+As shown in the image above:
+
+1. Select "OpenAI API Compatible" as your Provider Type from the dropdown
+2. Enter the Endpoint URL for your chosen provider (marked with *)
+3. Enter your API Key in the designated field (marked with *)
+4. Specify the exact Model Name as listed by your provider (marked with *)
+5. (Optional) Check "Multimodal" if your model supports image input
+6. (Optional) Check "Reasoning" if your model has enhanced reasoning capabilities
+7. Click "Add Model" to complete the setup
+
+``All fields marked with an asterisk (*) are required to successfully configure the OpenAI-compatible integration. You must complete these fields to proceed with the setup.``
+
+## Supported Providers
+
+PipesHub's OpenAI-compatible configuration works with any provider that implements the OpenAI API specification. Some popular providers include:
+
+- **Together AI** - Access to various open-source models with fast inference
+- **Groq** - Ultra-fast inference with open-source models
+- **Perplexity** - Online and offline models with search capabilities
+- **Anyscale** - Enterprise-grade model serving
+- **OpenRouter** - Unified interface to multiple LLM providers
+- **Fireworks AI** - Fast inference for open-source models
+- **Deepinfra** - Cost-effective access to open-source models
+- **Local providers** - Self-hosted solutions like vLLM, Ollama with OpenAI compatibility
+
+## Usage Considerations
+
+- API usage will count against your provider's account quota and billing
+- Different providers and models have different pricing structures
+- Response times vary by provider and model size
+- Ensure your endpoint supports the OpenAI API format (chat completions, embeddings, etc.)
+- Some providers may have rate limits - check your plan details
+- Context window sizes vary by model - verify limits for your use case
+
+## Troubleshooting
+
+**Connection Issues:**
+- Verify the endpoint URL is correct and includes the proper base path (usually `/v1/`)
+- Ensure your endpoint URL uses `https://` for secure connections
+- Check that the endpoint is accessible from your network
+
+**Authentication Errors:**
+- Verify your API key is correct and has not expired
+- Ensure your API key has the necessary permissions for chat completions
+- Check that your provider account has billing set up (if required)
+
+**Model Not Found:**
+- Confirm the model name exactly matches your provider's naming convention
+- Verify that your account has access to the specified model
+- Check if the model requires special access or waitlist approval
+
+**Response Errors:**
+- Ensure the selected model is currently available (not deprecated)
+- Verify that multimodal/reasoning flags match the model's actual capabilities
+- Check your provider's status page for any ongoing issues
+
+For additional support, refer to your provider's documentation or contact PipesHub support.
+

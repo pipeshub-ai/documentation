@@ -1,0 +1,186 @@
+---
+title: vLLM
+description: "Configure PipesHub Workplace AI to use vLLM with OpenAI-compatible API"
+---
+
+# vLLM Configuration
+
+![OpenAI Compatible Configuration Interface](/images/ai-models/OpenAICompatible_LLMConfig.png)
+
+*The OpenAI API Compatible configuration screen in PipesHub where you'll enter your vLLM endpoint URL, API Key, and Model Name*
+
+PipesHub allows you to integrate with vLLM (High-throughput and memory-efficient inference engine) using its OpenAI-compatible API endpoint. vLLM is designed for fast LLM inference and serving, making it ideal for self-hosted deployments.
+
+## What is vLLM?
+
+vLLM is an open-source library for fast LLM inference and serving. It provides:
+- High throughput serving with PagedAttention
+- Continuous batching of incoming requests
+- Optimized CUDA kernels for faster inference
+- OpenAI-compatible API server
+- Support for various popular open-source models
+
+## Prerequisites
+
+Before configuring vLLM in PipesHub, ensure you have:
+1. A running vLLM server instance
+2. The endpoint URL where your vLLM server is accessible
+3. (Optional) API key if you've configured authentication on your vLLM server
+4. The model name/path used when starting your vLLM server
+
+## Starting a vLLM Server
+
+If you haven't started a vLLM server yet, here's a quick example:
+
+```bash
+# Install vLLM
+pip install "vllm>=0.8.5"
+
+# With API key authentication
+vllm serve Qwen/Qwen3-8B --port 8000 --api-key your-secret-key
+```
+
+Your vLLM server will be accessible at `http://localhost:8000/v1/` (or your server's IP/domain).
+
+## Required Fields
+
+### Endpoint URL *
+
+The Endpoint URL is the base API endpoint of your vLLM server.
+
+**Format:** `http://your-server:port/v1/`
+
+**Examples:**
+- Local deployment: `http://localhost:8000/v1/`
+- Remote server: `http://192.168.1.100:8000/v1/`
+- Domain-based: `https://vllm.yourdomain.com/v1/`
+
+**Important:** 
+- The endpoint URL must include the `/v1/` suffix
+- Use `https://` for production deployments with SSL/TLS
+- Ensure the server is accessible from where PipesHub is running
+- Check firewall rules if connecting to a remote vLLM server
+
+### API Key *
+
+The API Key field is used to authenticate requests to your vLLM server.
+
+**Configuration options:**
+- If your vLLM server was started **with** `--api-key`, enter that key here
+- If your vLLM server was started **without** authentication, you can enter any placeholder value (e.g., `no-key` or `dummy`)
+
+**Security Note:** For production deployments, always configure API key authentication on your vLLM server and use strong, unique keys.
+
+### Model Name *
+
+The Model Name must match the model identifier used when starting your vLLM server.
+
+**Examples:**
+- `Qwen/Qwen3-8B`
+
+**Finding your model name:**
+You can query your vLLM server to list available models:
+
+```bash
+curl http://localhost:8000/v1/models
+```
+
+**Important:** The model name must exactly match what was specified when starting the vLLM server.
+
+## Optional Features
+
+### Multimodal
+
+Enable this checkbox if your vLLM server is running a model that supports multimodal input (text + images).
+
+**When to enable:**
+- You're using a vision-language model (e.g., LLaVA, Qwen-VL)
+- The model was specifically trained for multimodal understanding
+- You need to process documents with images or visual content
+
+**Example multimodal models for vLLM:**
+- `Qwen/Qwen3-8B`
+
+**Note:** Standard text-only models do not support multimodal capabilities. Verify your model's documentation before enabling this feature.
+
+### Reasoning
+
+Enable this checkbox if your model has enhanced reasoning capabilities.
+
+**When to enable:**
+- You're using a reasoning-focused model (e.g., DeepSeek-R1, QwQ)
+- The model is designed for complex problem-solving tasks
+- Your use case involves mathematical, logical, or multi-step reasoning
+
+**Note:** Reasoning models typically take longer to generate responses as they perform additional internal reasoning steps.
+
+## Configuration Steps
+
+As shown in the image above:
+
+1. Select "OpenAI API Compatible" as your Provider Type from the dropdown
+2. Enter your vLLM server's Endpoint URL (e.g., `http://localhost:8000/v1/`)
+3. Enter your API Key (or a placeholder if authentication is disabled)
+4. Specify the exact Model Name used when starting your vLLM server
+5. (Optional) Check "Multimodal" if using a vision-language model
+6. (Optional) Check "Reasoning" if using a reasoning-focused model
+7. Click "Add Model" to complete the setup
+
+``All fields marked with an asterisk (*) are required to successfully configure the vLLM integration. You must complete these fields to proceed with the setup.``
+
+## Supported Models
+
+vLLM supports a wide range of open-source models.
+
+For the most up-to-date list of supported models, check the [vLLM documentation](https://docs.vllm.ai/en/latest/models/supported_models.html).
+
+## Performance Considerations
+
+**Optimizing your vLLM deployment:**
+- **GPU Memory:** Ensure adequate GPU memory for your model size
+- **Batch Size:** vLLM automatically manages batching for optimal throughput
+- **Tensor Parallelism:** For large models, use multiple GPUs with `--tensor-parallel-size`
+- **Quantization:** Use quantized models (GPTQ, AWQ) to reduce memory usage
+- **Context Length:** Adjust `--max-model-len` based on your use case
+
+**Example with optimizations:**
+```bash
+vllm serve Qwen/Qwen3-8B \
+  --tensor-parallel-size 4 \
+  --max-model-len 8192 \
+  --port 8000
+```
+
+## Troubleshooting
+
+**Connection Issues:**
+- Verify the endpoint URL is correct and includes `/v1/`
+- Check that the vLLM server is running: `curl http://localhost:8000/health`
+- Ensure network connectivity between PipesHub and vLLM server
+- Check firewall rules and port accessibility
+- For remote servers, ensure proper DNS resolution
+
+**Authentication Errors:**
+- Verify the API key matches what was set with `--api-key` when starting vLLM
+- If no authentication was configured, any placeholder value should work
+- Check vLLM server logs for authentication failures
+
+**Model Not Found:**
+- Confirm the model name exactly matches the one used to start the vLLM server
+- Query available models: `curl http://localhost:8000/v1/models`
+- Restart vLLM server if the model was changed
+
+**Performance Issues:**
+- Monitor GPU memory usage and utilization
+- Check vLLM server logs for warnings or errors
+- Consider using a smaller model or quantization
+- Adjust `--max-model-len` if seeing out-of-memory errors
+- Use tensor parallelism for large models
+
+**Server Not Starting:**
+- Verify CUDA/GPU drivers are properly installed
+- Check you have sufficient GPU memory for the model
+- Review vLLM server logs for detailed error messages
+- Ensure the model is compatible with your vLLM version
+
+For additional support, refer to the [vLLM documentation](https://docs.vllm.ai/) or contact PipesHub support.

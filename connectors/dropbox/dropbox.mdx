@@ -40,7 +40,7 @@ Dropbox is a popular cloud storage service. Its main purpose is to let you store
 
 ### User & Teams Client
 
-**User Client** is designed to interact with an individual user's Dropbox account. Think of this as managing a personal workspace. These can be called with Team client but we need to define the user who we want to call that endpoint as.
+**User Client** is designed to interact with an individual user's Dropbox account. Think of this as managing a personal workspace. These endpoints can also be called via the Team client, but require specifying the user to act on behalf of.
 
 **Team Client** is specifically for Dropbox Business or Enterprise accounts. They include endpoints that are used to manage an entire team or organization's Dropbox environment from an administrative perspective.
 
@@ -171,7 +171,7 @@ This guide will walk you through the process of creating a Dropbox application a
 
 ### Step 2: Set Sync Strategy
 
-Click **Next** here you can setup your sync strategy either **Manual**, **Scheduled** or via **Webhooks** (to be implemented). On scheduled you can setup to run sync every 15 min, 30mins, 1hr, 4hr etc. And also decide batch size (this is an internal connector settings that decide how many items should the conenctor sync to ArangoDB at once) leave it empty if you want to go with default option 100.
+Click **Next** here you can setup your sync strategy either **Manual**, **Scheduled** or via **Webhooks** (to be implemented). On scheduled you can setup to run sync every 15 min, 30mins, 1hr, 4hr etc. And also decide batch size (this is an internal connector settings that decide how many items should the connector sync to ArangoDB at once) leave it empty if you want to go with default option 100.
 
 <img
     src="/images/connectors/dropbox/p2.png"
@@ -182,7 +182,7 @@ Click **Next** here you can setup your sync strategy either **Manual**, **Schedu
 
 ### Step 3: Authenticate and Enable
 
-1. Click **Save Configuration**. Now the authenticate button will be active, click on it and you will be taken to dropbox to authorize you app (make sure you are logged in to correct dropbox account).
+1. Click **Save Configuration**. Now the authenticate button will be active, click on it and you will be taken to dropbox to authorize your app (make sure you are logged in to correct dropbox account).
 
 2. After granting access, you will be redirected back to PipesHub, and your Dropbox account will be successfully connected, once you enable the connector your files will start syncing.
 
@@ -198,7 +198,7 @@ Click **Next** here you can setup your sync strategy either **Manual**, **Schedu
 
 <Accordion title="Synchronization Process" icon="sync">
 
-## How Does Dropbox Connector Work?
+### How Does Dropbox Connector Work?
 
 Each connector, including the `DropboxConnector` is a child class (or concrete class) that inherits from `BaseConnector`. It implements the following abstract methods:
 

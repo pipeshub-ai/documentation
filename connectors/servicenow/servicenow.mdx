@@ -1,0 +1,311 @@
+---
+title: "ServiceNow"
+description: "Knowledge Base and service management connector"
+icon: "/logo/servicenow.png"
+---
+
+<div className="max-w-2xl mx-auto mt-12">
+  <div className="p-6 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800">
+    <div className="flex items-center mb-4">
+      <img 
+        src="/logo/servicenow.png" 
+        alt="ServiceNow Logo" 
+        className="w-8 h-8 mr-3 object-contain flex-shrink-0"
+      />
+      <h2 className="text-2xl font-semibold m-0">ServiceNow</h2>
+    </div>
+    <p className="text-lg text-gray-700 dark:text-gray-300 mb-4">Knowledge Base and service management platform</p>
+    <div className="flex items-center gap-2">
+      <span className="px-3 py-1 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 rounded-full text-sm font-medium">
+        ✅ Ready
+      </span>
+      <span className="px-3 py-1 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 rounded-full text-sm font-medium">
+        📚 Documentation Available
+      </span>
+    </div>
+  </div>
+</div>
+
+## Configuration Guide
+
+<AccordionGroup type="single" collapsible>
+
+<Accordion title="Setup">
+
+<div className="mt-4">
+
+## Overview
+
+The ServiceNow connector provides access to your organization's Knowledge Base articles through OAuth 2.0 authentication. It syncs users, groups, knowledge bases, categories, and articles with their attachments.
+
+### Authentication
+
+The ServiceNow connector uses OAuth 2.0 authentication with user impersonation. This allows a single admin account to access Knowledge Base articles on behalf of all users, ensuring each user sees only the content they have permission to view.
+
+## How to configure and enable the ServiceNow Connector
+
+### Step 1: Create OAuth Application in ServiceNow
+
+1. **Sign in to ServiceNow:**  
+   Navigate to your ServiceNow instance (e.g., `https://dev12345.service-now.com`) and sign in with administrator credentials.
+
+2. **Access Application Registry:**
+   - In the navigation filter, search for **"Application Registry"**
+   - Or navigate to **System OAuth** → **Application Registry**
+
+<div style={{ textAlign: "center" }}>
+  <img
+    src="/images/connectors/servicenow/app_registry.png"
+    alt="ServiceNow Application Registry"
+    width="90%"
+  />
+</div>
+
+3. **Create New OAuth Application:**
+   - Click **"New"**
+   <div style={{ textAlign: "center" }}>
+    <img
+        src="/images/connectors/servicenow/new_oauth.png"
+        alt="Create OAuth API endpoint"
+        width="90%"
+    />
+    </div>
+   - Select **"Create an OAuth API endpoint for external clients"**
+    <div style={{ textAlign: "center" }}>
+    <img
+        src="/images/connectors/servicenow/oauth_type_selection.png"
+        alt="Create OAuth API endpoint"
+        width="90%"
+    />
+    </div>
+
+4. **Configure OAuth Application:**
+   Fill in the following details:
+   - **Name**: `PipesHub KB Connector` (or any meaningful name)
+   - **Client ID**: Auto-generated (copy this value)
+   - **Client Secret**: Auto-generated (copy this value)
+   - **Redirect URL**: (Get the redirect uri from pipeshub configure servicenow dialog in connector settings)
+     - For production: `https://your-domain.com/connectors/oauth/callback/ServiceNow`
+    <div style={{ textAlign: "center" }}>
+        <img
+            src="/images/connectors/servicenow/redirect_uri.png"
+            alt="OAuth application configuration"
+            width="90%"
+        />
+    </div>
+   - **Accessible from**: `All application scopes`
+   - **Refresh Token Lifespan**: `8640000` seconds (100 days recommended)
+
+<div style={{ textAlign: "center" }}>
+  <img
+    src="/images/connectors/servicenow/oauth_config.png"
+    alt="OAuth application configuration"
+    width="90%"
+  />
+</div>
+
+5. **Copy Credentials:**
+   - **Client ID**: Copy and save securely
+   - **Client Secret**: Copy and save securely
+
+<div style={{ textAlign: "center" }}>
+  <img
+    src="/images/connectors/servicenow/client_secret.png"
+    alt="Client ID and Secret"
+    width="90%"
+  />
+</div>
+
+6. Click **"Submit"** to save the application
+
+<Warning>
+  Store the Client ID and Client Secret securely. You'll need these to configure the connector in PipesHub.
+</Warning>
+
+### Step 2: Verify Admin User Permissions
+
+The admin user authenticating the OAuth connection needs appropriate roles for user impersonation:
+
+1. Navigate to **System Security** → **Users**
+2. Find the admin user who will authenticate the connector
+3. Verify the user has one of the following roles:
+   - `admin` role (recommended)
+   - `impersonate` role
+
+<div style={{ textAlign: "center" }}>
+  <img
+    src="/images/connectors/servicenow/admin_roles.png"
+    alt="Admin user roles"
+    width="90%"
+  />
+</div>
+
+<Info>
+  Most administrator accounts already have the `admin` role by default. User impersonation allows the connector to access Knowledge Base articles on behalf of different users while respecting their individual permissions.
+</Info>
+
+### Step 3: Prepare Instance URLs
+
+You'll need three URLs based on your ServiceNow instance:
+
+If your instance URL is: `https://dev12345.service-now.com`
+
+Then:
+- **Instance URL**: `https://dev12345.service-now.com`
+- **Authorize URL**: `https://dev12345.service-now.com/oauth_auth.do`
+- **Token URL**: `https://dev12345.service-now.com/oauth_token.do`
+
+<Note>
+  Simply append `/oauth_auth.do` for the Authorize URL and `/oauth_token.do` for the Token URL to your instance URL.
+</Note>
+
+### Step 4: Configure Connector in PipesHub
+
+1. Navigate to **Settings** → **Connectors** in PipesHub
+2. Find the **ServiceNow** connector and click **"Configure"**
+3. Enter the following details:
+   - **ServiceNow Instance URL**: Your instance URL (e.g., `https://dev12345.service-now.com`)
+   - **ServiceNow Authorize URL**: Instance URL + `/oauth_auth.do`
+   - **ServiceNow Token URL**: Instance URL + `/oauth_token.do`
+   - **Client ID**: From Step 1
+   - **Client Secret**: From Step 1
+
+<div style={{ textAlign: "center" }}>
+  <img
+    src="/images/connectors/servicenow/pipeshub_config.png"
+    alt="PipesHub ServiceNow configuration"
+    width="90%"
+  />
+</div>
+
+4. Click **"Next"** or **"Save Configuration"**
+
+### Step 5: Authorize Connection
+
+1. After saving configuration, you'll be redirected to ServiceNow
+2. Sign in with your administrator account (if not already signed in)
+3. Review the permissions requested by PipesHub connector
+4. Click **"Allow"** to authorize the connection
+
+<div style={{ textAlign: "center" }}>
+  <img
+    src="/images/connectors/servicenow/oauth_consent.png"
+    alt="ServiceNow OAuth consent screen"
+    width="90%"
+  />
+</div>
+
+5. You'll be redirected back to PipesHub with a success message
+
+<Info>
+  The authorization grants PipesHub access to your ServiceNow Knowledge Base data using the admin account credentials while maintaining user-level permissions through impersonation.
+</Info>
+
+### Step 6: Enable the Connector
+
+1. After successful authorization, toggle the connector to **"Enable"**
+<div style={{ textAlign: "center" }}>
+  <img
+    src="/images/connectors/servicenow/toggle_to_enable.png"
+    alt="ServiceNow connector enabled"
+    width="90%"
+  />
+</div>
+
+2. The connector will verify credentials and begin initial sync
+3. Wait for the status to show **"Active and syncing data"**
+
+<div style={{ textAlign: "center" }}>
+  <img
+    src="/images/connectors/servicenow/enabled_connector.png"
+    alt="ServiceNow connector enabled"
+    width="90%"
+  />
+</div>
+
+<Note>
+  Initial sync duration depends on the number of Knowledge Base articles, categories, and users in your ServiceNow instance.
+</Note>
+
+## Supported Features
+
+The ServiceNow connector syncs the following data:
+
+- **Users**: User profiles and permissions
+- **Groups**: User groups and memberships
+- **Knowledge Bases**: KB structures and configurations
+- **Categories**: Article categories and hierarchies
+- **Articles**: Knowledge Base articles with full content
+- **Attachments**: Files attached to articles
+
+## Data Sync Behavior
+
+### Initial Sync
+- Fetches all users, groups, knowledge bases, categories, and articles
+- Respects user permissions for article visibility
+- Duration depends on the size of your Knowledge Base
+
+### Incremental Sync
+- Uses timestamp-based synchronization (`sys_updated_on` field)
+- Only syncs new or modified content since last sync
+- Efficient delta queries reduce API calls and sync time
+
+### User Impersonation
+- Single admin OAuth token authenticates the connector
+- Connector impersonates individual users when fetching articles
+- Each user sees only articles they have permission to access
+- Maintains ServiceNow's access control and security model
+
+## Troubleshooting
+
+### Common Issues
+
+**Invalid client credentials error:**
+- Verify Client ID and Client Secret are correct
+- Ensure you copied the full values without extra spaces
+- Check that the OAuth application is active in ServiceNow
+
+**Authorization failed:**
+- Verify the admin user has `admin` or `impersonate` role
+- Ensure the admin account is active and not locked
+- Check that Knowledge Base access is granted to the admin user
+
+**Incorrect instance URL:**
+- Instance URL format must be: `https://instance-name.service-now.com`
+- Do not include trailing slashes or additional paths
+- Ensure URLs match exactly (Instance, Authorize, Token)
+
+**Token expired or sync stopped:**
+- Refresh tokens expire based on the configured lifespan
+- Disable and re-enable the connector to re-authenticate
+- Consider increasing Refresh Token Lifespan in ServiceNow OAuth settings
+
+**Permission denied for articles:**
+- Verify the admin user has Knowledge Base read access
+- Check user group memberships for article access
+- Ensure ACLs (Access Control Lists) are configured correctly in ServiceNow
+
+<Warning>
+  If you modify OAuth application settings in ServiceNow (Client ID, Secret, Redirect URL), you must update the configuration in PipesHub and re-authorize the connection.
+</Warning>
+
+## ServiceNow Version Compatibility
+
+This connector has been tested with ServiceNow version **Zurich** and should work with other recent versions (Rome, San Diego, Tokyo, Utah, Vancouver, Washington, Xanadu).
+
+<Info>
+  ServiceNow maintains backward compatibility for OAuth 2.0 and Table APIs across versions, ensuring the connector works reliably.
+</Info>
+
+</div>
+
+</Accordion>
+
+</AccordionGroup>
+
+<div className="text-center mt-12 p-6 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg max-w-2xl mx-auto">
+  <h3 className="text-lg font-semibold mb-2">Ready to Get Started?</h3>
+  <p className="text-gray-600 dark:text-gray-400">
+    Connect your ServiceNow Knowledge Base to PipesHub in just a few minutes. Follow the steps above to enable organization-wide knowledge search and access.
+  </p>
+</div>

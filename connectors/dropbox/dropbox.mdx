@@ -20,14 +20,11 @@ icon: "/logo/dropbox.png"
         ✅ Ready
       </span>
       <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
-        📝 Documentation in process
+        📚 Documentation Available
       </span>
     </div>
   </div>
 </div>
-
-
-# Dropbox Documentation
 
 ## Overview
 
@@ -36,6 +33,34 @@ Dropbox is a popular cloud storage service. Its main purpose is to let you store
 ---
 
 ## Configuration Guide
+
+<AccordionGroup>
+
+<Accordion title="Understanding Dropbox API" icon="info">
+
+### User & Teams Client
+
+**User Client** is designed to interact with an individual user's Dropbox account. Think of this as managing a personal workspace. These can be called with Team client but we need to define the user who we want to call that endpoint as.
+
+**Team Client** is specifically for Dropbox Business or Enterprise accounts. They include endpoints that are used to manage an entire team or organization's Dropbox environment from an administrative perspective.
+
+### APIs Documentation
+
+- **Dropbox Individual API:** [https://www.dropbox.com/developers/documentation/http/documentation](https://www.dropbox.com/developers/documentation/http/documentation)
+
+- **Dropbox Teams API:** [https://www.dropbox.com/developers/documentation/http/teams](https://www.dropbox.com/developers/documentation/http/teams)
+
+### Concept of Cursor
+
+A **cursor** is a short string that acts like a bookmark for keeping track of changes in a folder.
+
+When you first list the contents of a folder using an endpoint like `/files/list_folder`, the API response includes a cursor. This cursor represents the exact state of that folder at that moment.
+
+Instead of re-downloading the entire list of files to check for changes, you can simply pass that cursor to the `/files/list_folder/continue` endpoint. The API will then return only the files and folders that have been added, modified, or deleted since you last received that cursor. This makes syncing changes highly efficient as you only process the differences.
+
+</Accordion>
+
+<Accordion title="Create Dropbox App" icon="rocket">
 
 This guide will walk you through the process of creating a Dropbox application and connecting it to PipesHub to fetch your files and folders.
 
@@ -88,8 +113,6 @@ This guide will walk you through the process of creating a Dropbox application a
    - `team_info.read`
    - `events.read`
 
-
-
 4. Click **Submit** at the bottom of the page to save your changes.
 
 <img
@@ -116,6 +139,7 @@ This guide will walk you through the process of creating a Dropbox application a
     style={{ display: 'block', margin: '0 auto' }}
     width="90%"
   />
+
 #### Step 3: Copy App Key and Secret
 
 1. While still in the **Settings** tab, locate the **App key** and **App secret**.
@@ -124,7 +148,11 @@ This guide will walk you through the process of creating a Dropbox application a
 
 3. Copy both the **App key** and the **App secret**. You will need these for the next step.
 
-#### Step 4: Connect to PipesHub
+</Accordion>
+
+<Accordion title="Connect Dropbox to PipesHub" icon="plug">
+
+### Step 1: Configure Connection
 
 1. Open your PipesHub application and navigate to **Connections Settings**.
 
@@ -141,8 +169,9 @@ This guide will walk you through the process of creating a Dropbox application a
     width="90%"
   />
 
-5. Click **Next** here you can setup your sync strategy either **Manual**, **Scheduled** or via **Webhooks** (to be implemented). On scheduled you can setup to run sync every 15 min, 30mins, 1hr, 4hr etc. And also decide batch size (this is an
-internal connector settings that decide how many items should the conenctor sync to ArangoDB at once) leave it empty if you want to go with default option 100.
+### Step 2: Set Sync Strategy
+
+Click **Next** here you can setup your sync strategy either **Manual**, **Scheduled** or via **Webhooks** (to be implemented). On scheduled you can setup to run sync every 15 min, 30mins, 1hr, 4hr etc. And also decide batch size (this is an internal connector settings that decide how many items should the conenctor sync to ArangoDB at once) leave it empty if you want to go with default option 100.
 
 <img
     src="/images/connectors/dropbox/p2.png"
@@ -151,35 +180,23 @@ internal connector settings that decide how many items should the conenctor sync
     width="90%"
   />
 
-6. Then click **Save Configuration**. Now the authenticate button will be active, click on it and you will be taken to dropbox to authorize you app (make sure you are logged in to correct dropbox account).
+### Step 3: Authenticate and Enable
 
-7. After granting access, you will be redirected back to PipesHub, and your Dropbox account will be successfully connected, once you enable the connector your files will start syncing.
+1. Click **Save Configuration**. Now the authenticate button will be active, click on it and you will be taken to dropbox to authorize you app (make sure you are logged in to correct dropbox account).
 
----
+2. After granting access, you will be redirected back to PipesHub, and your Dropbox account will be successfully connected, once you enable the connector your files will start syncing.
 
-## How Does Dropbox API Work?
+</Accordion>
 
-### User & Teams Client
-
-**User Client** is designed to interact with an individual user's Dropbox account. Think of this as managing a personal workspace. These can be called with Team client but we need to define the user who we want to call that endpoint as.
-
-**Team Client** is specifically for Dropbox Business or Enterprise accounts. They include endpoints that are used to manage an entire team or organization's Dropbox environment from an administrative perspective.
-
-### APIs Documentation
-
-- **Dropbox Individual API:** [https://www.dropbox.com/developers/documentation/http/documentation](https://www.dropbox.com/developers/documentation/http/documentation)
-
-- **Dropbox Teams API:** [https://www.dropbox.com/developers/documentation/http/teams](https://www.dropbox.com/developers/documentation/http/teams)
-
-### Concept of Cursor
-
-A **cursor** is a short string that acts like a bookmark for keeping track of changes in a folder.
-
-When you first list the contents of a folder using an endpoint like `/files/list_folder`, the API response includes a cursor. This cursor represents the exact state of that folder at that moment.
-
-Instead of re-downloading the entire list of files to check for changes, you can simply pass that cursor to the `/files/list_folder/continue` endpoint. The API will then return only the files and folders that have been added, modified, or deleted since you last received that cursor. This makes syncing changes highly efficient as you only process the differences.
+</AccordionGroup>
 
 ---
+
+## Connector Workflow
+
+<AccordionGroup>
+
+<Accordion title="Synchronization Process" icon="sync">
 
 ## How Does Dropbox Connector Work?
 
@@ -339,3 +356,7 @@ This is an incremental, event-driven process designed to keep file and folder pe
 4. **Process and Update:** The fresh data is processed, and the item's permissions are updated in the database to reflect the latest state.
 
 5. **Update Cursor:** Finally, the new cursor is saved to mark the position for the next sync.
+
+</Accordion>
+
+</AccordionGroup>

@@ -20,13 +20,12 @@ icon: "/logo/bookstack.png"
         ✅ Ready
       </span>
       <span className="px-3 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-full text-sm font-medium">
-        📝 Documentation in process
+        📚 Documentation Available
       </span>
     </div>
   </div>
 </div>
 
-# BookStack Documentation
 
 ## Overview
 
@@ -46,7 +45,9 @@ BookStack provides multiple ways through which it can be deployed (e.g., Docker,
 
 ## Configuration Guide
 
-### BookStack API Token Generation and Usage
+<AccordionGroup>
+
+<Accordion title="Generate API Token in BookStack" icon="key">
 
 BookStack uses a system of Token IDs and Token Secrets to authenticate external applications and scripts via its built-in REST API.
 
@@ -54,11 +55,11 @@ The API operations performed with the token will have the same permissions as th
 
 It is recommended to use a user with admin permissions to create the api token because sync requires permission to read all entities (shelves, books, pages, etc.) aswell as read the audit log to which only admin users have access.
 
-#### Prerequisites
+### Prerequisites
 
 The user generating the token must have a role assigned that includes the **"Access system API"** permission. (The default Admin role usually has this permission).
 
-#### Creating a Token
+### Creating a Token
 
 1. **Navigate to Profile:** Click on your user profile icon (in the top right corner) and select "My Account".
 
@@ -95,9 +96,9 @@ The user generating the token must have a role assigned that includes the **"Acc
 
    **⚠️ CRITICAL:** The Token ID and Token Secret will be displayed immediately and only once. You must copy both values now, as the Secret cannot be retrieved later.
 
----
+</Accordion>
 
-### Configure BookStack Connector in PipesHub
+<Accordion title="Connect BookStack to PipesHub" icon="plug">
 
 The integration requires three pieces of information:
 
@@ -119,7 +120,7 @@ The integration requires three pieces of information:
 - Paste the **BookStack Token ID**.
 - Paste the **BookStack Token Secret**.
 
-#### Step 3: Input Credentials
+#### Step 3: Set Sync Strategy
   - Set your sync strategy as **Manual** or **Webhooks** (to be implemented)
 
 #### Step 4: Activate Connection
@@ -127,9 +128,17 @@ The integration requires three pieces of information:
 - Click **Enable App** button.
 - The BookStack Connector is now active and will start syncing the shelves, books, chapters, and pages.
 
+</Accordion>
+
+</AccordionGroup>
+
 ---
 
-## BookStack Connector Sync Workflow
+## Connector Workflow
+
+<AccordionGroup>
+
+<Accordion title="Synchronization Process" icon="sync">
 
 The `run_sync` method executes a complete synchronization cycle. It follows a mandatory, sequential four-step process which checks if sync points are created. If not, it runs the full sync of BookStack, fetching all users, roles, books, pages, etc., then creates a sync point when they run successfully.
 
@@ -150,15 +159,15 @@ The `_sync_users` function first checks the Sync Point for the last synchronizat
 
 ---
 
-## 1. User Synchronization
+### 1. User Synchronization
 
 The user synchronization process ensures the local system's user base is an up-to-date mirror of the BookStack instance.
 
-### 1.1 Full Sync
+#### 1.1 Full Sync
 
 If no timestamp is found in the sync point, it runs a full sync, fetching all users from the BookStack API and passing them to the data processor for creation or update.
 
-### 1.2 Incremental Sync
+#### 1.2 Incremental Sync
 
 Since BookStack does not have a native incremental user API, the connector relies on three parallel audit log queries to detect activity since the `last_sync_timestamp`:
 
@@ -178,9 +187,9 @@ with time in ISO UTC format.
 
 ---
 
-## 2. Role Synchronization
+### 2. Role Synchronization
 
-### 2.1 Full User Group Sync
+#### 2.1 Full User Group Sync
 
 The full sync is comprehensive and requires fetching data in parallel:
 
@@ -190,7 +199,7 @@ The full sync is comprehensive and requires fetching data in parallel:
 
 - **Processing:** The final batch of `(AppUserGroup, List[AppUser])` tuples is sent to the data processor via `on_new_user_groups()` to establish the group entity and all membership edges.
 
-### 2.2 Incremental Role Sync
+#### 2.2 Incremental Role Sync
 
 The incremental sync relies on the BookStack Audit Log for role-related events since the last timestamp:
 
@@ -203,11 +212,11 @@ The incremental sync relies on the BookStack Audit Log for role-related events s
 
 ---
 
-## 3. Record Group Synchronization
+### 3. Record Group Synchronization
 
 This phase synchronizes the hierarchical containers for content: Shelves, Books, and Chapters. These are mapped to the local system's `RecordGroup` entity.
 
-### 3.1 Full Record Group Sync
+#### 3.1 Full Record Group Sync
 
 The full sync iterates through all three content types—shelves, books, and chapters—to create and update all record group entities and their associated permissions.
 
@@ -222,7 +231,7 @@ The full sync iterates through all three content types—shelves, books, and cha
 
 **NOTE:** In BookStack, the "Shelf" is used only for organizing items and is not a parent of any book.
 
-### 3.2 Incremental Record Group Sync
+#### 3.2 Incremental Record Group Sync
 
 Incremental sync is managed by listening to Audit Log events for each of the three content types (bookshelf, book, and chapter) within the `_sync_record_groups_events` helper function.
 
@@ -235,11 +244,11 @@ Incremental sync is managed by listening to Audit Log events for each of the thr
 
 ---
 
-## 4. Records Synchronization
+### 4. Records Synchronization
 
 This is the final synchronization step, focused on synchronizing content units: Pages (which hold the main content) and any associated attachments. These are mapped to the local system's `FileRecord` entity.
 
-### 4.1 Full Records Sync
+#### 4.1 Full Records Sync
 
 **Function:** `async def _sync_records_full() -> None`
 
@@ -258,7 +267,7 @@ The full sync processes all pages using paginated API calls and performs a detai
   - **Permission Changes:** Trigger `on_updated_record_permissions`.
   - **Deleted Records:** Trigger deletion via `on_record_deleted`.
 
-### 4.2 Incremental Records Sync
+#### 4.2 Incremental Records Sync
 
 **Function:** `async def _sync_records_incremental(...) -> None`
 
@@ -274,9 +283,9 @@ Incremental sync for records uses the Audit Log to identify specific pages that 
 
 ---
 
-## Miscellaneous
+### Miscellaneous
 
-### Methods
+#### Methods
 
 - **`create_connector`:** It handles the instantiation and initialization of the core dependency, the `DataSourceEntitiesProcessor`, before creating and returning the `BookStackConnector` object itself.
 
@@ -284,6 +293,10 @@ Incremental sync for records uses the Audit Log to identify specific pages that 
 
 - **`stream_record`:** This exports the BookStack page as raw markdown.
 
-### BookStackDataSource
+#### BookStackDataSource
 
 Auto-generated comprehensive BookStack API client wrapper. Generated from BookStack API documentation at: [https://demo.bookstackapp.com/api/docs](https://demo.bookstackapp.com/api/docs)
+
+</Accordion>
+
+</AccordionGroup>

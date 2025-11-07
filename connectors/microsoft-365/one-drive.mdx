@@ -31,8 +31,7 @@ icon: "/logo/one-drive.png"
 
 OneDrive is Microsoft's cloud storage service that lets you store, sync, and share files across all your devices, often bundled with Microsoft 365. 
 
-The OneDrive connector uses OAuth 2.0 via Microsoft Graph API with Application Permissions, allowing background access to organizational mailboxes without requiring individual user sign-ins.
-
+The OneDrive connector uses OAuth 2.0 via Microsoft Graph API with Application Permissions, allowing background access to organizational files and folders without requiring individual user sign-ins.
 ---
 
 ## Configuration Setup
@@ -55,7 +54,7 @@ The OneDrive connector uses OAuth 2.0 via Microsoft Graph API with Application P
 <div style={{ textAlign: "center" }}>
   <img
     src="/images/connectors/microsoft365/onedrive/1.png"
-    alt="Create New Registration"
+    alt="OneDrive"
     style={{ display: 'block', margin: '0 auto' }}
     width="90%"
   />
@@ -68,7 +67,7 @@ The OneDrive connector uses OAuth 2.0 via Microsoft Graph API with Application P
 <div style={{ textAlign: "center" }}>
   <img
     src="/images/connectors/microsoft365/onedrive/2.png"
-    alt="Create New Registration"
+    alt="OneDrive"
     style={{ display: 'block', margin: '0 auto' }}
     width="90%"
   />
@@ -77,7 +76,7 @@ The OneDrive connector uses OAuth 2.0 via Microsoft Graph API with Application P
 <div style={{ textAlign: "center" }}>
   <img
     src="/images/connectors/microsoft365/onedrive/3.png"
-    alt="Create New Registration"
+    alt="OneDrive"
     style={{ display: 'block', margin: '0 auto' }}
     width="90%"
   />
@@ -95,7 +94,7 @@ After registration, you'll see the Overview page. Copy the following values:
 <div style={{ textAlign: "center" }}>
   <img
     src="/images/connectors/microsoft365/onedrive/4.png"
-    alt="Create New Registration"
+    alt="OneDrive"
     style={{ display: 'block', margin: '0 auto' }}
     width="90%"
   />
@@ -117,7 +116,7 @@ Copy the "Application (client) ID" NOT the "Object ID". These are different valu
 <div style={{ textAlign: "center" }}>
   <img
     src="/images/connectors/microsoft365/onedrive/5.png"
-    alt="Create New Registration"
+    alt="OneDrive"
     style={{ display: 'block', margin: '0 auto' }}
     width="90%"
   />
@@ -141,7 +140,7 @@ The client secret value is only displayed once! If you navigate away, you cannot
 <div style={{ textAlign: "center" }}>
   <img
     src="/images/connectors/microsoft365/onedrive/6.png"
-    alt="Create New Registration"
+    alt="OneDrive"
     style={{ display: 'block', margin: '0 auto' }}
     width="90%"
   />
@@ -155,7 +154,7 @@ The client secret value is only displayed once! If you navigate away, you cannot
 <div style={{ textAlign: "center" }}>
   <img
     src="/images/connectors/microsoft365/onedrive/7.png"
-    alt="Create New Registration"
+    alt="OneDrive"
     style={{ display: 'block', margin: '0 auto' }}
     width="90%"
   />
@@ -179,7 +178,7 @@ Admin consent is required for application permissions. Only Global Administrator
 <div style={{ textAlign: "center" }}>
   <img
     src="/images/connectors/microsoft365/onedrive/8.png"
-    alt="Create New Registration"
+    alt="OneDrive"
     style={{ display: 'block', margin: '0 auto' }}
     width="90%"
   />
@@ -209,7 +208,7 @@ Unlike user-facing OAuth flows, there's no login screen because the connector us
 
 ### How Does OneDrive Connector Work?
 
-The `run_sync` method orchestrates the complete synchronization process in four main steps:
+The `run_sync` method orchestrates the complete synchronization process in three main steps:
 
 1. **Sync Users**
 2. **Sync User Groups**
@@ -262,7 +261,7 @@ The system handles three types of changes:
 - Processes member additions and removals via `members@delta` field
 - Fetches user email for each member change
 - Removes the group member if `@remove` field is present
-- Member addition is handled via ADD/UPDATE function
+- Member addition is handled as part of the group's ADD/UPDATE process.
 
 ---
 
@@ -287,7 +286,7 @@ This function manages the synchronization of a single user's OneDrive content us
 2. If a token exists, the sync is incremental; otherwise, it initiates a full scan
 3. The connector calls the Delta API endpoint to retrieve all drive items that have changed
 4. Fetched items are passed to `_process_delta_items_generator` to extract metadata and changes
-5. Returns a `RecordUpdate` item along with permissions
+5. The `_process_delta_items_generator` yields a `RecordUpdate` item along with permissions for each change.
 6. New file records and permissions are collected into batches (`batch_size`)
 7. Once a batch is full, it's published via `data_entities_processor.on_new_records`
 8. Updated records are handled via `_handle_record_updates`

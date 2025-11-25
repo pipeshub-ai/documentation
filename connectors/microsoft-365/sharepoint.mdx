@@ -3,12 +3,7 @@ title: "SharePoint"
 description: "Document management and collaboration platform connector"
 icon: "/logo/sharepoint.png"
 ---
-<div className="flex flex-col items-center justify-center text-center pt-10">
-  <h1 className="text-4xl font-bold">✅ SharePoint Connector Ready</h1>
-  <h3 className="text-xl mt-2">
-    Connector is live and ready to use. Documentation in process!
-  </h3>
-</div>
+
 <div className="max-w-2xl mx-auto mt-12">
   <div className="p-6 border rounded-lg bg-blue-50">
     <div className="flex items-center mb-4">
@@ -17,7 +12,7 @@ icon: "/logo/sharepoint.png"
         alt="Microsoft SharePoint Logo" 
         className="w-8 h-8 mr-3 object-contain flex-shrink-0"
       />
-      <h2 className="text-2xl font-semibold m-0"> Microsoft SharePoint</h2>
+      <h2 className="text-2xl font-semibold text-emerald-600 m-0"> Microsoft SharePoint</h2>
     </div>
     <p className="text-lg text-gray-700 mb-4">Document management and collaboration platform</p>
     <div className="flex items-center gap-2">
@@ -25,15 +20,183 @@ icon: "/logo/sharepoint.png"
         ✅ Ready
       </span>
       <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
-        📝 Documentation in process
+        📝 Documentation Available
       </span>
     </div>
   </div>
 </div>
-<div className="text-center mt-12 p-6 bg-gray-50 rounded-lg max-w-2xl mx-auto">
-  <h3 className="text-lg font-semibold mb-2">Need Help Getting Started?</h3>
-  <p className="text-gray-600">
-    The SharePoint connector is fully operational and ready for use. While we're finalizing the documentation, 
-    feel free to reach out to our support team for setup assistance.
-  </p>
+
+## Overview
+
+SharePoint is a web-based collaborative platform developed by Microsoft. It's primarily used for document management and storage, acting as a secure place where teams can store, organize, share, and access information from almost any device.
+
+### Key Functions of SharePoint
+
+- **Intranets & Team Sites:** Serves as a centralized intranet and a secure digital space for team collaboration and internal communication.
+- **Document Management:** Offers secure storage, version control, and organization for all documents and files.
+- **Content & Data Tracking:** Allows users to create custom lists (e.g., tasks, contacts, issues) and manage company data.
+- **Workflow Automation:** Enables the building of simple custom applications and forms to automate business processes.
+
+The SharePoint connector uses OAuth 2.0 with Application Permissions via Microsoft Entra ID (formerly Azure AD), granting it the ability to execute background, server-to-server operations on SharePoint sites, lists, and documents without an interactive user sign-in.
+
+---
+
+## Configuration Setup
+
+<AccordionGroup>
+
+<Accordion title="Setup Guide" icon="gear">
+
+### Step 1: Register Application in Azure Portal
+
+**Sign in to Azure Portal:**
+- Navigate to [portal.azure.com](https://portal.azure.com) and sign in with your Microsoft 365 administrator account
+
+**Access App Registrations:**
+- Search for "App registrations" in the top search bar
+- Or navigate to Microsoft Entra ID → App registrations
+
+**Create New Registration:**
+- Enter application details:
+  - **Name:** Enter app name (e.g., "PipesHub Connector")
+  - **Supported account types:** Select "Accounts in this organizational directory only (Single tenant)"
+  - **Select a platform:** Web
+  - **Redirect URI:** Leave blank
+- Click "Register"
+
+<div style={{ textAlign: "center" }}>
+  <img
+    src="/images/connectors/microsoft365/sharepoint/1.png"
+    alt="SharePoint"
+    style={{ display: 'block', margin: '0 auto' }}
+    width="90%"
+  />
 </div>
+
+<Note>
+Single-tenant configuration ensures the application only works within your organization for better security.
+</Note>
+
+### Step 2: Copy Application Credentials
+
+After registration, you'll see the Overview page. Copy the following values (you'll need these later):
+- **Application (client) ID:** Found under "Essentials" section
+- **Directory (tenant) ID:** Found under "Essentials" section
+
+<div style={{ textAlign: "center" }}>
+  <img
+    src="/images/connectors/microsoft365/sharepoint/2.png"
+    alt="SharePoint Application Credentials"
+    style={{ display: 'block', margin: '0 auto' }}
+    width="90%"
+  />
+</div>
+
+<Warning>
+Copy the "Application (client) ID" NOT the "Object ID". These are different values.
+</Warning>
+
+### Step 3: Configure API Permissions
+
+**Configure Microsoft Graph Permissions:**
+- On the overview page, click on **Manage > API Permissions**
+- Click **Add a permission**
+- Select **Microsoft Graph**
+- Choose **Application permissions** (not Delegated permissions) and add the following:
+  - `User.Read.All`
+  - `GroupMember.Read.All`
+  - `Group.Read.All`
+  - `Files.ReadWrite.All`
+  - `Reports.Read.All`
+  - `Sites.FullControl.All`
+  - `Member.Read.Hidden`
+
+**Configure SharePoint Permissions:**
+- Click **Add a permission** and select **SharePoint**
+- Choose **Application permissions** and add the following:
+  - `Sites.FullControl.All`
+- Click **Add permissions**
+
+### Step 4: Grant Admin Consent
+
+- On the API permissions page, click **"Grant admin consent for [Your Organization]"**
+- Confirm by clicking **"Yes"**
+- Wait for the status to show green checkmarks
+
+<div style={{ textAlign: "center" }}>
+  <img
+    src="/images/connectors/microsoft365/sharepoint/3.png"
+    alt="SharePoint Admin Consent Page"
+    style={{ display: 'block', margin: '0 auto' }}
+    width="90%"
+  />
+</div>
+
+<Note>
+Admin consent is required for application permissions. Only Global Administrators or Application Administrators can grant this consent.
+</Note>
+
+### Step 5: Setup Certificate & Secret
+
+**Install OpenSSL:**
+
+OpenSSL is installed by default on Linux and OS X terminals. If you are using Windows, follow these instructions:
+
+- Download the relevant OpenSSL installation manager for your version of Windows. OpenSSL offers a list of third-party binary distributions, with Shining Light Productions as an option.
+- During the installation process, select the option to copy the OpenSSL binaries into the `/bin` directory.
+- Open a new PowerShell instance. In PowerShell, you can run the following command to make use of OpenSSL binaries:
+
+```powershell
+$env:Path += ";C:\\Program Files\\OpenSSL-Win64\\bin"
+```
+
+**Generate Certificate and Private Key:**
+
+Run the following commands line by line. Microsoft SDK requires the certificate to be verified with a private key in PKCS#8 syntax:
+
+```bash
+openssl genrsa -out tempprivatekey.key 2048
+openssl pkcs8 -topk8 -inform PEM -outform PEM -in tempprivatekey.key -out privatekey.key -nocrypt
+openssl req -new -key privatekey.key -out request.csr
+openssl x509 -req -days 365 -in request.csr -signkey privatekey.key -out certificate.crt
+```
+
+**Verify Certificate Files:**
+
+Verify that both `certificate.crt` and `privatekey.key` exist. Open each file, and ensure the files conform to the following formats:
+
+- The certificate file must start with `BEGIN CERTIFICATE` and end with `END CERTIFICATE`
+- The private key should begin with `BEGIN PRIVATE KEY` and end with `END PRIVATE KEY`. It must not include RSA in the headers, nor be encrypted.
+
+**Upload to PipesHub:**
+- Upload the `certificate.crt` in PipesHub under **Client Certificate**
+- Upload the `privatekey.key` in PipesHub under **Private Key**
+
+<div style={{ textAlign: "center" }}>
+  <img
+    src="/images/connectors/microsoft365/sharepoint/4.png"
+    alt="Uploading certificate and private key in PipesHub"
+    style={{ display: 'block', margin: '0 auto' }}
+    width="90%"
+  />
+</div>
+
+**Upload Certificate to Azure:**
+- Navigate back to **Microsoft Entra ID > Manage > App registrations** and click on the app you created earlier
+- Click **Manage > Certificates & secrets**
+- Click the **Certificates** section and **Upload certificate**
+- Upload the `certificate.crt` file that you generated
+- After uploading, the application must now list the new certificate
+
+<div style={{ textAlign: "center" }}>
+  <img
+    src="/images/connectors/microsoft365/sharepoint/5.png"
+    alt="Uploading certificate to Azure App"
+    style={{ display: 'block', margin: '0 auto' }}
+    width="90%"
+  />
+</div>
+
+</Accordion>
+
+</AccordionGroup>

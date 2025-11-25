@@ -4,12 +4,6 @@ description: "Cloud storage and file management connector"
 icon: "/logo/one-drive.png"
 ---
 
-<div className="flex flex-col items-center justify-center text-center pt-10">
-  <h1 className="text-4xl font-bold">✅ OneDrive Connector Ready</h1>
-  <h3 className="text-xl mt-2">
-    Connector is live and ready to use. Documentation in process!
-  </h3>
-</div>
 
 <div className="max-w-2xl mx-auto mt-12">
   <div className="p-6 border rounded-lg bg-blue-50">
@@ -19,7 +13,7 @@ icon: "/logo/one-drive.png"
         alt="Microsoft OneDrive Logo" 
         className="w-8 h-8 mr-3 object-contain flex-shrink-0"
       />
-      <h2 className="text-2xl font-semibold m-0"> Microsoft OneDrive</h2>
+      <h2 className="text-2xl text-blue-600 font-semibold m-0"> Microsoft OneDrive</h2>
     </div>
     <p className="text-lg text-gray-700 mb-4">Cloud storage and file management</p>
     <div className="flex items-center gap-2">
@@ -27,16 +21,280 @@ icon: "/logo/one-drive.png"
         ✅ Ready
       </span>
       <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
-        📝 Documentation in process
+        📚 Documentation Available
       </span>
     </div>
   </div>
 </div>
 
-<div className="text-center mt-12 p-6 bg-gray-50 rounded-lg max-w-2xl mx-auto">
-  <h3 className="text-lg font-semibold mb-2">Need Help Getting Started?</h3>
-  <p className="text-gray-600">
-    The OneDrive connector is fully operational and ready for use. While we're finalizing the documentation, 
-    feel free to reach out to our support team for setup assistance.
-  </p>
+## Overview
+
+OneDrive is Microsoft's cloud storage service that lets you store, sync, and share files across all your devices, often bundled with Microsoft 365. 
+
+The OneDrive connector uses OAuth 2.0 via Microsoft Graph API with Application Permissions, allowing background access to organizational files and folders without requiring individual user sign-ins.
+---
+
+## Configuration Setup
+
+<AccordionGroup>
+
+<Accordion title="Setup Guide" icon="gear">
+
+### Step 1: Register Application in Azure Portal
+
+**Sign in to Azure Portal:**
+- Navigate to [portal.azure.com](https://portal.azure.com) and sign in with your Microsoft 365 administrator account
+
+**Access App Registrations:**
+- Search for "App registrations" in the top search bar
+- Or navigate to Microsoft Entra ID → App registrations
+
+**Create New Registration:**
+- Click "New registration"
+<div style={{ textAlign: "center" }}>
+  <img
+    src="/images/connectors/microsoft365/onedrive/1.png"
+    alt="OneDrive"
+    style={{ display: 'block', margin: '0 auto' }}
+    width="90%"
+  />
 </div>
+- Enter application details:
+  - **Name:** Enter app name (e.g., "PipesHub Connector")
+  - **Supported account types:** Select "Accounts in this organizational directory only (Single tenant)"
+  - **Select a platform:** Web
+  - **Redirect URI:** Get the redirect URI from PipesHub configure OneDrive dialog in connector settings
+<div style={{ textAlign: "center" }}>
+  <img
+    src="/images/connectors/microsoft365/onedrive/2.png"
+    alt="OneDrive"
+    style={{ display: 'block', margin: '0 auto' }}
+    width="90%"
+  />
+</div>
+- Click "Register"
+<div style={{ textAlign: "center" }}>
+  <img
+    src="/images/connectors/microsoft365/onedrive/3.png"
+    alt="OneDrive"
+    style={{ display: 'block', margin: '0 auto' }}
+    width="90%"
+  />
+</div>
+
+<Note>
+Single-tenant configuration ensures the application only works within your organization for better security.
+</Note>
+
+### Step 2: Copy Application Credentials
+
+After registration, you'll see the Overview page. Copy the following values:
+- **Application (client) ID:** Found under "Essentials" section
+- **Directory (tenant) ID:** Found under "Essentials" section
+<div style={{ textAlign: "center" }}>
+  <img
+    src="/images/connectors/microsoft365/onedrive/4.png"
+    alt="OneDrive"
+    style={{ display: 'block', margin: '0 auto' }}
+    width="90%"
+  />
+</div>
+
+<Warning>
+Copy the "Application (client) ID" NOT the "Object ID". These are different values.
+</Warning>
+
+### Step 3: Create Client Secret
+
+- In the left sidebar, click "Certificates & secrets"
+- Click "New client secret"
+- Configure the secret:
+  - **Description:** Enter a description (e.g., "PipesHub Connector Secret")
+  - **Expires:** Choose expiration period (recommended: 24 months)
+- Click "Add"
+- Immediately copy the secret value from the "Value" column
+<div style={{ textAlign: "center" }}>
+  <img
+    src="/images/connectors/microsoft365/onedrive/5.png"
+    alt="OneDrive"
+    style={{ display: 'block', margin: '0 auto' }}
+    width="90%"
+  />
+</div>
+
+<Warning>
+The client secret value is only displayed once! If you navigate away, you cannot retrieve it again and must create a new secret.
+</Warning>
+
+### Step 4: Configure API Permissions
+
+- In the left sidebar, click "API permissions"
+- Click "Add a permission" → "Microsoft Graph"
+- Choose "Application permissions" (not Delegated permissions)
+- Add the following permissions:
+  - `User.Read.All`
+  - `Group.Read.All`
+  - `Files.Read.All`
+  - `Sites.Read.All`
+- Click "Add permissions"
+<div style={{ textAlign: "center" }}>
+  <img
+    src="/images/connectors/microsoft365/onedrive/6.png"
+    alt="OneDrive"
+    style={{ display: 'block', margin: '0 auto' }}
+    width="90%"
+  />
+</div>
+
+### Step 5: Grant Admin Consent
+
+- On the API permissions page, click "Grant admin consent for [Your Organization]"
+- Confirm by clicking "Yes"
+- Wait for the status to show green checkmarks
+<div style={{ textAlign: "center" }}>
+  <img
+    src="/images/connectors/microsoft365/onedrive/7.png"
+    alt="OneDrive"
+    style={{ display: 'block', margin: '0 auto' }}
+    width="90%"
+  />
+</div>
+
+<Note>
+Admin consent is required for application permissions. Only Global Administrators or Application Administrators can grant this consent.
+</Note>
+
+### Step 6: Configure Connector in PipesHub
+
+- Navigate to Settings → Connectors in PipesHub
+- Find the OneDrive connector and click "Configure"
+- Enter the following details:
+  - **Application (Client) ID:** From Step 2
+  - **Client Secret:** From Step 3
+  - **Directory (Tenant) ID:** From Step 2
+  - **Redirect URI:** Pre-filled (verify it matches your environment)
+- Check the "Has Admin Consent" checkbox
+- Click "Next" or "Save"
+<div style={{ textAlign: "center" }}>
+  <img
+    src="/images/connectors/microsoft365/onedrive/8.png"
+    alt="OneDrive"
+    style={{ display: 'block', margin: '0 auto' }}
+    width="90%"
+  />
+</div>
+
+### Step 7: Enable the Connector
+
+- After saving the configuration, toggle the connector to "Enable"
+- The connector will verify credentials and begin initial sync
+- Wait for the status to show "Connected" or "Syncing"
+
+<Note>
+Unlike user-facing OAuth flows, there's no login screen because the connector uses application permissions with client credentials.
+</Note>
+
+</Accordion>
+
+</AccordionGroup>
+
+---
+
+## Connector Workflow
+
+<AccordionGroup>
+
+<Accordion title="Synchronization Process" icon="sync">
+
+### How Does OneDrive Connector Work?
+
+The `run_sync` method orchestrates the complete synchronization process in three main steps:
+
+1. **Sync Users**
+2. **Sync User Groups**
+3. **Sync User Drives (Records)**
+
+---
+
+### 1. User Synchronization
+
+The main sync function calls `msgraph_client.get_all_users()` to interact with the Microsoft Graph API and retrieve a list of all users configured in the organization's Azure Active Directory (or Microsoft 365 tenant).
+
+**Workflow:**
+- Calls `msgraph_client.get_all_users()` to fetch all users
+- Publishes new/updated users to the data store via `data_entities_processor.on_new_app_users()`
+
+---
+
+### 2. User Group Synchronization
+
+Group membership is critical for accurately handling shared permissions (e.g., when a file is shared with "Everyone in Marketing").
+
+**Workflow:**
+- Calls `_sync_user_groups()` to fetch all groups and their members
+- Publishes groups and their members to the data store via `data_entities_processor.on_new_user_groups()`
+
+#### Initial Full Sync
+
+On first run (no saved sync state):
+- Starts with the base Delta API endpoint
+- Processes all existing groups in pages
+- Each group triggers member fetching and processing
+- Saves `deltaLink` upon completion for future incremental syncs
+
+#### Incremental Sync
+
+On subsequent runs (with saved `deltaLink`):
+- Uses saved `deltaLink` to fetch only changes since last sync
+- Processes additions, updates, and deletions
+- Updates sync state with new `deltaLink` for next run
+
+#### Change Detection
+
+The system handles three types of changes:
+
+**Group Changes:**
+- **ADD/UPDATE:** Creates or updates group metadata and syncs all members
+- **DELETE:** Removes group from system when `@removed` marker is present
+
+**Member Changes:**
+- Processes member additions and removals via `members@delta` field
+- Fetches user email for each member change
+- Removes the group member if `@remove` field is present
+- Member addition is handled as part of the group's ADD/UPDATE process.
+
+---
+
+### 3. Records Synchronization
+
+#### Processing Users in Batches
+
+The initial list of all Microsoft 365 users is filtered against the application's internal list of active users. Only users with active accounts in the core system proceed to the drive sync stage.
+
+**Workflow:**
+- Calls `_process_users_in_batches(users)`
+- Filtered users are divided into small batches (controlled by `max_concurrent_batches = 3`)
+- Each batch is processed in parallel using `asyncio.gather`
+- A short delay is introduced between batches to rate limit API calls
+
+#### Sync Drive Items for Each User
+
+This function manages the synchronization of a single user's OneDrive content using the Delta API for incremental changes.
+
+**Process:**
+1. The connector checks the persistent sync point (`drive_delta_sync_point`) for the last token (either `deltaLink` or `nextLink`)
+2. If a token exists, the sync is incremental; otherwise, it initiates a full scan
+3. The connector calls the Delta API endpoint to retrieve all drive items that have changed
+4. Fetched items are passed to `_process_delta_items_generator` to extract metadata and changes
+5. The `_process_delta_items_generator` yields a `RecordUpdate` item along with permissions for each change.
+6. New file records and permissions are collected into batches (`batch_size`)
+7. Once a batch is full, it's published via `data_entities_processor.on_new_records`
+8. Updated records are handled via `_handle_record_updates`
+9. After all items are processed, the `deltaLink` is stored as the starting point for the next sync
+
+
+</Accordion>
+
+</AccordionGroup>
+
+

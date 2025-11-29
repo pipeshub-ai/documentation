@@ -3,37 +3,453 @@ title: "Confluence"
 description: "Team workspace and documentation platform connector"
 icon: "/logo/confluence.png"
 ---
-<div className="flex flex-col items-center justify-center text-center pt-10">
-  <h1 className="text-4xl font-bold">✅ Confluence Connector Ready</h1>
-  <h3 className="text-xl mt-2">
-    Connector is live and ready to use. Documentation in process!
-  </h3>
-</div>
+
 <div className="max-w-2xl mx-auto mt-12">
-  <div className="p-6 border rounded-lg bg-blue-50">
+  <div className="p-6 border border-gray-200 dark:border-gray-700 rounded-lg bg-blue-50 dark:bg-gray-800">
     <div className="flex items-center mb-4">
       <img 
         src="/logo/confluence.png" 
         alt="Confluence Logo" 
         className="w-8 h-8 mr-3 object-contain flex-shrink-0"
       />
-      <h2 className="text-2xl font-semibold m-0"> Confluence</h2>
+      <h2 className="text-2xl font-semibold m-0">Confluence</h2>
     </div>
-    <p className="text-lg text-gray-700 mb-4">Team workspace and documentation platform</p>
+    <p className="text-lg text-gray-700 dark:text-gray-300 mb-4">Team workspace and documentation platform</p>
     <div className="flex items-center gap-2">
-      <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium">
+      <span className="px-3 py-1 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 rounded-full text-sm font-medium">
         ✅ Ready
       </span>
-      <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
-        📝 Documentation in process
+      <span className="px-3 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-full text-sm font-medium">
+        📖 Documentation Available
       </span>
     </div>
   </div>
 </div>
-<div className="text-center mt-12 p-6 bg-gray-50 rounded-lg max-w-2xl mx-auto">
-  <h3 className="text-lg font-semibold mb-2">Need Help Getting Started?</h3>
-  <p className="text-gray-600">
-    The Confluence connector is fully operational and ready for use. While we're finalizing the documentation, 
-    feel free to reach out to our support team for setup assistance.
+
+## Configuration Guide
+
+<AccordionGroup type="single" collapsible>
+
+<Accordion title="Setup">
+
+<div className="mt-4">
+
+## Overview
+
+The Confluence connector provides access to your organization's Confluence Cloud workspace through OAuth 2.0 (3LO) authentication. It syncs spaces, pages, blog posts, comments, attachments, and user information, enabling comprehensive knowledge base search and access across your Confluence content.
+
+### Authentication
+
+The Confluence connector uses OAuth 2.0 with 3-legged OAuth (3LO) for secure authentication. This allows users to authorize the connector to access Confluence data on their behalf while maintaining fine-grained control over permissions through Atlassian's granular API scopes.
+
+## How to configure and enable the Confluence Connector
+
+### Step 1: Access Atlassian Developer Console
+
+1. **Navigate to the Developer Console:**  
+   Go to [developer.atlassian.com/console/myapps/](https://developer.atlassian.com/console/myapps/) and sign in with your Atlassian account that has administrator access to your Confluence workspace.
+
+2. **View Your Apps:**
+   You'll see the "My apps" page where you can create and manage OAuth 2.0 integrations.
+
+<div className="text-center">
+  <img
+    src="/images/connectors/confluence/create_new_app.png"
+    alt="Atlassian Developer Console - My Apps"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+### Step 2: Create a New OAuth 2.0 Integration
+
+1. Click the **"Create"** button in the top right corner
+2. Select **"OAuth 2.0 integration"** from the dropdown menu
+3. Fill in the application details:
+   - **Name**: Enter a meaningful name (e.g., "PipesHub Confluence Connector")
+   - Check the box to agree to Atlassian's developer terms
+4. Click **"Create"** to proceed
+
+<div className="text-center">
+  <img
+    src="/images/connectors/confluence/create_new_app_form.png"
+    alt="Create OAuth 2.0 Integration Form"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+<Info>
+  OAuth 2.0 (3LO) integrations use rotating refresh tokens by default, which improves security by limiting token validity and enabling automatic detection of refresh token reuse.
+</Info>
+
+### Step 3: Review Application Overview
+
+After creation, you'll be taken to the app overview page. This page displays:
+- **App ID**: Your application's unique identifier
+- **Distribution status**: Whether the app is shared publicly
+- **Permissions**: API scopes configured for the app
+- **Authorization**: OAuth 2.0 (3LO) authorization settings
+
+Use the left sidebar to navigate between **Permissions**, **Authorization**, and **Settings** sections.
+
+<div className="text-center">
+  <img
+    src="/images/connectors/confluence/app_overview.png"
+    alt="Application Overview Page"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+### Step 4: Configure OAuth 2.0 Authorization
+
+1. In the left sidebar, click **"Authorization"**
+2. Find **"OAuth 2.0 (3LO)"** in the authorization types list
+3. Click **"Add"** to enable OAuth 2.0 authorization for your app
+
+<div className="text-center">
+  <img
+    src="/images/connectors/confluence/add_oauth.png"
+    alt="Add OAuth 2.0 Authorization"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+4. **Set the Callback URL:**
+   - You need to enter the redirect URI provided by PipesHub
+   - To get this URL, open PipesHub in another tab, navigate to **Settings** → **Connectors**, find the **Confluence** connector, and click **"Configure"**
+   - Copy the **Redirect URI** shown in the configuration dialog:
+
+<div className="text-center">
+  <img
+    src="/images/connectors/confluence/confluence_config.png"
+    alt="PipesHub Confluence Configuration - Copy Redirect URI"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+5. Paste the copied Redirect URI into the **Callback URL** field in Atlassian Developer Console
+6. Click **"Save changes"**
+
+<div className="text-center">
+  <img
+    src="/images/connectors/confluence/add_callback_url.png"
+    alt="Add Callback URL in Atlassian"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+<Warning>
+  The callback URL must match exactly between Atlassian Developer Console and PipesHub configuration. Any mismatch will cause authentication to fail.
+</Warning>
+
+### Step 5: Add API Permissions
+
+1. In the left sidebar, click **"Permissions"**
+2. You'll see a list of available Atlassian APIs
+3. Add scopes for both **User identity API** and **Confluence API**
+
+<div className="text-center">
+  <img
+    src="/images/connectors/confluence/add_api_scopes.png"
+    alt="Add API Scopes"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+#### User Identity API Scopes
+
+Click **"Add"** next to User identity API and select the following scope:
+- `read:account` - View user profiles (required for user identification)
+
+<div className="text-center">
+  <img
+    src="/images/connectors/confluence/user_identity_scopes.png"
+    alt="User Identity API Scopes"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+#### Confluence API Scopes
+
+Click **"Add"** next to Confluence API. You'll see two tabs: **"Classic scopes"** and **"Granular scopes"**. You need to configure scopes from both tabs.
+
+##### Classic Scopes
+
+First, select the **"Classic scopes"** tab and add the following scopes:
+
+| Scope | Description |
+|-------|-------------|
+| `read:confluence-content.all` | Read all Confluence content |
+| `read:confluence-content.summary` | Read Confluence content summaries |
+| `read:confluence-props` | Read Confluence content properties |
+| `read:confluence-space.summary` | Read Confluence space summaries |
+| `read:confluence-user` | Read Confluence user information |
+| `read:confluence-groups` | Read Confluence group information |
+| `search:confluence` | Search Confluence content |
+
+<Info>
+  Classic scopes provide broader access patterns and are required for certain API endpoints. Some features may not work correctly without these scopes enabled.
+</Info>
+
+##### Granular Scopes
+
+Next, select the **"Granular scopes"** tab and add the following read permissions for more fine-grained access control:
+
+| Scope | Description |
+|-------|-------------|
+| `read:content-details:confluence` | View content details and properties |
+| `read:page:confluence` | View page content |
+| `read:blogpost:confluence` | View blog post content |
+| `read:attachment:confluence` | View and download attachments |
+| `read:comment:confluence` | View comments on pages and blog posts |
+| `read:space:confluence` | View space details |
+| `read:user:confluence` | View user details |
+| `read:group:confluence` | View groups and memberships |
+| `read:permission:confluence` | View content restrictions and permissions |
+| `read:audit-log:confluence` | View audit records |
+| `read:folder:confluence` | View folder data |
+| `read:email-address:confluence` | View user email addresses |
+
+<div className="text-center">
+  <img
+    src="/images/connectors/confluence/granular_scopes_1.png"
+    alt="Confluence API Granular Scopes - Part 1"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+<div className="text-center">
+  <img
+    src="/images/connectors/confluence/granular_scopes_2.png"
+    alt="Confluence API Granular Scopes - Part 2"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+<Note>
+  Atlassian recommends not adding more than 50 scopes to your app. Both Classic and Granular scopes are required for full connector functionality. Classic scopes provide broad access while Granular scopes enable fine-grained permissions for specific API operations.
+</Note>
+
+### Step 6: Get OAuth 2.0 Credentials
+
+1. In the left sidebar, click **"Settings"**
+2. Scroll down to the **"Authentication details"** section
+3. Copy the following credentials:
+   - **Client ID**: Your app's unique identifier
+   - **Secret**: Your app's client secret (click the copy button)
+
+<div className="text-center">
+  <img
+    src="/images/connectors/confluence/auth_creds.png"
+    alt="OAuth 2.0 Credentials"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+<Warning>
+  Store the Client ID and Client Secret securely. The secret can be regenerated if needed, but you'll need to update your PipesHub configuration with the new value.
+</Warning>
+
+### Step 7: Configure Connector in PipesHub
+
+1. Return to the PipesHub Confluence configuration dialog (if you closed it, navigate to **Settings** → **Connectors** and click **"Configure"** on the Confluence connector)
+2. The configuration dialog has two steps:
+   - **Step 1: Authentication** - Enter OAuth credentials
+   - **Step 2: Sync Settings** - Configure synchronization
+
+3. Verify the **Redirect URI** displayed matches the callback URL you configured in Atlassian Developer Console (Step 4)
+
+4. Enter your OAuth 2.0 credentials:
+   - **Client ID**: From Step 6
+   - **Client Secret**: From Step 6
+
+<div className="text-center">
+  <img
+    src="/images/connectors/confluence/connector_add_creds.png"
+    alt="Enter OAuth Credentials in PipesHub"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+5. Click **"Next"** to proceed to authentication
+
+### Step 8: Authorize the Connection
+
+1. After saving the configuration, click **"Authenticate"** from the Quick Actions panel
+2. You'll be redirected to Atlassian's authorization page
+3. **Select your Confluence site** from the dropdown menu
+
+<div className="text-center">
+  <img
+    src="/images/connectors/confluence/oauth_page_choose_app.png"
+    alt="Choose Confluence Site"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+4. Review the permissions being requested by the connector
+5. Click **"Accept"** to grant access
+
+<div className="text-center">
+  <img
+    src="/images/connectors/confluence/oauth_page_accept.png"
+    alt="Accept OAuth Permissions"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+<Info>
+  The authorization page shows all the Confluence and User permissions your connector will have. Review these carefully before accepting to ensure they align with your data access requirements.
+</Info>
+
+6. You'll be redirected back to PipesHub with a success message
+7. The connector status will update to show **"Authenticated"**
+
+<div className="text-center">
+  <img
+    src="/images/connectors/confluence/connector_authenticate_option.png"
+    alt="Connector Authenticated Status"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+### Step 9: Configure Sync Settings
+
+1. After successful authentication, configure your sync preferences:
+   - **Sync Strategy**: Choose between "Scheduled" or "Manual"
+   - **Timezone**: Select your preferred timezone for scheduled syncs
+   - **Sync Interval**: Choose how often to sync (e.g., 1 hour, 6 hours, 24 hours)
+
+<div className="text-center">
+  <img
+    src="/images/connectors/confluence/connector_configure_sync_strategy.png"
+    alt="Configure Sync Strategy"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+2. Click **"Save Configuration"** to save your settings
+
+<Note>
+  **Scheduled sync** runs automatically at the specified intervals, keeping your data up-to-date without manual intervention. **Manual sync** requires you to trigger synchronization on-demand.
+</Note>
+
+### Step 10: Enable the Connector
+
+1. After configuration is complete, toggle the connector status to **"Enable"**
+2. You can do this by:
+   - Using the toggle switch next to **"Connector Status"**
+   - Or clicking **"Enable"** in the Quick Actions panel
+
+<div className="text-center">
+  <img
+    src="/images/connectors/confluence/enable_connector.png"
+    alt="Enable Confluence Connector"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+3. The connector will verify credentials and begin initial synchronization
+4. Wait for the status to show **"Active"** or **"Syncing"**
+5. Monitor the **Indexing Progress** to track sync completion
+
+## Supported Features
+
+The Confluence connector syncs the following data from your Confluence Cloud workspace:
+
+- **Spaces**: All accessible spaces and their configurations
+- **Pages**: Full page content with formatting preserved
+- **Blog Posts**: All blog post content and metadata
+- **Comments**: Comments on pages and blog posts
+- **Attachments**: Files attached to pages and blog posts
+- **Users**: User profiles and account information
+- **Groups**: User groups and memberships
+- **Permissions**: Content restrictions and space permissions
+- **Folders**: Folder structure and organization
+- **Audit Logs**: Activity records for compliance
+
+## Data Sync Behavior
+
+### Initial Sync
+- Fetches all accessible content from connected Confluence spaces
+- Indexes pages, blog posts, attachments, and comments
+- Respects user permissions for content visibility
+- Duration depends on the size of your Confluence workspace
+
+### Incremental Sync
+- Uses timestamp-based synchronization to detect changes
+- Only syncs new or modified content since last sync
+- Efficiently handles additions, updates, and deletions
+- Reduces API calls and sync duration
+
+### Permission Handling
+- Syncs content based on the authenticating user's permissions
+- Each user sees only content they have access to in Confluence
+- Respects space permissions and page restrictions
+- Maintains Confluence's access control model
+
+## Troubleshooting
+
+### Common Issues
+
+**Invalid client credentials error:**
+- Verify Client ID and Client Secret are correct
+- Ensure you copied the full values without extra spaces
+- Check that the OAuth app is active in Atlassian Developer Console
+- Regenerate the secret if necessary and update PipesHub
+
+**Callback URL mismatch error:**
+- Ensure the Redirect URI in PipesHub exactly matches the callback URL in Atlassian
+- Check for trailing slashes or protocol differences (http vs https)
+- Update both configurations to use the same URL
+
+**Authorization failed:**
+- Verify you're signing in with an account that has Confluence access
+- Ensure your Confluence site is selected during authorization
+- Check that all required API scopes are configured
+
+**No data syncing:**
+- Verify the connector status shows "Active"
+- Check that the authenticating user has access to Confluence content
+- Ensure spaces are not restricted or archived
+- Review sync logs for specific error messages
+
+**Token expired or sync stopped:**
+- OAuth 2.0 tokens may expire based on Atlassian's policies
+- Disable and re-enable the connector to re-authenticate
+- Check if the OAuth app is still active in Developer Console
+
+**Permission denied for specific content:**
+- Verify the authenticating user has read access to the content
+- Check space permissions in Confluence
+- Review page restrictions that may limit access
+
+<Warning>
+  If you modify OAuth application settings in Atlassian Developer Console (Client ID, Secret, callback URL, or scopes), you must update the configuration in PipesHub and re-authorize the connection.
+</Warning>
+
+## Confluence Cloud Compatibility
+
+This connector is designed for **Confluence Cloud** and uses Atlassian's REST API v2. It supports all current Confluence Cloud features and is regularly updated for compatibility with Atlassian's API changes.
+
+<Info>
+  This connector does not support Confluence Data Center or Confluence Server (on-premise deployments). Only Confluence Cloud workspaces can be connected.
+</Info>
+
+## Useful Links
+
+- **Atlassian Developer Console**: [developer.atlassian.com/console/myapps/](https://developer.atlassian.com/console/myapps/)
+- **OAuth 2.0 (3LO) Documentation**: [developer.atlassian.com/cloud/confluence/oauth-2-3lo-apps/](https://developer.atlassian.com/cloud/confluence/oauth-2-3lo-apps/)
+- **Confluence API Scopes Reference**: [developer.atlassian.com/cloud/confluence/scopes/](https://developer.atlassian.com/cloud/confluence/scopes/)
+
+</div>
+
+</Accordion>
+
+</AccordionGroup>
+
+<div className="text-center mt-12 p-6 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg max-w-2xl mx-auto">
+  <h3 className="text-lg font-semibold mb-2">Ready to Get Started?</h3>
+  <p className="text-gray-600 dark:text-gray-400">
+    Connect your Confluence workspace to PipesHub in just a few minutes. Follow the step-by-step guide above to enable organization-wide knowledge search and access across all your Confluence content.
   </p>
 </div>

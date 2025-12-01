@@ -24,6 +24,17 @@ icon: "question"
     
     This setup ensures your deployment is secure and properly configured for production use.
   </Accordion>
+
+  <Accordion title="I'm seeing a white/blank screen after deploying PipesHub to the cloud. What could be wrong?">
+    If you're seeing a white screen even though all Docker containers show as healthy and running, the most likely cause is that you're accessing PipesHub using HTTP instead of HTTPS.
+    
+    **Solution**: PipesHub requires HTTPS for cloud deployments due to stricter security checks. To resolve this issue:
+    - Configure your deployment to use HTTPS instead of HTTP
+    - Set up SSL/TLS certificates for your domain
+    - If using EC2 or similar VM instances, configure NGINX or another reverse proxy to handle HTTPS termination
+    
+    Note: While PipesHub may work with HTTP in local development environments, cloud deployments must use HTTPS to function properly.
+  </Accordion>
 </AccordionGroup>
 
 ## AI Models

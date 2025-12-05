@@ -1,0 +1,235 @@
+---
+title: "Dropbox Personal"
+description: "Sync files from your personal Dropbox account"
+icon: "/logo/dropbox.png"
+---
+
+<div className="max-w-2xl mx-auto mt-12">
+  <div className="p-6 border rounded-lg bg-blue-50">
+    <div className="flex items-center mb-4">
+      <img src="/logo/dropbox.png" alt="Dropbox Personal Logo" className="w-8 h-8 mr-3 object-contain flex-shrink-0" />
+      <h2 className="text-2xl text-indigo-800 font-semibold m-0">Dropbox Personal</h2>
+    </div>
+    <p className="text-lg text-gray-700 mb-4">Sync files and folders from individual accounts</p>
+    <div className="flex items-center gap-2">
+      <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium">
+        ✅ Ready
+      </span>
+      <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
+        📚 Documentation Available
+      </span>
+    </div>
+  </div>
+</div>
+
+## Overview
+
+The Dropbox Personal connector allows you to sync files and folders from a single, individual Dropbox account. Unlike the Team connector, this focuses on your personal "Home" drive and does not import organization-wide team structures or groups.
+
+---
+
+## Configuration Guide
+
+<AccordionGroup>
+
+<Accordion title="Understanding Dropbox Personal API" icon="info">
+
+### User Client
+
+This connector uses the **Dropbox User Client**. It is designed to interact with a specific user's account data. It treats the root of your Dropbox as the "Record Group" (Drive) and syncs content recursively from there.
+
+### APIs Documentation
+
+- **Dropbox HTTP API:** [https://www.dropbox.com/developers/documentation/http/documentation](https://www.dropbox.com/developers/documentation/http/documentation)
+
+### Concept of Cursor
+
+A **cursor** is a short string that acts like a bookmark for keeping track of changes in a folder.
+
+1.  When you first list the contents of a folder, the API response includes a cursor.
+2.  This cursor represents the exact state of that folder at that moment.
+3.  Instead of re-downloading the entire list of files to check for changes, the connector passes that cursor to the `/files/list_folder/continue` endpoint.
+4.  The API then returns only the files and folders that have been added, modified, or deleted since the last sync.
+
+This makes syncing highly efficient as you only process the differences.
+
+</Accordion>
+
+<Accordion title="Create Dropbox App" icon="rocket">
+
+This guide will walk you through creating a Dropbox application to connect your personal account to PipesHub.
+
+### Step 1: Create a Dropbox App
+
+1. Navigate to the [Dropbox App Console](https://www.dropbox.com/developers/apps) and sign in with your Dropbox credentials.
+2. Click the **Create app** button on the top right.
+
+<img src="/images/connectors/dropbox/db1.png" alt="Dropbox Create App" style={{ display: 'block', margin: '0 auto' }} width="90%" />
+
+3. Configure your new app with the following settings:
+   - **Choose an API:** Select **Scoped access**.
+   - **Type of access:** Select **Full Dropbox**. (This allows access to all files in your account, not just a specific app folder).
+   - **Name your app:** Enter a unique name, for example, "Pipeshub Personal Connector".
+
+4. Click **Create app**. You will be redirected to your new app's settings page.
+
+### Step 2: Configure Permissions
+
+1. On your app's page, navigate to the **Permissions** tab.
+
+<img src="/images/connectors/dropbox/db2.png" alt="Dropbox Permissions" style={{ display: 'block', margin: '0 auto' }} width="90%" />
+
+2. You must enable the following **Individual Scopes** by checking their boxes to allow PipesHub to access your data:
+
+   - `account_info.read` (Required to identify your user ID and email)
+   - `files.content.read` (Required to download file content)
+   - `files.metadata.read` (Required to track file names, types, and updates)
+   - `sharing.read` (Required to detect shared link permissions)
+   - `sharing.write` (Required to create preview links)
+
+   > **Note:** You do **not** need to check any "Team Scopes" as this connector is for individual accounts only.
+
+3. Click **Submit** at the bottom of the page to save these changes.
+
+### Step 3: Configure Redirect URI
+
+1. Go to the **Settings** tab and find the **OAuth 2** section.
+2. Add the following URL to the **Redirect URIs** field (replace `{your_pipeshub_base_url}` with your actual domain):
+```
+http://{your_pipeshub_base_url}/connectors/oauth/callback/Dropbox%20Personal
+```
+> **Important:** Ensure the URL matches exactly what is configured in your connector code (specifically the `Dropbox%20Personal` suffix).
+
+3. Click **Add** to save the URI.
+
+<img src="/images/connectors/dropbox/dbp1.png" alt="Dropbox Redirect URI" style={{ display: 'block', margin: '0 auto' }} width="90%" />
+
+### Step 4: Copy App Key and Secret
+
+1. While in the **Settings** tab, locate the **App key** and **App secret**.
+2. Click **Show** to reveal the secret.
+3. Copy these credentials for the next step.
+
+</Accordion>
+
+<Accordion title="Connect to PipesHub" icon="plug">
+
+### Step 1: Configure Connection
+
+1. Open your PipesHub application and navigate to **Connections Settings**.
+2. Select **Dropbox Personal**.
+3. Paste your **App key** into the "Client ID" field.
+4. Paste your **App secret** into the "Client Secret" field.
+
+<img src="/images/connectors/dropbox/pp1.png" alt="Configure Credentials" style={{ display: 'block', margin: '0 auto' }} width="90%" />
+
+### Step 2: Set Sync Strategy
+
+Click **Next**. You can set up your sync strategy: **Manual** or **Scheduled**.
+
+* **Batch Size:** Defines how many files are processed in one database transaction (default: 100).
+* **Schedule:** Set the interval (e.g., every 60 minutes) for the connector to check for changes.
+
+<img src="/images/connectors/dropbox/pp2.png" alt="Sync Strategy" style={{ display: 'block', margin: '0 auto' }} width="90%" />
+
+### Step 3: Authenticate
+
+1. Click **Save Configuration**.
+2. Click the **Authenticate** button. You will be redirected to Dropbox to approve access.
+3. Once authorized, the connector will immediately begin the first full sync.
+
+</Accordion>
+
+</AccordionGroup>
+
+---
+
+## Connector Workflow
+
+<AccordionGroup>
+
+<Accordion title="Synchronization Process" icon="sync">
+
+### How Does Dropbox Personal Connector Work?
+
+The `DropboxIndividualConnector` inherits from `BaseConnector` but is simplified for single-user contexts. It implements the standard lifecycle methods:
+
+- `init`
+- `_get_current_user_info`
+- `run_sync`
+- `_run_sync_with_cursor`
+- `_process_dropbox_items_generator`
+
+### Connector Initialization
+
+The workflow is straightforward compared to the Teams version. 
+**`run_sync`** - Syncs 3 main elements:
+1. **User Identity** (The account owner)
+2. **Record Group** (The "Personal Drive")
+3. **Files and Folders** (Recursive sync)
+
+The system uses an **Incremental component** which saves a **'cursor'** in the database.
+- **Full Sync:** If no cursor is initialized, it runs a full sync.
+- **Incremental Sync:** If a cursor exists, it only fetches the delta (changes).
+
+---
+
+## User & Record Group Sync Workflow
+
+Unlike the Team connector which iterates through member directories, this connector focuses on the authenticated user.
+
+### Identity Resolution
+The sync begins by calling `users/get_current_account`. This verifies the token and retrieves the `account_id` and `email` of the owner.
+
+### Drive Creation
+Once the user is identified, the system ensures a "Record Group" exists:
+* **Name:** "Dropbox - `{User Email}`"
+* **Type:** Drive
+* **Permission:** The user is assigned as the **OWNER**.
+
+---
+
+## Files and Folders Sync Workflow
+
+### Workflow Overview
+
+1.  **Cursor Check:** The connector checks `dropbox_cursor_sync_point` to see if a previous sync has occurred.
+2.  **Data Fetching:**
+ * **Full Sync:** If no cursor exists, it calls `files/list_folder` with `recursive=True` to fetch the entire drive hierarchy.
+ * **Incremental Sync:** If a cursor exists, it calls `files/list_folder/continue`. Dropbox returns only items that changed since the last run.
+3.  **Generator Processing:** The results are passed to `_process_dropbox_items_generator` which yields items one by one to manage memory usage.
+
+### Detailed Item Processing
+
+For each entry, the system determines the specific metadata type and handles it accordingly:
+
+1.  **File Metadata (`FileMetadata`)**:
+ * **Duplicate Check:** Calls `get_record_by_external_id` to see if the file is already in the database.
+ * **Metadata Extraction:** Extracts MimeType (based on extension) and `server_modified` timestamps.
+ * **Preview Generation:** Attempts to generate a web-viewable link using `sharing/create_shared_link_with_settings`.
+
+2.  **Folder Metadata (`FolderMetadata`)**:
+ * Processed similarly to files but marked as a container type to maintain directory structure.
+
+3.  **Deleted Metadata (`DeletedMetadata`)**:
+ * If Dropbox sends a deletion event, the record is flagged for removal.
+
+### Database Updates
+
+* **New Records:** Batched (default 100) and sent to `on_new_records`.
+* **Updates:** If the file hash or name changed, `on_record_content_update` or `on_record_metadata_update` is triggered.
+* **Deletions:** Records marked as deleted are removed via `on_record_deleted`.
+
+---
+
+## Sharing & Permissions Sync
+
+### Simplified Model
+Unlike the Teams connector which maps complex organizational roles (e.g., Editor, Viewer, Commenter), the Personal connector uses a simplified permission model.
+
+1. **Default Ownership:** Since this connector syncs a private drive, the authenticated user is automatically assigned **OWNER** permissions for every file and folder.
+2. **Shared Links:** The connector uses `sharing.read` to detect if a file has shared links. While it does not import the list of external users, it ensures the file metadata reflects that it is shared.
+
+</Accordion>
+
+</AccordionGroup>

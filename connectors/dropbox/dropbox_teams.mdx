@@ -1,5 +1,5 @@
 ---
-title: "Dropbox"
+title: "Dropbox Teams"
 description: "Cloud storage and file sharing connector"
 icon: "/logo/dropbox.png"
 ---
@@ -12,7 +12,7 @@ icon: "/logo/dropbox.png"
         alt="Dropbox Logo" 
         className="w-8 h-8 mr-3 object-contain flex-shrink-0"
       />
-      <h2 className="text-2xl text-indigo-800 font-semibold m-0"> Dropbox</h2>
+      <h2 className="text-2xl text-indigo-800 font-semibold m-0"> Dropbox Teams</h2>
     </div>
     <p className="text-lg text-gray-700 mb-4">Cloud storage and file sharing</p>
     <div className="flex items-center gap-2">
@@ -127,18 +127,17 @@ This guide will walk you through the process of creating a Dropbox application a
 6. You also need to enable **additional Development users**.
 
 7. Find the **OAuth 2** section and add the following URL to the **Redirect URIs** field (where {your_pipeshub_base_url} is your PipesHub instance URL):
-   ```
-   http://{your_pipeshub_base_url}/connectors/oauth/callback/Dropbox
-   ```
-
+```
+http://{your_pipeshub_base_url}/connectors/oauth/callback/Dropbox
+```
 8. Click **Add** to save the URI.
 
 <img
-    src="/images/connectors/dropbox/db4.png"
-    alt="Dropbox"
-    style={{ display: 'block', margin: '0 auto' }}
-    width="90%"
-  />
+ src="/images/connectors/dropbox/db4.png"
+ alt="Dropbox"
+ style={{ display: 'block', margin: '0 auto' }}
+ width="90%"
+/>
 
 #### Step 3: Copy App Key and Secret
 
@@ -156,29 +155,29 @@ This guide will walk you through the process of creating a Dropbox application a
 
 1. Open your PipesHub application and navigate to **Connections Settings**.
 
-2. Select **Dropbox** from the list of available data sources.
+2. Select **Dropbox Teams** from the list of available data sources.
 
 3. Paste the **App key** into the "Client ID" field.
 
 4. Paste the **App secret** into the "Client Secret" field.
 
 <img
-    src="/images/connectors/dropbox/p1.png"
-    alt="Dropbox"
-    style={{ display: 'block', margin: '0 auto' }}
-    width="90%"
-  />
+ src="/images/connectors/dropbox/p1.png"
+ alt="Dropbox"
+ style={{ display: 'block', margin: '0 auto' }}
+ width="90%"
+/>
 
 ### Step 2: Set Sync Strategy
 
 Click **Next** here you can setup your sync strategy either **Manual**, **Scheduled** or via **Webhooks** (to be implemented). On scheduled you can setup to run sync every 15 min, 30mins, 1hr, 4hr etc. And also decide batch size (this is an internal connector settings that decide how many items should the connector sync to ArangoDB at once) leave it empty if you want to go with default option 100.
 
 <img
-    src="/images/connectors/dropbox/p2.png"
-    alt="Dropbox"
-    style={{ display: 'block', margin: '0 auto' }}
-    width="90%"
-  />
+ src="/images/connectors/dropbox/p2.png"
+ alt="Dropbox"
+ style={{ display: 'block', margin: '0 auto' }}
+ width="90%"
+/>
 
 ### Step 3: Authenticate and Enable
 
@@ -325,17 +324,17 @@ The connector uses an incremental approach, tracking the state for each folder s
 4. **Per-Folder Tracking:** For each folder, `_run_sync_with_yield` calls `dropbox_cursor_sync_point.read_sync_point` to retrieve the last known sync cursor. This cursor determines where the sync should resume.
 
 5. **Data Fetching:** The function then enters a loop to fetch changes from Dropbox.
-   - It calls `files_list_folder` for an initial sync or `files_list_folder_continue` if a cursor exists.
-   - The results from the API are passed to `_process_dropbox_items_generator`.
+- It calls `files_list_folder` for an initial sync or `files_list_folder_continue` if a cursor exists.
+- The results from the API are passed to `_process_dropbox_items_generator`.
 
 6. **Individual Item Processing:** The generator loops through each item and calls `_process_dropbox_entry` to do the main conversion work. This function:
-   - Calls `tx_store.get_record_by_external_id` to check if the item already exists in the local database.
-   - Calls `_convert_dropbox_permissions_to_permissions` to fetch and format the item's access rights.
-   - Returns a `RecordUpdate` object summarizing the changes.
+- Calls `tx_store.get_record_by_external_id` to check if the item already exists in the local database.
+- Calls `_convert_dropbox_permissions_to_permissions` to fetch and format the item's access rights.
+- Returns a `RecordUpdate` object summarizing the changes.
 
 7. **Database Updates:** Back in `_run_sync_with_yield`, the results are handled:
-   - New records are batched and sent to `data_entities_processor.on_new_records`.
-   - Updated or deleted items are passed to `_handle_record_updates`, which then calls specific methods like `data_entities_processor.on_record_content_update` or `on_record_deleted`.
+- New records are batched and sent to `data_entities_processor.on_new_records`.
+- Updated or deleted items are passed to `_handle_record_updates`, which then calls specific methods like `data_entities_processor.on_record_content_update` or `on_record_deleted`.
 
 8. **State Management:** After a page of changes is processed, `_run_sync_with_yield` calls `dropbox_cursor_sync_point.update_sync_point` to save the new cursor for that specific folder, ensuring the next sync is incremental.
 

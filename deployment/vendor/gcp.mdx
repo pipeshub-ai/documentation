@@ -1,12 +1,817 @@
 ---
 title: "Deploy on GCP"
-description: "How to deploy on GCP"
+description: "How to deploy PipesHub on Google Cloud Platform using VM instances"
 icon: "google"
 ---
 
-<div className="flex flex-col items-center justify-center text-center pt-10">
-  <h1 className=" font-bold">🚧 Coming Soon</h1>
-  <h3 className="text-xl mt-2">
-    We are working hard to bring you this content. Please check back shortly!
-  </h3>
-</div>
+## Overview
+
+This guide will walk you through deploying PipesHub on Google Cloud Platform (GCP) using a Virtual Machine instance. You'll set up a VM with the required specifications, install Docker, and deploy the PipesHub application.
+
+### Database Architecture
+
+PipesHub uses a modern, distributed database architecture:
+
+- **MongoDB**: Primary document store for user data, configurations, and metadata
+- **ArangoDB**: Multi-model database for graph relationships and complex queries
+- **Qdrant**: High-performance vector database for semantic search and AI embeddings
+- **Redis**: In-memory cache for session management and real-time data
+- **etcd**: Distributed key-value store for service discovery and configuration management
+
+## Minimum Requirements
+
+Before you begin, ensure your VM meets these specifications:
+
+- **CPU**: 4 cores (minimum)
+- **RAM**: 16 GB (minimum)
+- **Storage**: 100 GB SSD or higher (recommended)
+  - PipesHub uses multiple databases (MongoDB, ArangoDB, Qdrant, Redis, etcd)
+  - Storage requirements grow with indexed documents and vector embeddings
+- **OS**: Ubuntu 22.04 LTS or 24.04 LTS (recommended)
+
+<Note>
+For production workloads with large document collections, consider 200 GB or more storage to accommodate database growth and vector embeddings.
+</Note>
+
+## Recommended GCP VM Instance Types
+
+Choose an instance type based on your workload requirements:
+
+### Standard Workloads
+- **n2-standard-4**: 4 vCPUs, 16 GB memory
+  - Balanced performance for most use cases
+  - Latest generation compute-optimized
+  
+- **n2d-standard-4**: 4 vCPUs, 16 GB memory (AMD EPYC)
+  - Cost-effective alternative with AMD processors
+
+### Cost-Optimized
+- **e2-standard-4**: 4 vCPUs, 16 GB memory
+  - Most cost-effective option
+  - Suitable for steady-state workloads
+
+## Deployment Steps
+
+<Steps>
+  <Step title="Create a GCP VM Instance">
+    
+1. Go to the [GCP Console](https://console.cloud.google.com/)
+2. Navigate to **Compute Engine** > **VM Instances**
+3. Click **Create Instance**
+4. Configure your instance:
+   - **Name**: Choose a descriptive name (e.g., `pipeshub-prod`)
+   - **Region/Zone**: Select a region close to your users
+   - **Machine configuration**: Select one of the recommended instance types
+   - **Boot disk**: 
+     - Operating system: **Ubuntu**
+     - Version: **Ubuntu 22.04 LTS** or **24.04 LTS**
+     - Boot disk type: **Balanced persistent disk** or **SSD persistent disk**
+     - Size: **100 GB** (200 GB recommended for production)
+   - **Firewall**: 
+     - ✅ Allow HTTP traffic
+     - ✅ Allow HTTPS traffic
+
+5. Click **Create** to launch your instance
+
+  </Step>
+
+  <Step title="Configure Firewall Rules">
+    
+After creating your VM, configure firewall rules to allow traffic:
+
+1. Go to **VPC Network** > **Firewall**
+2. Click **Create Firewall Rule**
+3. Configure the rule:
+   - **Name**: `allow-pipeshub`
+   - **Target tags**: Add a network tag (e.g., `pipeshub-server`)
+   - **Source IP ranges**: `0.0.0.0/0` (or restrict to your organization's IP range)
+   - **Protocols and ports**: 
+     - ✅ tcp:80
+     - ✅ tcp:443
+     - ✅ tcp:3000
+
+4. Go back to your VM instance and add the network tag under **Edit** > **Network tags**
+
+  </Step>
+
+  <Step title="Connect to Your VM">
+    
+Connect to your VM using SSH:
+
+```bash
+# Using gcloud CLI
+gcloud compute ssh your-instance-name --zone=your-zone
+
+# Or use the SSH button in the GCP Console
+```
+
+  </Step>
+
+  <Step title="Update System Packages">
+    
+Once connected, update your system:
+
+```bash
+sudo apt update && sudo apt upgrade -y
+```
+
+  </Step>
+
+  <Step title="Install Docker">
+    
+Install Docker using the official Docker installation script:
+
+```bash
+# Add Docker's official GPG key
+sudo apt update
+sudo apt install ca-certificates curl
+sudo install -m 0755 -d /etc/apt/keyrings
+sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+sudo chmod a+r /etc/apt/keyrings/docker.asc
+
+# Add the repository to Apt sources
+echo \
+  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu \
+  $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
+  sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+sudo apt update
+
+# Install Docker Engine and Docker Compose
+sudo apt install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+
+# Verify installation
+sudo docker --version
+sudo docker compose version
+```
+
+For detailed instructions, see the [official Docker installation guide](https://docs.docker.com/engine/install/ubuntu/).
+
+<Note>
+To run Docker commands without `sudo`, add your user to the docker group:
+```bash
+sudo usermod -aG docker $USER
+newgrp docker
+```
+</Note>
+
+  </Step>
+
+  <Step title="Install Additional Dependencies">
+    
+Install required network utilities:
+
+```bash
+sudo apt install -y net-tools nginx git
+```
+
+  </Step>
+
+  <Step title="Clone PipesHub Repository">
+    
+Clone the PipesHub repository:
+
+```bash
+git clone https://github.com/pipeshub-ai/pipeshub-ai.git
+cd pipeshub-ai/deployment/docker-compose
+```
+
+  </Step>
+
+  <Step title="Configure Environment Variables">
+    
+Copy the environment template and configure your settings:
+
+```bash
+cp env.template .env
+```
+
+Edit the `.env` file to set your configuration:
+
+```bash
+nano .env
+```
+
+**Important settings to update:**
+- `SECRET_KEY`: Generate a secure random key
+- `FRONTEND_PUBLIC_URL`: Set to your domain or VM's external IP
+- Any other service-specific passwords or keys
+
+<Warning>
+Never commit the `.env` file to version control. Keep your secrets secure!
+</Warning>
+
+  </Step>
+
+  <Step title="Start PipesHub">
+    
+Start the PipesHub application using Docker Compose:
+
+```bash
+sudo docker compose -f docker-compose.prod.yml -p pipeshub-ai up -d
+```
+
+This command will:
+- Download all required Docker images
+- Create and start all containers
+- Run the application in detached mode
+
+Check the status of your containers:
+
+```bash
+sudo docker compose -f docker-compose.prod.yml -p pipeshub-ai ps
+```
+
+View logs:
+
+```bash
+sudo docker compose -f docker-compose.prod.yml -p pipeshub-ai logs -f
+```
+
+  </Step>
+
+  <Step title="Stop PipesHub (When Needed)">
+    
+To stop the services:
+
+```bash
+sudo docker compose -f docker-compose.prod.yml -p pipeshub-ai down
+```
+
+To stop and remove all data (⚠️ use with caution):
+
+```bash
+sudo docker compose -f docker-compose.prod.yml -p pipeshub-ai down -v
+```
+
+  </Step>
+</Steps>
+
+## Configure HTTPS Access
+
+<Warning>
+**HTTPS is required for production deployments.** PipesHub enforces stricter security checks, and browsers will block certain requests when the application is served over HTTP. If you see a white screen after deployment, this is likely the cause.
+</Warning>
+
+You have several options to set up HTTPS:
+
+### Option 1: Nginx Reverse Proxy
+
+Configure Nginx as a reverse proxy to terminate HTTPS traffic and forward to the PipesHub frontend:
+
+```nginx
+server {
+    listen 80;
+    server_name your-domain.com;
+    return 301 https://$server_name$request_uri;
+}
+
+server {
+    listen 443 ssl http2;
+    server_name your-domain.com;
+
+    ssl_certificate /etc/ssl/certs/your-cert.pem;
+    ssl_certificate_key /etc/ssl/private/your-key.pem;
+
+    location / {
+        proxy_pass http://localhost:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_cache_bypass $http_upgrade;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+```
+
+Get a free SSL certificate using [Let's Encrypt](https://letsencrypt.org/):
+
+```bash
+sudo apt install certbot python3-certbot-nginx
+sudo certbot --nginx -d your-domain.com
+```
+
+### Option 2: Cloudflare Tunnel
+
+Use [Cloudflare Tunnel](https://www.cloudflare.com/products/tunnel/) for zero-configuration HTTPS:
+
+```bash
+# Install cloudflared
+wget https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb
+sudo dpkg -i cloudflared-linux-amd64.deb
+
+# Authenticate
+cloudflared tunnel login
+
+# Create and configure tunnel
+cloudflared tunnel create pipeshub
+cloudflared tunnel route dns pipeshub your-domain.com
+cloudflared tunnel run --url http://localhost:3000 pipeshub
+```
+
+### Option 3: GCP Load Balancer
+
+Use GCP's built-in Load Balancer with managed SSL certificates:
+
+1. Go to **Network Services** > **Load Balancing**
+2. Create an HTTPS Load Balancer
+3. Configure backend to point to your VM instance on port 3000
+4. Set up a managed SSL certificate for your domain
+
+For detailed HTTPS setup instructions, refer to the [Quickstart Guide](/quickstart).
+
+## Access PipesHub
+
+Once deployed, access PipesHub at:
+- **HTTPS** (production): `https://your-domain.com`
+
+<Note>
+The first startup may take a few minutes as Docker pulls images and initializes the databases (MongoDB, ArangoDB, Qdrant, Redis, and etcd).
+</Note>
+
+## Post-Deployment Configuration
+
+After accessing PipesHub for the first time:
+
+1. Complete the **onboarding setup**
+2. Choose your account type (**Individual** or **Enterprise**)
+3. Configure your AI models and connectors
+4. Set up user management and permissions
+
+For detailed onboarding instructions, see the [Onboarding Guide](/onboarding).
+
+## Troubleshooting
+
+### White Screen After Deployment
+
+**Cause**: You're accessing PipesHub over HTTP instead of HTTPS.
+
+**Solution**: Set up HTTPS using one of the methods described above.
+
+### Cannot Access on Port 3000
+
+**Cause**: Firewall rules not configured or service not running.
+
+**Solution**: 
+```bash
+# Check if containers are running
+sudo docker compose -f docker-compose.prod.yml -p pipeshub-ai ps
+
+# Verify port is listening
+sudo netstat -tulpn | grep 3000
+```
+
+### Docker Permission Denied
+
+**Cause**: User doesn't have Docker permissions.
+
+**Solution**:
+```bash
+sudo usermod -aG docker $USER
+newgrp docker
+```
+
+### Out of Memory or CPU Issues
+
+**Cause**: Instance type doesn't meet minimum requirements.
+
+**Solution**: Upgrade to a larger instance type with at least 4 cores and 16 GB RAM.
+
+## Monitoring and Maintenance
+
+### View Logs
+
+```bash
+# All services
+sudo docker compose -f docker-compose.prod.yml -p pipeshub-ai logs -f
+
+# View logs for specific services
+sudo docker compose -f docker-compose.prod.yml -p pipeshub-ai logs -f frontend
+sudo docker compose -f docker-compose.prod.yml -p pipeshub-ai logs -f backend
+sudo docker compose -f docker-compose.prod.yml -p pipeshub-ai logs -f mongodb
+sudo docker compose -f docker-compose.prod.yml -p pipeshub-ai logs -f arangodb
+sudo docker compose -f docker-compose.prod.yml -p pipeshub-ai logs -f qdrant
+sudo docker compose -f docker-compose.prod.yml -p pipeshub-ai logs -f redis
+```
+
+### Check Service Health
+
+```bash
+# Check running containers
+sudo docker compose -f docker-compose.prod.yml -p pipeshub-ai ps
+
+# Check resource usage
+sudo docker stats
+
+# Check disk usage of volumes
+sudo docker system df -v
+```
+
+### Update PipesHub
+
+```bash
+cd pipeshub-ai
+git pull origin main
+cd deployment/docker-compose
+sudo docker compose -f docker-compose.prod.yml -p pipeshub-ai pull
+sudo docker compose -f docker-compose.prod.yml -p pipeshub-ai up -d
+```
+
+### Backup Data
+
+<Warning>
+**Never use simple file copy methods (like `tar`) on live database volumes.** This can result in corrupted backups and data loss. Always use native database backup tools or stop the application before backing up.
+</Warning>
+
+PipesHub uses multiple databases and storage systems. Choose one of the following backup strategies:
+
+<AccordionGroup>
+
+<Accordion title="Option 1: Native Database Tools (Recommended for Production)" icon="shield-check">
+
+Use database-specific backup tools that create consistent snapshots without downtime:
+
+```bash
+# Create backup directory
+mkdir -p ~/pipeshub-backups
+BACKUP_DATE=$(date +%Y%m%d-%H%M%S)
+
+# Backup MongoDB using mongodump
+sudo docker exec pipeshub-ai-mongodb-1 mongodump \
+  --out=/tmp/mongodb-backup \
+  --authenticationDatabase=admin
+sudo docker cp pipeshub-ai-mongodb-1:/tmp/mongodb-backup \
+  ~/pipeshub-backups/mongodb-backup-${BACKUP_DATE}
+sudo docker exec pipeshub-ai-mongodb-1 rm -rf /tmp/mongodb-backup
+
+# Backup ArangoDB using arangodump
+sudo docker exec pipeshub-ai-arangodb-1 arangodump \
+  --output-directory /tmp/arango-backup \
+  --overwrite true \
+  --server.password="${ARANGO_ROOT_PASSWORD}"
+sudo docker cp pipeshub-ai-arangodb-1:/tmp/arango-backup \
+  ~/pipeshub-backups/arango-backup-${BACKUP_DATE}
+sudo docker exec pipeshub-ai-arangodb-1 rm -rf /tmp/arango-backup
+
+# Backup Qdrant using snapshot API
+sudo docker exec pipeshub-ai-qdrant-1 \
+  curl -X POST 'http://localhost:6333/snapshots' \
+  -H 'Content-Type: application/json'
+# Copy the snapshot file (check Qdrant logs for snapshot path)
+sudo docker cp pipeshub-ai-qdrant-1:/qdrant/storage/snapshots \
+  ~/pipeshub-backups/qdrant-backup-${BACKUP_DATE}
+
+# Backup Redis using BGSAVE
+sudo docker exec pipeshub-ai-redis-1 redis-cli BGSAVE
+# Wait for BGSAVE to complete
+sleep 5
+sudo docker cp pipeshub-ai-redis-1:/data/dump.rdb \
+  ~/pipeshub-backups/redis-backup-${BACKUP_DATE}.rdb
+
+# Backup etcd using snapshot
+sudo docker exec pipeshub-ai-etcd-1 \
+  etcdctl snapshot save /tmp/etcd-backup.db \
+  --endpoints=http://localhost:2379
+sudo docker cp pipeshub-ai-etcd-1:/tmp/etcd-backup.db \
+  ~/pipeshub-backups/etcd-backup-${BACKUP_DATE}.db
+sudo docker exec pipeshub-ai-etcd-1 rm /tmp/etcd-backup.db
+
+# Backup application data (safe to use tar for non-database files)
+sudo docker run --rm \
+  -v pipeshub-ai_pipeshub_data:/data \
+  -v ~/pipeshub-backups:/backup \
+  ubuntu tar czf /backup/pipeshub-data-backup-${BACKUP_DATE}.tar.gz /data
+
+# Backup .env file
+cp .env ~/pipeshub-backups/.env.backup-${BACKUP_DATE}
+
+# Create compressed archive of all backups
+tar czf ~/pipeshub-backups/pipeshub-full-backup-${BACKUP_DATE}.tar.gz \
+  -C ~/pipeshub-backups \
+  mongodb-backup-${BACKUP_DATE} \
+  arango-backup-${BACKUP_DATE} \
+  qdrant-backup-${BACKUP_DATE} \
+  redis-backup-${BACKUP_DATE}.rdb \
+  etcd-backup-${BACKUP_DATE}.db \
+  pipeshub-data-backup-${BACKUP_DATE}.tar.gz \
+  .env.backup-${BACKUP_DATE}
+
+echo "Backup completed: pipeshub-full-backup-${BACKUP_DATE}.tar.gz"
+```
+
+**Advantages:**
+- No downtime required
+- Consistent database snapshots
+- Safe for production environments
+- Uses native tools designed for each database
+
+</Accordion>
+
+<Accordion title="Option 2: Stop Application First (Simple and Safe)" icon="power-off">
+
+If you prefer a simpler approach and can tolerate downtime:
+
+```bash
+# Create backup directory
+mkdir -p ~/pipeshub-backups
+BACKUP_DATE=$(date +%Y%m%d-%H%M%S)
+
+# Stop PipesHub (ensures no data is being written)
+sudo docker compose -f docker-compose.prod.yml -p pipeshub-ai down
+
+# Now it's safe to backup volumes using tar
+sudo docker run --rm \
+  -v pipeshub-ai_mongodb_data:/data/mongodb \
+  -v pipeshub-ai_arango_data:/data/arango \
+  -v pipeshub-ai_qdrant_storage:/data/qdrant \
+  -v pipeshub-ai_redis_data:/data/redis \
+  -v pipeshub-ai_etcd_data:/data/etcd \
+  -v pipeshub-ai_pipeshub_data:/data/pipeshub \
+  -v ~/pipeshub-backups:/backup \
+  ubuntu tar czf /backup/pipeshub-volumes-backup-${BACKUP_DATE}.tar.gz /data
+
+# Backup .env file
+cp .env ~/pipeshub-backups/.env.backup-${BACKUP_DATE}
+
+# Restart PipesHub
+sudo docker compose -f docker-compose.prod.yml -p pipeshub-ai up -d
+
+echo "Backup completed: pipeshub-volumes-backup-${BACKUP_DATE}.tar.gz"
+```
+
+**Advantages:**
+- Simple and straightforward
+- Single backup file for all data
+- Guaranteed data consistency
+- Easy to automate
+
+</Accordion>
+
+<Accordion title="Automated Backup Script" icon="clock">
+
+Create a backup script for regular automated backups:
+
+```bash
+# Create backup script
+cat > ~/backup-pipeshub.sh <<'EOF'
+#!/bin/bash
+set -e
+
+BACKUP_DIR=~/pipeshub-backups
+BACKUP_DATE=$(date +%Y%m%d-%H%M%S)
+RETENTION_DAYS=30
+
+mkdir -p "$BACKUP_DIR"
+
+# Stop services
+sudo docker compose -f ~/pipeshub-ai/deployment/docker-compose/docker-compose.prod.yml -p pipeshub-ai down
+
+# Backup all volumes
+sudo docker run --rm \
+  -v pipeshub-ai_mongodb_data:/data/mongodb \
+  -v pipeshub-ai_arango_data:/data/arango \
+  -v pipeshub-ai_qdrant_storage:/data/qdrant \
+  -v pipeshub-ai_redis_data:/data/redis \
+  -v pipeshub-ai_etcd_data:/data/etcd \
+  -v pipeshub-ai_pipeshub_data:/data/pipeshub \
+  -v "$BACKUP_DIR":/backup \
+  ubuntu tar czf /backup/pipeshub-backup-${BACKUP_DATE}.tar.gz /data
+
+# Restart services
+sudo docker compose -f ~/pipeshub-ai/deployment/docker-compose/docker-compose.prod.yml -p pipeshub-ai up -d
+
+# Delete old backups
+find "$BACKUP_DIR" -name "pipeshub-backup-*.tar.gz" -mtime +$RETENTION_DAYS -delete
+
+# Upload to GCS (optional)
+# gsutil cp "$BACKUP_DIR/pipeshub-backup-${BACKUP_DATE}.tar.gz" gs://your-bucket/backups/
+
+echo "Backup completed: pipeshub-backup-${BACKUP_DATE}.tar.gz"
+EOF
+
+chmod +x ~/backup-pipeshub.sh
+
+# Schedule with cron (daily at 2 AM)
+(crontab -l 2>/dev/null; echo "0 2 * * * ~/backup-pipeshub.sh >> ~/pipeshub-backup.log 2>&1") | crontab -
+```
+
+**Features:**
+- Automated daily backups at 2 AM
+- 30-day retention policy
+- Automatic cleanup of old backups
+- Optional GCS upload for off-site storage
+- Logging for monitoring
+
+</Accordion>
+
+</AccordionGroup>
+
+<Note>
+For production environments, upload backups to Google Cloud Storage (GCS) for long-term retention and disaster recovery. Use `gsutil` to automate uploads.
+</Note>
+
+### Restore Data
+
+<Warning>
+Always test your backup and restore procedures in a non-production environment before relying on them for disaster recovery.
+</Warning>
+
+Choose the restore method that matches your backup strategy:
+
+<AccordionGroup>
+
+<Accordion title="Restore from Native Backup Tools" icon="database">
+
+Use this method if you created backups using Option 1 (native database tools):
+
+```bash
+BACKUP_DATE="YYYYMMDD-HHMMSS"  # Replace with your backup date
+
+# Stop PipesHub
+sudo docker compose -f docker-compose.prod.yml -p pipeshub-ai down
+
+# Extract full backup if using compressed archive
+cd ~/pipeshub-backups
+tar xzf pipeshub-full-backup-${BACKUP_DATE}.tar.gz
+
+# Start only the database containers
+sudo docker compose -f docker-compose.prod.yml -p pipeshub-ai up -d mongodb arangodb qdrant redis etcd
+
+# Wait for databases to be ready
+sleep 10
+
+# Restore MongoDB
+sudo docker cp ~/pipeshub-backups/mongodb-backup-${BACKUP_DATE} \
+  pipeshub-ai-mongodb-1:/tmp/mongodb-backup
+sudo docker exec pipeshub-ai-mongodb-1 mongorestore \
+  /tmp/mongodb-backup \
+  --drop \
+  --authenticationDatabase=admin
+sudo docker exec pipeshub-ai-mongodb-1 rm -rf /tmp/mongodb-backup
+
+# Restore ArangoDB
+sudo docker cp ~/pipeshub-backups/arango-backup-${BACKUP_DATE} \
+  pipeshub-ai-arangodb-1:/tmp/arango-backup
+sudo docker exec pipeshub-ai-arangodb-1 arangorestore \
+  --input-directory /tmp/arango-backup \
+  --server.password="${ARANGO_ROOT_PASSWORD}" \
+  --overwrite true
+sudo docker exec pipeshub-ai-arangodb-1 rm -rf /tmp/arango-backup
+
+# Restore Qdrant
+sudo docker cp ~/pipeshub-backups/qdrant-backup-${BACKUP_DATE}/. \
+  pipeshub-ai-qdrant-1:/qdrant/storage/snapshots/
+
+# Restore Redis
+sudo docker cp ~/pipeshub-backups/redis-backup-${BACKUP_DATE}.rdb \
+  pipeshub-ai-redis-1:/data/dump.rdb
+
+# Restore etcd
+sudo docker cp ~/pipeshub-backups/etcd-backup-${BACKUP_DATE}.db \
+  pipeshub-ai-etcd-1:/tmp/etcd-backup.db
+sudo docker exec pipeshub-ai-etcd-1 etcdctl snapshot restore /tmp/etcd-backup.db
+
+# Restore application data
+sudo docker run --rm \
+  -v pipeshub-ai_pipeshub_data:/data \
+  -v ~/pipeshub-backups:/backup \
+  ubuntu tar xzf /backup/pipeshub-data-backup-${BACKUP_DATE}.tar.gz -C /
+
+# Restart all services
+sudo docker compose -f docker-compose.prod.yml -p pipeshub-ai restart
+
+echo "Restore completed successfully"
+```
+
+</Accordion>
+
+<Accordion title="Restore from Volume Backup" icon="hard-drive">
+
+Use this method if you used Option 2 (stopped application backup):
+
+```bash
+BACKUP_DATE="YYYYMMDD-HHMMSS"  # Replace with your backup date
+
+# Stop PipesHub
+sudo docker compose -f docker-compose.prod.yml -p pipeshub-ai down
+
+# Remove old volumes
+sudo docker volume rm pipeshub-ai_mongodb_data
+sudo docker volume rm pipeshub-ai_arango_data
+sudo docker volume rm pipeshub-ai_qdrant_storage
+sudo docker volume rm pipeshub-ai_redis_data
+sudo docker volume rm pipeshub-ai_etcd_data
+sudo docker volume rm pipeshub-ai_pipeshub_data
+
+# Restore all volumes
+sudo docker run --rm \
+  -v pipeshub-ai_mongodb_data:/data/mongodb \
+  -v pipeshub-ai_arango_data:/data/arango \
+  -v pipeshub-ai_qdrant_storage:/data/qdrant \
+  -v pipeshub-ai_redis_data:/data/redis \
+  -v pipeshub-ai_etcd_data:/data/etcd \
+  -v pipeshub-ai_pipeshub_data:/data/pipeshub \
+  -v ~/pipeshub-backups:/backup \
+  ubuntu tar xzf /backup/pipeshub-volumes-backup-${BACKUP_DATE}.tar.gz -C /
+
+# Restore .env file if needed
+cp ~/pipeshub-backups/.env.backup-${BACKUP_DATE} .env
+
+# Restart PipesHub
+sudo docker compose -f docker-compose.prod.yml -p pipeshub-ai up -d
+
+echo "Restore completed successfully"
+```
+
+</Accordion>
+
+<Accordion title="Restore from Automated Backup Script" icon="rotate-right">
+
+If you used the automated backup script:
+
+```bash
+BACKUP_DATE="YYYYMMDD-HHMMSS"  # Replace with your backup date
+
+# Stop PipesHub
+sudo docker compose -f docker-compose.prod.yml -p pipeshub-ai down
+
+# Remove old volumes
+sudo docker volume rm pipeshub-ai_mongodb_data
+sudo docker volume rm pipeshub-ai_arango_data
+sudo docker volume rm pipeshub-ai_qdrant_storage
+sudo docker volume rm pipeshub-ai_redis_data
+sudo docker volume rm pipeshub-ai_etcd_data
+sudo docker volume rm pipeshub-ai_pipeshub_data
+
+# Download from GCS if needed
+# gsutil cp gs://your-bucket/backups/pipeshub-backup-${BACKUP_DATE}.tar.gz ~/pipeshub-backups/
+
+# Restore all volumes
+sudo docker run --rm \
+  -v pipeshub-ai_mongodb_data:/data/mongodb \
+  -v pipeshub-ai_arango_data:/data/arango \
+  -v pipeshub-ai_qdrant_storage:/data/qdrant \
+  -v pipeshub-ai_redis_data:/data/redis \
+  -v pipeshub-ai_etcd_data:/data/etcd \
+  -v pipeshub-ai_pipeshub_data:/data/pipeshub \
+  -v ~/pipeshub-backups:/backup \
+  ubuntu tar xzf /backup/pipeshub-backup-${BACKUP_DATE}.tar.gz -C /
+
+# Restart PipesHub
+sudo docker compose -f docker-compose.prod.yml -p pipeshub-ai up -d
+
+echo "Restore completed successfully"
+```
+
+</Accordion>
+
+<Accordion title="Verify Restore" icon="check-circle">
+
+After restoring, verify that all services are running correctly:
+
+```bash
+# Check container status
+sudo docker compose -f docker-compose.prod.yml -p pipeshub-ai ps
+
+# Check logs for errors
+sudo docker compose -f docker-compose.prod.yml -p pipeshub-ai logs --tail=50
+
+# Test database connections
+sudo docker exec pipeshub-ai-mongodb-1 mongosh --eval "db.adminCommand('ping')"
+sudo docker exec pipeshub-ai-arangodb-1 curl -s http://localhost:8529/_api/version
+sudo docker exec pipeshub-ai-qdrant-1 curl -s http://localhost:6333/health
+sudo docker exec pipeshub-ai-redis-1 redis-cli ping
+sudo docker exec pipeshub-ai-etcd-1 etcdctl endpoint health
+
+# Access the application
+echo "Access PipesHub at https://your-domain.com"
+```
+
+**Verification Checklist:**
+- ✅ All containers are running
+- ✅ No error messages in logs
+- ✅ All databases respond to health checks
+- ✅ Application UI is accessible
+- ✅ User data is visible
+- ✅ Connectors are functioning
+
+</Accordion>
+
+</AccordionGroup>
+
+## Next Steps
+
+- [Configure AI Models](/ai-models/overview)
+- [Set Up Connectors](/connectors/overview)
+- [User Management](/user-management/user)
+- [System Overview](/system-overview)
+
+## Support
+
+Need help? 
+- 📚 Check our [FAQ](/additional-resources/faq)
+- 💬 Join our community discussions
+- 🐛 Report issues on [GitHub](https://github.com/pipeshub-ai/pipeshub-ai/issues)

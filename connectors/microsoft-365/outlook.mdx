@@ -225,12 +225,27 @@ Sync filters determine which emails and calendar events are downloaded from Outl
      - Focus on specific time period
    - **Example**: Operator: `Is After`, Date: `2024-01-01` → Only syncs emails from 2024 onwards
 
-2. **Start Date** - Filter calendar events by start date
-   - **Operators**: `Is After`, `Is Before`, or `Is Between`
-   - **Use cases**:
-     - Sync only upcoming or recent events
-     - Exclude past events
-   - **Example**: Operator: `Is After`, Date: `2024-12-01` → Only syncs events starting December 2024 onwards
+2. **Mail Folders** - Filter by specific Outlook folders
+   - **Operator**: `In` (include only) or `Not In` (exclude)
+   - **Value**: Enter one or more folder names (e.g., `Inbox`, `Sent Items`, `Important`)
+   - **Note**: Folder names are case-sensitive
+   
+   **How to identify Mail Folders:**
+   The connector syncs from standard Outlook folders and any custom folders you've created:
+   - **Standard folders**: `Inbox`, `Sent Items`, `Drafts`, `Deleted Items`, `Junk Email`, `Archive`
+   - **Custom folders**: Any folders you've created in Outlook
+   
+   <div className="text-center">
+     <img
+       src="/images/connectors/outlook/enterprise/outlook_inboxes.png"
+       alt="Outlook Folder Structure"
+       className="block mx-auto"
+     />
+   </div>
+   
+   **Example Configurations:**
+   - **Sync only Inbox and Sent Items**: Operator: `In`, Values: `Inbox`, `Sent Items`
+   - **Exclude Junk and Deleted folders**: Operator: `Not In`, Values: `Junk Email`, `Deleted Items`
 
 #### Indexing Filters
 

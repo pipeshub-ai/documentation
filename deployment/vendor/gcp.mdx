@@ -1,12 +1,550 @@
 ---
 title: "Deploy on GCP"
-description: "How to deploy on GCP"
+description: "How to deploy PipesHub on Google Cloud Platform using VM instances"
 icon: "google"
 ---
 
-<div className="flex flex-col items-center justify-center text-center pt-10">
-  <h1 className=" font-bold">🚧 Coming Soon</h1>
-  <h3 className="text-xl mt-2">
-    We are working hard to bring you this content. Please check back shortly!
-  </h3>
-</div>
+## Overview
+
+This guide will walk you through deploying PipesHub on Google Cloud Platform (GCP) using a Virtual Machine instance. You'll set up a VM with the required specifications, install Docker, and deploy the PipesHub application.
+
+### Database Architecture
+
+PipesHub uses a modern, distributed database architecture:
+
+- **MongoDB**: Primary document store for user data, configurations, and metadata
+- **ArangoDB**: Multi-model database for graph relationships and complex queries
+- **Qdrant**: High-performance vector database for semantic search and AI embeddings
+- **Redis**: In-memory cache for session management and real-time data
+- **etcd**: Distributed key-value store for service discovery and configuration management
+
+## Minimum Requirements
+
+Before you begin, ensure your VM meets these specifications:
+
+- **CPU**: 4 cores (minimum)
+- **RAM**: 16 GB (minimum)
+- **Storage**: 100 GB SSD or higher (recommended)
+  - PipesHub uses multiple databases (MongoDB, ArangoDB, Qdrant, Redis, etcd)
+  - Storage requirements grow with indexed documents and vector embeddings
+- **OS**: Ubuntu 22.04 LTS or 24.04 LTS (recommended)
+- **GPU**: Optional, but required for local inferencing with Ollama or similar models
+
+<Note>
+For production workloads with large document collections, consider 200 GB or more storage to accommodate database growth and vector embeddings.
+</Note>
+
+## Recommended GCP VM Instance Types
+
+Choose an instance type based on your workload requirements:
+
+### Standard Workloads
+- **n2-standard-4**: 4 vCPUs, 16 GB memory
+  - Balanced performance for most use cases
+  - Latest generation compute-optimized
+  
+- **n2d-standard-4**: 4 vCPUs, 16 GB memory (AMD EPYC)
+  - Cost-effective alternative with AMD processors
+
+### Cost-Optimized
+- **e2-standard-4**: 4 vCPUs, 16 GB memory
+  - Most cost-effective option
+  - Suitable for steady-state workloads
+
+### With GPU (for Local Inferencing)
+- **n1-standard-4** with NVIDIA T4 GPU
+  - 4 vCPUs, 15 GB memory, 1x NVIDIA T4
+  - Ideal for Ollama and local AI model inferencing
+  
+- **a2-highgpu-1g** 
+  - 12 vCPUs, 85 GB memory, 1x NVIDIA A100 GPU
+  - High-performance option for demanding AI workloads
+
+<Note>
+GPU instances are required only if you plan to use local inferencing engines like Ollama. For cloud-based AI models (OpenAI, Anthropic, etc.), standard instances are sufficient.
+</Note>
+
+## Deployment Steps
+
+<Steps>
+  <Step title="Create a GCP VM Instance">
+    
+1. Go to the [GCP Console](https://console.cloud.google.com/)
+2. Navigate to **Compute Engine** > **VM Instances**
+3. Click **Create Instance**
+4. Configure your instance:
+   - **Name**: Choose a descriptive name (e.g., `pipeshub-prod`)
+   - **Region/Zone**: Select a region close to your users
+   - **Machine configuration**: Select one of the recommended instance types
+   - **Boot disk**: 
+     - Operating system: **Ubuntu**
+     - Version: **Ubuntu 22.04 LTS** or **24.04 LTS**
+     - Boot disk type: **Balanced persistent disk** or **SSD persistent disk**
+     - Size: **100 GB** (200 GB recommended for production)
+   - **Firewall**: 
+     - ✅ Allow HTTP traffic
+     - ✅ Allow HTTPS traffic
+
+5. Click **Create** to launch your instance
+
+<Note>
+If you need GPU support, go to **Machine configuration** > **GPUs** and add an NVIDIA T4 or A100 GPU before creating the instance.
+</Note>
+
+  </Step>
+
+  <Step title="Configure Firewall Rules">
+    
+After creating your VM, configure firewall rules to allow traffic:
+
+1. Go to **VPC Network** > **Firewall**
+2. Click **Create Firewall Rule**
+3. Configure the rule:
+   - **Name**: `allow-pipeshub`
+   - **Target tags**: Add a network tag (e.g., `pipeshub-server`)
+   - **Source IP ranges**: `0.0.0.0/0` (or restrict to your organization's IP range)
+   - **Protocols and ports**: 
+     - ✅ tcp:80
+     - ✅ tcp:443
+     - ✅ tcp:3000
+
+4. Go back to your VM instance and add the network tag under **Edit** > **Network tags**
+
+  </Step>
+
+  <Step title="Connect to Your VM">
+    
+Connect to your VM using SSH:
+
+```bash
+# Using gcloud CLI
+gcloud compute ssh your-instance-name --zone=your-zone
+
+# Or use the SSH button in the GCP Console
+```
+
+  </Step>
+
+  <Step title="Update System Packages">
+    
+Once connected, update your system:
+
+```bash
+sudo apt update && sudo apt upgrade -y
+```
+
+  </Step>
+
+  <Step title="Install Docker">
+    
+Install Docker using the official Docker installation script:
+
+```bash
+# Add Docker's official GPG key
+sudo apt update
+sudo apt install ca-certificates curl
+sudo install -m 0755 -d /etc/apt/keyrings
+sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+sudo chmod a+r /etc/apt/keyrings/docker.asc
+
+# Add the repository to Apt sources
+echo \
+  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu \
+  $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
+  sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+sudo apt update
+
+# Install Docker Engine and Docker Compose
+sudo apt install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+
+# Verify installation
+sudo docker --version
+sudo docker compose version
+```
+
+For detailed instructions, see the [official Docker installation guide](https://docs.docker.com/engine/install/ubuntu/).
+
+<Note>
+To run Docker commands without `sudo`, add your user to the docker group:
+```bash
+sudo usermod -aG docker $USER
+newgrp docker
+```
+</Note>
+
+  </Step>
+
+  <Step title="Install Additional Dependencies">
+    
+Install required network utilities:
+
+```bash
+sudo apt install -y net-tools nginx git
+```
+
+  </Step>
+
+  <Step title="Clone PipesHub Repository">
+    
+Clone the PipesHub repository:
+
+```bash
+git clone https://github.com/pipeshub-ai/pipeshub-ai.git
+cd pipeshub-ai/deployment/docker-compose
+```
+
+  </Step>
+
+  <Step title="Configure Environment Variables">
+    
+Copy the environment template and configure your settings:
+
+```bash
+cp env.template .env
+```
+
+Edit the `.env` file to set your configuration:
+
+```bash
+nano .env
+```
+
+**Important settings to update:**
+- `SECRET_KEY`: Generate a secure random key
+- `FRONTEND_PUBLIC_URL`: Set to your domain or VM's external IP
+- Any other service-specific passwords or keys
+
+<Warning>
+Never commit the `.env` file to version control. Keep your secrets secure!
+</Warning>
+
+  </Step>
+
+  <Step title="Start PipesHub">
+    
+Start the PipesHub application using Docker Compose:
+
+```bash
+sudo docker compose -f docker-compose.prod.yml -p pipeshub-ai up -d
+```
+
+This command will:
+- Download all required Docker images
+- Create and start all containers
+- Run the application in detached mode
+
+Check the status of your containers:
+
+```bash
+sudo docker compose -f docker-compose.prod.yml -p pipeshub-ai ps
+```
+
+View logs:
+
+```bash
+sudo docker compose -f docker-compose.prod.yml -p pipeshub-ai logs -f
+```
+
+  </Step>
+
+  <Step title="Stop PipesHub (When Needed)">
+    
+To stop the services:
+
+```bash
+sudo docker compose -f docker-compose.prod.yml -p pipeshub-ai down
+```
+
+To stop and remove all data (⚠️ use with caution):
+
+```bash
+sudo docker compose -f docker-compose.prod.yml -p pipeshub-ai down -v
+```
+
+  </Step>
+</Steps>
+
+## Configure HTTPS Access
+
+<Warning>
+**HTTPS is required for production deployments.** PipesHub enforces stricter security checks, and browsers will block certain requests when the application is served over HTTP. If you see a white screen after deployment, this is likely the cause.
+</Warning>
+
+You have several options to set up HTTPS:
+
+### Option 1: Nginx Reverse Proxy
+
+Configure Nginx as a reverse proxy to terminate HTTPS traffic and forward to the PipesHub frontend:
+
+```nginx
+server {
+    listen 80;
+    server_name your-domain.com;
+    return 301 https://$server_name$request_uri;
+}
+
+server {
+    listen 443 ssl http2;
+    server_name your-domain.com;
+
+    ssl_certificate /etc/ssl/certs/your-cert.pem;
+    ssl_certificate_key /etc/ssl/private/your-key.pem;
+
+    location / {
+        proxy_pass http://localhost:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_cache_bypass $http_upgrade;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+```
+
+Get a free SSL certificate using [Let's Encrypt](https://letsencrypt.org/):
+
+```bash
+sudo apt install certbot python3-certbot-nginx
+sudo certbot --nginx -d your-domain.com
+```
+
+### Option 2: Cloudflare Tunnel
+
+Use [Cloudflare Tunnel](https://www.cloudflare.com/products/tunnel/) for zero-configuration HTTPS:
+
+```bash
+# Install cloudflared
+wget https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb
+sudo dpkg -i cloudflared-linux-amd64.deb
+
+# Authenticate
+cloudflared tunnel login
+
+# Create and configure tunnel
+cloudflared tunnel create pipeshub
+cloudflared tunnel route dns pipeshub your-domain.com
+cloudflared tunnel run --url http://localhost:3000 pipeshub
+```
+
+### Option 3: GCP Load Balancer
+
+Use GCP's built-in Load Balancer with managed SSL certificates:
+
+1. Go to **Network Services** > **Load Balancing**
+2. Create an HTTPS Load Balancer
+3. Configure backend to point to your VM instance on port 3000
+4. Set up a managed SSL certificate for your domain
+
+For detailed HTTPS setup instructions, refer to the [Quickstart Guide](/quickstart).
+
+## Access PipesHub
+
+Once deployed, access PipesHub at:
+- **HTTP** (development only): `http://your-vm-external-ip:3000`
+- **HTTPS** (production): `https://your-domain.com`
+
+<Note>
+The first startup may take a few minutes as Docker pulls images and initializes the databases (MongoDB, ArangoDB, Qdrant, Redis, and etcd).
+</Note>
+
+## Post-Deployment Configuration
+
+After accessing PipesHub for the first time:
+
+1. Complete the **onboarding setup**
+2. Choose your account type (**Individual** or **Enterprise**)
+3. Configure your AI models and connectors
+4. Set up user management and permissions
+
+For detailed onboarding instructions, see the [Onboarding Guide](/onboarding).
+
+## Troubleshooting
+
+### White Screen After Deployment
+
+**Cause**: You're accessing PipesHub over HTTP instead of HTTPS.
+
+**Solution**: Set up HTTPS using one of the methods described above.
+
+### Cannot Access on Port 3000
+
+**Cause**: Firewall rules not configured or service not running.
+
+**Solution**: 
+```bash
+# Check if containers are running
+sudo docker compose -f docker-compose.prod.yml -p pipeshub-ai ps
+
+# Check firewall rules
+sudo ufw status
+
+# Verify port is listening
+sudo netstat -tulpn | grep 3000
+```
+
+### Docker Permission Denied
+
+**Cause**: User doesn't have Docker permissions.
+
+**Solution**:
+```bash
+sudo usermod -aG docker $USER
+newgrp docker
+```
+
+### Out of Memory or CPU Issues
+
+**Cause**: Instance type doesn't meet minimum requirements.
+
+**Solution**: Upgrade to a larger instance type with at least 4 cores and 16 GB RAM.
+
+### GPU Not Detected (for Ollama)
+
+**Cause**: GPU drivers not installed or instance doesn't have GPU.
+
+**Solution**: 
+```bash
+# Check if GPU is available
+lspci | grep -i nvidia
+
+# Install NVIDIA drivers
+sudo apt install nvidia-driver-535
+
+# Install NVIDIA Container Toolkit
+distribution=$(. /etc/os-release;echo $ID$VERSION_ID)
+curl -s -L https://nvidia.github.io/nvidia-docker/gpgkey | sudo apt-key add -
+curl -s -L https://nvidia.github.io/nvidia-docker/$distribution/nvidia-docker.list | sudo tee /etc/apt/sources.list.d/nvidia-docker.list
+sudo apt update
+sudo apt install -y nvidia-container-toolkit
+sudo systemctl restart docker
+```
+
+## Monitoring and Maintenance
+
+### View Logs
+
+```bash
+# All services
+sudo docker compose -f docker-compose.prod.yml -p pipeshub-ai logs -f
+
+# View logs for specific services
+sudo docker compose -f docker-compose.prod.yml -p pipeshub-ai logs -f frontend
+sudo docker compose -f docker-compose.prod.yml -p pipeshub-ai logs -f backend
+sudo docker compose -f docker-compose.prod.yml -p pipeshub-ai logs -f mongodb
+sudo docker compose -f docker-compose.prod.yml -p pipeshub-ai logs -f arangodb
+sudo docker compose -f docker-compose.prod.yml -p pipeshub-ai logs -f qdrant
+sudo docker compose -f docker-compose.prod.yml -p pipeshub-ai logs -f redis
+```
+
+### Check Service Health
+
+```bash
+# Check running containers
+sudo docker compose -f docker-compose.prod.yml -p pipeshub-ai ps
+
+# Check resource usage
+sudo docker stats
+
+# Check disk usage of volumes
+sudo docker system df -v
+```
+
+### Update PipesHub
+
+```bash
+cd pipeshub-ai
+git pull origin main
+cd deployment/docker-compose
+sudo docker compose -f docker-compose.prod.yml -p pipeshub-ai pull
+sudo docker compose -f docker-compose.prod.yml -p pipeshub-ai up -d
+```
+
+### Backup Data
+
+PipesHub uses multiple databases and storage systems. Back up all data volumes:
+
+```bash
+# Create backup directory
+mkdir -p ~/pipeshub-backups
+
+# Backup MongoDB
+sudo docker run --rm \
+  -v pipeshub-ai_mongodb_data:/data \
+  -v ~/pipeshub-backups:/backup \
+  ubuntu tar czf /backup/mongodb-backup-$(date +%Y%m%d).tar.gz /data
+
+# Backup ArangoDB
+sudo docker run --rm \
+  -v pipeshub-ai_arango_data:/data \
+  -v ~/pipeshub-backups:/backup \
+  ubuntu tar czf /backup/arango-backup-$(date +%Y%m%d).tar.gz /data
+
+# Backup Qdrant (vector database)
+sudo docker run --rm \
+  -v pipeshub-ai_qdrant_storage:/data \
+  -v ~/pipeshub-backups:/backup \
+  ubuntu tar czf /backup/qdrant-backup-$(date +%Y%m%d).tar.gz /data
+
+# Backup Redis
+sudo docker run --rm \
+  -v pipeshub-ai_redis_data:/data \
+  -v ~/pipeshub-backups:/backup \
+  ubuntu tar czf /backup/redis-backup-$(date +%Y%m%d).tar.gz /data
+
+# Backup etcd
+sudo docker run --rm \
+  -v pipeshub-ai_etcd_data:/data \
+  -v ~/pipeshub-backups:/backup \
+  ubuntu tar czf /backup/etcd-backup-$(date +%Y%m%d).tar.gz /data
+
+# Backup application data
+sudo docker run --rm \
+  -v pipeshub-ai_pipeshub_data:/data \
+  -v ~/pipeshub-backups:/backup \
+  ubuntu tar czf /backup/pipeshub-data-backup-$(date +%Y%m%d).tar.gz /data
+
+# Backup .env file
+cp .env ~/pipeshub-backups/.env.backup-$(date +%Y%m%d)
+```
+
+<Note>
+Schedule regular backups using a cron job to automate this process. Store backups in GCS for long-term retention.
+</Note>
+
+### Restore Data
+
+To restore from backups:
+
+```bash
+# Stop PipesHub
+sudo docker compose -f docker-compose.prod.yml -p pipeshub-ai down
+
+# Restore MongoDB
+sudo docker run --rm \
+  -v pipeshub-ai_mongodb_data:/data \
+  -v ~/pipeshub-backups:/backup \
+  ubuntu tar xzf /backup/mongodb-backup-YYYYMMDD.tar.gz -C /
+
+# Restore other volumes using similar commands...
+
+# Restart PipesHub
+sudo docker compose -f docker-compose.prod.yml -p pipeshub-ai up -d
+```
+
+## Next Steps
+
+- [Configure AI Models](/ai-models/overview)
+- [Set Up Connectors](/connectors/overview)
+- [User Management](/user-management/user)
+- [System Overview](/system-overview)
+
+## Support
+
+Need help? 
+- 📚 Check our [FAQ](/additional-resources/faq)
+- 💬 Join our community discussions
+- 🐛 Report issues on [GitHub](https://github.com/pipeshub-ai/pipeshub-ai/issues)

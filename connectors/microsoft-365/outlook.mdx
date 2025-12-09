@@ -199,7 +199,64 @@ The Outlook connector uses OAuth 2.0 via Microsoft Graph API with Application Pe
   />
 </div>
 
-### Step 7: Enable the Connector
+### Step 7: Configure Filters (Optional)
+
+Filters allow you to control what emails and calendar events are synced and indexed from Outlook.
+
+<div style={{ textAlign: "center" }}>
+  <img
+    src="/images/connectors/outlook/enterprise/outlook-filters.png"
+    alt="Outlook Filters Configuration"
+    style={{ display: 'block', margin: '0 auto' }}
+    width="90%"
+  />
+</div>
+
+#### Sync Filters
+
+Sync filters determine which emails and calendar events are downloaded from Outlook. Data excluded by sync filters is never downloaded.
+
+**Available Sync Filters:**
+
+1. **Received Date** - Filter emails by received date
+   - **Operators**: `Is After`, `Is Before`, or `Is Between`
+   - **Use cases**:
+     - Sync only recent emails (e.g., last 6 months)
+     - Focus on specific time period
+   - **Example**: Operator: `Is After`, Date: `2024-01-01` → Only syncs emails from 2024 onwards
+
+2. **Start Date** - Filter calendar events by start date
+   - **Operators**: `Is After`, `Is Before`, or `Is Between`
+   - **Use cases**:
+     - Sync only upcoming or recent events
+     - Exclude past events
+   - **Example**: Operator: `Is After`, Date: `2024-12-01` → Only syncs events starting December 2024 onwards
+
+#### Indexing Filters
+
+Indexing filters control what synced data gets processed for AI search. All data is synced, but only enabled content types are indexed.
+
+**Available Indexing Filters:**
+
+- **Email Section:**
+  - Index Emails (default: enabled)
+  - Index Email Attachments (default: enabled)
+
+- **Calendar Section:**
+  - Index Calendar Events (default: enabled)
+
+**Example Configurations:**
+
+- **Sync last year's emails**: Received Date → Operator: `Is After`, Date: `2024-01-01`
+- **Sync specific project period**: Received Date → Operator: `Is Between`, Start: `2024-03-01`, End: `2024-06-30`
+- **Sync future events only**: Start Date → Operator: `Is After`, Date: `2024-12-09`
+- **Index emails but not attachments**: Disable "Index Email Attachments" toggle
+
+<Info>
+  Filters help optimize performance and storage by limiting the scope of synced data. You can adjust filters at any time, and changes will apply on the next sync.
+</Info>
+
+### Step 8: Enable the Connector
 
 1. After saving the configuration, toggle the connector to **"Enable"**
 2. The connector will verify credentials and begin initial sync

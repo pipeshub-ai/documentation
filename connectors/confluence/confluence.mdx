@@ -333,7 +333,78 @@ Next, select the **"Granular scopes"** tab and add the following read permission
   **Scheduled sync** runs automatically at the specified intervals, keeping your data up-to-date without manual intervention. **Manual sync** requires you to trigger synchronization on-demand.
 </Note>
 
-### Step 10: Enable the Connector
+### Step 10: Configure Filters (Optional)
+
+Filters allow you to control what data is synced and indexed from your Confluence workspace.
+
+<div className="text-center">
+  <img
+    src="/images/connectors/confluence/confluence-filters.png"
+    alt="Confluence Filters Configuration"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+#### Sync Filters
+
+Sync filters determine which content is downloaded from Confluence. Data excluded by sync filters is never downloaded.
+
+**Available Sync Filters:**
+
+1. **Space Keys** - Filter by Confluence spaces
+   - **Operator**: `In` (include only) or `Not In` (exclude)
+   - **Value**: Enter one or more space keys (e.g., `ENG`, `MKT`, `PROD`)
+   - **Note**: Space keys are case-sensitive
+   - **Finding Space Keys**: Check your space URL - `https://yourinstance.atlassian.net/wiki/spaces/SPACEKEY/overview` - the `SPACEKEY` is what you need
+
+2. **Page IDs** - Filter specific pages (includes all child pages automatically)
+   - **Operator**: `In` (include) or `Not In` (exclude)
+   - **Value**: Enter one or more page IDs (e.g., `88375321`, `90341377`)
+   - **Note**: When you specify a parent page, all its child pages are automatically included
+   - **Finding Page IDs**: Check your page URL - `https://yourinstance.atlassian.net/wiki/spaces/SPACE/pages/88375321/Page+Title` - the number after `/pages/` is the page ID
+
+3. **Blogpost IDs** - Filter specific blogposts
+   - **Operator**: `In` or `Not In`
+   - **Value**: Enter one or more blogpost IDs
+   - **Finding Blogpost IDs**: Check your blogpost URL - `https://yourinstance.atlassian.net/wiki/spaces/SPACE/blog/2024/12/09/12345678/Blog+Title` - the number after `/blog/YYYY/MM/DD/` is the blogpost ID
+
+4. **Modified Date** - Filter by last modification date
+   - **Operators**: `Is After`, `Is Before`, or `Is Between`
+   - **Use case**: Sync only recently updated content (e.g., content modified in the last 6 months)
+
+5. **Created Date** - Filter by creation date
+   - **Operators**: `Is After`, `Is Before`, or `Is Between`
+   - **Use case**: Sync only newly created content or exclude legacy documentation
+
+#### Indexing Filters
+
+Indexing filters control what synced data gets processed for AI search. All data is synced, but only enabled content types are indexed.
+
+**Available Indexing Filters:**
+
+- **Pages Section:**
+  - Index Pages (default: enabled)
+  - Index Page Attachments (default: enabled)
+  - Index Page Comments (default: enabled)
+
+- **Blogposts Section:**
+  - Index Blogposts (default: enabled)
+  - Index Blogpost Attachments (default: enabled)
+  - Index Blogpost Comments (default: enabled)
+
+**Example Configurations:**
+
+- **Sync only Engineering space**: Space Keys → Operator: `In`, Value: `ENG`
+- **Exclude archived spaces**: Space Keys → Operator: `Not In`, Value: `ARCHIVE, OLD`
+- **Sync specific documentation tree**: Page IDs → Operator: `In`, Value: `88375321`
+- **Recent content only**: Modified Date → Operator: `Is After`, Date: `2024-06-01`
+- **Index pages but not attachments**: Disable "Index Page Attachments" toggle
+
+<Info>
+  Filters can be configured during initial setup or modified later. Changes to filters will take effect on the next sync.
+</Info>
+
+### Step 11: Enable the Connector
 
 1. After configuration is complete, toggle the connector status to **"Enable"**
 2. You can do this by:

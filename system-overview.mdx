@@ -6,8 +6,72 @@ icon: "network-wired"
 
 PipesHub platform is a modern, distributed system designed for flexible data processing and service orchestration. The architecture follows event-driven principles to ensure components remain loosely coupled while maintaining high scalability and reliability.
 
-## System Interaction Diagram
+## System Architecture Diagram
 
-<a href="/images/system-architecture/system-diagram.png" target="_blank">
-  <img src="/images/system-architecture/system-diagram.png" alt="PipesHub System Overview" style={{ maxWidth: "100%", height: "auto", cursor: "zoom-in" }} />
+<a href="/images/system-architecture/architecture-diagram.png" target="_blank">
+  <img src="/images/system-architecture/architecture-diagram.png" alt="PipesHub Architecture Diagram" style={{ maxWidth: "100%", height: "auto", cursor: "zoom-in" }} />
 </a>
+
+The architecture is organized into three main tiers: Presentation, Application, and Data, with external AI Models Provider and External Services integrations.
+
+## Presentation Tier
+
+### Web App in Browser
+The frontend application runs in the browser and communicates with the backend through REST APIs, WebSocket connections, and Server-Sent Events (SSE). This provides a responsive and real-time user experience for interacting with the platform.
+
+## Application Tier
+
+### Express Web App
+The primary web application server built with Express.js handles HTTP API requests, serves the frontend application, and orchestrates communication between various services. It acts as the main gateway for client interactions and coordinates with auxiliary services.
+
+### Auxiliary Services
+A collection of microservices that provide essential functionality:
+- **Storage**: Manages file storage and retrieval operations
+- **Mail**: Handles email sending and processing via SMTP relay servers
+- **Config**: Centralized configuration management for all services
+- **Notifications**: Manages user notifications and alerts
+- **Auth**: Handles authentication and authorization with support for Azure AD, Okta, and other identity providers
+- **Crawling**: Manages the scheduling and execution of data crawling operations
+
+### Event Bus (Kafka)
+Apache Kafka serves as the central event streaming platform, enabling asynchronous communication between services. It ensures reliable message delivery and allows services to scale independently while maintaining loose coupling.
+
+### Query Service (Python FastAPI Server)
+A high-performance Python-based API service that handles search queries and interacts with AI models. It processes user queries, performs semantic search operations, and communicates with external AI model providers like Bedrock and Azure AI.
+
+### Indexing Service
+The Indexing service extracts content from various data sources and indexes it for search. This service processes documents, extracts metadata, and prepares data for storage in blob, vector, and graph databases.
+
+### Connectors Service
+Pre-built integrations with popular enterprise platforms including SharePoint, Slack, Jira, Confluence, Outlook, and many more. Connectors handle authentication, data extraction, and synchronization with external systems.
+
+## Data Tier
+
+### VectorDB (Qdrant)
+Stores vector embeddings for semantic search capabilities. Enables fast similarity search and powers the platform's AI-driven search functionality.
+
+### GraphDB (Arango)
+Manages relationships between entities and enables complex graph-based queries. Useful for understanding connections between documents, users, and metadata.
+
+### NoSQL (MongoDB)
+Primary database for storing document metadata, user information, and application state. Provides flexible schema and high scalability.
+
+### Blob Storage (Local/S3)
+Stores large files and binary objects. Supports both local storage for development and cloud storage (S3) for production deployments.
+
+### Redis Cache
+High-performance in-memory data store used for caching frequently accessed data, managing session state, and implementing distributed locks. Significantly improves response times and reduces load on primary databases.
+
+### Encrypted KV Store (etcd)
+A secure key-value store used by all services for caching, session management, and storing sensitive configuration data. All data is encrypted at rest.
+
+## External Services
+
+The platform integrates with numerous external services for authentication, communication, and data sources:
+- **Identity Providers**: Azure AD, Okta and more
+- **Email Services**: SMTP Relay Server
+- **Collaboration Platforms**: SharePoint, Outlook, Slack, Teams and more
+- **Project Management**: Jira, Linear and more
+- **Documentation**: Confluence, Notion and more
+- **AI Models**: Azure AI, AWS Bedrock, Vertex AI, OpenAI, Anthropic, Google AI Studio and more
+- And many more...

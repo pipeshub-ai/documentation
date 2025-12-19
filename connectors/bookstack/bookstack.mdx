@@ -41,6 +41,13 @@ BookStack provides multiple ways through which it can be deployed (e.g., Docker,
 
 **Official Installation Guide:** [https://www.bookstackapp.com/docs/admin/installation/](https://www.bookstackapp.com/docs/admin/installation/)
 
+> **⚠️ Note on API Rate Limits**
+> 
+> BookStack defaults to **180 API requests per minute**. 
+> To prevent sync failures on large documentation bases, we recommend increasing the `API_REQUESTS_PER_MIN` variable to around **1000-1500** in your BookStack server's `.env` file.
+>
+> * **Standard/Ubuntu:** Edit the `.env` file in your installation root (usually `/var/www/bookstack/.env`).
+> * **Docker:** Add `API_REQUESTS_PER_MIN: 1000` under the `environment:` section of your `docker-compose.yml` file and recreate the container.
 ---
 
 ## Configuration Guide
@@ -129,6 +136,39 @@ The integration requires three pieces of information:
 - The BookStack Connector is now active and will start syncing the shelves, books, chapters, and pages.
 
 </Accordion>
+
+</AccordionGroup>
+
+---
+
+## FAQ
+
+<AccordionGroup>
+
+<Accordion title="My sync is stalling or failing on large wikis">
+  This is usually caused by BookStack's default API rate limit.
+  
+  Please refer to the [Overview](#overview) section above to see how to increase the `API_REQUESTS_PER_MIN` variable in your `.env` or `docker-compose.yml` file.
+</Accordion>
+
+<Accordion title="Does the API Token expire?">
+  It depends on how you created it. During token creation, the "Expiry Date" field is optional. If you left it blank, the token will expire in 100 years. If you set a date, you will need to generate a new token and update the connector settings in PipesHub before that date.
+</Accordion>
+
+<Accordion title="What permissions are required?">
+  The user account generating the token **must** have the **"Access system API"** role permission. 
+  
+  We strongly recommend using an **Admin** account because non-admin users cannot access the "Audit Log," which the connector uses to track changes and keep your data in sync efficiently.
+</Accordion>
+
+<Accordion title="How often does the connector sync data?">
+  The connector can be configured to sync data on a schedule or manually. Webhooks are planned for future implementation to enable real-time synchronization.
+</Accordion>
+
+<Accordion title="Facing issues not mentioned here?">
+  If you're experiencing issues not covered in this documentation, please check the docker logs for bookstack to see if it's failing from there, otherwise feel free to reach out to our support team for assistance on our [discord](https://discord.com/invite/K5RskzJBm2). 
+</Accordion>
+
 
 </AccordionGroup>
 

@@ -77,8 +77,6 @@ The Jira connector uses **OAuth 2.0 with 3-legged OAuth (3LO)** for secure authe
   OAuth 2.0 (3LO) is the recommended authentication method by Atlassian. It provides secure, token-based access without requiring users to share their passwords.
 </Info>
 
-## How to configure and enable the Jira Connector
-
 ### Step 1: Access Atlassian Developer Console
 
 1. **Navigate to the Developer Console:**  
@@ -237,7 +235,7 @@ First, select the **"Classic scopes"** tab and add the following scopes:
 </div>
 
 <Info>
-  Classic scopes provide broader access patterns and are required for certain API endpoints. While write scopes are included in the OAuth app configuration, the connector only performs read operations.
+  Some write or manage scopes (such as <code>write:jira-work</code> or <code>manage:jira-configuration</code>) may be required by Atlassian for certain API endpoints, even if the connector only performs read operations. The connector itself does <b>not</b> create, modify, or delete any Jira data. These permissions are requested solely to satisfy Atlassian's API requirements.
 </Info>
 
 ##### Granular Scopes

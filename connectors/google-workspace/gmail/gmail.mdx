@@ -36,15 +36,15 @@ icon: "/logo/gmail.png"
 
 ## Overview
 
-The Google Workspace connector allows you to access, manage, and synchronize data across Gmail, Google Calendar, and Google Drive.
+The Gmail connector allows you to access, manage, and synchronize email data from Gmail, including attachments and embedded documents.
 
-Google Workspace (formerly G Suite) is a collection of cloud computing, productivity, and collaboration tools developed by Google. This connector provides access to core Google Workspace services through a unified API.
+Gmail is Google's email service that provides access to emails, attachments, and related content. This connector enables synchronization of Gmail data including emails and their associated documents (Google Docs, Sheets, and Slides).
 
 ### Authentication
 
-The Google Workspace connector uses OAuth 2.0 for authentication. This requires users to grant permission for the application to access their Google Workspace data within the scopes specified.
+The Gmail connector uses OAuth 2.0 for authentication. This requires users to grant permission for the application to access their Gmail data within the scopes specified.
 
-## How to configure and enable the Google Workspace Connector
+## How to configure and enable the Gmail Connector
 
 ### Step 1: Create a Google Cloud Project & Set Up Admin Access
 
@@ -73,34 +73,24 @@ The Google Workspace connector uses OAuth 2.0 for authentication. This requires 
 
 1. Navigate to **APIs & Services > Library** in the Cloud Console
 
-2. Search for and enable the following APIs:
-   - **Google Drive API**
-   - **Gmail API**
-   - **Google Calendar API**
-   - **Admin SDK API**
-   - **Google Docs API**
-   - **Google Sheets API**
-   - **Google Slides API**
+2. Search for and enable the following APIs required for Gmail sync:
+   - **Gmail API** (required for email access)
+   - **Google Docs API** (required for Google Docs attachments)
+   - **Google Sheets API** (required for Google Sheets attachments)
+   - **Google Slides API** (required for Google Slides attachments)
+   - **Admin SDK API** (required for domain-wide delegation)
 
 <div style={{ textAlign: "center", padding: "5px" }}>
   <img
     src="/images/connectors/googleWorkspace/enterprise/apis.png"
-    alt="Google APIs"
-    style={{ display: 'block', margin: '0 auto' }}
-    width="80%"
-  />
-</div>
-<div style={{ textAlign: "center", padding: "5px" }}>
-  <img
-    src="/images/connectors/googleWorkspace/enterprise/enable_api.png"
-    alt="Enable Google APIs"
+    alt="Enabled Google APIs in Google Cloud Console"
     style={{ display: 'block', margin: '0 auto' }}
     width="80%"
   />
 </div>
 
 <Warning>
-  Make sure that all of the listed APIs are enabled to ensure smooth operation of the enterprise search application.
+  Make sure that all of the listed APIs are enabled to ensure smooth operation of the Gmail connector.
 </Warning>
 
 ### Step 3: Create a Service Account
@@ -142,10 +132,20 @@ The Google Workspace connector uses OAuth 2.0 for authentication. This requires 
 2. Navigate to **Security > Access and data control > API controls**
 3. Click **Manage Domain Wide Delegation**
 4. Click **Add new** and paste the service account's client ID
-5. Add the following OAuth scopes:
+5. Add the following OAuth scopes required for Gmail sync:
 ```
-https://www.googleapis.com/auth/admin.directory.group.readonly,https://www.googleapis.com/auth/admin.reports.audit.readonly,https://www.googleapis.com/auth/admin.directory.user.readonly,https://www.googleapis.com/auth/admin.directory.domain.readonly,https://www.googleapis.com/auth/admin.directory.orgunit,https://www.googleapis.com/auth/gmail.readonly,https://www.googleapis.com/auth/drive.readonly,https://www.googleapis.com/auth/calendar.readonly,https://www.googleapis.com/auth/documents.readonly,https://www.googleapis.com/auth/spreadsheets.readonly,https://www.googleapis.com/auth/presentations.readonly
+https://www.googleapis.com/auth/admin.directory.group.readonly,https://www.googleapis.com/auth/admin.reports.audit.readonly,https://www.googleapis.com/auth/admin.directory.user.readonly,https://www.googleapis.com/auth/admin.directory.domain.readonly,https://www.googleapis.com/auth/admin.directory.orgunit,https://www.googleapis.com/auth/gmail.readonly,https://www.googleapis.com/auth/documents.readonly,https://www.googleapis.com/auth/spreadsheets.readonly,https://www.googleapis.com/auth/presentations.readonly
 ```
+
+<Info>
+
+  These scopes are required for Gmail synchronization:
+  - `gmail.readonly`: Access to read Gmail messages
+  - `documents.readonly`: Access to Google Docs files attached to emails
+  - `spreadsheets.readonly`: Access to Google Sheets files attached to emails
+  - `presentations.readonly`: Access to Google Slides files attached to emails
+  - Admin scopes: Required for domain-wide delegation
+</Info>
 
 6. Click **Authorize**
 
@@ -184,28 +184,54 @@ https://www.googleapis.com/auth/admin.directory.group.readonly,https://www.googl
 
 ### Configuring and enabling connector
 
-1. Navigate to the Connectors tab under settings tab in Company Profile
-2. Click on **"Click to View"** Button
-3. If not configured, click on settings button which will open a configuration dialog
-4. In the Configuration Dialog:
-   - Enter the **Admin Email** (Admin user's email with which you created the Google Cloud credentials)
-   - Select the **JSON** key file to upload and click on **Save** button.
 
+1. Navigate to the **Connectors** page in your account settings:
+   - Go to **Account > Company Settings > Settings > Connectors**
+
+<div style={{ textAlign: "center", padding: "5px" }}>
+  <img
+    src="/images/connectors/common/empty_connector_list_state.png"
+    alt="Empty connector list"
+    style={{ display: 'block', margin: '0 auto' }}
+    width="80%"
+  />
+</div>
+
+
+2. Click on **"Add New Connectors"** or **"Browse Available Connectors"** view available connectors
+
+<div style={{ textAlign: "center", padding: "5px" }}>
+  <img
+    src="/images/connectors/common/connector_list_regsitry.png"
+    alt="Connector registry"
+    style={{ display: 'block', margin: '0 auto' }}
+    width="80%"
+  />
+</div>
+
+3. Find and click on the **Gmail** connector card to create a new connector instance
+
+4. In the configuration dialog that opens:
+   - Enter an **Instance Name** for your connector (e.g., "Company Gmail")
+   - Enter the **Admin Email** (Admin user's email with which you created the Google Cloud credentials)
+   - Select the **JSON** key file to upload
+   - Click on **Save** button to save the configuration
 <div style={{ textAlign: "center" }}>
   <img
-    src="/images/connectors/googleWorkspace/enterprise/config.png"
-    alt="Configure Google Workspace"
+    src="/images/connectors/googleWorkspace/enterprise/gmail_configuration.png"
+    alt="Configure Gmail connector"
     style={{ display: 'block', margin: '0 auto' }}
     width="90%"
   />
 </div>
 
-5. To enable the connector, click on the enable button so that data can be shared
-
+5. After saving, you will be redirected to the connector instance page. To enable the connector:
+   - Use the **Sync toggle switch** to enable data synchronization
+   - The connector will start syncing Gmail data once enabled
 <div style={{ textAlign: "center" }}>
   <img
-    src="/images/connectors/googleWorkspace/enterprise/enable.png"
-    alt="Enable Google Workspace"
+    src="/images/connectors/googleWorkspace/enterprise/gmail_sync_state.png"
+    alt="Gmail connector sync status"
     style={{ display: 'block', margin: '0 auto' }}
     width="90%"
   />
@@ -331,52 +357,146 @@ PubSub setup enables real-time updates for Gmail content. While optional, it's h
 
 ## Overview
 
-The Google Workspace connector allows you to access, manage, and synchronize data across Gmail, Google Calendar, and Google Drive.
+The Gmail connector allows you to access, manage, and synchronize email data from Gmail, including attachments and embedded documents.
 
-Google Workspace (formerly G Suite) is a collection of cloud computing, productivity, and collaboration tools developed by Google. This connector provides access to core Google Workspace services through a unified API.
+Gmail is Google's email service that provides access to emails, attachments, and related content. This connector enables synchronization of Gmail data including emails and their associated documents (Google Docs, Sheets, and Slides).
 
 ### Authentication
 
-The Google Workspace connector uses OAuth 2.0 for authentication. This requires users to grant permission for the application to access their Google Workspace data within the scopes specified.
+The Gmail connector uses OAuth 2.0 for authentication. This requires users to grant permission for the application to access their Gmail data within the scopes specified.
 
-### Obtaining credentials
+### Step 1: Create a Google Cloud Project
 
-1. To obtain credentials for a Google Workspace connector, you need to create Oauth Client in the Google Cloud Console, assign the scopes, and add Redirect Uri.
-2. Access the Google Cloud Console: Go to the [Google Cloud Console](https://console.cloud.google.com/).
-3. Create a project (if you don't have one) - Configure
-   OAuth consent screen - Create OAuth client ID (Web application) - Note your Client ID and Client Secret
-4. Redirect Uri must be (http://your-frontend-dns/account/individual/settings/connector/googleWorkspace)
-5. In the Data access Tab in google cloud console , add the scopes for gmail,calendar and google drive.
-   <Info>
-     Redirect Uri must match exactly frontend url. For example: if you app is
-     running on https://f7f0-240.ngrok-free.app then redirectUri should be
-     https://f7f0-240.ngrok-free.app/account/individual/settings/connector/googleWorkspace
-     in Google Cloud Console.
-   </Info>
+1. Access the [Google Cloud Console](https://console.cloud.google.com/)
+2. Create a project (if you don't have one)
+3. Note your project ID for later use
+
+### Step 2: Enable Required APIs
+
+1. Navigate to **APIs & Services > Library** in the Cloud Console
+2. Search for and enable the following APIs required for Gmail sync:
+   - **Gmail API** (required for email access)
+   - **Google Docs API** (required for Google Docs attachments)
+   - **Google Sheets API** (required for Google Sheets attachments)
+   - **Google Slides API** (required for Google Slides attachments)
+
+<div style={{ textAlign: "center", padding: "5px" }}>
+  <img
+    src="/images/connectors/googleWorkspace/enterprise/apis.png"
+    alt="Enabled Google APIs in Google Cloud Console"
+    style={{ display: 'block', margin: '0 auto' }}
+    width="80%"
+  />
+</div>
+
+
+<Warning>
+  Make sure that all of the listed APIs are enabled to ensure smooth operation of the Gmail connector.
+</Warning>
+
+### Step 3: Configure OAuth Consent Screen
+
+1. Navigate to **APIs & Services > OAuth consent screen** in the Cloud Console
+2. Configure the OAuth consent screen with your application details
+3. Add the required scopes (see Step 5)
+
+### Step 4: Create OAuth Client ID
+
+1. Navigate to **APIs & Services > Credentials** in the Cloud Console
+2. Click **Create Credentials** and select **OAuth client ID**
+3. Select **Web application** as the application type
+4. Set the **Authorized redirect URI** to:
+   ```
+   http://your-frontend-dns/connectors/oauth/callback/Gmail
+   ```
+   or for HTTPS:
+   ```
+   https://your-frontend-dns/connectors/oauth/callback/Gmail
+   ```
+5. Click **Create** and note your **Client ID** and **Client Secret**
+
+<Info>
+  Redirect URI must match exactly your frontend URL. For example: if your app is
+  running on https://f7f0-240.ngrok-free.app then redirect URI should be
+  https://f7f0-240.ngrok-free.app/connectors/oauth/callback/Gmail
+  in Google Cloud Console.
+</Info>
+
+### Step 5: Configure OAuth Scopes
+
+1. In the **OAuth consent screen**, navigate to the **Scopes** section
+2. Add the following OAuth scopes required for Gmail sync:
+   - `https://www.googleapis.com/auth/gmail.readonly` - Read Gmail messages
+   - `https://www.googleapis.com/auth/documents.readonly` - Read Google Docs files
+   - `https://www.googleapis.com/auth/spreadsheets.readonly` - Read Google Sheets files
+   - `https://www.googleapis.com/auth/presentations.readonly` - Read Google Slides files
+
+<Info>
+  These scopes allow the connector to:
+  - Access and read Gmail messages
+  - Access Google Docs, Sheets, and Slides files that are attached to or embedded in emails
+</Info>
 
 ### Configuring and enabling connector
 
-1. Navigate to the Connectors tab under settings tab in Company Profile
-2. Click on "Click to View" Button.
-3. If not configured, click on settings button which will open a configuration dialog.
-4. In the Configuration Dialog
+1. Navigate to the **Connectors** page in your account settings:
+   - Go to **Account > Individual Settings > Settings > Connectors**
 
-   - Enter the Google Client ID and Google Client Secret.
-   - Click on save button.
+<div style={{ textAlign: "center", padding: "5px" }}>
+  <img
+    src="/images/connectors/common/empty_connector_list_state.png"
+    alt="Empty connector list"
+    style={{ display: 'block', margin: '0 auto' }}
+    width="80%"
+  />
+</div>
+
+
+2. Click on **"Add New Connectors"** or **"Browse Available Connectors"** view available connectors
+
+<div style={{ textAlign: "center", padding: "5px" }}>
+  <img
+    src="/images/connectors/common/connector_list_regsitry.png"
+    alt="Connector registry"
+    style={{ display: 'block', margin: '0 auto' }}
+    width="80%"
+  />
+</div>
+
+3. Find and click on the **Gmail** connector card to create a new connector instance
+
+4. In the configuration dialog that opens:
+   - Enter an **Instance Name** for your connector (e.g., "My Gmail")
+   - Enter the **Google Client ID** from your Google Cloud Console
+   - Enter the **Google Client Secret** from your Google Cloud Console
+   - Click on **Save** button to save the configuration
+
      <div style={{ textAlign: "center" }}>
        <img
-         src="/images/connectors/googleWorkspace/individual/config.png"
-         alt="Google credentials individual config dialog"
+         src="/images/connectors/googleWorkspace/individual/gmail_configuration.png"
+         alt="Gmail auth configuration"
          width="90%"
        />
      </div>
 
-5. To enable the connector, click on the enable button, you will be redirected to consent screen from google ,you have to sign in and give consent for all the connectors like gmail, drive, calendar for sharing the data.
+5. After saving, you will be redirected to the connector instance page. To enable the connector:
+  
+  <div style={{ textAlign: "center" }}>
+     <img
+       src="/images/connectors/googleWorkspace/individual/gmail_pre_auth_state.png"
+       alt="Gmail connector before authentication"
+       width="90%"
+     />
+   </div>
+
+   - Click on the **Authenticate** button (or use the Sync toggle switch)
+   - You will be redirected to Google's consent screen where you need to sign in and grant permission for Gmail and related document access
+  
 
    <div style={{ textAlign: "center" }}>
      <img
-       src="/images/connectors/googleWorkspace/individual/consent_screen.png"
-       alt="Google credentials individual enable"
+       src="/images/connectors/googleWorkspace/individual/gmail_consent_screen.png"
+       alt="Google consent screen for Gmail connector"
        width="90%"
      />
    </div>
@@ -385,8 +505,8 @@ The Google Workspace connector uses OAuth 2.0 for authentication. This requires 
    {" "}
    <div style={{ textAlign: "center" }}>
      <img
-       src="/images/connectors/googleWorkspace/individual/enable.png"
-       alt="Google credentials individual enable"
+       src="/images/connectors/googleWorkspace/individual/gmail_sync_state.png"
+       alt="Gmail connector sync status"
        width="90%"
      />
    </div>

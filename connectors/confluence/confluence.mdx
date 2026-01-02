@@ -44,6 +44,59 @@ The Confluence connector uses OAuth 2.0 with 3-legged OAuth (3LO) for secure aut
 
 ## How to configure and enable the Confluence Connector
 
+## ⚠️ Critical User Configuration Requirement
+
+<Warning>
+  <div className="text-lg font-semibold">
+    **Each user in your organization must set their email address to be visible** in order for PipesHub to correctly assign permissions and make records visible to them.
+  </div>
+</Warning>
+
+### Why Email Visibility Matters
+
+PipesHub uses email addresses to match Confluence users with their permissions. If a user's email is hidden:
+- PipesHub cannot identify the user when syncing permissions
+- Records will appear invisible to that user even if they have proper access in Confluence
+- The user won't be able to see any content they should have access to
+
+### How to Configure Email Visibility
+
+Every user must complete these steps in their Atlassian account:
+
+1. Click on your **profile picture** in the top right → Select **"Account Settings"**
+
+<div className="text-center">
+  <img
+    src="/images/connectors/confluence/user_profile_settings.png"
+    alt="Access User Profile Settings"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+2. Select the **"Profile and visibility"** tab
+3. Scroll down to the **"Contact"** section
+4. In the **"Who can see this?"** dropdown for your email address, select either:
+   - **"Anyone"** (recommended), OR
+   - **"Your organization"**
+
+<div className="text-center">
+  <img
+    src="/images/connectors/confluence/email_visibility_setting.png"
+    alt="Set Email Visibility to Organization"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+<Warning>
+  **DO NOT select "Only you and admins"** - this will prevent PipesHub from accessing your email address and matching you to permissions, making all records invisible to you.
+</Warning>
+
+📖 **Official Documentation**: [Configure User Email Visibility in Confluence](https://support.atlassian.com/confluence-cloud/docs/configure-user-email-visibility/)
+
+<Info>
+  This is a **per-user setting** that must be configured by each individual user in your organization. Administrators cannot change this setting for other users. We recommend communicating this requirement to your team during the Confluence connector rollout.
+</Info>
+
 ### Step 1: Access Atlassian Developer Console
 
 1. **Navigate to the Developer Console:**  

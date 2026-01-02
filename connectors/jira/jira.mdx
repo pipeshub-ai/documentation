@@ -61,7 +61,7 @@ The connector indexes the following content for AI-powered search:
 
 <AccordionGroup type="single" collapsible>
 
-<Accordion title="Setup">
+<Accordion title="Setup" icon="gear">
 
 <div className="mt-4">
 
@@ -75,6 +75,59 @@ The Jira connector uses **OAuth 2.0 with 3-legged OAuth (3LO)** for secure authe
 
 <Info>
   OAuth 2.0 (3LO) is the recommended authentication method by Atlassian. It provides secure, token-based access without requiring users to share their passwords.
+</Info>
+
+## ⚠️ Critical User Configuration Requirement
+
+<Warning>
+  <div className="text-lg font-semibold">
+    **Each user in your organization must set their email address to be visible** in order for PipesHub to correctly assign permissions and make records visible to them.
+  </div>
+</Warning>
+
+### Why Email Visibility Matters
+
+PipesHub uses email addresses to match Jira users with their permissions. If a user's email is hidden:
+- PipesHub cannot identify the user when syncing permissions
+- Records will appear invisible to that user even if they have proper access in Jira
+- The user won't be able to see any content they should have access to
+
+### How to Configure Email Visibility
+
+Every user must complete these steps in their Atlassian account:
+
+1. Click on your **profile picture** in the top right → Select **"Account Settings"**
+
+<div className="text-center">
+  <img
+    src="/images/connectors/jira/user_profile_settings.png"
+    alt="Access User Profile Settings"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+2. Select the **"Profile and visibility"** tab
+3. Scroll down to the **"Contact"** section
+4. In the **"Who can see this?"** dropdown for your email address, select either:
+   - **"Anyone"** (recommended), OR
+   - **"Your organization"**
+
+<div className="text-center">
+  <img
+    src="/images/connectors/jira/email_visibility_setting.png"
+    alt="Set Email Visibility to Organization"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+<Warning>
+  **DO NOT select "Only you and admins"** - this will prevent PipesHub from accessing your email address and matching you to permissions, making all records invisible to you.
+</Warning>
+
+📖 **Official Documentation**: [Configure User Email Visibility in Confluence](https://support.atlassian.com/confluence-cloud/docs/configure-user-email-visibility/)
+
+<Info>
+  This is a **per-user setting** that must be configured by each individual user in your organization. Administrators cannot change this setting for other users. We recommend communicating this requirement to your team during the Jira connector rollout.
 </Info>
 
 ### Step 1: Access Atlassian Developer Console
@@ -452,31 +505,24 @@ The Jira connector syncs the following data from your Jira Cloud workspace:
 - **Project Roles**: Role assignments for project access control
 - **Permissions**: Project permissions and issue-level access controls
 
-## Data Sync Behavior
+## Useful Links
 
-### Initial Sync
-- Fetches all accessible projects from your Jira workspace
-- Syncs users, groups, and project roles
-- Indexes issues, comments, and attachments based on filter settings
-- Respects user permissions for content visibility
-- Duration depends on the size of your Jira workspace and number of issues
+- **Atlassian Developer Console**: [developer.atlassian.com/console/myapps/](https://developer.atlassian.com/console/myapps/)
+- **OAuth 2.0 (3LO) Documentation**: [developer.atlassian.com/cloud/jira/platform/oauth-2-3lo-apps/](https://developer.atlassian.com/cloud/jira/platform/oauth-2-3lo-apps/)
+- **Jira API Scopes Reference**: [developer.atlassian.com/cloud/jira/platform/scopes-for-oauth-2-3LO-and-forge-apps/](https://developer.atlassian.com/cloud/jira/platform/scopes-for-oauth-2-3LO-and-forge-apps/)
+- **Jira REST API v3 Documentation**: [developer.atlassian.com/cloud/jira/platform/rest/v3/](https://developer.atlassian.com/cloud/jira/platform/rest/v3/)
 
-### Incremental Sync
-- Uses timestamp-based synchronization to detect changes
-- Only syncs new or modified issues since last sync
-- Detects deleted issues via Jira audit logs
-- Efficiently handles additions, updates, and deletions
-- Reduces API calls and sync duration
+</div>
 
-### Permission Handling
-- Syncs content based on the authenticating user's permissions
-- Each user sees only content they have access to in Jira
-- Respects project permissions and issue-level restrictions
-- Maintains Jira's access control model including:
-  - Project-level permissions (from permission schemes)
-  - Issue-level access based on creator, reporter, and assignee
+</Accordion>
+
+</AccordionGroup>
 
 ## Troubleshooting
+
+<AccordionGroup>
+
+<Accordion title="Troubleshooting" icon="circle-exclamation">
 
 ### Common Issues
 
@@ -521,32 +567,10 @@ The Jira connector syncs the following data from your Jira Cloud workspace:
   If you modify OAuth application settings in Atlassian Developer Console (Client ID, Secret, callback URL, or scopes), you must update the configuration in PipesHub and re-authorize the connection.
 </Warning>
 
-## Jira Cloud Compatibility
-
-This connector is designed for **Jira Cloud** and uses Atlassian's REST API v3. It supports all current Jira Cloud features including:
-- Classic and Next-gen projects
-- Scrum and Kanban boards
-- Atlassian Document Format (ADF) for rich text content
-- All standard and custom fields
-
-<Info>
-  This connector does not support Jira Data Center or Jira Server (on-premise deployments). Only Jira Cloud workspaces can be connected.
-</Info>
-
-## Useful Links
-
-- **Atlassian Developer Console**: [developer.atlassian.com/console/myapps/](https://developer.atlassian.com/console/myapps/)
-- **OAuth 2.0 (3LO) Documentation**: [developer.atlassian.com/cloud/jira/platform/oauth-2-3lo-apps/](https://developer.atlassian.com/cloud/jira/platform/oauth-2-3lo-apps/)
-- **Jira API Scopes Reference**: [developer.atlassian.com/cloud/jira/platform/scopes-for-oauth-2-3LO-and-forge-apps/](https://developer.atlassian.com/cloud/jira/platform/scopes-for-oauth-2-3LO-and-forge-apps/)
-- **Jira REST API v3 Documentation**: [developer.atlassian.com/cloud/jira/platform/rest/v3/](https://developer.atlassian.com/cloud/jira/platform/rest/v3/)
-
-</div>
-
 </Accordion>
 
 </AccordionGroup>
 
----
 
 ## Connector Workflow
 
@@ -654,14 +678,12 @@ After each successful sync:
   Jira Server and Jira Data Center (on-premise deployments) use different authentication mechanisms and APIs. If you need support for on-premise Jira, please contact our support team to discuss options.
 </Accordion>
 
-<Accordion title="Facing issues not mentioned here?">
-  If you're experiencing issues not covered in this documentation:
-  
-  1. Check the connector status and sync logs in PipesHub dashboard
-  2. Verify your OAuth app is still active in Atlassian Developer Console
-  3. Ensure the authenticating user still has access to the Jira workspace
-  
-  Feel free to reach out to our support team on [Discord](https://discord.com/invite/K5RskzJBm2) for assistance.
+<Accordion title="Why do I see no issues after authenticating?">
+  The most common causes are missing scopes or selecting the wrong Jira site during consent. Re-run authentication, ensure the required Jira and User scopes are granted, and pick the correct site when prompted.
+</Accordion>
+
+<Accordion title="Why are comments or attachments missing from search?">
+  Check that indexing filters for comments and attachments are enabled, and confirm the authenticating user has permission to view those items in Jira. After toggling filters, run a sync to refresh indexed content.
 </Accordion>
 
 </AccordionGroup>

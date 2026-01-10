@@ -3,37 +3,597 @@ title: "Linear"
 description: "Modern issue tracking and project management connector"
 icon: "/logo/linear.png"
 ---
-<div className="flex flex-col items-center justify-center text-center pt-10">
-  <h1 className="text-4xl font-bold">✅ Linear Connector Ready</h1>
-  <h3 className="text-xl mt-2">
-    Connector is live and ready to use. Documentation in process!
-  </h3>
-</div>
+
 <div className="max-w-2xl mx-auto mt-12">
-  <div className="p-6 border rounded-lg bg-purple-50">
+  <div className="p-6 border border-gray-200 dark:border-gray-700 rounded-lg bg-purple-50 dark:bg-gray-800">
     <div className="flex items-center mb-4">
       <img 
         src="/logo/linear.png" 
         alt="Linear Logo" 
         className="w-8 h-8 mr-3 object-contain flex-shrink-0"
       />
-      <h2 className="text-2xl font-semibold m-0"> Linear</h2>
+      <h2 className="text-2xl font-semibold m-0">Linear</h2>
     </div>
-    <p className="text-lg text-gray-700 mb-4">Modern issue tracking and project management</p>
+    <p className="text-lg text-gray-700 dark:text-gray-300 mb-4">Modern issue tracking and project management</p>
     <div className="flex items-center gap-2">
-      <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium">
+      <span className="px-3 py-1 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 rounded-full text-sm font-medium">
         ✅ Ready
       </span>
-      <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
-        📝 Documentation in process
+      <span className="px-3 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-full text-sm font-medium">
+        📖 Documentation Available
       </span>
     </div>
   </div>
 </div>
-<div className="text-center mt-12 p-6 bg-gray-50 rounded-lg max-w-2xl mx-auto">
-  <h3 className="text-lg font-semibold mb-2">Need Help Getting Started?</h3>
-  <p className="text-gray-600">
-    The Linear connector is fully operational and ready for use. While we're finalizing the documentation, 
-    feel free to reach out to our support team for setup assistance.
+
+## Overview
+
+Linear is a modern issue tracking and project management platform designed for high-performance software teams. It provides streamlined workflows, keyboard-first design, and powerful integrations to help teams build products faster.
+
+### Linear Data Structure
+
+The connector understands Linear's hierarchical data model:
+
+- **Teams**
+  - **Issues**
+    - Comments
+    - Attachments (external links)
+    - Documents
+    - Files (embedded in descriptions/comments)
+  - **Projects**
+    - Content, Milestones & Updates
+    - External Links
+    - Documents
+
+| Entity | Description |
+|--------|-------------|
+| **Teams** | Workspaces that organize issues and projects (e.g., Engineering, Design, Product) |
+| **Issues** | Work items belonging to a team - bugs, features, tasks, and improvements |
+| **Projects** | Collections of related issues with milestones and progress tracking (can span multiple teams) |
+| **Comments** | Discussion threads attached to issues or projects |
+| **Attachments** | External links attached to issues |
+| **Documents** | Linear documents linked to issues and projects |
+| **Files** | Images and files embedded in issue descriptions and comments |
+| **Users** | Team members with their profiles and email addresses |
+
+### What Gets Synced
+
+The connector indexes the following content for AI-powered search:
+
+- **Issue Content**: Title, description (Markdown), status, priority, labels, and identifiers (e.g., ENG-123)
+- **Issue Metadata**: Assignee, creator, created/updated dates, state, and type
+- **Comments**: Full comment threads with author information
+- **Attachments**: External links attached to issues
+- **Documents**: Linear documents with full content
+- **Files**: Images and files extracted from issue descriptions and comments
+- **Projects**: Project content, milestones, updates, and external links
+- **Permissions**: Team-level access controls are preserved
+
+---
+
+## Configuration Guide
+
+<AccordionGroup type="single" collapsible>
+
+<Accordion title="Setup" icon="gear">
+
+<div className="mt-4">
+
+## Getting Started
+
+The Linear connector provides access to your organization's Linear workspace through OAuth 2.0 authentication. It syncs teams, projects, issues, comments, attachments, documents, and user information, enabling comprehensive issue tracking search and access across your Linear content.
+
+### Authentication Method
+
+The Linear connector uses **OAuth 2.0** for secure authentication. This allows users to authorize the connector to access Linear data on their behalf while maintaining control over permissions through Linear's OAuth scopes.
+
+<Info>
+  OAuth 2.0 is the recommended authentication method by Linear. It provides secure, token-based access with automatic refresh token support for continuous synchronization.
+</Info>
+
+## How to configure and enable the Linear Connector
+
+### Step 1: Access Linear API Settings
+
+1. **Navigate to Linear Settings:**  
+   Go to [linear.app/settings/api](https://linear.app/settings/api) and sign in with your Linear account that has administrator access to your workspace.
+
+2. **View Your Applications:**
+   You'll see the "API" settings page where you can create and manage OAuth 2.0 applications.
+
+<div className="text-center">
+  <img
+    src="/images/connectors/linear/api_settings.png"
+    alt="Linear API Settings Page"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+<Info>
+  It is recommended to create a dedicated workspace for managing OAuth2 applications, as each admin user will have access to the application credentials.
+</Info>
+
+### Step 2: Create a New OAuth 2.0 Application
+
+1. Click on **"OAuth applications"** in the left sidebar under the API section
+2. Click **"Create new"** or **"New OAuth application"** button
+3. Fill in the application details:
+   - **Application name**: Enter a meaningful name (e.g., "PipesHub Linear Connector")
+   - **Description**: Optional description of the application
+   - **Developer name**: Your name or organization name
+   - **Developer URL**: Your website URL (optional)
+
+<div className="text-center">
+  <img
+    src="/images/connectors/linear/create_oauth_app.png"
+    alt="Create OAuth 2.0 Application Form"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+4. Click **"Create"** to proceed
+
+<Info>
+  OAuth 2.0 applications created from October 1, 2025 onwards have refresh tokens enabled by default. Access tokens are valid for 24 hours and are automatically refreshed.
+</Info>
+
+### Step 3: Configure Redirect URI
+
+1. After creating the application, you'll be taken to the application settings page
+2. **Set the Redirect Callback URL:**
+   - You need to enter the redirect URI provided by PipesHub
+   - To get this URL, open PipesHub in another tab, navigate to **Settings** → **Connectors**, find the **Linear** connector, and click **"Configure"**
+   - Copy the **Redirect URI** shown in the configuration dialog:
+
+<div className="text-center">
+  <img
+    src="/images/connectors/linear/linear_config.png"
+    alt="PipesHub Linear Configuration - Copy Redirect URI"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+3. Paste the copied Redirect URI into the **Redirect callback URLs** field in Linear
+4. Click **"Save"** to save the changes
+
+<div className="text-center">
+  <img
+    src="/images/connectors/linear/add_callback_url.png"
+    alt="Add Callback URL in Linear"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+<Warning>
+  The callback URL must match exactly between Linear and PipesHub configuration. Any mismatch will cause authentication to fail.
+</Warning>
+
+### Step 4: Get OAuth 2.0 Credentials
+
+1. On the application settings page, locate the **OAuth credentials** section
+2. Copy the following credentials:
+   - **Client ID**: Your application's unique identifier
+   - **Client Secret**: Your application's secret key (click to reveal and copy)
+
+<div className="text-center">
+  <img
+    src="/images/connectors/linear/oauth_credentials.png"
+    alt="OAuth 2.0 Credentials"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+<Warning>
+  Store the Client ID and Client Secret securely. The secret can be regenerated if needed, but you'll need to update your PipesHub configuration with the new value. Rotating the client secret will also invalidate any existing client credentials tokens.
+</Warning>
+
+### Step 5: Configure Connector in PipesHub
+
+1. Return to the PipesHub Linear configuration dialog (if you closed it, navigate to **Settings** → **Connectors** and click **"Configure"** on the Linear connector)
+2. The configuration dialog has two steps:
+   - **Step 1: Authentication** - Enter OAuth credentials
+   - **Step 2: Sync Settings** - Configure synchronization
+
+3. Verify the **Redirect URI** displayed matches the callback URL you configured in Linear (Step 3)
+
+4. Enter your OAuth 2.0 credentials:
+   - **Client ID**: From Step 4
+   - **Client Secret**: From Step 4
+
+<div className="text-center">
+  <img
+    src="/images/connectors/linear/connector_add_creds.png"
+    alt="Enter OAuth Credentials in PipesHub"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+5. Click **"Save Auth Settings"** to save authentication settings
+
+### Step 6: Authorize the Connection
+
+1. After saving the configuration, click **"Authenticate"** from the Quick Actions panel
+2. You'll be redirected to Linear's authorization page
+3. Review the permissions being requested by the connector:
+   - **read**: Read access for your account data (always present)
+   - **write**: Write access for your account data
+
+<div className="text-center">
+  <img
+    src="/images/connectors/linear/oauth_consent.png"
+    alt="Linear OAuth Consent Screen"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+4. Click **"Authorize"** or **"Allow"** to grant access
+
+<Info>
+  The connector requests `read` and `write` scopes. The `read` scope is required for syncing data, while `write` scope may be needed for certain API operations. The connector itself does not create, modify, or delete any Linear data.
+</Info>
+
+5. You'll be redirected back to PipesHub with a success message
+6. The connector status will update to show **"Authenticated"**
+
+<div className="text-center">
+  <img
+    src="/images/connectors/linear/connector_authenticated.png"
+    alt="Connector Authenticated Status"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+### Step 7: Enable and Configure the Connector
+
+1. After successful authentication, click **"Enable Sync"** to activate the connector
+2. A configuration dialog will appear with two sections:
+   - **Filters** - Control what data is synced
+   - **Sync Settings** - Configure synchronization schedule
+
+<div className="text-center">
+  <img
+    src="/images/connectors/linear/enable_connector.png"
+    alt="Enable Linear Connector"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+#### Sync Filters
+
+Sync filters determine which content is downloaded from Linear. Data excluded by sync filters is never downloaded.
+
+<div className="text-center">
+  <img
+    src="/images/connectors/linear/linear-filters.png"
+    alt="Linear Filters Configuration"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+**Available Sync Filters:**
+
+1. **Teams** - Filter issues and projects by team
+   - **Operator**: `In` (include only) or `Not In` (exclude)
+   - **Selection**: Choose from a **searchable dropdown list** of all your Linear teams
+   - The dropdown displays team names (e.g., "Engineering", "Design", "Product")
+   - Type to search and filter teams by name
+   - Select multiple teams as needed
+   - Leave empty to sync all teams
+
+<Info>
+  The team list is dynamically fetched from your Linear workspace. You don't need to manually enter team IDs - simply search and select from the dropdown.
+</Info>
+
+2. **Modified Date** - Filter by last modification date
+   - **Operators**: `Is After`, `Is Before`, or `Is Between`
+   - **Use case**: Sync only recently updated issues (e.g., issues modified in the last 6 months)
+
+3. **Created Date** - Filter by creation date
+   - **Operators**: `Is After`, `Is Before`, or `Is Between`
+   - **Use case**: Sync only newly created issues or exclude legacy tickets
+
+#### Indexing Filters
+
+Indexing filters control what synced data gets processed for AI search. All data is synced, but only enabled content types are indexed.
+
+**Available Indexing Filters:**
+
+- **Issues Section:**
+  - **Index Issues** (default: enabled) - Include issue content in search
+  - **Index Issue Comments** (default: enabled) - Include comments in search
+  - **Index Issue Attachments** (default: enabled) - Include external link attachments in search
+  - **Index Issue Documents** (default: enabled) - Include Linear documents in search
+  - **Index Issue Files** (default: enabled) - Include files extracted from issue descriptions and comments
+
+- **Projects Section:**
+  - **Index Projects** (default: enabled) - Include project content, milestones, and updates in search
+
+**Example Configurations:**
+
+- **Sync only Engineering team**: Teams → Operator: `In`, select "Engineering" from dropdown
+- **Exclude archived teams**: Teams → Operator: `Not In`, select archived teams from dropdown
+- **Recent issues only**: Modified Date → Operator: `Is After`, Date: `2024-06-01`
+- **Index issues but not attachments**: Disable "Index Issue Attachments" toggle
+- **Index everything except files**: Disable "Index Issue Files" toggle
+
+<Info>
+  Filters can be configured during initial setup or modified later. Changes to filters will take effect on the next sync.
+</Info>
+
+#### Sync Settings
+
+Configure your synchronization preferences:
+
+1. **Sync Strategy**: Choose between "Scheduled" or "Manual"
+2. **Sync Interval**: Choose how often to sync (default: 60 minutes)
+
+<div className="text-center">
+  <img
+    src="/images/connectors/linear/connector_configure_sync_strategy.png"
+    alt="Configure Sync Strategy"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+<Note>
+  **Scheduled sync** runs automatically at the specified intervals, keeping your data up-to-date without manual intervention. **Manual sync** requires you to trigger synchronization on-demand.
+</Note>
+
+#### Save and Activate
+
+1. Click **"Save"** to save your configuration and enable the connector
+2. The connector will verify credentials and begin initial synchronization
+3. Wait for the status to show **"Active"** or **"Syncing"**
+4. Monitor the **Indexing Progress** to track sync completion
+
+## Supported Features
+
+The Linear connector syncs the following data from your Linear workspace:
+
+- **Teams**: All accessible teams with their configurations and privacy settings
+- **Projects**: Full project content including milestones, updates, and external links
+- **Issues**: Full issue content including title, description (Markdown), status, priority, and labels
+- **Comments**: All comments on issues with author information
+- **Attachments**: External links attached to issues
+- **Documents**: Linear documents linked to issues and projects
+- **Files**: Images and files extracted from issue descriptions and comments (from uploads.linear.app)
+- **Users**: User profiles and account information
+- **Permissions**: Team-level access controls (public vs. private teams)
+
+## Permission Model
+
+Linear uses a team-based permission model:
+
+| Team Type | Permission Behavior |
+|-----------|---------------------|
+| **Public Teams** | All organization members can view team content |
+| **Private Teams** | Only team members can view team content |
+
+The connector preserves these permissions:
+- For **public teams**, content is visible to all organization users in PipesHub
+- For **private teams**, content is only visible to team members in PipesHub
+
+## Useful Links
+
+- **Linear API Settings**: [linear.app/settings/api](https://linear.app/settings/api)
+- **OAuth 2.0 Documentation**: [linear.app/developers/oauth-2-0-authentication](https://linear.app/developers/oauth-2-0-authentication)
+- **Linear GraphQL API**: [linear.app/developers/graphql](https://linear.app/developers/graphql)
+- **Linear API Reference**: [studio.apollographql.com/public/Linear-API](https://studio.apollographql.com/public/Linear-API/schema/reference?variant=current)
+
+</div>
+
+</Accordion>
+
+</AccordionGroup>
+
+## Troubleshooting
+
+<AccordionGroup>
+
+<Accordion title="Troubleshooting" icon="circle-exclamation">
+
+### Common Issues
+
+**Invalid client credentials error:**
+- Verify Client ID and Client Secret are correct
+- Ensure you copied the full values without extra spaces
+- Check that the OAuth app is active in Linear API settings
+- Regenerate the secret if necessary and update PipesHub
+
+**Callback URL mismatch error:**
+- Ensure the Redirect URI in PipesHub exactly matches the callback URL in Linear
+- Check for trailing slashes or protocol differences (http vs https)
+- Update both configurations to use the same URL
+
+**Authorization failed:**
+- Verify you're signing in with an account that has Linear access
+- Ensure you have the necessary permissions in your Linear workspace
+- Check that the OAuth application is properly configured
+
+**No data syncing:**
+- Verify the connector status shows "Active"
+- Check that the authenticating user has access to Linear teams
+- Ensure teams are not archived or restricted
+- Review sync logs for specific error messages
+
+**Token expired or sync stopped:**
+- OAuth 2.0 access tokens expire after 24 hours but are automatically refreshed
+- If refresh fails, disable and re-enable the connector to re-authenticate
+- Check if the OAuth app is still active in Linear API settings
+
+**Permission denied for specific issues:**
+- Verify the authenticating user has access to the team containing the issues
+- Check team privacy settings (public vs. private) in Linear
+- Ensure the user is a member of private teams
+
+**Missing comments or attachments:**
+- Verify indexing filters are enabled for comments and attachments
+- Check that the user has permission to view comments/attachments
+- Ensure the content exists on the issues
+
+**Files not appearing:**
+- Only files from Linear's upload service (uploads.linear.app) are extracted
+- External file URLs from other services are not indexed
+- Check that "Index Issue Files" filter is enabled
+
+<Warning>
+  If you modify OAuth application settings in Linear (Client ID, Secret, or callback URL), you must update the configuration in PipesHub and re-authorize the connection.
+</Warning>
+
+</Accordion>
+
+</AccordionGroup>
+
+## Connector Workflow
+
+<AccordionGroup>
+
+<Accordion title="Synchronization Process" icon="sync">
+
+The Linear connector follows a structured synchronization process to ensure all data is accurately synced and permissions are properly maintained.
+
+### Sync Overview
+
+The connector executes a complete synchronization cycle in a specific order:
+
+| Step | Function | Data Synced | Purpose |
+|------|----------|-------------|---------|
+| 1 | `_fetch_users()` | Users | Sync all Linear users with their profiles |
+| 2 | `_fetch_teams()` | Teams | Sync teams as both UserGroups and RecordGroups |
+| 3 | `_sync_issues_for_teams()` | Issues | Sync issues, comments, and files per team |
+| 4 | `_sync_attachments()` | Attachments | Sync issue attachments (external links) |
+| 5 | `_sync_documents()` | Documents | Sync Linear documents |
+| 6 | `_sync_projects_for_teams()` | Projects | Sync projects with milestones and updates |
+| 7 | `_sync_deleted_issues()` | Deletions | Detect and remove deleted/archived issues |
+| 8 | `_sync_deleted_projects()` | Deletions | Detect and remove deleted/archived projects |
+
+### Full Sync vs Incremental Sync
+
+The connector automatically determines whether to perform a full or incremental sync:
+
+**Full Sync** occurs when:
+- First-time synchronization (no sync checkpoint exists)
+- Sync filters have been modified since last sync
+- Manual full sync is triggered
+
+**Incremental Sync** occurs when:
+- A valid sync checkpoint exists
+- Filters haven't changed
+- Uses `updatedAt` timestamps to fetch only changes since last sync
+
+### User & Team Synchronization
+
+1. **User Fetch**: Retrieves all users from Linear with their IDs, emails, and display names
+2. **Team Sync**: Fetches all teams and creates dual structures:
+   - **UserGroups**: Track WHO is in each team (membership management)
+   - **RecordGroups**: Track WHAT each team contains (issues/content organization)
+3. **Permission Mapping**: Creates team-based permissions respecting public/private settings
+
+### Issue Synchronization
+
+For each team, the connector:
+
+1. **Applies Filters**: Constructs query with date filters and team scope
+2. **Batched Fetching**: Retrieves issues in batches (default: 50 per request)
+3. **Content Processing**: 
+   - Parses issue description (Markdown format)
+   - Extracts metadata (status, priority, assignee, etc.)
+   - Extracts identifier (e.g., ENG-123)
+4. **Comment Sync**: Fetches and indexes all comments if enabled
+5. **File Extraction**: Extracts images and files from issue descriptions and comments
+6. **Permission Assignment**: Applies team-level permissions
+
+### Attachment & Document Synchronization
+
+The connector syncs attachments and documents separately because:
+- Linear doesn't update `issue.updatedAt` when attachments/documents are added
+- This ensures new attachments are captured even if the parent issue wasn't updated
+
+### Project Synchronization
+
+For each team, the connector:
+
+1. **Applies Filters**: Uses `accessibleTeams` filter for team scope
+2. **Content Processing**:
+   - Project content (Markdown) → Text blocks
+   - Project comments → BlockComments
+   - Project milestones → Text blocks with metadata
+   - Project updates → Text blocks
+3. **External Links**: Processes project external links as LinkRecords
+4. **Project Documents**: Processes project documents as WebpageRecords
+
+### Deletion Detection
+
+The connector uses Linear's `archivedAt` timestamp to detect deleted/trashed content:
+
+1. Queries for issues/projects with `trash: { isNull: false }` since last sync
+2. Identifies deleted issue/project IDs from archived records
+3. Removes corresponding records from the index
+4. Cascades deletion to associated comments, attachments, and files
+
+### Checkpoint Management
+
+After each successful sync:
+- Stores the latest `updatedAt` timestamp as checkpoint per team
+- Separate checkpoints for issues, attachments, documents, and projects
+- Per-team checkpoints enable resumable syncs on failures
+
+</Accordion>
+
+</AccordionGroup>
+
+---
+
+## FAQ
+
+<AccordionGroup>
+
+<Accordion title="How long does the initial sync take?">
+  The initial sync duration depends on the size of your Linear workspace:
+  
+  | Workspace Size | Estimated Time |
+  |----------------|----------------|
+  | Small (< 1,000 issues) | 5-15 minutes |
+  | Medium (1,000 - 10,000 issues) | 15-45 minutes |
+  | Large (10,000 - 50,000 issues) | 1-3 hours |
+  | Enterprise (50,000+ issues) | 3+ hours |
+  
+  **Tip**: Use team filters to sync only the teams you need, significantly reducing initial sync time.
+</Accordion>
+
+<Accordion title="What OAuth scopes does the connector require?">
+  The Linear connector requests the following OAuth scopes:
+  
+  | Scope | Description |
+  |-------|-------------|
+  | `read` | Read access for your account data (required - always present) |
+  | `write` | Write access for your account data |
+  
+  <Note>
+    While the `write` scope is requested, the connector does **not** create, modify, or delete any Linear data. These permissions are requested to satisfy API requirements for certain read operations.
+  </Note>
+</Accordion>
+
+<Accordion title="Does the connector support real-time sync?">
+  **Not currently**. The connector uses scheduled polling-based synchronization rather than real-time webhooks. Incremental syncs occur at the configured interval (default: 60 minutes) to capture changes.
+</Accordion>
+
+<Accordion title="Can I sync specific projects only?">
+  Currently, the connector does not support filtering by specific projects. You can filter by:
+  - **Teams**: Sync only specific teams
+  - **Modified Date**: Sync only recently modified content
+  - **Created Date**: Sync only recently created content
+  
+  Since projects belong to teams, filtering by team will effectively filter the associated projects as well.
+</Accordion>
+
+</AccordionGroup>
+
+---
+
+<div className="text-center mt-12 p-6 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg max-w-2xl mx-auto">
+  <h3 className="text-lg font-semibold mb-2">Ready to Get Started?</h3>
+  <p className="text-gray-600 dark:text-gray-400">
+    Connect your Linear workspace to PipesHub in just a few minutes. Follow the step-by-step guide above to enable organization-wide issue tracking search across all your Linear content.
   </p>
 </div>

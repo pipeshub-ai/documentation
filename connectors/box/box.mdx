@@ -195,7 +195,7 @@ This guide will walk you through the process of creating a Box application and c
 
 ### Step 1: Configure Connection
 
-1. Open your PipesHub application and navigate to **Connections Settings**.
+1. Open your PipesHub application and navigate to **Connection Settings**.
 
 2. Select **Box** from the list of available data sources.
 
@@ -376,7 +376,7 @@ Record groups sync operates as a full sync, re-processing all active users to en
 
 2. **Folder Traversal:** For each user, starts from their root folder (ID: 0) and recursively traverses the entire folder tree.
 
-3. **Incremental Detection:** Each folder maintains its own sync cursor, enabling efficient incremental updates.
+3. **Change Detection:** During full sync, the connector recursively fetches all items. For incremental sync, it uses the Box Enterprise Event Stream to detect changes.
 
 ### Detailed Process
 
@@ -412,11 +412,9 @@ Record groups sync operates as a full sync, re-processing all active users to en
    - `data_entities_processor.on_record_content_update` - For modifications
    - `data_entities_processor.on_record_metadata_update` - For metadata changes
 
-6. **Cursor Management:** After each folder sync, saves the folder's cursor for incremental updates.
-
 #### Incremental Sync
 
-Uses the Box Enterprise Event Stream to efficiently process only changes:
+Box uses a **global Enterprise Event Stream** with a single `stream_position` cursor for all incremental sync operations:
 
 1. **Event Listening:** Monitors event stream for file/folder activities:
    - `FILE.UPLOADED`
@@ -443,7 +441,7 @@ Uses the Box Enterprise Event Stream to efficiently process only changes:
 
 6. **Deletion Handling:** Processes deletion events by marking records as deleted in the database.
 
-7. **Cursor Update:** Saves new stream position after processing all events.
+7. **Stream Position Update:** After processing all events, saves the new `stream_position` cursor for the next incremental sync cycle. This single cursor tracks the state of the entire enterprise event stream, not individual folders.
 
 ---
 
@@ -582,8 +580,7 @@ The connector automatically determines the optimal sync approach:
 ### Sync Strategy
 
 - **Use Incremental Sync:** After initial setup, rely on incremental syncs for efficiency
-- **Schedule Appropriately:** Set sync intervals based on your team's activity patterns
-- **Schedule Wisely:** Run scheduled syncs during off-peak hours for large datasets
+- **Schedule Syncs Wisely:** Set sync intervals based on your team's activity patterns. For large datasets, consider running scheduled syncs during off-peak hours
 
 ### Filter Configuration
 

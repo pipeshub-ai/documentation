@@ -3,12 +3,7 @@ title: "Box"
 description: "Enterprise cloud storage and collaboration connector"
 icon: "/logo/box.png"
 ---
-<div className="flex flex-col items-center justify-center text-center pt-10">
-  <h1 className="text-4xl font-bold">✅ Box Connector Ready</h1>
-  <h3 className="text-xl mt-2">
-    Connector is live and ready to use. Documentation in process!
-  </h3>
-</div>
+
 <div className="max-w-2xl mx-auto mt-12">
   <div className="p-6 border rounded-lg bg-blue-50">
     <div className="flex items-center mb-4">
@@ -17,7 +12,7 @@ icon: "/logo/box.png"
         alt="Box Logo" 
         className="w-8 h-8 mr-3 object-contain flex-shrink-0"
       />
-      <h2 className="text-2xl font-semibold m-0"> Box</h2>
+      <h2 className="text-2xl text-indigo-800 font-semibold m-0"> Box</h2>
     </div>
     <p className="text-lg text-gray-700 mb-4">Enterprise cloud storage and collaboration</p>
     <div className="flex items-center gap-2">
@@ -25,15 +20,580 @@ icon: "/logo/box.png"
         ✅ Ready
       </span>
       <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
-        📝 Documentation in process
+        📚 Documentation Available
       </span>
     </div>
   </div>
 </div>
-<div className="text-center mt-12 p-6 bg-gray-50 rounded-lg max-w-2xl mx-auto">
-  <h3 className="text-lg font-semibold mb-2">Need Help Getting Started?</h3>
-  <p className="text-gray-600">
-    The Box connector is fully operational and ready for use. While we're finalizing the documentation, 
-    feel free to reach out to our support team for setup assistance.
-  </p>
-</div>
+
+## Overview
+
+Box is an enterprise-grade cloud content management and file sharing service. It provides secure collaboration, workflow automation, and content sharing capabilities designed for businesses of all sizes.
+
+---
+
+## Configuration Guide
+
+<AccordionGroup>
+
+<Accordion title="Understanding Box API" icon="info">
+
+### Box Platform Architecture
+
+Box provides a comprehensive platform for content management and collaboration. The Box API allows applications to interact with files, folders, users, groups, and collaboration features programmatically.
+
+**Enterprise Access** is required for full team management capabilities. The Box connector uses OAuth 2.0 with Client Credentials Grant (CCG) to access enterprise resources.
+
+### APIs Documentation
+
+- **Box Platform API:** [https://developer.box.com/reference/](https://developer.box.com/reference/)
+
+- **Box Authentication Guide:** [https://developer.box.com/guides/authentication/](https://developer.box.com/guides/authentication/)
+
+- **Box Enterprise Events:** [https://developer.box.com/guides/events/enterprise-events/](https://developer.box.com/guides/events/enterprise-events/)
+
+### Concept of Event Stream
+
+The **Enterprise Event Stream** is Box's real-time change tracking mechanism that allows applications to monitor all activities across an enterprise account.
+
+When you first access the event stream, Box provides a **stream_position** (similar to a cursor). This position represents a specific point in time within your enterprise's event history.
+
+Instead of repeatedly fetching all files and folders to check for changes, you can use this stream_position to retrieve only events that occurred since your last sync. The API returns activities like file uploads, deletions, moves, sharing changes, and collaboration updates. This makes incremental syncing highly efficient as you only process what has changed.
+
+### Upcoming Features
+
+The following features are currently under development and will be available in future releases:
+
+- **Box Notes:** Native Box Notes content extraction and indexing
+- **Comments:** File and folder comment thread synchronization
+
+</Accordion>
+
+<Accordion title="Create Box App" icon="rocket">
+
+This guide will walk you through the process of creating a Box application and connecting it to PipesHub to sync your enterprise files, folders, users, and permissions.
+
+### Box Enterprise Account
+
+#### Step 1: Create a Box Application
+
+1. Navigate to the [Box Developer Console](https://app.box.com/developers/console) and sign in with your Box admin credentials.
+
+2. Click the **Create New App** button.
+
+3. Configure your new app with the following settings:
+   - **Select App Type:** Choose **Custom App**.
+   - **Authentication Method:** Select **OAuth 2.0 with Client Credentials Grant**.
+   - **Name your app:** Enter a unique name for your application, for example, "PipesHub Connector".
+
+
+<img
+    src="/images/connectors/box/b7.png"
+    alt="Box Create App Button"
+    style={{ display: 'block', margin: '0 auto' }}
+    width="90%"
+  />
+
+<img
+    src="/images/connectors/box/b6.png"
+    alt="Box Select CCG Authentication"
+    style={{ display: 'block', margin: '0 auto' }}
+    width="90%"
+  />
+
+4. Click **Create App**. You will be redirected to your new app's configuration page.
+
+#### Step 2: Configure Application Settings
+
+1. On your app's **Configuration** page, scroll to the **Application Scopes** section.
+
+2. Enable the following scopes that PipesHub needs:
+   - **Content Actions:**
+     - Read all files and folders stored in Box
+     - Write all files and folders stored in Box
+   - **Administrative Actions:**
+     - Manage users
+     - Manage groups
+     - Manage enterprise properties
+
+<img
+    src="/images/connectors/box/b5.png"
+    alt="Box Application Scopes"
+    style={{ display: 'block', margin: '0 auto' }}
+    width="90%"
+  />
+
+3. Under **Advanced Features**, enable:
+   - **Perform actions as users**
+
+<img
+    src="/images/connectors/box/b1.png"
+    alt="Box Advanced Features - As-User Header"
+    style={{ display: 'block', margin: '0 auto' }}
+    width="90%"
+  />
+
+4. In the **App Access Level** section, select **App + Enterprise Access**.
+
+<img
+    src="/images/connectors/box/b4.png"
+    alt="Box App Access Level"
+    style={{ display: 'block', margin: '0 auto' }}
+    width="90%"
+  />
+
+#### Step 3: Get Application Credentials
+
+1. In the **OAuth 2.0 Credentials** section:
+   - Note your **Client ID**
+   - Click **Fetch Client Secret** to reveal your **Client Secret**
+   - Copy both values for later use
+
+2. Find your **Enterprise ID**:
+   - Go to your Box Admin Console
+   - Navigate to **General Settings** → **App Info**
+   - Copy your **Enterprise ID**
+
+<img
+    src="/images/connectors/box/b2.png"
+    alt="Box Enterprise ID"
+    style={{ display: 'block', margin: '0 auto' }}
+    width="90%"
+  />
+
+#### Step 4: Admin Authorization
+
+1. As an admin, approve the app:
+   - Go to the [Admin Console](https://app.box.com/master/settings/apps)
+   - Navigate to **Apps** → **Custom Apps**
+   - Find your application and click **Authorize**
+
+<img
+    src="/images/connectors/box/a1.png"
+    alt="Box Admin Console - Custom Apps"
+    style={{ display: 'block', margin: '0 auto' }}
+    width="90%"
+  />
+
+<img
+    src="/images/connectors/box/a2.png"
+    alt="Box Admin Console - Custom Apps"
+    style={{ display: 'block', margin: '0 auto' }}
+    width="90%"
+  />
+
+<img
+    src="/images/connectors/box/a3.png"
+    alt="Box Authorize Application"
+    style={{ display: 'block', margin: '0 auto' }}
+    width="90%"
+  />
+
+</Accordion>
+
+<Accordion title="Connect Box to PipesHub" icon="plug">
+
+### Step 1: Configure Connection
+
+1. Open your PipesHub application and navigate to **Connection Settings**.
+
+2. Select **Box** from the list of available data sources.
+
+3. Enter the required credentials:
+   - **Client ID:** Paste the Application (Client) ID from Box Developer Console
+   - **Client Secret:** Paste the Client Secret from Box Developer Console
+   - **Enterprise ID:** Paste your Box Enterprise ID
+
+<img
+    src="/images/connectors/box/t1.png"
+    alt="Box PipesHub Connection Configuration"
+    style={{ display: 'block', margin: '0 auto' }}
+    width="90%"
+  />
+
+### Step 2: Set Sync Strategy
+
+Click **Next** to configure your sync strategy:
+
+- **Manual:** Trigger syncs manually when needed
+- **Scheduled:** Automatically run syncs at regular intervals (15 min, 30 min, 1 hr, 4 hr, etc.)
+
+You can also configure the **Batch Size** (how many items to sync at once). The default is 100 items per batch.
+
+<img
+    src="/images/connectors/box/t2.png"
+    alt="Box Sync Strategy Configuration"
+    style={{ display: 'block', margin: '0 auto' }}
+    width="90%"
+  />
+
+### Step 3: Configure Filters (Optional)
+
+Set up file filters to control what content gets synced:
+
+- **File Extensions:** Limit sync to specific file types (e.g., `.pdf`, `.docx`, `.xlsx`)
+
+<img
+    src="/images/connectors/box/t3.png"
+    alt="Box File Extension Filters"
+    style={{ display: 'block', margin: '0 auto' }}
+    width="90%"
+  />
+
+### Step 4: Enable Connection
+
+1. Click **Save Configuration**.
+
+2. Click **Enable** to activate the connector.
+
+3. Your Box enterprise content will start syncing based on your configured strategy.
+
+</Accordion>
+
+</AccordionGroup>
+
+---
+
+## Connector Workflow
+
+<AccordionGroup>
+
+<Accordion title="Synchronization Process" icon="sync">
+
+### How Does Box Connector Work?
+
+The `BoxConnector` is a concrete implementation that inherits from `BaseConnector`. It implements the following core methods:
+
+- `init` - Initialize Box client with credentials
+- `test_connection_and_access` - Verify connectivity and permissions
+- `get_signed_url` - Generate temporary download URLs
+- `stream_record` - Stream file content
+- `run_sync` - Execute full or smart synchronization
+- `run_incremental_sync` - Process only changes since last sync
+- `cleanup` - Clean up resources
+- `create_connector` - Factory method for connector creation
+
+### Box Connector Initialization
+
+The Box sync workflow operates in the following sequence:
+
+**`run_sync`** - Smart Sync that synchronizes 4 main entities:
+
+1. **Users** - Enterprise users and their profiles
+2. **User Groups** - Enterprise groups and memberships
+3. **Record Groups** - Root folders (user drives)
+4. **Files and Folders** - Complete file hierarchy for all users
+
+Each workflow component has an **Incremental mode** that fetches only events occurring since the last sync. The connector maintains sync state using **cursors** stored in sync points:
+
+- `box_cursor_sync_point` - For file/folder events
+- `user_sync_point` - For user changes
+- `user_group_sync_point` - For group changes
+
+**If no cursor exists for an entity, the connector performs a full sync.**
+
+---
+
+## User Sync Workflow
+
+Users are fetched from Box Enterprise API and converted to `AppUser` entities.
+
+### First Sync
+
+1. **Fetch All Users:** Retrieves complete user list from Box Enterprise using pagination.
+
+2. **Process User Data:** Converts Box user objects to `AppUser` format with profile information.
+
+3. **Batch Submission:** Sends all users to `data_entities_processor.on_new_app_users`.
+
+4. **Initialize Cursor:** Saves initial sync point for future incremental syncs.
+
+### Incremental Sync
+
+User sync currently operates as a full sync on each run. The connector fetches all active users from Box Enterprise and updates their status in PipesHub. Users marked as inactive in Box will be reflected accordingly in the system.
+
+---
+
+## User Group Sync Workflow
+
+### Full Sync (Initial Run)
+
+A full sync executes when no cursor exists:
+
+1. **Fetch All Groups:** Retrieves complete list of enterprise groups from Box API with pagination.
+
+2. **Fetch Group Memberships:** For each group, fetches all members and their roles.
+
+3. **Process Permissions:** Maps Box group roles to PipesHub permission types (Admin, Member).
+
+4. **Batch Processing:** Collects all groups and memberships into a single batch.
+
+5. **Submit to Processor:** Sends the complete batch to `data_entities_processor.on_new_user_groups`.
+
+### Incremental Sync
+
+Once a cursor is established, incremental sync processes only new events:
+
+1. **Fetch Events:** Retrieves group-related events from Enterprise Event Stream since last sync.
+
+2. **Process Changes:** Handles various event types:
+   - Group creation and deletion
+   - Group name changes
+   - Membership additions and removals
+   - Role/permission updates
+
+3. **Update State:** Saves the new cursor position for next sync cycle.
+
+4. **Reconciliation:** Periodically validates that all Box groups exist in the database and removes orphaned entries.
+
+---
+
+## Record Groups Sync Workflow
+
+Record Groups in Box represent user "drives" - the root "All Files" folder (ID: 0) for each user.
+
+### Full Sync
+
+1. **Fetch Active Users:** Retrieves list of all active enterprise users.
+
+2. **Create Record Groups:** For each user, creates a `RecordGroup` representing their root folder.
+
+3. **Set Permissions:** Assigns OWNER permission to each user for their own drive.
+
+4. **Batch Submission:** Sends all record groups to the processor with full permission mappings.
+
+### Incremental Sync
+
+Record groups sync operates as a full sync, re-processing all active users to ensure record groups are up-to-date.
+
+---
+
+## Files and Folders Sync Workflow
+
+### Workflow Overview
+
+1. **User Processing:** The connector processes users sequentially to avoid API conflicts when using "As-User" impersonation.
+
+2. **Folder Traversal:** For each user, starts from their root folder (ID: 0) and recursively traverses the entire folder tree.
+
+3. **Change Detection:** During full sync, the connector recursively fetches all items. For incremental sync, it uses the Box Enterprise Event Stream to detect changes.
+
+### Detailed Process
+
+#### Initial Sync
+
+1. **Start from Root:** Begins at each user's root folder (All Files).
+
+2. **Recursive Fetch:** For each folder:
+   - Fetches folder contents using `client.folder(folder_id).get_items()`
+   - Processes files and subfolders
+   - Recursively descends into subfolders
+
+3. **Item Processing:** For each item:
+   - **Metadata Extraction:** Collects file/folder properties (name, size, timestamps, path, etag, sha1)
+   - **Permission Fetching:** Retrieves collaborations and sharing settings via `client.folder(id).get_collaborations()`
+   - **Conversion:** Maps Box permissions to PipesHub permission types:
+     - `owner` → OWNER
+     - `co-owner` → OWNER
+     - `editor` → WRITE
+     - `viewer uploader` → WRITE
+     - `previewer uploader` → WRITE
+     - `viewer` → READ
+     - `previewer` → READ
+
+4. **Change Detection:** Compares etag and modified timestamps with existing database records to identify:
+   - New files/folders
+   - Modified content
+   - Moved items
+   - Permission changes
+
+5. **Batch Processing:** Items are batched (default 100 per batch) and sent to:
+   - `data_entities_processor.on_new_records` - For new items
+   - `data_entities_processor.on_record_content_update` - For modifications
+   - `data_entities_processor.on_record_metadata_update` - For metadata changes
+
+#### Incremental Sync
+
+Box uses a **global Enterprise Event Stream** with a single `stream_position` cursor for all incremental sync operations:
+
+1. **Event Listening:** Monitors event stream for file/folder activities:
+   - `FILE.UPLOADED`
+   - `FILE.DELETED`
+   - `FILE.MOVED`
+   - `FILE.COPIED`
+   - `FOLDER.CREATED`
+   - `FOLDER.DELETED`
+   - `FOLDER.MOVED`
+   - `COLLABORATION.CREATED`
+   - `COLLABORATION.ACCEPTED`
+   - `COLLABORATION.REMOVED`
+
+2. **Event Deduplication:** Groups events by item ID to process each item only once per sync cycle.
+
+3. **Owner Impersonation:** Uses "As-User" header to fetch items on behalf of their owners, ensuring proper permission context.
+
+4. **Parent Folder Validation:** Before processing files, ensures all parent folders exist in the database, creating them recursively if needed.
+
+5. **Targeted Fetching:** For modified items:
+   - Fetches fresh metadata from Box API
+   - Re-processes permissions
+   - Updates database records
+
+6. **Deletion Handling:** Processes deletion events by marking records as deleted in the database.
+
+7. **Stream Position Update:** After processing all events, saves the new `stream_position` cursor for the next incremental sync cycle. This single cursor tracks the state of the entire enterprise event stream, not individual folders.
+
+---
+
+## Permission & Collaboration Sync
+
+Box permissions are managed through **collaborations** - explicit grants that give users or groups access to files and folders.
+
+### Permission Hierarchy
+
+1. **Direct Collaborations:** Explicit permissions set on individual items.
+
+2. **Inherited Permissions:** Permissions flow down from parent folders to children.
+
+3. **Group Memberships:** Users inherit permissions through group collaborations.
+
+4. **Public/Company Links:** Shared links can grant broader access.
+
+### Sync Process
+
+1. **Fetch Collaborations:** For each file/folder, retrieves all collaborations via API.
+
+2. **Map Accessible By:** Identifies who has access:
+   - Individual users
+   - User groups
+   - Organization-wide (company shared links)
+   - Public (external sharing)
+
+3. **Virtual Groups:** Creates system groups for special access types:
+   - `PUBLIC_ACCESS_GROUP` - For publicly shared items
+   - `ORGANIZATION_ACCESS_GROUP` - For company-wide shared items
+
+4. **Permission Updates:** When collaboration events occur:
+   - Fetches latest collaboration list
+   - Re-processes all permissions for the affected item
+   - Handles recursive permission removal when folder access is revoked
+
+5. **Recursive Revocation:** When a user loses access to a folder:
+   - Removes permissions from the folder
+   - Recursively removes permissions from all descendant files and folders
+   - Ensures access control consistency
+
+</Accordion>
+
+<Accordion title="File Filtering & Sync Optimization" icon="filter">
+
+### File Extension Filtering
+
+The Box connector supports filtering files by extension during sync:
+
+1. **Configuration:** Set allowed file extensions in connector settings (e.g., `.pdf`, `.docx`, `.xlsx`).
+
+2. **Filter Application:** Files are filtered during the sync process based on their extensions.
+
+3. **Folder Handling:** Folders are always synced regardless of filters to maintain proper hierarchy.
+
+### Batch Processing
+
+The connector uses intelligent batching to optimize performance:
+
+- **Batch Size:** Configurable (default 100 items)
+- **Concurrent Batches:** Processes multiple batches for different users in parallel
+- **Rate Limiting:** Respects Box API rate limits (50 requests per second)
+
+### Smart Sync Strategy
+
+The connector automatically determines the optimal sync approach:
+
+1. **No Cursor:** Performs full sync
+2. **Has Cursor:** Performs incremental sync using event stream
+3. **Cursor Expired:** Falls back to full sync and establishes new cursor
+
+</Accordion>
+
+</AccordionGroup>
+
+---
+
+## Troubleshooting
+
+<AccordionGroup>
+
+<Accordion title="Common Issues" icon="wrench">
+
+### Authentication Errors
+
+**Problem:** "Failed to fetch access token" or "Invalid credentials"
+
+**Solutions:**
+- Verify Client ID, Client Secret, and Enterprise ID are correct
+- Ensure the app has been authorized by your Box admin
+- Check that the app has not been deauthorized in Box Admin Console
+- Verify your enterprise account is active
+
+### Permission Errors
+
+**Problem:** "Insufficient permissions" or "Access denied"
+
+**Solutions:**
+- Ensure all required scopes are enabled in Box Developer Console
+- Verify "Perform actions as users" is enabled
+- Check that App Access Level is set to "App + Enterprise Access"
+- Re-authorize the application if scopes were changed
+
+### Sync Issues
+
+**Problem:** Files not appearing or sync taking too long
+
+**Solutions:**
+- Check the sync logs for specific errors
+- Verify users are active in Box
+- Ensure folders are not restricted by admin policies
+- Try triggering a manual full sync
+- Adjust batch size if processing large datasets
+
+### Rate Limiting
+
+**Problem:** "Rate limit exceeded" errors
+
+**Solutions:**
+- The connector has built-in rate limiting (50 req/s)
+- Increase sync interval for scheduled syncs
+- Contact Box support to request higher rate limits for your enterprise
+
+</Accordion>
+
+</AccordionGroup>
+
+---
+
+## Best Practices
+
+<AccordionGroup>
+
+<Accordion title="Optimization Tips" icon="lightbulb">
+
+### Sync Strategy
+
+- **Use Incremental Sync:** After initial setup, rely on incremental syncs for efficiency
+- **Schedule Syncs Wisely:** Set sync intervals based on your team's activity patterns. For large datasets, consider running scheduled syncs during off-peak hours
+
+### Filter Configuration
+
+- **Be Specific:** Only sync file types you need to index
+- **Exclude Large Files:** Consider excluding video and large binary files if not needed
+- **Review Regularly:** Audit your filters to ensure they match current needs
+
+### Monitoring
+
+- **Check Logs:** Regularly review sync logs for errors or warnings
+- **Monitor Performance:** Track sync duration and adjust batch size if needed
+- **Validate Data:** Periodically verify that critical files are being synced correctly
+
+</Accordion>
+
+</AccordionGroup>

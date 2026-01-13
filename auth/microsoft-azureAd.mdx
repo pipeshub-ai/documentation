@@ -1,26 +1,70 @@
 ---
-title: "Microsoft and Azure-Ad"
-description: "Configure how users authenticate and access the application thorugh microsoft and azure"
+title: "Microsoft and Azure AD"
+description: "Configure how users authenticate and access the application through Microsoft and Azure AD"
 icon: "microsoft"
 ---
 
-## Microsoft Authentication Allow users to sign in with their Microsoft
+## Microsoft Authentication
 
-accounts using OAuth 2.0. ### How It Works 1. User clicks "Sign in with
-Microsoft" 2. User is redirected to Microsoft's authentication page 3. After
-authenticating with Microsoft, user is returned to your application 4. System
-validates the Microsoft authentication token 5. Upon successful validation,
-access is granted ### Configuration To enable Microsoft authentication: 1.
-Register your application in the Microsoft Azure portal: - Sign in to the
-Azure portal - Navigate to Azure Active Directory - Register a new application
+Allow users to sign in with their Microsoft accounts using OAuth 2.0.
 
-- Configure platform settings (Web) - Note your Application (client) ID and
-  Client Secret 2. In your application: - Navigate to Authentication Settings -
-  Toggle on "Microsoft" - Enter Client ID and Client Secret - Configure redirect
-  URI (typically your-app-url/auth/microsoft/callback) - Click "Save" ### Best
-  Practices - Implement proper session management - Use state parameters to
-  prevent CSRF attacks - Validate all tokens server-side
-  <Info>
-    Microsoft authentication works well for organizations using Microsoft 365 or
-    with an existing Microsoft identity infrastructure.
-  </Info>
+### How It Works
+
+1. User clicks "Sign in with Microsoft"
+2. User is redirected to Microsoft's authentication page
+3. After authenticating with Microsoft, user is returned to the application
+4. Upon successful validation, access is granted
+
+### Configuration
+
+To enable Microsoft authentication:
+
+1. Register your application in the [Microsoft Azure Portal](https://portal.azure.com/):
+
+   - Sign in to the Azure portal
+   - Navigate to **Azure Active Directory** → **App registrations**
+   - Click **New registration**
+   - Enter a name for your application (e.g., "PipesHub login")
+   - Select the appropriate **Supported account types** based on your needs:
+     - **Single tenant**: Accounts in this organizational directory only
+     - **Multitenant**: Accounts in any organizational directory
+   - Under **Redirect URI**, select **Single-page application (SPA)** and enter your callback URL (e.g., `https://your-app-url/auth/microsoft/callback`)
+   - Click **Register**
+
+   <div style={{ textAlign: "center" }}>
+     <img
+       src="/images/auth/saml/microsoft/entra_app.png"
+       alt="Azure AD App Registration"
+       width="90%"
+     />
+   </div>
+
+   <Warning>
+     The Redirect URI in your Azure App Registration must match exactly with your application's callback URL (`your-app-url/auth/microsoft/callback`)
+     <Info>
+       For example - if your app is running on `https://play.pipeshub.com`, then the Redirect URI should be `https://play.pipeshub.com/auth/microsoft/callback` in Azure Portal.
+     </Info>
+   </Warning>
+
+2. After registration, note down the following from the **Overview** page:
+   - **Application (Client) ID**
+   - **Directory (Tenant) ID**
+
+3. In PipesHub:
+   - Navigate to **Authentication Settings**
+   - Toggle on **Microsoft**
+   - Enter the **Application (Client) ID** from your Azure app registration
+   - Enter the **Directory (Tenant) ID** from your Azure app registration
+   - Click **Save**
+
+   <div style={{ textAlign: "center" }}>
+     <img
+       src="/images/auth/saml/microsoft/pipeshub_microsoft_setup.png"
+       alt="PipesHub Microsoft Configuration Dialog"
+       width="90%"
+     />
+   </div>
+
+<Info>
+  Microsoft authentication works well for organizations using Microsoft 365 or with an existing Microsoft identity infrastructure.
+</Info>

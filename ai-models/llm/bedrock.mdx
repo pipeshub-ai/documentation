@@ -1,0 +1,182 @@
+---
+title: AWS Bedrock
+description: "Configure PipesHub Workplace AI to use AWS Bedrock models"
+---
+
+# AWS Bedrock Configuration
+
+![AWS Bedrock Configuration Interface](/images/ai-models/Bedrock_LLMConfig.png)
+
+*The AWS Bedrock configuration screen in PipesHub where you'll enter your AWS credentials, region, model name, and provider settings*
+
+PipesHub allows you to integrate with AWS Bedrock's foundation models to enable AI features in your workspace. AWS Bedrock provides access to high-performing foundation models from leading AI companies including Anthropic (Claude), Amazon (Titan), Meta (Llama), Cohere, AI21 Labs, and more.
+
+## Required Fields
+
+### AWS Access Key ID *
+
+The AWS Access Key ID is required to authenticate your requests to AWS Bedrock.
+
+**Example format:** `AKIAIOSFODNN7EXAMPLE`
+
+**How to obtain your Access Key ID:**
+1. Log in to the [AWS Management Console](https://aws.amazon.com/console/)
+2. Navigate to IAM (Identity and Access Management)
+3. Go to "Users" and select your user (or create a new one)
+4. Click on "Security credentials" tab
+5. Under "Access keys", click "Create access key"
+6. Copy the Access Key ID
+
+**Note:** Ensure your IAM user has the necessary permissions to access AWS Bedrock services.
+
+### AWS Access Secret Key *
+
+The AWS Access Secret Key is the secret portion of your AWS credentials.
+
+**Example format:** `wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY`
+
+**How to obtain your Secret Key:**
+1. When creating an access key in IAM, the secret key is shown only once
+2. Download or copy the secret key immediately when created
+3. If you've lost your secret key, you'll need to create a new access key pair
+
+**Security Note:** Your secret key should be kept secure and never shared publicly. PipesHub securely stores your credentials and uses them only for authenticating requests to AWS Bedrock.
+
+### Region *
+
+The AWS Region where your Bedrock service is deployed.
+
+**Example:** `us-east-1`
+
+**Common regions with Bedrock availability:**
+- `us-east-1` (N. Virginia)
+- `us-west-2` (Oregon)
+- `eu-west-1` (Ireland)
+- `ap-northeast-1` (Tokyo)
+- `ap-southeast-1` (Singapore)
+
+**How to choose a region:**
+- Select a region close to your users for lower latency
+- Ensure the models you need are available in that region
+- Consider data residency requirements for your organization
+
+### Model Name *
+
+The Model Name field specifies the model ID or ARN you want to use with PipesHub.
+
+**Model ID format examples:**
+- `us.anthropic.claude-sonnet-4-20250514-v1:0`
+- `anthropic.claude-3-5-sonnet-20241022-v2:0`
+- `amazon.titan-text-express-v1`
+- `meta.llama3-70b-instruct-v1:0`
+
+**Inference Profile ARN format:**
+- `arn:aws:bedrock:us-east-1:106782021127:inference-profile/apac.anthropic.claude-sonnet-4-20250514-v1:0`
+
+**How to find model IDs:**
+1. Go to the [AWS Bedrock Console](https://console.aws.amazon.com/bedrock/)
+2. Navigate to "Model access" to see available models
+3. Select "Base models" or "Custom models" to view model IDs
+4. Use the model ID as shown in the console
+
+### Provider *
+
+Select the provider of the foundation model you're using. This helps PipesHub properly format requests for the specific model.
+
+**Available providers:**
+- **Anthropic (Claude)** - Claude models including Claude 3.5 Sonnet, Claude 3 Opus, Claude 3 Haiku
+- **Amazon (Titan)** - Amazon's Titan models
+- **Meta (Llama)** - Meta's Llama 2 and Llama 3 models
+- **Cohere** - Cohere Command and Embed models
+- **AI21 Labs** - Jurassic models
+- **Mistral AI** - Mistral and Mixtral models
+- **Other** - For any other providers (requires Custom Provider Name)
+
+### Custom Provider Name
+
+Only required if you selected "Other" as the provider. Enter the name of the custom provider you're using.
+
+## Optional Fields
+
+### Context Length
+
+Specify the maximum context length for your model (e.g., 128000 for 128K tokens). This helps PipesHub optimize how it handles large documents and conversations.
+
+**Note:** Different models support different context lengths. Check your model's documentation for the maximum supported context.
+
+### Multimodal
+
+Enable this option if your model supports multimodal inputs (text + image). This allows PipesHub to process both text and images when interacting with the model.
+
+**Models with multimodal support include:**
+- Claude 3.5 Sonnet, Claude 3 Opus, Claude 3 Haiku
+- Amazon Titan Image models
+
+### Reasoning
+
+Enable this option if your model supports advanced reasoning capabilities. This is particularly useful for models designed for complex problem-solving tasks.
+
+## Configuration Steps
+
+As shown in the image above:
+
+1. Select "AWS Bedrock" as your Provider Type from the dropdown
+2. Enter your AWS Access Key ID (marked with *)
+3. Enter your AWS Access Secret Key (marked with *)
+4. Specify your AWS Region (marked with *)
+5. Enter the Model Name (model ID or ARN) (marked with *)
+6. Select the appropriate Provider from the dropdown (marked with *)
+7. If you selected "Other" as provider, enter the Custom Provider Name
+8. Optionally, set the Context Length for your model
+9. Enable Multimodal if your model supports text + image inputs
+10. Enable Reasoning if your model supports advanced reasoning
+11. Click "Add Model" to complete the setup
+
+> AWS Access Key ID, AWS Access Secret Key, Region, Model Name, and Provider 
+> are required fields. You must complete these fields to proceed with the setup.
+
+## IAM Permissions
+
+Ensure your IAM user or role has the following permissions to use AWS Bedrock:
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "bedrock:InvokeModel",
+        "bedrock:InvokeModelWithResponseStream"
+      ],
+      "Resource": "*"
+    }
+  ]
+}
+```
+
+For more restrictive access, specify the exact model ARNs in the Resource field.
+
+## Usage Considerations
+
+- API usage will count against your AWS Bedrock quotas and billing
+- Different models have different pricing - check [AWS Bedrock pricing](https://aws.amazon.com/bedrock/pricing/) for details
+- Model capabilities vary - more powerful models may provide better results but at higher cost
+- AWS Bedrock provides enterprise features including:
+  - VPC endpoints for private connectivity
+  - AWS PrivateLink support
+  - CloudWatch integration for monitoring
+  - CloudTrail for auditing
+  - Data encryption at rest and in transit
+
+## Troubleshooting
+
+- If you encounter authentication errors, verify your AWS Access Key ID and Secret Key are correct
+- Ensure your IAM user has the necessary Bedrock permissions
+- Verify the selected region has AWS Bedrock available and your desired model is accessible
+- Check that you have model access enabled for the specific model in the AWS Bedrock console
+- Ensure the model ID or ARN is correctly formatted
+- If using an inference profile, verify the ARN is complete and accurate
+- Check your AWS account's service quotas for Bedrock
+
+For additional support, refer to the [AWS Bedrock documentation](https://docs.aws.amazon.com/bedrock/) or contact PipesHub support.

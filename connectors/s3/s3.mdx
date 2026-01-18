@@ -335,6 +335,8 @@ For enhanced security, you can create a custom IAM policy that restricts access 
 
 ### Example Custom Policy
 
+Here's a basic example policy for a single bucket:
+
 ```json
 {
   "Version": "2012-10-17",
@@ -361,6 +363,46 @@ For enhanced security, you can create a custom IAM policy that restricts access 
   ]
 }
 ```
+
+### Enhanced Custom Policy (Multiple Buckets)
+
+For production use with multiple buckets and additional permissions, use this comprehensive policy:
+
+```json
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "VisualEditor0",
+            "Effect": "Allow",
+            "Action": [
+                "s3:GetObject",
+                "s3:ListBucket",
+                "s3:GetBucketLocation",
+                "s3:GetObjectVersion",
+                "s3:GetObjectAttributes",
+                "s3:GetObjectTagging"
+            ],
+            "Resource": [
+                "arn:aws:s3:::*/*",
+                "arn:aws:s3:::your-bucket-name-1",
+                "arn:aws:s3:::your-bucket-name-2",
+                "arn:aws:s3:::your-bucket-name-3"
+            ]
+        },
+        {
+            "Sid": "VisualEditor1",
+            "Effect": "Allow",
+            "Action": "s3:ListAllMyBuckets",
+            "Resource": "*"
+        }
+    ]
+}
+```
+
+<Info>
+  Replace the bucket names in the Resource array (`your-bucket-name-1`, `your-bucket-name-2`, `your-bucket-name-3`) with your actual bucket names. The `arn:aws:s3:::*/*` allows access to all objects in the specified buckets.
+</Info>
 
 **Steps to apply custom policy:**
 

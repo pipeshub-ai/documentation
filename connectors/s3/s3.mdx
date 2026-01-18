@@ -63,7 +63,7 @@ The connector indexes the following content for AI-powered search:
 
 <div className="mt-4">
 
-## Overview
+### Setup Overview
 
 The S3 connector provides access to your AWS S3 buckets through Access Key authentication. It syncs files, folders, and metadata, enabling comprehensive search and access across your S3 content.
 
@@ -96,7 +96,7 @@ The S3 connector uses **AWS Access Key ID and Secret Access Key** for authentica
 
 3. **Navigate to Users:**
    - In the left sidebar, click **"Users"**
-   - Click the **"Create user"** button
+   - Click the **"Create user"** button (orange button at the top right)
 
 <div className="text-center">
   <img
@@ -110,7 +110,7 @@ The S3 connector uses **AWS Access Key ID and Secret Access Key** for authentica
 
 1. **Enter User Name:**
    - Enter a descriptive name for the user (e.g., "PipesHub-S3-Connector")
-   - Click **"Next"**
+   - Click **"Next"** button
 
 <div className="text-center">
   <img
@@ -139,7 +139,7 @@ The S3 connector uses **AWS Access Key ID and Secret Access Key** for authentica
 
 3. **Review and Create:**
    - Review the user configuration
-   - Click **"Create user"**
+   - Click **"Create user"** button at the bottom
 
 ### Step 3: Create Access Keys
 
@@ -157,10 +157,10 @@ The S3 connector uses **AWS Access Key ID and Secret Access Key** for authentica
 </div>
 
 2. **Create Access Key:**
-   - Click **"Create access key"**
+   - Click **"Create access key"** button
    - Select **"Application running outside AWS"** as the use case
    - Check the confirmation box
-   - Click **"Next"**
+   - Click **"Next"** button
 
 <div className="text-center">
   <img
@@ -172,7 +172,7 @@ The S3 connector uses **AWS Access Key ID and Secret Access Key** for authentica
 
 3. **Download or Copy Credentials:**
    - **Access Key ID**: Copy this value immediately
-   - **Secret Access Key**: Click **"Show"** and copy this value immediately
+   - **Secret Access Key**: Click **"Show"** button and copy this value immediately
 
 <Warning>
   <div className="text-lg font-semibold">
@@ -189,15 +189,15 @@ The S3 connector uses **AWS Access Key ID and Secret Access Key** for authentica
 </div>
 
 4. **Download Credentials (Optional):**
-   - Click **"Download .csv file"** to save credentials to a secure location
-   - Click **"Done"** to complete the process
+   - Click **"Download .csv file"** button to save credentials to a secure location
+   - Click **"Done"** button to complete the process
 
 ### Step 4: Configure Connector in PipesHub
 
 1. **Navigate to Connectors:**
    - In PipesHub, go to **Settings** → **Connectors**
    - Find the **S3** connector in the list
-   - Click **"Configure"**
+   - Click **"Configure"** button or link
 
 <div className="text-center">
   <img
@@ -210,7 +210,7 @@ The S3 connector uses **AWS Access Key ID and Secret Access Key** for authentica
 2. **Enter Access Credentials:**
    - **Access Key**: Paste your AWS Access Key ID
    - **Secret Key**: Paste your AWS Secret Access Key
-   - Click **"Save Auth Settings"** or **"Next"**
+   - Click **"Save Auth Settings"** or **"Next"** button
 
 <div className="text-center">
   <img
@@ -303,7 +303,7 @@ Indexing filters control what synced data gets processed for AI search. All data
 - **Sync only specific buckets**: Bucket Names → Operator: `In`, select buckets from dropdown
 - **Sync only documents**: File Extensions → Operator: `In`, Value: `pdf, docx, txt, pptx`
 - **Exclude images**: File Extensions → Operator: `Not In`, Value: `jpg, png, gif, svg`
-- **Recent files only**: Modified Date → Operator: `Is After`, Date: `2024-06-01`
+- **Recent files only**: Modified Date → Operator: `Is After`, Date: `YYYY-MM-DD` (e.g., files modified in the last 6 months)
 - **Sync all but index only documents**: Enable all sync filters, disable indexing for non-document files
 
 <Info>
@@ -315,7 +315,7 @@ Indexing filters control what synced data gets processed for AI search. All data
 1. After configuration is complete, toggle the connector status to **"Enable"**
 2. You can do this by:
    - Using the toggle switch next to **"Connector Status"**
-   - Or clicking **"Enable"** in the Quick Actions panel
+   - Or clicking the **"Enable"** button in the Quick Actions panel
 
 <div className="text-center">
   <img
@@ -339,6 +339,14 @@ For enhanced security, you can create a custom IAM policy that restricts access 
 {
   "Version": "2012-10-17",
   "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "s3:ListAllMyBuckets",
+        "s3:GetBucketLocation"
+      ],
+      "Resource": "*"
+    },
     {
       "Effect": "Allow",
       "Action": [
@@ -411,7 +419,7 @@ After the initial sync, subsequent syncs are much faster:
 
 **How It Works:**
 
-1. Connector reads the sync point for each bucket (stored in ArangoDB)
+1. Connector reads the sync point for each bucket (stored in our database)
 2. Retrieves the `last_sync_time` timestamp
 3. Queries S3 for objects with `LastModified >= last_sync_time`
 4. Processes only the changed objects

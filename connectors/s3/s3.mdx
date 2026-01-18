@@ -3,37 +3,749 @@ title: "S3"
 description: "Amazon cloud object storage service connector"
 icon: "/logo/s3.png"
 ---
-<div className="flex flex-col items-center justify-center text-center pt-10">
-  <h1 className="text-4xl font-bold">✅ S3 Connector Ready</h1>
-  <h3 className="text-xl mt-2">
-    Connector is live and ready to use. Documentation in process!
-  </h3>
-</div>
+
 <div className="max-w-2xl mx-auto mt-12">
-  <div className="p-6 border rounded-lg bg-orange-50">
+  <div className="p-6 border border-gray-200 dark:border-gray-700 rounded-lg bg-orange-50 dark:bg-gray-800">
     <div className="flex items-center mb-4">
       <img 
         src="/logo/s3.png" 
         alt="Amazon S3 Logo" 
         className="w-8 h-8 mr-3 object-contain flex-shrink-0"
       />
-      <h2 className="text-2xl font-semibold m-0"> Amazon S3</h2>
+      <h2 className="text-2xl font-semibold m-0">Amazon S3</h2>
     </div>
-    <p className="text-lg text-gray-700 mb-4">Cloud object storage service</p>
+    <p className="text-lg text-gray-700 dark:text-gray-300 mb-4">Cloud object storage service</p>
     <div className="flex items-center gap-2">
-      <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium">
+      <span className="px-3 py-1 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 rounded-full text-sm font-medium">
         ✅ Ready
       </span>
-      <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
-        📝 Documentation in process
+      <span className="px-3 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-full text-sm font-medium">
+        📖 Documentation Available
       </span>
     </div>
   </div>
 </div>
-<div className="text-center mt-12 p-6 bg-gray-50 rounded-lg max-w-2xl mx-auto">
-  <h3 className="text-lg font-semibold mb-2">Need Help Getting Started?</h3>
-  <p className="text-gray-600">
-    The S3 connector is fully operational and ready for use. While we're finalizing the documentation, 
-    feel free to reach out to our support team for setup assistance.
+
+## Overview
+
+Amazon S3 (Simple Storage Service) is a scalable object storage service designed to store and retrieve any amount of data from anywhere on the web. It provides industry-leading scalability, data availability, security, and performance.
+
+The S3 connector enables you to sync files and folders from your S3 buckets into PipesHub, making your cloud storage content searchable through AI-powered search and accessible across your organization.
+
+### S3 Data Structure
+
+The connector understands S3's hierarchical structure:
+
+**Buckets → Folders → Files**
+
+| Entity | Description |
+|--------|-------------|
+| **Buckets** | Top-level containers for organizing objects (similar to root directories) |
+| **Folders** | Logical groupings of objects using prefixes (e.g., `documents/reports/`) |
+| **Files** | Individual objects stored in buckets with unique keys (paths) |
+
+### What Gets Synced
+
+The connector indexes the following content for AI-powered search:
+
+- **Files**: All file types stored in S3 buckets (documents, images, videos, archives, etc.)
+- **Folders**: Directory structure and organization
+- **Metadata**: File names, sizes, modification dates, MIME types
+- **Permissions**: Access control based on bucket and object permissions
+
+---
+
+## Configuration Guide
+
+<AccordionGroup type="single" collapsible>
+
+<Accordion title="Setup">
+
+<div className="mt-4">
+
+## Overview
+
+The S3 connector provides access to your AWS S3 buckets through Access Key authentication. It syncs files, folders, and metadata, enabling comprehensive search and access across your S3 content.
+
+### Authentication
+
+The S3 connector uses **AWS Access Key ID and Secret Access Key** for authentication. This method allows secure programmatic access to your S3 buckets without requiring OAuth setup.
+
+<Info>
+  Access Key authentication is simpler to set up than OAuth but requires you to manage AWS IAM credentials. Ensure you follow AWS security best practices when creating and storing access keys.
+</Info>
+
+## How to configure and enable the S3 Connector
+
+### Step 1: Create an IAM User in AWS
+
+1. **Sign in to AWS Management Console:**  
+   Navigate to [console.aws.amazon.com](https://console.aws.amazon.com) and sign in with your AWS account credentials.
+
+2. **Access IAM Service:**
+   - In the AWS Management Console, search for **"IAM"** in the top search bar
+   - Click on **"IAM"** from the results to open the Identity and Access Management console
+
+<div className="text-center">
+  <img
+    src="/images/connectors/s3/iam_console.png"
+    alt="AWS IAM Console"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+3. **Navigate to Users:**
+   - In the left sidebar, click **"Users"**
+   - Click the **"Create user"** button
+
+<div className="text-center">
+  <img
+    src="/images/connectors/s3/create_user.png"
+    alt="Create IAM User"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+### Step 2: Configure User Details
+
+1. **Enter User Name:**
+   - Enter a descriptive name for the user (e.g., "PipesHub-S3-Connector")
+   - Click **"Next"**
+
+<div className="text-center">
+  <img
+    src="/images/connectors/s3/user_name.png"
+    alt="Enter User Name"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+2. **Set Permissions:**
+   - Select **"Attach policies directly"**
+   - Search for and select **"AmazonS3ReadOnlyAccess"** policy
+   - This policy provides read-only access to all S3 buckets
+
+<Info>
+  For more granular control, you can create a custom IAM policy that restricts access to specific buckets. See the "Advanced: Custom IAM Policy" section below for details.
+</Info>
+
+<div className="text-center">
+  <img
+    src="/images/connectors/s3/attach_policy.png"
+    alt="Attach S3 Read Only Policy"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+3. **Review and Create:**
+   - Review the user configuration
+   - Click **"Create user"**
+
+### Step 3: Create Access Keys
+
+1. **Access Security Credentials:**
+   - After creating the user, you'll be redirected to the user details page
+   - Click on the **"Security credentials"** tab
+   - Scroll down to the **"Access keys"** section
+
+<div className="text-center">
+  <img
+    src="/images/connectors/s3/security_credentials.png"
+    alt="Security Credentials Tab"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+2. **Create Access Key:**
+   - Click **"Create access key"**
+   - Select **"Application running outside AWS"** as the use case
+   - Check the confirmation box
+   - Click **"Next"**
+
+<div className="text-center">
+  <img
+    src="/images/connectors/s3/create_access_key.png"
+    alt="Create Access Key"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+3. **Download or Copy Credentials:**
+   - **Access Key ID**: Copy this value immediately
+   - **Secret Access Key**: Click **"Show"** and copy this value immediately
+
+<Warning>
+  <div className="text-lg font-semibold">
+    **Important:** The Secret Access Key is shown only once. If you don't save it now, you'll need to create a new access key pair. Store these credentials securely.
+  </div>
+</Warning>
+
+<div className="text-center">
+  <img
+    src="/images/connectors/s3/access_key_credentials.png"
+    alt="Access Key Credentials"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+4. **Download Credentials (Optional):**
+   - Click **"Download .csv file"** to save credentials to a secure location
+   - Click **"Done"** to complete the process
+
+### Step 4: Configure Connector in PipesHub
+
+1. **Navigate to Connectors:**
+   - In PipesHub, go to **Settings** → **Connectors**
+   - Find the **S3** connector in the list
+   - Click **"Configure"**
+
+<div className="text-center">
+  <img
+    src="/images/connectors/s3/s3_config.png"
+    alt="PipesHub S3 Configuration"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+2. **Enter Access Credentials:**
+   - **Access Key**: Paste your AWS Access Key ID
+   - **Secret Key**: Paste your AWS Secret Access Key
+   - Click **"Save Auth Settings"** or **"Next"**
+
+<div className="text-center">
+  <img
+    src="/images/connectors/s3/enter_credentials.png"
+    alt="Enter S3 Credentials"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+<Warning>
+  Ensure you copy the credentials exactly as shown. Extra spaces or line breaks will cause authentication to fail.
+</Warning>
+
+### Step 5: Configure Sync Settings
+
+1. **Choose Sync Strategy:**
+   - **Scheduled**: Automatically sync at regular intervals (default: every 60 minutes)
+   - **Manual**: Sync only when you trigger it manually
+
+<div className="text-center">
+  <img
+    src="/images/connectors/s3/sync_strategy.png"
+    alt="Configure Sync Strategy"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+2. **Set Sync Interval (if Scheduled):**
+   - Choose how often to sync (e.g., 15 min, 30 min, 1 hour, 4 hours, 24 hours)
+   - Default is 60 minutes
+
+<Info>
+  More frequent syncs keep your data up-to-date but consume more API resources. For large buckets, consider longer intervals to reduce AWS API usage.
+</Info>
+
+### Step 6: Configure Filters (Optional)
+
+Filters allow you to control what data is synced and indexed from your S3 buckets.
+
+<div className="text-center">
+  <img
+    src="/images/connectors/s3/s3-filters.png"
+    alt="S3 Filters Configuration"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+#### Sync Filters
+
+Sync filters determine which content is downloaded from S3. Data excluded by sync filters is never downloaded.
+
+**Available Sync Filters:**
+
+1. **Bucket Names** - Filter by specific S3 buckets
+   - **Operator**: `In` (include only) or `Not In` (exclude)
+   - **Selection**: Choose from a **searchable dropdown list** of all your S3 buckets
+   - The dropdown displays all accessible buckets
+   - Type to search and filter buckets by name
+   - Select multiple buckets as needed
+
+<Info>
+  The bucket list is dynamically fetched from your AWS account. You don't need to manually enter bucket names - simply search and select from the dropdown.
+</Info>
+
+2. **File Extensions** - Filter files by extension
+   - **Operator**: `In` (include) or `Not In` (exclude)
+   - **Value**: Enter file extensions separated by commas (e.g., `pdf, docx, txt`)
+   - **Note**: Extensions are case-insensitive and don't require the leading dot
+   - **Use case**: Sync only specific file types (e.g., documents only, exclude images)
+
+3. **Modified Date** - Filter by last modification date
+   - **Operators**: `Is After`, `Is Before`, or `Is Between`
+   - **Use case**: Sync only recently updated files (e.g., files modified in the last 6 months)
+
+4. **Created Date** - Filter by creation date
+   - **Operators**: `Is After`, `Is Before`, or `Is Between`
+   - **Use case**: Sync only newly created files or exclude legacy files
+
+#### Indexing Filters
+
+Indexing filters control what synced data gets processed for AI search. All data is synced, but only enabled content types are indexed.
+
+**Available Indexing Filters:**
+
+- **Index Files** (default: enabled) - Include file content in search
+- **Index Folders** (default: enabled) - Include folder structure in search
+
+**Example Configurations:**
+
+- **Sync only specific buckets**: Bucket Names → Operator: `In`, select buckets from dropdown
+- **Sync only documents**: File Extensions → Operator: `In`, Value: `pdf, docx, txt, pptx`
+- **Exclude images**: File Extensions → Operator: `Not In`, Value: `jpg, png, gif, svg`
+- **Recent files only**: Modified Date → Operator: `Is After`, Date: `2024-06-01`
+- **Sync all but index only documents**: Enable all sync filters, disable indexing for non-document files
+
+<Info>
+  Filters can be configured during initial setup or modified later. Changes to filters will take effect on the next sync.
+</Info>
+
+### Step 7: Enable the Connector
+
+1. After configuration is complete, toggle the connector status to **"Enable"**
+2. You can do this by:
+   - Using the toggle switch next to **"Connector Status"**
+   - Or clicking **"Enable"** in the Quick Actions panel
+
+<div className="text-center">
+  <img
+    src="/images/connectors/s3/enable_connector.png"
+    alt="Enable S3 Connector"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+3. The connector will verify credentials and begin initial synchronization
+4. Wait for the status to show **"Active"** or **"Syncing"**
+5. Monitor the **Indexing Progress** to track sync completion
+
+## Advanced: Custom IAM Policy
+
+For enhanced security, you can create a custom IAM policy that restricts access to specific buckets or prefixes.
+
+### Example Custom Policy
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "s3:ListBucket",
+        "s3:GetObject"
+      ],
+      "Resource": [
+        "arn:aws:s3:::your-bucket-name",
+        "arn:aws:s3:::your-bucket-name/*"
+      ]
+    }
+  ]
+}
+```
+
+**Steps to apply custom policy:**
+
+1. In IAM, go to **"Policies"** → **"Create policy"**
+2. Use the JSON editor to paste the policy above (replace `your-bucket-name` with your actual bucket name)
+3. Name the policy (e.g., "PipesHub-S3-ReadOnly-SpecificBuckets")
+4. Attach the policy to your IAM user instead of the managed policy
+
+## Supported Features
+
+The S3 connector syncs the following data from your AWS S3 buckets:
+
+- **Buckets**: All accessible buckets in your AWS account
+- **Files**: All file types with their metadata (name, size, modification date, MIME type)
+- **Folders**: Directory structure and organization using S3 prefixes
+- **Permissions**: Access control based on bucket and object-level permissions
+
+## Data Sync Behavior
+
+### Initial Sync
+
+The first sync performs a complete scan of your configured S3 buckets:
+
+- **Bucket Discovery**: Lists all accessible buckets in your AWS account (or uses configured bucket filters)
+- **Region Detection**: Automatically detects and caches the region for each bucket
+- **Full Object Listing**: Fetches all objects from selected buckets using pagination
+- **Metadata Extraction**: Extracts file names, sizes, modification dates, MIME types, and paths
+- **Folder Structure**: Creates logical folder structure from S3 object prefixes
+- **Indexing**: Indexes file content for AI-powered search (based on indexing filter settings)
+- **Permission Assignment**: Assigns permissions based on connector scope (Personal or Team)
+
+**Sync Duration Estimates:**
+
+| Bucket Size | Objects | Estimated Time |
+|-------------|---------|----------------|
+| Small | < 1,000 | 5-15 minutes |
+| Medium | 1,000 - 10,000 | 15-45 minutes |
+| Large | 10,000 - 100,000 | 1-3 hours |
+| Very Large | 100,000 - 1,000,000 | 3-8 hours |
+| Enterprise | 1,000,000+ | 8+ hours |
+
+<Info>
+  Use bucket and file extension filters to significantly reduce initial sync time. For example, syncing only PDF files from a specific bucket can reduce sync time by 80-90%.
+</Info>
+
+### Incremental Sync
+
+After the initial sync, subsequent syncs are much faster:
+
+- **Timestamp-Based Detection**: Uses `LastModified` timestamps to identify changed objects
+- **Sync Point Tracking**: Stores the last sync timestamp per bucket in sync points
+- **Change Detection**: Only fetches objects modified since the last sync timestamp
+- **Pagination Resume**: Uses continuation tokens to resume interrupted syncs
+- **Efficient Updates**: Processes only new, modified, or deleted objects
+- **API Optimization**: Reduces API calls by 90%+ compared to full syncs
+
+**How It Works:**
+
+1. Connector reads the sync point for each bucket (stored in ArangoDB)
+2. Retrieves the `last_sync_time` timestamp
+3. Queries S3 for objects with `LastModified >= last_sync_time`
+4. Processes only the changed objects
+5. Updates the sync point with the new maximum timestamp
+
+<Info>
+  Incremental syncs typically take 5-15 minutes for most buckets, regardless of total bucket size, as they only process changes.
+</Info>
+
+### Permission Handling
+
+The connector respects AWS IAM permissions and PipesHub access controls:
+
+- **IAM-Based Access**: Only syncs buckets and objects the IAM user has permission to access
+- **Bucket Policies**: Respects S3 bucket policies and access control lists (ACLs)
+- **PipesHub Scope**: 
+  - **Personal Scope**: Only the connector creator can access synced content
+  - **Team Scope**: All organization users have read access to synced content
+- **Permission Inheritance**: Files inherit permissions from their parent bucket (Record Group)
+- **Access Control**: Users see only content they have permission to view in both AWS and PipesHub
+
+### Sync Frequency
+
+**Scheduled Sync:**
+- Default interval: 60 minutes
+- Configurable: 15 min, 30 min, 1 hour, 4 hours, 24 hours
+- Runs automatically in the background
+- Best for: Keeping data up-to-date with minimal manual intervention
+
+**Manual Sync:**
+- Triggered on-demand from the connector settings
+- Best for: Testing, troubleshooting, or syncing after bulk changes
+- Useful when: You need immediate sync after uploading many files
+
+<Info>
+  For large buckets with infrequent changes, consider longer sync intervals (4-24 hours) to reduce AWS API usage and costs.
+</Info>
+
+## Troubleshooting
+
+<AccordionGroup type="single" collapsible>
+
+<Accordion title="Troubleshooting" icon="circle-exclamation">
+
+### Common Issues
+
+**Invalid credentials error:**
+
+*Symptoms:*
+- Error message: "InvalidAccessKeyId" or "SignatureDoesNotMatch"
+- Connector fails to initialize
+- Authentication fails immediately
+
+*Solutions:*
+1. Verify Access Key ID and Secret Access Key are correct
+2. Ensure you copied the full values without extra spaces or line breaks
+3. Check that the IAM user is active in AWS IAM console
+4. Verify the access keys haven't been deleted or rotated
+5. Try creating new access keys if the old ones are compromised
+6. Ensure credentials are pasted exactly as shown (no leading/trailing spaces)
+
+**Bucket access denied:**
+
+*Symptoms:*
+- Error: "AccessDenied" when listing or accessing buckets
+- Some buckets appear but others don't
+- Sync fails with permission errors
+
+*Solutions:*
+1. Verify the IAM user has the following permissions:
+   - `s3:ListAllMyBuckets` - To list all buckets
+   - `s3:ListBucket` - To list objects in each bucket
+   - `s3:GetBucketLocation` - To detect bucket regions
+   - `s3:GetObject` - To download object content
+2. Check that the bucket policy allows access from your IAM user
+3. Ensure the bucket exists and is in the same AWS account
+4. Verify bucket region matches your AWS region configuration
+5. Review IAM policy JSON to ensure ARNs are correct
+
+**No buckets appearing:**
+
+*Symptoms:*
+- Bucket dropdown is empty
+- No buckets available to select
+- "No buckets found" message
+
+*Solutions:*
+1. Check that the IAM user has `s3:ListAllMyBuckets` permission
+2. Verify credentials are correctly entered in PipesHub
+3. Ensure the IAM user has access to at least one bucket
+4. Check AWS CloudTrail logs for permission errors
+5. Verify the IAM user is in the same AWS account as the buckets
+6. Try refreshing the bucket list in the filter configuration
+
+**No data syncing:**
+
+*Symptoms:*
+- Connector shows "Active" but no files appear
+- Sync completes but no records are indexed
+- Indexing progress stays at 0%
+
+*Solutions:*
+1. Verify the connector status shows "Active" or "Syncing"
+2. Check that buckets are selected in the filter configuration
+3. Ensure file extension filters aren't excluding all files
+4. Verify date filters aren't excluding all files (e.g., "Modified After" set to future date)
+5. Review sync logs for specific error messages
+6. Verify the IAM user has `s3:GetObject` permission
+7. Check that objects exist in the selected buckets
+8. Ensure indexing filters are enabled (Index Files, Index Folders)
+
+**Sync taking too long:**
+
+*Symptoms:*
+- Initial sync runs for hours without completion
+- Progress bar moves very slowly
+- High AWS API usage
+
+*Solutions:*
+1. **Use Bucket Filters**: Sync only necessary buckets instead of all buckets
+2. **Use File Extension Filters**: Filter to specific file types (e.g., `pdf, docx, txt`)
+3. **Use Date Filters**: Sync only recently modified files (e.g., last 6 months)
+4. **Increase Sync Interval**: For large buckets, use 4-24 hour intervals
+5. **Check Bucket Size**: Very large buckets (millions of objects) will take longer
+6. **Monitor Progress**: Check indexing progress to ensure sync is actually running
+
+<Info>
+  A bucket with 1 million objects can take 6-12 hours for initial sync. Using filters to sync only 10% of objects reduces this to 1-2 hours.
+</Info>
+
+**Region detection errors:**
+
+*Symptoms:*
+- Warnings about region detection
+- Sync fails with region mismatch errors
+- Objects not found errors
+
+*Solutions:*
+1. The connector automatically detects bucket regions - this usually works
+2. If region detection fails, ensure the IAM user has `s3:GetBucketLocation` permission
+3. Some buckets may require explicit region configuration in AWS
+4. Check that buckets are in supported AWS regions
+5. Verify the IAM user has access to the region where buckets are located
+
+**Token expired or sync stopped:**
+
+*Symptoms:*
+- Sync was working but suddenly stopped
+- Authentication errors after working previously
+- "Credentials invalid" errors
+
+*Solutions:*
+1. Access keys don't expire automatically, but they can be rotated or deleted
+2. If access keys were rotated in AWS, update credentials in PipesHub immediately
+3. Check if the IAM user or access keys were deleted in AWS IAM console
+4. Re-authenticate by updating credentials in connector settings
+5. Verify the IAM user still exists and is active
+6. Check AWS CloudTrail for any credential-related events
+
+**Files not appearing in search:**
+
+*Symptoms:*
+- Files synced but not searchable
+- Search returns no results for known files
+- Indexing shows 0% complete
+
+*Solutions:*
+1. Verify indexing filters are enabled (Index Files should be ON)
+2. Check that file types are supported for indexing (PDF, DOCX, TXT, etc.)
+3. Images and binary files cannot be indexed for text search
+4. Wait for indexing to complete - large files take time to process
+5. Check indexing progress in connector status
+6. Verify file content is not encrypted or password-protected
+7. Ensure files have readable text content (not just images)
+
+**Partial sync or missing files:**
+
+*Symptoms:*
+- Some files appear but others don't
+- Files in certain folders are missing
+- Inconsistent sync results
+
+*Solutions:*
+1. Check file extension filters - files may be excluded by filter settings
+2. Verify date filters aren't excluding files
+3. Check bucket permissions - IAM user may not have access to all objects
+4. Review sync logs for specific errors about missing files
+5. Verify files actually exist in S3 (check S3 console)
+6. Ensure files aren't in excluded buckets (if bucket filter is active)
+7. Check if files are in Glacier storage class (not directly accessible)
+
+</Accordion>
+
+</AccordionGroup>
+
+<Warning>
+  If you rotate or change AWS access keys, you must update the configuration in PipesHub immediately. The connector will fail to sync until new credentials are provided.
+</Warning>
+
+## AWS S3 Compatibility
+
+This connector is designed for **Amazon S3** and uses the AWS S3 API. It supports:
+
+- **All AWS S3 Regions**: Works with buckets in any AWS region worldwide
+- **Standard S3 Storage Classes**: Standard, Standard-IA, One Zone-IA, Intelligent-Tiering
+- **S3-Compatible Services**: Should work with MinIO and other S3-compatible storage (with proper endpoint configuration)
+
+**Not Supported:**
+- S3 Glacier and Glacier Deep Archive (requires restore process)
+- S3 Outposts (may require special configuration)
+- Requester Pays buckets (not currently supported)
+
+<Info>
+  The connector uses the standard S3 API and should work with S3-compatible services like MinIO, but is primarily tested and optimized for AWS S3.
+</Info>
+
+## FAQ
+
+<AccordionGroup type="single" collapsible>
+
+<Accordion title="How long does the initial sync take?">
+  The initial sync duration depends on the size of your S3 buckets:
+  
+  | Bucket Size | Estimated Time |
+  |-------------|----------------|
+  | Small (< 1,000 objects) | 5-15 minutes |
+  | Medium (1,000 - 10,000 objects) | 15-45 minutes |
+  | Large (10,000 - 100,000 objects) | 1-3 hours |
+  | Very Large (100,000 - 1,000,000 objects) | 3-8 hours |
+  | Enterprise (1,000,000+ objects) | 8+ hours |
+  
+  **Tip**: Use bucket and file extension filters to significantly reduce initial sync time. For example, syncing only PDF files from specific buckets can reduce sync time by 80-90%.
+</Accordion>
+
+<Accordion title="Can I sync multiple AWS accounts?">
+  **No**, each connector instance connects to a single AWS account. To sync buckets from multiple AWS accounts, you'll need to:
+  
+  1. Create separate IAM users in each AWS account
+  2. Create separate S3 connector instances in PipesHub
+  3. Configure each connector with credentials from the respective AWS account
+  
+  This allows you to manage and filter buckets from different accounts separately.
+</Accordion>
+
+<Accordion title="What file types can be indexed for search?">
+  The connector can index text-based file types for AI-powered search:
+  
+  **Supported:**
+  - Documents: PDF, DOCX, XLSX, PPTX, ODT, RTF
+  - Text: TXT, MD, CSV, JSON, XML, HTML
+  - Code: Python, JavaScript, TypeScript, Java, Go, and many others
+  
+  **Not Supported (no text content):**
+  - Images: JPG, PNG, GIF, SVG, WebP
+  - Videos: MP4, AVI, MOV, etc.
+  - Archives: ZIP, RAR, TAR, etc.
+  - Binary files without extractable text
+  
+  Images and binary files are synced and can be accessed, but their content cannot be indexed for text search.
+</Accordion>
+
+<Accordion title="How does incremental sync work?">
+  After the initial sync, the connector uses timestamp-based incremental sync:
+  
+  1. **Stores Sync Point**: Saves the last sync timestamp for each bucket
+  2. **Queries Changes**: On next sync, queries S3 for objects modified since that timestamp
+  3. **Processes Only Changes**: Downloads and indexes only new or modified objects
+  4. **Updates Timestamp**: Saves the new maximum timestamp for the next sync
+  
+  This makes subsequent syncs 90%+ faster than full syncs, typically completing in 5-15 minutes regardless of bucket size.
+</Accordion>
+
+<Accordion title="Can I sync S3 Glacier files?">
+  **No**, the connector does not directly support S3 Glacier or Glacier Deep Archive storage classes. These storage classes require a restore process before files can be accessed.
+  
+  If you need to sync Glacier files:
+  1. Restore the files to Standard storage class in S3
+  2. Wait for restoration to complete
+  3. The connector will then sync the restored files
+  
+  Consider using S3 Intelligent-Tiering or Standard-IA for frequently accessed files that need to be searchable.
+</Accordion>
+
+<Accordion title="What happens if I delete a file in S3?">
+  When a file is deleted from S3:
+  
+  - The deletion is detected during the next incremental sync
+  - The file record is marked as deleted in PipesHub
+  - The file is removed from search results
+  - Historical access to the file may still be available depending on your retention settings
+  
+  **Note**: If you use S3 versioning, deleted files may still appear if previous versions exist.
+</Accordion>
+
+<Accordion title="Can I sync encrypted S3 buckets?">
+  **Yes**, the connector supports S3 buckets with encryption:
+  
+  - **SSE-S3**: Server-side encryption with S3-managed keys (fully supported)
+  - **SSE-KMS**: Server-side encryption with AWS KMS keys (requires KMS permissions)
+  - **SSE-C**: Server-side encryption with customer-provided keys (not supported)
+  - **Client-side encryption**: Files encrypted before upload (not supported)
+  
+  Ensure your IAM user has the necessary KMS permissions if using SSE-KMS.
+</Accordion>
+
+<Accordion title="How do I sync only specific folders in a bucket?">
+  Currently, the connector syncs entire buckets. To sync only specific folders:
+  
+  1. **Use Bucket Filters**: Create separate buckets for different content types
+  2. **Use File Extension Filters**: Filter to specific file types
+  3. **Use Date Filters**: Sync only recently modified files
+  
+  Folder-level filtering within a bucket is not currently supported, but may be added in future releases.
+</Accordion>
+
+</AccordionGroup>
+
+## Useful Links
+
+- **AWS IAM Console**: [console.aws.amazon.com/iam](https://console.aws.amazon.com/iam)
+- **AWS S3 Documentation**: [docs.aws.amazon.com/s3](https://docs.aws.amazon.com/s3)
+- **IAM Access Keys Guide**: [docs.aws.amazon.com/general/latest/gr/aws-sec-cred-types.html#access-keys-and-secret-access-keys](https://docs.aws.amazon.com/general/latest/gr/aws-sec-cred-types.html#access-keys-and-secret-access-keys)
+- **S3 IAM Policies**: [docs.aws.amazon.com/AmazonS3/latest/userguide/using-with-s3-actions.html](https://docs.aws.amazon.com/AmazonS3/latest/userguide/using-with-s3-actions.html)
+- **S3 Console**: [s3.console.aws.amazon.com](https://s3.console.aws.amazon.com)
+
+</div>
+
+</Accordion>
+
+</AccordionGroup>
+
+<div className="text-center mt-12 p-6 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg max-w-2xl mx-auto">
+  <h3 className="text-lg font-semibold mb-2">Ready to Get Started?</h3>
+  <p className="text-gray-600 dark:text-gray-400">
+    Connect your S3 buckets to PipesHub in just a few minutes. Follow the step-by-step guide above to enable organization-wide file search and access across all your S3 content.
   </p>
 </div>

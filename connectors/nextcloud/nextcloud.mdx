@@ -1,0 +1,434 @@
+---
+title: "Nextcloud"
+description: "Sync files from your personal Nextcloud account"
+icon: "/logo/nextcloud.svg"
+---
+
+<div className="max-w-2xl mx-auto mt-12">
+  <div className="p-6 border rounded-lg bg-blue-50">
+    <div className="flex items-center mb-4">
+      <img src="/logo/nextcloud.svg" alt="Nextcloud Logo" className="w-8 h-8 mr-3 object-contain flex-shrink-0" />
+      <h2 className="text-2xl text-indigo-800 font-semibold m-0"> Nextcloud</h2>
+    </div>
+    <p className="text-lg text-gray-700 mb-4">Sync files and folders from your personal Nextcloud account</p>
+    <div className="flex items-center gap-2">
+      <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium">
+        ✅ Ready
+      </span>
+      <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
+        📚 Documentation Available
+      </span>
+    </div>
+  </div>
+</div>
+
+## Overview
+
+Nextcloud is a self-hosted file sync and share platform that provides secure collaboration and content management. This connector allows you to sync files and folders from your personal Nextcloud account using App Passwords for secure authentication.
+
+---
+
+## Configuration Guide
+
+<AccordionGroup>
+
+<Accordion title="Understanding Nextcloud API" icon="info">
+
+### WebDAV Client
+
+This connector uses the **Nextcloud WebDAV API** for file operations. WebDAV (Web Distributed Authoring and Versioning) is a standard protocol that allows you to access, manage, and sync files over HTTP.
+
+### APIs Documentation
+
+- **Nextcloud WebDAV Documentation:** [https://docs.nextcloud.com/server/latest/user_manual/en/files/access_webdav.html](https://docs.nextcloud.com/server/latest/user_manual/en/files/access_webdav.html)
+- **Nextcloud Developer Manual:** [https://docs.nextcloud.com/server/latest/developer_manual/](https://docs.nextcloud.com/server/latest/developer_manual/)
+
+### Concept of Cursor
+
+A **cursor** (activity ID) is used to track changes between syncs.
+
+1. When you first sync, the connector fetches all files and folders using WebDAV PROPFIND.
+2. After the sync completes, the connector saves the latest activity ID as a cursor.
+3. Instead of re-downloading the entire file list to check for changes, the connector queries the Activity API with this cursor.
+4. The API returns only the files and folders that have been added, modified, or deleted since the last sync.
+
+This makes syncing highly efficient as you only process the differences.
+
+</Accordion>
+
+<Accordion title="Generate App Password" icon="key">
+
+This guide will walk you through generating an App Password to connect your Nextcloud account to PipesHub.
+
+### Step 1: Access Your Nextcloud Account
+
+1. Sign in to your Nextcloud instance with your credentials.
+2. Click on your **profile icon** in the top-right corner.
+
+### Step 2: Navigate to Security Settings
+
+1. From the dropdown menu, select **Personal settings**.
+
+<img src="/images/connectors/nextcloud/n1.png" alt="Nextcloud Profile Menu" style={{ display: 'block', margin: '0 auto' }} width="90%" />
+
+2. In the left sidebar, click on **Security**.
+
+### Step 3: Create App Password
+
+1. Scroll down to the **Devices & sessions** section.
+2. In the **App name** field, enter a descriptive name for this connection (e.g., "PipesHub Connector").
+3. Click the **Create new app password** button.
+
+<img src="/images/connectors/nextcloud/n2.png" alt="Personal Settings" style={{ display: 'block', margin: '0 auto' }} width="90%" />
+
+4. You may be prompted to re-enter your Nextcloud password for security verification.
+
+<img src="/images/connectors/nextcloud/n3.png" alt="Security Settings" style={{ display: 'block', margin: '0 auto' }} width="90%" />
+
+5. After confirmation, Nextcloud will generate an App Password (typically in the format `xxxx-xxxx-xxxx-xxxx`).
+
+<img src="/images/connectors/nextcloud/n4.png" alt="Create App Password" style={{ display: 'block', margin: '0 auto' }} width="90%" />
+
+6. **Important:** Copy this password immediately as it will only be shown once.
+
+### Step 4: Save Your Credentials
+
+Keep the following information ready for the next step:
+- **Base URL:** Your Nextcloud instance URL (e.g., `https://cloud.example.com`)
+- **Username:** Your Nextcloud username
+- **App Password:** The generated app password from Step 3
+
+</Accordion>
+
+<Accordion title="Connect to PipesHub" icon="plug">
+
+### Step 1: Configure Connection
+
+1. Open your PipesHub application and navigate to **Connections Settings**.
+2. Select **Nextcloud**.
+3. Enter your credentials:
+   - **Base URL:** Your Nextcloud instance URL (e.g., `https://cloud.example.com`)
+   - **Username:** Your Nextcloud username
+   - **App Password:** The app password you generated in the previous step
+
+<img src="/images/connectors/nextcloud/nc1.png" alt="Nextcloud Connector Config" style={{ display: 'block', margin: '0 auto' }} width="90%" />
+
+### Step 2: Configure Filters (Optional)
+
+You can optionally configure filters to control which files are synced:
+
+* **Modified Date Filter:** Only sync files modified within a specific date range
+* **Created Date Filter:** Filter files by creation date
+* **File Extension Filter:** Include or exclude specific file types (e.g., `.pdf`, `.docx`)
+
+<img src="/images/connectors/nextcloud/nc2.png" alt="Nextcloud Filters Menu" style={{ display: 'block', margin: '0 auto' }} width="90%" />
+
+### Step 3: Set Sync Strategy
+
+Click **Next**. You can configure your sync strategy:
+
+* **Sync Type:** Choose between **Manual** or **Scheduled**
+* **Batch Size:** Number of files processed in one transaction (default: 100)
+* **Schedule Interval:** For scheduled syncs, set the interval (e.g., every 60 minutes)
+
+<img src="/images/connectors/nextcloud/nc3.png" alt="Nextcloud Sync Strategy" style={{ display: 'block', margin: '0 auto' }} width="90%" />
+
+
+### Step 4: Save and Sync
+
+1. Click **Save Configuration**.
+2. The connection will be tested automatically to verify your credentials.
+3. Once verified, click **Start Sync** to begin the initial synchronization.
+4. The first sync will be a full sync, fetching all files and folders from your Nextcloud account.
+
+</Accordion>
+
+</AccordionGroup>
+
+---
+
+## Connector Workflow
+
+<AccordionGroup>
+
+<Accordion title="Synchronization Process" icon="sync">
+
+### How Does Nextcloud Connector Work?
+
+The `NextcloudConnector` inherits from `BaseConnector` and implements smart synchronization with automatic detection of sync mode. It implements the standard lifecycle methods:
+
+- `init`
+- `run_sync`
+- `_run_full_sync_internal`
+- `_run_incremental_sync_internal`
+- `_process_nextcloud_items_generator`
+
+### Connector Initialization
+
+The `init` method:
+1. Validates credentials from configuration
+2. Creates a Nextcloud REST client with username and app password
+3. Retrieves current user information
+4. Initializes the data source for WebDAV operations
+
+### Smart Sync Strategy
+
+**`run_sync`** - Automatically determines sync type:
+1. **User Identity** (The account owner)
+2. **Record Group** (The "Personal Drive")
+3. **Files and Folders** (Smart sync based on cursor state)
+
+The system uses a **sync point** (cursor) stored in the database:
+- **Full Sync:** If no cursor exists, performs complete WebDAV PROPFIND
+- **Incremental Sync:** If cursor exists, queries Activity API for changes only
+
+---
+
+## User & Record Group Sync Workflow
+
+### Identity Resolution
+
+The sync begins by authenticating with the provided username and app password. The system:
+1. Validates the connection with a test WebDAV request
+2. Retrieves user email from Nextcloud (if available)
+3. Uses username as the primary identifier
+
+### Drive Creation
+
+Once the user is identified, the system creates a "Record Group":
+* **Name:** "Nextcloud - `{Username}`"
+* **Type:** Drive
+* **Permission:** The user is assigned as the **OWNER**
+
+---
+
+## Files and Folders Sync Workflow
+
+### Workflow Overview
+
+1. **Cursor Check:** The connector checks the activity sync point to determine if a previous sync has occurred.
+
+2. **Data Fetching:**
+   * **Full Sync:** If no cursor exists, uses WebDAV PROPFIND with `Depth: infinity` to fetch the entire directory tree.
+   * **Incremental Sync:** If a cursor exists, queries the Activity API for changes since the last sync.
+
+3. **Hierarchical Processing:** Entries are sorted by depth (folders before files) to ensure parent records exist before children are processed.
+
+4. **Generator Processing:** Results are processed through `_process_nextcloud_items_generator` for memory-efficient batch handling.
+
+### Detailed Process
+
+#### Initial Sync
+
+1. **WebDAV PROPFIND:** Fetches all files and folders recursively from the user's root directory.
+
+2. **For Each Item:**
+   - **Metadata Extraction:** Collects file/folder properties:
+     - File ID (unique identifier)
+     - Path (full WebDAV path)
+     - ETag (version identifier for change detection)
+     - Size (file size in bytes)
+     - Modified Time (last modification timestamp)
+     - Resource Type (file or folder)
+   - **Parent Resolution:** Extracts parent path and looks up parent record ID
+   - **MIME Type Detection:** Determines file type from extension or content-type header
+   - **Permission Assignment:** Assigns OWNER permission to the authenticated user
+
+3. **Change Detection:** Compares ETag and modified timestamps with existing database records to identify:
+   - New files/folders
+   - Modified content
+   - Moved items
+   - Metadata changes
+
+4. **Batch Processing:** Items are batched (default 100 per batch) and sent to:
+   - `data_entities_processor.on_new_records` - For new items
+   - `data_entities_processor.on_record_content_update` - For content modifications
+   - `data_entities_processor.on_record_metadata_update` - For metadata changes
+
+5. **Cursor Initialization:** After successful full sync, saves the latest activity ID as cursor for future incremental syncs.
+
+#### Incremental Sync
+
+Nextcloud uses the **Activity API** to track changes:
+
+1. **Event Listening:** Monitors activity stream for file/folder activities:
+   - `file_created` - New files added
+   - `file_changed` - File content modified
+   - `file_deleted` - Files removed
+   - `file_restored` - Deleted files restored
+
+2. **Path Extraction:** Parses activity objects to extract affected file paths.
+
+3. **Targeted Fetching:** For modified items:
+   - Fetches fresh metadata using WebDAV PROPFIND
+   - Re-processes permissions
+   - Updates database records
+
+4. **Deletion Handling:** Processes deletion events by marking records as deleted in the database.
+
+5. **Activity Cursor Update:** After processing all events, saves the latest activity ID for the next incremental sync cycle.
+
+---
+
+## Sharing & Permissions Sync
+
+### Simplified Personal Model
+
+Since this is a personal connector:
+
+1. **Default Ownership:** The authenticated user is assigned **OWNER** permissions for all files and folders
+2. **Share Information:** The connector can detect shares via Nextcloud's OCS Share API
+3. **Permission Types:** Maps Nextcloud permissions (READ, UPDATE, DELETE, SHARE) to PipesHub permission types
+
+### Nextcloud Permission Mapping
+
+* **Permission 31 (ALL):** Maps to OWNER
+* **Permissions with DELETE or UPDATE:** Maps to WRITE
+* **Permission with READ only:** Maps to READ
+
+---
+
+## Incremental Sync with Activity API
+
+### Activity-Based Change Detection
+
+The incremental sync uses Nextcloud's Activity API to efficiently detect changes:
+
+1. **Activity Query:** Fetches activities since last sync cursor
+2. **Activity Types Processed:**
+   * `file_created`: New files added
+   * `file_changed`: File content modified
+   * `file_deleted`: Files removed
+   * `file_restored`: Deleted files restored
+
+3. **Path Extraction:** Parses activity objects to extract affected file paths
+4. **Targeted Updates:** Only fetches fresh metadata for changed files
+5. **Cursor Update:** Saves latest activity ID for next incremental sync
+
+### Performance Optimization
+
+* **Path Cache:** Maintains in-memory map of paths to record IDs
+* **Batch Processing:** Groups updates into configurable batch sizes
+* **Rate Limiting:** Respects API rate limits (50 requests/second default)
+* **Concurrent Batches:** Processes up to 5 batches simultaneously
+
+</Accordion>
+
+<Accordion title="File Downloads" icon="download">
+
+### Streaming Support
+
+The connector provides authenticated file downloads:
+
+1. **WebDAV Download:** Uses authenticated WebDAV GET requests
+2. **Streaming Response:** Files are streamed to avoid memory issues with large files
+3. **Folder Handling:** Folders cannot be downloaded (only individual files)
+
+### Usage
+
+* Files can be downloaded through the `stream_record` method
+* No public signed URLs (authentication required for all downloads)
+* Maintains security by requiring valid credentials for every download
+
+### Supported Features
+
+| Feature | Supported | Notes |
+|---------|-----------|-------|
+| File Sync | ✅ | Full WebDAV support |
+| Folder Sync | ✅ | Hierarchical structure maintained |
+| Incremental Sync | ✅ | Activity API-based |
+| File Extension Filters | ✅ | Include/exclude by extension |
+| Date Filters | ✅ | Modified and created date filters |
+| Permission Sync | ✅ | Personal account ownership |
+| File Download | ✅ | Authenticated streaming |
+| Webhook Support | ❌ | Use scheduled sync instead |
+| Real-time Sync | ❌ | Scheduled only |
+
+</Accordion>
+
+</AccordionGroup>
+
+---
+
+## Troubleshooting
+
+<AccordionGroup>
+
+<Accordion title="Connection Issues" icon="exclamation-triangle">
+
+### Invalid Credentials
+
+**Symptom:** Authentication fails with 401 error
+
+**Solutions:**
+1. Verify your username is correct
+2. Ensure you're using an **App Password**, not your main password
+3. Check that the app password hasn't been revoked in Nextcloud Security settings
+4. Verify the Base URL is correct (should not end with `/`)
+
+### Base URL Incorrect
+
+**Symptom:** Connection test fails or 404 errors
+
+**Solutions:**
+1. Ensure Base URL includes protocol (e.g., `https://`)
+2. Remove trailing slashes from the URL
+3. Verify the Nextcloud instance is accessible from your network
+4. Check for any proxy or firewall restrictions
+
+</Accordion>
+
+<Accordion title="Performance Optimization" icon="tachometer">
+
+### Slow Sync Performance
+
+**Solutions:**
+1. Adjust batch size - smaller batches for limited memory, larger for better throughput
+2. Configure file extension filters to exclude unnecessary file types
+3. Use date filters to limit scope of sync
+4. Check rate limiting settings and adjust if needed
+
+### High Memory Usage
+
+**Solutions:**
+1. Reduce batch size from default 100 to 50 or lower
+2. Limit concurrent batch processing
+3. Enable file extension filters to reduce total file count
+4. Consider splitting large folder structures across multiple connectors
+
+</Accordion>
+
+</AccordionGroup>
+
+---
+
+<AccordionGroup>
+
+<Accordion title="Best Practices" icon="lightbulb">
+
+### Sync Strategy
+
+- **Use Incremental Sync:** After initial setup, rely on incremental syncs for efficiency
+- **Schedule Syncs Wisely:** Set sync intervals based on your activity patterns (e.g., every 60 minutes for continuous updates)
+
+### Filter Configuration
+
+- **Be Specific:** Only sync file types you need to index using file extension filters
+- **Use Date Filters:** Apply date filters to optimize sync scope and performance
+- **Review Regularly:** Audit your filters to ensure they match current needs
+
+### Monitoring
+
+- **Monitor First Sync:** The initial full sync may take time depending on your file count
+- **Test Connection:** Always test the connection after configuration changes
+- **Check Logs:** Regularly review sync logs for errors or warnings
+
+### Security
+
+- **Use App Passwords:** Always use generated app passwords rather than your main Nextcloud password
+- **Revoke Unused Tokens:** Regularly review and revoke unused app passwords in Nextcloud Security settings
+- **Secure Transmission:** All API calls use HTTPS for encrypted communication
+
+</Accordion>
+
+</AccordionGroup>

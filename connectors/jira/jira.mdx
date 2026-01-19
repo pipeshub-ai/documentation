@@ -243,12 +243,11 @@ Use the left sidebar to navigate between **Permissions**, **Authorization**, and
 
 #### User Identity API Scopes
 
-Click **"Add"** next to User identity API and select the following scopes:
+Click **"Add"** next to User identity API and select the following scope:
 
 | Scope | Description |
 |-------|-------------|
 | `read:account` | View user profiles (required for user identification) |
-| `read:me` | View current user's email address |
 
 <div className="text-center">
   <img
@@ -259,7 +258,7 @@ Click **"Add"** next to User identity API and select the following scopes:
 </div>
 
 <Info>
-  The `offline_access` scope is essential for scheduled synchronization to work when users are not actively logged in. It enables refresh tokens for maintaining access.
+  The `offline_access` scope is automatically included when you configure OAuth 2.0 (3LO). It enables refresh tokens for scheduled synchronization to work when users are not actively logged in.
 </Info>
 
 #### Jira API Scopes
@@ -272,12 +271,8 @@ First, select the **"Classic scopes"** tab and add the following scopes:
 
 | Scope | Description |
 |-------|-------------|
-| `read:jira-work` | Read Jira project and issue data |
-| `write:jira-work` | Write access for Jira work items |
-| `read:jira-user` | Read Jira user information |
-| `manage:jira-configuration` | Manage Jira configuration settings |
-| `read:jira-project` | Read project configurations |
-| `write:jira-project` | Write access for project settings |
+| `read:jira-work` | Read Jira project and issue data, search issues, attachments, worklogs |
+| `read:jira-user` | Read Jira user information (usernames, emails, avatars) |
 
 <div className="text-center">
   <img
@@ -288,7 +283,7 @@ First, select the **"Classic scopes"** tab and add the following scopes:
 </div>
 
 <Info>
-  Some write or manage scopes (such as <code>write:jira-work</code> or <code>manage:jira-configuration</code>) may be required by Atlassian for certain API endpoints, even if the connector only performs read operations. The connector itself does <b>not</b> create, modify, or delete any Jira data. These permissions are requested solely to satisfy Atlassian's API requirements.
+  The connector uses only **read-only** classic scopes. It does not require any write or manage permissions. These two scopes provide broad access to Jira projects, issues, and user data.
 </Info>
 
 ##### Granular Scopes
@@ -298,8 +293,11 @@ Next, select the **"Granular scopes"** tab and add the following read permission
 | Scope | Description |
 |-------|-------------|
 | `read:user:jira` | View user details |
-| `read:group:jira` | View groups and memberships |
+| `read:group:jira` | View groups and group members |
 | `read:avatar:jira` | View user and project avatars |
+| `read:audit-log:jira` | Read audit logs (for detecting deleted issues) |
+| `read:application-role:jira` | Read application roles |
+| `read:project-role:jira` | Read project roles and role assignments |
 
 <div className="text-center">
   <img
@@ -310,7 +308,7 @@ Next, select the **"Granular scopes"** tab and add the following read permission
 </div>
 
 <Note>
-  The connector uses a combination of Classic and Granular scopes for full functionality. Classic scopes (`read:jira-work`, `read:jira-user`) provide the primary data access, while Granular scopes enable specific features like user lookup and group membership resolution.
+  The connector uses a combination of Classic and Granular scopes for full functionality. Classic scopes (`read:jira-work`, `read:jira-user`) provide the primary data access, while Granular scopes enable specific features like user lookup, group membership resolution, audit log access for deletion detection, and project role permissions.
 </Note>
 
 ### Step 6: Get OAuth 2.0 Credentials
@@ -451,16 +449,19 @@ Indexing filters control what synced data gets processed for AI search. All data
 
 **Available Indexing Filters:**
 
-- **Index Issues** (default: enabled) - Include issue content in search
-- **Index Issue Comments** (default: enabled) - Include comments in search
-- **Index Issue Attachments** (default: enabled) - Include attachments in search
+- **Index Issues** (default: enabled) - Include issue content (description and comments) in search
+- **Index Issue and Comment Attachments** (default: enabled) - Include attachments from issues and comments in search
+
+<Info>
+  Comments are stored as part of the issue content (not as separate records). When "Index Issues" is enabled, both issue descriptions and comments are indexed together.
+</Info>
 
 **Example Configurations:**
 
 - **Sync only Engineering project**: Project Keys → Operator: `In`, select "Engineering" from dropdown
 - **Exclude archived projects**: Project Keys → Operator: `Not In`, select archived projects from dropdown
 - **Recent issues only**: Modified Date → Operator: `Is After`, Date: `2024-06-01`
-- **Index issues but not attachments**: Disable "Index Issue Attachments" toggle
+- **Index issues but not attachments**: Disable "Index Issue and Comment Attachments" toggle
 
 <Info>
   Filters can be configured during initial setup or modified later. Changes to filters will take effect on the next sync.
@@ -590,8 +591,9 @@ The `run_sync` method executes a complete synchronization cycle in a specific or
 | 2 | `_sync_user_groups()` | Groups | Sync groups and user-group memberships |
 | 3 | `_fetch_projects()` | Projects | Fetch projects (filtered if configured) |
 | 4 | `_sync_project_roles()` | Roles | Sync project role assignments |
-| 5 | `_sync_project_issues()` | Issues | Sync issues, comments, and attachments |
-| 6 | `_handle_issue_deletions()` | Deletions | Detect and remove deleted issues |
+| 5 | `_sync_project_lead_roles()` | Lead Roles | Assign project lead permissions |
+| 6 | `_sync_project_issues()` | Issues | Sync issues, comments, and attachments |
+| 7 | `_handle_issue_deletions()` | Deletions | Detect and remove deleted issues |
 
 ### Full Sync vs Incremental Sync
 
@@ -627,20 +629,27 @@ For each project, the connector:
 1. **Builds JQL Query**: Constructs query with date filters and project scope
 2. **Batched Fetching**: Retrieves issues in batches (default: 100 per request)
 3. **Content Processing**: 
-   - Parses issue description (ADF format → Markdown)
+   - Parses issue description (ADF format → Markdown with embedded images)
    - Extracts metadata (status, priority, labels, etc.)
-4. **Comment Sync**: Fetches and indexes all comments if enabled
-5. **Attachment Sync**: Processes attachments if indexing is enabled
+4. **BlockGroup Structure**: Creates hierarchical content structure:
+   - **Description BlockGroup** (index=0): Contains issue description with inline attachments
+   - **Comment Thread BlockGroups**: Each thread gets its own BlockGroup with `parent_index=0`
+   - **Comment Blocks**: Individual comments stored as Blocks within their thread BlockGroup
+5. **Attachment Processing**: Maps attachments to their correct location (description or specific comments)
 6. **Permission Assignment**: Applies project and issue-level permissions
+
+<Note>
+  Comments are stored as **Blocks** within the issue's BlocksContainer (not as separate records). This enables efficient threaded comment organization and ensures comments are deleted automatically when the parent issue is removed.
+</Note>
 
 ### Deletion Detection
 
 The connector uses Jira's **Audit Log API** to detect deleted issues:
 
-1. Queries audit log for `issue_deleted` events since last sync
+1. Queries audit log for `ISSUE_DELETE` events since last sync
 2. Identifies deleted issue keys from audit records
-3. Removes corresponding records from the index
-4. Cascades deletion to associated comments and attachments
+3. Removes issue records from the index
+4. Comments are automatically deleted with the issue (stored as Blocks within the issue)
 
 ### Checkpoint Management
 
@@ -664,10 +673,10 @@ After each successful sync:
   
   | Workspace Size | Estimated Time |
   |----------------|----------------|
-  | Small (< 1,000 issues) | 5-15 minutes |
-  | Medium (1,000 - 10,000 issues) | 15-45 minutes |
-  | Large (10,000 - 50,000 issues) | 1-3 hours |
-  | Enterprise (50,000+ issues) | 3+ hours |
+  | Small (< 1,000 issues) | 1-5 minutes |
+  | Medium (1,000 - 10,000 issues) | 5-15 minutes |
+  | Large (10,000 - 50,000 issues) | 15-45 minutes |
+  | Enterprise (50,000+ issues) | 45+ minutes |
   
   **Tip**: Use project filters to sync only the projects you need, significantly reducing initial sync time.
 </Accordion>
@@ -683,7 +692,12 @@ After each successful sync:
 </Accordion>
 
 <Accordion title="Why are comments or attachments missing from search?">
-  Check that indexing filters for comments and attachments are enabled, and confirm the authenticating user has permission to view those items in Jira. After toggling filters, run a sync to refresh indexed content.
+  Comments are indexed as part of the issue content (not separately). Ensure:
+  - **Index Issues** filter is enabled (this includes comments)
+  - **Index Issue and Comment Attachments** filter is enabled for attachment search
+  - The authenticating user has permission to view the issues and their comments in Jira
+  
+  After toggling filters, run a sync to refresh indexed content.
 </Accordion>
 
 </AccordionGroup>

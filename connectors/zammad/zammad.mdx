@@ -51,7 +51,7 @@ The connector indexes the following content for AI-powered search:
 | **Tickets** | Title, number, state, priority, group, owner, customer, articles (messages/replies), attachments
 | **Knowledge Base** | Categories, answers/articles with translations, and associated attachments |
 | **Users** | Customer and agent profiles with emails and roles |
-| **Groups**| Support team/department information |
+| **Groups** | Support team/department information |
 | **Roles** | User roles and permission assignments |
 | **Permissions** | Group-based access controls for tickets, role-based access controls for knowledge base |
 
@@ -228,11 +228,11 @@ Sync filters determine which content is downloaded from Zammad. Data excluded by
    - **Selection**: Choose from a searchable dropdown of your Zammad groups
    - Leave empty to sync all groups
 
-5. **Modified Date** - Filter by last modification date
+3. **Modified Date** - Filter by last modification date
    - **Operators**: `Is After`, `Is Before`, or `Is Between`
    - **Use case**: Sync only recently updated tickets
 
-6. **Created Date** - Filter by creation date
+4. **Created Date** - Filter by creation date
    - **Operators**: `Is After`, `Is Before`, or `Is Between`
    - **Use case**: Sync only tickets created within a specific timeframe
 
@@ -244,15 +244,7 @@ Indexing filters control what synced data gets processed for AI search.
 
 - **Index Tickets** (default: enabled) - Include ticket content in search
 - **Index Attachments** (default: enabled) - Include file attachments in search
-- **Index Internal Notes** (default: disabled) - Include internal/private articles in search
 - **Index Knowledge Base** (default: enabled) - Include knowledge base articles in search
-
-**Example Configurations:**
-
-- **Sync only Support team**: Groups → Operator: `In`, select "Support" from dropdown
-- **Exclude closed tickets**: Ticket States → Operator: `Not In`, select "Closed"
-- **Recent tickets only**: Modified Date → Operator: `Is After`, Date: `2024-01-01`
-- **Customer-facing content only**: Disable "Index Internal Notes" toggle
 
 #### Sync Settings
 
@@ -288,7 +280,6 @@ The Zammad connector provides:
 - **Incremental sync**: Only fetches changes since last sync using `updated_at` timestamps
 - **Batch processing**: Fetches data in optimized batches for performance
 - **Permission preservation**: Respects group-based access controls
-- **Article visibility**: Distinguishes between public and internal articles
 - **Attachment handling**: Syncs file attachments from ticket articles
 - **Knowledge Base sync**: Syncs categories and answers with translations
 

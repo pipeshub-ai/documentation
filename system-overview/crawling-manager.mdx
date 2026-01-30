@@ -35,6 +35,7 @@ Authorization: Bearer <jwt_token>
 - `s3` - Amazon S3 connector
 - `azure` - Azure connector
 - `airtable` - Airtable connector
+- `zammad` - Zammad connector
 - `zendesk` - Zendesk connector
 
 **Note:** Connector names are case-insensitive and spaces are automatically removed during processing. Job IDs are generated using the format: `crawl-{connector}-{orgId}` where connector is normalized to lowercase with hyphens.
@@ -49,7 +50,7 @@ Schedule a new crawling job for a specific connector type.
 **Endpoint:** `POST /api/v1/crawlingManager/:connector/schedule`
 
 **Parameters:**
-- `connector` (string, path) - The connector type (gmail, drive, onedrive, sharepointonline, confluence, slack, linear, dropbox, outlook, jira, atlassian, github, box, s3, azure, airtable, zendesk)
+- `connector` (string, path) - The connector type (gmail, drive, onedrive, sharepointonline, confluence, slack, linear, dropbox, outlook, jira, atlassian, github, box, s3, azure, airtable, zammad, zendesk)
 
 <Tabs>
 <Tab title="Request Body">
@@ -767,6 +768,7 @@ Upon successful job completion, the system publishes sync events:
 - `s3` → `SyncS3Event`
 - `azure` → `SyncAzureEvent`
 - `airtable` → `SyncAirtableEvent`
+- `zammad` → `SyncZammadEvent`
 - `zendesk` → `SyncZendeskEvent`
 - `confluence` and `slack` → `ReindexAllRecordEvent` (fallback)
 

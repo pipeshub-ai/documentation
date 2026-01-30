@@ -1,0 +1,449 @@
+---
+title: "Zammad"
+description: "Open-source helpdesk and ticketing system connector"
+icon: "/logo/zammad.png"
+---
+
+<div className="max-w-2xl mx-auto mt-12">
+  <div className="p-6 border border-gray-200 dark:border-gray-700 rounded-lg bg-green-50 dark:bg-gray-800">
+    <div className="flex items-center mb-4">
+      <img 
+        src="/logo/zammad.png" 
+        alt="Zammad Logo" 
+        className="w-8 h-8 mr-3 object-contain flex-shrink-0"
+      />
+      <h2 className="text-2xl font-semibold m-0">Zammad</h2>
+    </div>
+    <p className="text-lg text-gray-700 dark:text-gray-300 mb-4">Open-source helpdesk and ticketing system</p>
+    <div className="flex items-center gap-2">
+      <span className="px-3 py-1 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 rounded-full text-sm font-medium">
+        ✅ Ready
+      </span>
+      <span className="px-3 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-full text-sm font-medium">
+        📖 Documentation Available
+      </span>
+    </div>
+  </div>
+</div>
+
+## Overview
+
+Zammad is an open-source, web-based helpdesk and customer support ticketing system. It provides a unified interface for managing customer communications across multiple channels including email, chat, telephone, and social media, making it ideal for support teams of all sizes.
+
+### Zammad Data Structure
+
+The connector understands Zammad's hierarchical data model:
+
+- **Organizations**
+  - **Users** (customers and agents)
+- **Groups** (support teams/departments)
+  - **Tickets** (with articles, attachments)
+- **Knowledge Base**
+  - **Categories** (hierarchical structure)
+  - **Answers** (articles with translations)
+
+### What Gets Synced
+
+The connector indexes the following content for AI-powered search:
+
+| Content Type | Details |
+|--------------|---------|
+| **Tickets** | Title, number, state, priority, group, owner, customer, articles (messages/replies), attachments
+| **Knowledge Base** | Categories, answers/articles with translations, and associated attachments |
+| **Users** | Customer and agent profiles with emails and roles |
+| **Groups**| Support team/department information |
+| **Roles** | User roles and permission assignments |
+| **Permissions** | Group-based access controls for tickets, role-based access controls for knowledge base |
+
+---
+
+## Configuration Guide
+
+<AccordionGroup type="single" collapsible>
+
+<Accordion title="Setup" icon="gear">
+
+<div className="mt-4">
+
+## Getting Started
+
+The Zammad connector provides access to your helpdesk data through API Token authentication. It syncs tickets, knowledge base content, users, and groups, enabling comprehensive support ticket search and access across your Zammad instance.
+
+### Authentication Method
+
+The Zammad connector uses **API Access Token** authentication (HTTP Token Authentication). This is the recommended method by Zammad for external integrations.
+
+<Info>
+  API operations performed with the token inherit the same permissions as the user who generated it. For full access to all tickets and data, use an admin user's token.
+</Info>
+
+## How to Configure and Enable the Zammad Connector
+
+### Step 1: Access User Profile in Zammad
+
+1. **Log in to your Zammad instance** with an account that has administrator privileges
+2. **Click on your user avatar** in the bottom left corner of the Zammad interface
+3. **Select "Profile"** from the dropdown menu
+
+<div className="text-center">
+  <img
+    src="/images/connectors/zammad/profile_settings.png"
+    alt="Zammad Profile Settings Access"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+<Warning>
+  The API token will have the same permissions as the user who creates it. For full access to all tickets and API endpoints, generate the token from an **admin user account**.
+</Warning>
+
+### Step 2: Navigate to Token Access
+
+1. In the profile settings page, locate the **"Token Access"** tab
+2. Click on it to open the **Personal Access Tokens** section
+3. You'll see a list of any existing tokens (if previously created)
+
+<div className="text-center">
+  <img
+    src="/images/connectors/zammad/token_access_tab.png"
+    alt="Zammad Token Access Tab"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+### Step 3: Create a New API Token
+
+1. Click the **"Create"** button to generate a new token
+2. Fill in the token configuration:
+
+   | Field | Description | Recommendation |
+   |-------|-------------|----------------|
+   | **Name** | A descriptive identifier for the token | Use something like "PipesHub-Integration" |
+   | **Expiry Date** | Optional expiration date for security | Leave empty for no expiration, or set based on your security policy |
+
+3. Enable the following **Permissions** for the token:
+
+   | Permission | Description |
+   |------------|-------------|
+   | **ticket.agent** | Access the tickets as agent based on group access |
+   | **ticket.customer** | Access tickets as customer |
+   | **knowledge_base.editor** | Access the knowledge base editor features |
+   | **knowledge_base.reader** | Access the knowledge base reader features |
+
+4. Click **"Create"** or **"Save"** to generate the token
+
+<div className="text-center">
+  <img
+    src="/images/connectors/zammad/create_token-1.png"
+    alt="Create New API Token"
+    className="block mx-auto w-11/12"
+  />
+</div>
+<div className="text-center">
+  <img
+    src="/images/connectors/zammad/create_token-2.png"
+    alt="Create New API Token"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+### Step 4: Copy the API Token
+
+<Warning>
+  **CRITICAL**: The API token will be displayed **immediately and only once**. You must copy it now, as it **cannot be retrieved later**. If you lose the token, you'll need to create a new one.
+</Warning>
+
+1. After clicking Create, the token will be displayed in a dialog or on screen
+2. **Immediately copy the token** to a secure location
+3. Store it temporarily until you complete the PipesHub configuration
+
+<div className="text-center">
+  <img
+    src="/images/connectors/zammad/copy_token.png"
+    alt="Copy API Token"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+### Step 5: Configure Connector in PipesHub
+
+1. Open PipesHub and navigate to **Connectors Settings**
+2. Find the **Zammad** connector and click **"Configure"**
+3. The configuration dialog will appear with authentication settings
+
+<div className="text-center">
+  <img
+    src="/images/connectors/zammad/pipeshub_config.png"
+    alt="PipesHub Zammad Configuration"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+4. Enter your Zammad instance details:
+
+   | Field | Description | Example |
+   |-------|-------------|---------|
+   | **Zammad URL** | Your Zammad instance base URL | `https://support.yourcompany.com` |
+   | **API Token** | The token you copied in Step 4 | `your-api-token-here` |
+
+5. Click **"Save Auth Settings"** to save the configuration
+
+<Info>
+  Ensure the Zammad URL does not include a trailing slash. Use `https://support.yourcompany.com` not `https://support.yourcompany.com/`.
+</Info>
+
+### Step 6: Enable and Configure the Connector
+
+1. After Save Auth Settings, click **"Enable Sync"** to activate the connector
+2. Configure synchronization settings:
+
+<div className="text-center">
+  <img
+    src="/images/connectors/zammad/enable_connector.png"
+    alt="Enable Zammad Connector"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+#### Sync Filters
+
+Sync filters determine which content is downloaded from Zammad. Data excluded by sync filters is never downloaded.
+
+<div className="text-center">
+  <img
+    src="/images/connectors/zammad/sync_filters.png"
+    alt="Zammad Sync Filters"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+**Available Sync Filters:**
+
+1. **Enable Manual Indexing** - Control indexing trigger method
+   - **Enabled**: Records are indexed only when you manually trigger it
+   - **Disabled** (default): Records are indexed automatically after sync
+
+2. **Groups** - Filter tickets by support group/department
+   - **Operator**: `In` (include only) or `Not In` (exclude)
+   - **Selection**: Choose from a searchable dropdown of your Zammad groups
+   - Leave empty to sync all groups
+
+5. **Modified Date** - Filter by last modification date
+   - **Operators**: `Is After`, `Is Before`, or `Is Between`
+   - **Use case**: Sync only recently updated tickets
+
+6. **Created Date** - Filter by creation date
+   - **Operators**: `Is After`, `Is Before`, or `Is Between`
+   - **Use case**: Sync only tickets created within a specific timeframe
+
+#### Indexing Filters
+
+Indexing filters control what synced data gets processed for AI search.
+
+**Available Indexing Filters:**
+
+- **Index Tickets** (default: enabled) - Include ticket content in search
+- **Index Attachments** (default: enabled) - Include file attachments in search
+- **Index Internal Notes** (default: disabled) - Include internal/private articles in search
+- **Index Knowledge Base** (default: enabled) - Include knowledge base articles in search
+
+**Example Configurations:**
+
+- **Sync only Support team**: Groups → Operator: `In`, select "Support" from dropdown
+- **Exclude closed tickets**: Ticket States → Operator: `Not In`, select "Closed"
+- **Recent tickets only**: Modified Date → Operator: `Is After`, Date: `2024-01-01`
+- **Customer-facing content only**: Disable "Index Internal Notes" toggle
+
+#### Sync Settings
+
+Configure your synchronization preferences:
+
+1. **Sync Strategy**: Choose between "Scheduled" or "Manual"
+2. **Sync Interval**: Choose how often to sync (default: 60 minutes)
+
+<div className="text-center">
+  <img
+    src="/images/connectors/zammad/sync_settings.png"
+    alt="Configure Sync Settings"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+<Note>
+  **Scheduled sync** runs automatically at the specified intervals. **Manual sync** requires you to trigger synchronization on-demand.
+</Note>
+
+#### Save and Activate
+
+1. Click **"Save"** to save your configuration and enable the connector
+2. The connector will verify credentials and begin initial synchronization
+3. Wait for the status to show **"Active"** or **"Syncing"**
+4. Monitor the **Indexing Progress** to track sync completion
+
+## Supported Features
+
+The Zammad connector provides:
+
+- **Full content sync**: Tickets, knowledge base, attachments, users, and groups
+- **Incremental sync**: Only fetches changes since last sync using `updated_at` timestamps
+- **Batch processing**: Fetches data in optimized batches for performance
+- **Permission preservation**: Respects group-based access controls
+- **Article visibility**: Distinguishes between public and internal articles
+- **Attachment handling**: Syncs file attachments from ticket articles
+- **Knowledge Base sync**: Syncs categories and answers with translations
+
+## Permission Model
+
+Zammad uses different permission models for different content types:
+
+- **Tickets**: Group-based access controls. Users can only access tickets in their assigned groups.
+- **Knowledge Base**: Role-based access controls. Access to knowledge base content is determined by user roles.
+
+The connector preserves these permissions:
+- Group assignments determine which agents can view synced tickets in PipesHub
+- Internal articles respect the internal/public visibility flag
+
+## Useful Links
+
+- **Zammad API Documentation**: [docs.zammad.org/en/latest/api/intro.html](https://docs.zammad.org/en/latest/api/intro.html)
+- **Zammad REST API Reference**: [docs.zammad.org/en/latest/api/](https://docs.zammad.org/en/latest/api/)
+- **Zammad User Documentation**: [user-docs.zammad.org](https://user-docs.zammad.org/)
+- **Zammad Admin Documentation**: [admin-docs.zammad.org](https://admin-docs.zammad.org/)
+
+</div>
+
+</Accordion>
+
+</AccordionGroup>
+
+## Troubleshooting
+
+<AccordionGroup>
+
+<Accordion title="Troubleshooting" icon="circle-exclamation">
+
+### Common Issues
+
+**Invalid API token error:**
+- Verify the API token was copied correctly without extra spaces
+- Check that the token has not expired (if expiry date was set)
+- Ensure the token was not revoked in Zammad
+- Generate a new token if the current one is compromised or lost
+
+**Connection refused or timeout:**
+- Verify the Zammad URL is correct and accessible
+- Check that your Zammad instance is running and reachable from PipesHub
+- Ensure there are no firewall rules blocking the connection
+- Verify SSL/TLS certificates are valid (for HTTPS connections)
+
+**Insufficient permissions error:**
+- The API token inherits the creating user's permissions
+- Use an admin user's token for full API access
+- Check that the user account is active and not locked
+- Verify the user has access to the required groups
+
+**No data syncing:**
+- Verify the connector status shows "Active"
+- Check that tickets exist in Zammad within your filter criteria
+- Ensure the API token user has access to the groups being synced
+- Review sync logs for specific error messages
+
+**Missing tickets:**
+- Verify group filters aren't excluding the desired content
+- Check that the API token user has access to those groups
+- Ensure ticket state filters aren't excluding tickets
+- Verify date filters aren't too restrictive
+
+<Warning>
+  If you regenerate or revoke the API token in Zammad, you must update the configuration in PipesHub with the new token value.
+</Warning>
+
+</Accordion>
+
+</AccordionGroup>
+
+## Connector Workflow
+
+<AccordionGroup>
+
+<Accordion title="Synchronization Process" icon="sync">
+
+The Zammad connector follows a structured synchronization process to ensure all data is accurately synced and permissions are properly maintained.
+
+### Sync Order
+
+The connector syncs data in the following order:
+
+1. **Users** → Sync all Zammad users with their profiles and emails
+2. **Groups** → Sync support groups/departments (creates both RecordGroups and UserGroups for permissions)
+3. **Roles** → Sync user roles for knowledge base access controls
+4. **Tickets** → Sync tickets per group with articles and attachments
+5. **Knowledge Base** → Sync categories and answers with translations
+
+### Full Sync vs Incremental Sync
+
+**Full Sync** occurs when:
+- First-time synchronization
+- Manual full sync is triggered
+
+**Incremental Sync** occurs when:
+- Previous sync completed successfully
+- Only fetches content modified since last sync
+- Uses `updated_at` timestamps for change detection
+
+### What Gets Processed
+
+**Tickets**: Number, title, state, priority, group assignment, owner, customer, all articles (messages, replies, notes), attachments
+
+**Knowledge Base**: Categories hierarchy, answers/articles with full content and translations, associated attachments
+
+**Attachments**: Files attached to ticket articles and knowledge base answers
+
+</Accordion>
+
+</AccordionGroup>
+
+---
+
+## FAQ
+
+<AccordionGroup>
+
+<Accordion title="How long does the initial sync take?">
+  The initial sync duration depends on several factors:
+  
+  - **Instance size**: Number of tickets and knowledge base articles
+  - **Network latency**: Connection speed to your Zammad instance
+  - **Content complexity**: Tickets with many attachments take longer
+  
+  **Tips to speed up initial sync:**
+  - Use **group filters** to sync only the groups you need
+  - Use **date filters** to exclude old tickets
+</Accordion>
+
+<Accordion title="What permissions does the API token need?">
+  The following permissions must be enabled when creating the API token:
+  
+  - **ticket.agent** - Access the tickets as agent based on group access
+  - **ticket.customer** - Access tickets as customer
+  - **knowledge_base.editor** - Access the knowledge base editor features
+  - **knowledge_base.reader** - Access the knowledge base reader features
+</Accordion>
+
+<Accordion title="Can I sync specific groups only?">
+  **Yes**. Use the Groups filter to specify which groups to include or exclude:
+  
+  - **Include specific groups**: Set Operator to `In` and select the groups
+  - **Exclude specific groups**: Set Operator to `Not In` and select the groups to exclude
+</Accordion>
+
+</AccordionGroup>
+
+---
+
+<div className="text-center mt-12 p-6 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg max-w-2xl mx-auto">
+  <h3 className="text-lg font-semibold mb-2">Ready to Get Started?</h3>
+  <p className="text-gray-600 dark:text-gray-400">
+    Connect your Zammad helpdesk to PipesHub in just a few minutes. Follow the step-by-step guide above to enable organization-wide support ticket search across all your Zammad content.
+  </p>
+</div>

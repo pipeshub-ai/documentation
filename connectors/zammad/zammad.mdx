@@ -34,13 +34,13 @@ Zammad is an open-source, web-based helpdesk and customer support ticketing syst
 
 The connector understands Zammad's hierarchical data model:
 
-- **Organizations**
-  - **Users** (customers and agents)
+- **Users** (customers and agents with role assignments)
 - **Groups** (support teams/departments)
-  - **Tickets** (with articles, attachments)
+  - **Tickets** (with articles and attachments)
+- **Roles** (permission sets assigned to users)
 - **Knowledge Base**
   - **Categories** (hierarchical structure)
-  - **Answers** (articles with translations)
+  - **Answers** (articles with translations and attachments)
 
 ### What Gets Synced
 
@@ -48,7 +48,7 @@ The connector indexes the following content for AI-powered search:
 
 | Content Type | Details |
 |--------------|---------|
-| **Tickets** | Title, number, state, priority, group, owner, customer, articles (messages/replies), attachments
+| **Tickets** | Title, state, priority, group, owner, customer, articles (messages/replies), attachments
 | **Knowledge Base** | Categories, answers/articles with translations, and associated attachments |
 | **Users** | Customer and agent profiles with emails and roles |
 | **Groups** | Support team/department information |
@@ -119,7 +119,7 @@ The Zammad connector uses **API Access Token** authentication (HTTP Token Authen
    | Field | Description | Recommendation |
    |-------|-------------|----------------|
    | **Name** | A descriptive identifier for the token | Use something like "PipesHub-Integration" |
-   | **Expiry Date** | Optional expiration date for security | Leave empty for no expiration, or set based on your security policy |
+   | **Expiry Date** | expiration date for security | set based on your security policy |
 
 3. Enable the following **Permissions** for the token:
 
@@ -168,7 +168,7 @@ The Zammad connector uses **API Access Token** authentication (HTTP Token Authen
 ### Step 5: Configure Connector in PipesHub
 
 1. Open PipesHub and navigate to **Connectors Settings**
-2. Find the **Zammad** connector and click **"Configure"**
+2. Find the **Zammad** connector and click **"Save Configuration"**
 3. The configuration dialog will appear with authentication settings
 
 <div className="text-center">

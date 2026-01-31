@@ -3,37 +3,442 @@ title: "Azure Blob Storage"
 description: "Microsoft cloud object storage service connector"
 icon: "/logo/azure-blob.png"
 ---
-<div className="flex flex-col items-center justify-center text-center pt-10">
-  <h1 className="text-4xl font-bold">✅ Azure Blob Storage Connector Ready</h1>
-  <h3 className="text-xl mt-2">
-    Connector is live and ready to use. Documentation in process!
-  </h3>
-</div>
 <div className="max-w-2xl mx-auto mt-12">
-  <div className="p-6 border rounded-lg bg-blue-50">
+  <div className="p-6 border border-gray-200 dark:border-gray-700 rounded-lg bg-blue-50 dark:bg-gray-800">
     <div className="flex items-center mb-4">
       <img 
         src="/logo/azure-blob.png" 
         alt="Azure Blob Storage Logo" 
         className="w-8 h-8 mr-3 object-contain flex-shrink-0"
       />
-      <h2 className="text-2xl font-semibold m-0"> Azure Blob Storage</h2>
+      <h2 className="text-2xl font-semibold m-0">Azure Blob Storage</h2>
     </div>
-    <p className="text-lg text-gray-700 mb-4">Microsoft cloud object storage service</p>
+    <p className="text-lg text-gray-700 dark:text-gray-300 mb-4">Microsoft cloud object storage service</p>
     <div className="flex items-center gap-2">
-      <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium">
+      <span className="px-3 py-1 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 rounded-full text-sm font-medium">
         ✅ Ready
       </span>
-      <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
-        📝 Documentation in process
+      <span className="px-3 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-full text-sm font-medium">
+        📖 Documentation Available
       </span>
     </div>
   </div>
 </div>
-<div className="text-center mt-12 p-6 bg-gray-50 rounded-lg max-w-2xl mx-auto">
-  <h3 className="text-lg font-semibold mb-2">Need Help Getting Started?</h3>
-  <p className="text-gray-600">
-    The Azure Blob Storage connector is fully operational and ready for use. While we're finalizing the documentation, 
-    feel free to reach out to our support team for setup assistance.
+
+## Overview
+
+Azure Blob Storage is a massively scalable **object storage** service for unstructured data. It is organized into storage accounts, containers, and blobs and is commonly used for documents, media, backups, and application data.
+
+The Azure Blob connector enables you to sync blobs and virtual folders from your Azure Storage account into PipesHub, making your content searchable through AI-powered search and easily accessible across your organization.
+
+### Azure Blob Data Structure
+
+The connector understands Azure Blob Storage's logical hierarchy:
+
+**Storage Account → Containers → Virtual Folders → Blobs**
+
+| Entity | Description |
+|--------|-------------|
+| **Storage Account** | Top-level Azure resource that owns one or more blob containers |
+| **Containers** | Logical groupings of blobs within a storage account |
+| **Virtual Folders** | Prefix-based paths inside containers (e.g., `documents/reports/`) |
+| **Blobs** | Individual objects (files) stored in containers with unique names (paths) |
+
+### What Gets Synced
+
+The connector indexes the following content for AI-powered search:
+
+- **Blobs**: All supported file types stored in selected containers (documents, images, archives, etc.)
+- **Virtual Folders**: Directory-like structure inferred from blob paths
+- **Metadata**: Blob names, sizes, modification dates, MIME types
+- **Permissions**: Access scope (Personal vs Team) controlled via connector configuration
+
+---
+
+## Configuration Guide
+
+<AccordionGroup type="single" collapsible>
+
+<Accordion title="Setup">
+
+<div className="mt-4">
+
+### Setup Overview
+
+The Azure Blob connector uses an **Azure Storage connection string** from the Azure Portal. It syncs containers, virtual folders, and blobs, enabling comprehensive search and access across your Azure content.
+
+### Authentication
+
+The connector uses **Connection String authentication**:
+
+- Connection string is generated from your Azure Storage account
+- Contains account name, key, and endpoint
+- Stored securely in PipesHub as a secret
+
+<Info>
+  Connection strings provide full access to your storage account. Treat them like passwords and store them securely. Rotate keys regularly following Azure security best practices.
+</Info>
+
+### How to configure and enable the Azure Blob Connector
+
+### Step 1: Get the Azure Storage Connection String
+
+1. **Sign in to Azure Portal:**  
+   Go to `https://portal.azure.com` and sign in with your Azure account.
+
+2. **Open your Storage Account:**
+   - In the left navigation, select **"Storage accounts"**
+   - Click the storage account you want PipesHub to use
+
+3. **Navigate to Access Keys:**
+   - In the storage account menu, go to **"Security + networking" → "Access keys"** (or **"Access keys"** section)
+
+<div className="text-center">
+  <img
+    src="/images/connectors/azure-blob/storage_account_access_keys.png"
+    alt="Azure Storage Account Access Keys"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+4. **Copy the Connection String:**
+   - Under **key1** (or key2), click **"Show"** to reveal the connection string
+   - Click **"Copy"** next to **Connection string**
+   - Keep this value secure – you will paste it into PipesHub
+
+<Warning>
+  <div className="text-lg font-semibold">
+    Do not share your connection string publicly or commit it to version control. Anyone with this string can access your storage account.
+  </div>
+</Warning>
+
+### Step 2: Configure Connector in PipesHub
+
+1. **Navigate to Connectors:**
+   - In PipesHub, go to **Settings → Connectors**
+   - Find the **Azure Blob Storage** connector in the list
+   - Click **"Configure"**
+
+<div className="text-center">
+  <img
+    src="/images/connectors/azure-blob/azure_blob_config.png"
+    alt="PipesHub Azure Blob Configuration"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+2. **Enter Connection String:**
+   - In the **Connection String** field, paste the connection string you copied from Azure Portal
+   - Click **"Save Auth Settings"** or **"Next"**
+
+<div className="text-center">
+  <img
+    src="/images/connectors/azure-blob/connection_string.png"
+    alt="Azure Blob Connection String Input"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+<Warning>
+  Ensure the connection string is complete and copied without extra spaces. Invalid or partial values will cause authentication failures.
+</Warning>
+
+### Step 3: Configure Sync Settings
+
+1. **Choose Sync Strategy:**
+   - **Scheduled**: Automatically sync at regular intervals (recommended)
+   - **Manual**: Sync only when triggered manually
+
+<div className="text-center">
+  <img
+    src="/images/connectors/azure-blob/sync_strategy.png"
+    alt="Azure Blob Sync Strategy"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+2. **Set Sync Interval (if Scheduled):**
+   - Choose how often to sync (e.g., 15 min, 30 min, 1 hour, 4 hours, 24 hours)
+   - Default is typically 60 minutes
+
+<Info>
+  More frequent syncs keep your data fresher but use more Azure API and PipesHub resources. For large storage accounts, consider longer intervals.
+</Info>
+
+### Step 4: Configure Filters (Optional)
+
+Filters control which data is **synced** and which data is **indexed** for search.
+
+<div className="text-center">
+  <img
+    src="/images/connectors/azure-blob/azure_blob_filters.png"
+    alt="Azure Blob Filters Configuration"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+#### Sync Filters
+
+Sync filters decide what content is downloaded from Azure Blob Storage. Data excluded by sync filters is never fetched.
+
+**Available Sync Filters:**
+
+1. **Container Names**
+   - **Operator**: `In` (include only) or `Not In` (exclude)
+   - **Selection**: Choose from a **searchable dropdown** of containers in your storage account
+   - Select one or more containers to scope the sync
+
+2. **File Extensions**
+   - **Operator**: `In` (include) or `Not In` (exclude)
+   - **Value**: Comma-separated list of extensions, e.g. `pdf, docx, txt`
+   - Case-insensitive; do not include leading dots
+
+3. **Modified Date**
+   - **Operators**: `Is After`, `Is Before`, `Is Between`
+   - Use to sync only recently updated blobs (e.g., last 6 months)
+
+4. **Created Date**
+   - **Operators**: `Is After`, `Is Before`, `Is Between`
+   - Use to include or exclude older blobs based on creation time
+
+#### Indexing Filters
+
+Indexing filters control what synced data is processed for AI-powered search.
+
+- **Index Files** (default: enabled) – Include blob content in search
+- **Index Folders** (default: enabled) – Include virtual folder structure in search
+
+**Example Configurations:**
+
+- **Sync only certain containers**: Container Names → `In` → select containers
+- **Documents only**: File Extensions → `In` → `pdf, docx, txt, pptx`
+- **Exclude media**: File Extensions → `Not In` → `jpg, png, mp4, mov`
+- **Recent blobs only**: Modified Date → `Is After` → `YYYY-MM-DD`
+
+<Info>
+  Filters can be changed anytime. Updates take effect on the next sync.
+</Info>
+
+### Step 5: Enable the Connector
+
+1. After configuration, toggle the connector status to **"Enable"**
+2. Use the toggle switch or **"Enable"** button in the connector panel
+
+<div className="text-center">
+  <img
+    src="/images/connectors/azure-blob/enable_connector.png"
+    alt="Enable Azure Blob Connector"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+3. PipesHub will validate your connection string and start the initial sync
+4. Wait until the connector status shows **"Active"** or **"Syncing"**
+5. Use the **Indexing Progress** panel to monitor sync status
+
+</div>
+
+</Accordion>
+
+<Accordion title="Features and Behavior">
+
+<div className="mt-4">
+
+### Supported Features
+
+The Azure Blob connector syncs:
+
+- **Containers** as top-level record groups
+- **Blobs** (files) with metadata such as name, size, last modified time, MIME type
+/- **Virtual Folders** inferred from blob paths (e.g., `folder/subfolder/file.txt`)
+- **Permissions** via connector scope (Personal vs Team)
+
+### Data Sync Behavior
+
+#### Initial Sync
+
+The first sync scans the selected containers:
+
+- Discovers containers and creates corresponding record groups in PipesHub
+- Lists blobs within each container using Azure Blob pagination
+- Extracts metadata and builds a folder hierarchy from blob paths
+- Indexes supported blob content for AI-powered search
+
+<Info>
+  Use container and file extension filters to significantly reduce initial sync time, especially for large storage accounts.
+</Info>
+
+#### Incremental Sync
+
+Subsequent syncs are incremental:
+
+- Uses blob timestamps to fetch only new or updated blobs
+- Tracks sync points per container to avoid reprocessing unchanged data
+- Handles deletions by marking records as deleted and removing them from search results
+
+### Permission Handling
+
+The connector respects Azure security and PipesHub scopes:
+
+- **Azure-level permissions**: Connector can only access containers and blobs allowed by the connection string
+- **PipesHub scopes**:
+  - **Personal**: Only the connector creator can see synced content
+  - **Team**: All organization users have read access to synced content
+- **Permission inheritance**: Blobs inherit access from their container and connector scope
+
+### Sync Frequency
+
+**Scheduled Sync:**
+- Default: ~60 minutes
+- Options: 15 min, 30 min, 1 hour, 4 hours, 24 hours
+
+**Manual Sync:**
+- Triggered from the connector UI
+- Recommended for testing or after large content changes
+
+<Info>
+  For very large storage accounts or infrequently updated content, prefer less frequent syncs (4–24 hours) to optimize cost and performance.
+</Info>
+
+</div>
+
+</Accordion>
+
+</AccordionGroup>
+
+### Troubleshooting
+
+<AccordionGroup type="single" collapsible>
+
+<Accordion title="Troubleshooting" icon="circle-exclamation">
+
+**Invalid connection string:**
+
+*Symptoms:*
+- Error messages like "Authentication failed" or "Invalid connection string"
+- Connector fails to initialize
+
+*Solutions:*
+1. Verify the connection string is copied completely from Azure Portal
+2. Ensure there are no extra spaces or line breaks
+3. Regenerate and replace the access keys if they may have been rotated
+4. Confirm that the storage account is active and not deleted
+
+**Access denied or missing containers:**
+
+*Symptoms:*
+- Some containers do not appear in the container filter
+- Sync fails with permission-related errors
+
+*Solutions:*
+1. Confirm you are using a connection string with correct permissions
+2. Check container-level access policies in Azure Portal
+3. Ensure the storage account is in the correct subscription and region
+
+**No data syncing:**
+
+*Symptoms:*
+- Connector shows "Active" but no blobs or folders appear
+- Indexing progress remains at 0%
+
+*Solutions:*
+1. Check that at least one container is selected in filters
+2. Verify file extension filters are not excluding all relevant file types
+3. Confirm date filters are not set too restrictively
+4. Validate that blobs actually exist in the selected containers
+
+**Sync taking too long:**
+
+*Symptoms:*
+- Initial sync runs for many hours
+- Progress appears slow for very large containers
+
+*Solutions:*
+1. Use container filters to limit scope
+2. Restrict file extensions to document-heavy types (e.g., `pdf, docx, txt`)
+3. Use date filters to focus on recent content
+4. Increase sync interval for large storage accounts
+
+**Blobs not appearing in search:**
+
+*Symptoms:*
+- Blobs are visible in connector records, but not searchable
+
+*Solutions:*
+1. Ensure **Index Files** is enabled in indexing filters
+2. Confirm the file type is text-based and supported for indexing
+3. Check that files are not encrypted or password-protected
+4. Allow time for indexing to complete, especially for large files
+
+</Accordion>
+
+</AccordionGroup>
+
+### Azure Blob Compatibility
+
+This connector is designed specifically for **Azure Blob Storage** and uses Azure's official SDKs and APIs.
+
+It supports:
+
+- **All Azure regions** supported by Blob Storage
+- **Standard redundancy options** (LRS, ZRS, GRS, RA-GRS etc.)
+- **Standard blob types**: Block blobs (primary focus), page blobs, and append blobs (metadata)
+
+<Info>
+  The connector is optimized for blob content used in knowledge management and document search scenarios.
+</Info>
+
+### FAQ
+
+<AccordionGroup type="single" collapsible>
+
+<Accordion title="How long does the initial sync take?">
+  Sync time depends on the number and size of blobs:
+  
+  | Storage Size | Estimated Time |
+  |--------------|----------------|
+  | Small (< 1,000 blobs) | 5–15 minutes |
+  | Medium (1,000–10,000 blobs) | 15–60 minutes |
+  | Large (10,000–100,000 blobs) | 1–3 hours |
+  | Very Large (100,000–1,000,000 blobs) | 3–8+ hours |
+  
+  Use container and extension filters to reduce initial sync time dramatically.
+</Accordion>
+
+<Accordion title="Can I connect multiple storage accounts?">
+  **Yes.** Create one Azure Blob connector instance per storage account.  
+  Each instance uses its own connection string and filter configuration.
+</Accordion>
+
+<Accordion title="What file types can be indexed for search?">
+  Text-based and document formats are indexed, including:
+  
+  - Documents: PDF, DOCX, PPTX, XLSX, ODT, RTF  
+  - Text: TXT, MD, CSV, JSON, XML, HTML  
+  - Code files (e.g., `.py`, `.js`, `.ts`, `.java`)
+  
+  Binary-only formats (images, videos, archives) are synced and visible but their contents are not searchable.
+</Accordion>
+
+<Accordion title="What happens if I delete a blob in Azure?">
+  Deletions are detected during the next incremental sync:
+  
+  - The record is marked as deleted in PipesHub  
+  - The blob is removed from search results  
+  - Historical behavior depends on your organization's retention policies
+</Accordion>
+
+</AccordionGroup>
+
+### Useful Links
+
+- **Azure Portal**: `https://portal.azure.com`
+- **Azure Blob Storage Docs**: `https://learn.microsoft.com/azure/storage/blobs/`
+- **Connection Strings**: `https://learn.microsoft.com/azure/storage/common/storage-configure-connection-string`
+
+<div className="text-center mt-12 p-6 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg max-w-2xl mx-auto">
+  <h3 className="text-lg font-semibold mb-2">Ready to Get Started?</h3>
+  <p className="text-gray-600 dark:text-gray-400">
+    Connect your Azure Blob Storage containers to PipesHub in just a few minutes. Follow the steps above to unlock organization-wide search across your Azure content.
   </p>
 </div>

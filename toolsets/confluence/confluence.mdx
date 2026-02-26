@@ -1,0 +1,277 @@
+---
+title: "Confluence Toolset"
+description: "Wiki pages and documentation management for AI agents"
+icon: "/logo/confluence.png"
+---
+
+<div className="max-w-2xl mx-auto mt-12">
+  <div className="p-6 border border-gray-200 dark:border-gray-700 rounded-lg bg-blue-50 dark:bg-gray-800">
+    <div className="flex items-center mb-4">
+      <img 
+        src="/logo/confluence.png" 
+        alt="Confluence Logo" 
+        className="w-8 h-8 mr-3 object-contain flex-shrink-0"
+      />
+      <h2 className="text-2xl font-semibold m-0">Confluence Toolset</h2>
+    </div>
+    <p className="text-lg text-gray-700 dark:text-gray-300 mb-4">Wiki pages, documentation, and knowledge management</p>
+    <div className="flex items-center gap-2">
+      <span className="px-3 py-1 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 rounded-full text-sm font-medium">
+        Ready
+      </span>
+      <span className="px-3 py-1 bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200 rounded-full text-sm font-medium">
+        Atlassian
+      </span>
+    </div>
+  </div>
+</div>
+
+## Overview
+
+The Confluence toolset enables AI agents to interact with your Confluence workspace. Agents can create pages, update content, search documentation, manage spaces, and add comments. This toolset is ideal for automating documentation workflows and making knowledge accessible through conversational AI.
+
+### Key Capabilities
+
+- **Create and update pages** - Create new documentation, update existing pages
+- **Search content** - Full-text search across pages and blog posts
+- **Space management** - List spaces, get space details
+- **Page hierarchy** - Navigate child pages, version history
+- **Comments** - Add comments to pages
+
+---
+
+## Available Tools
+
+| Tool | Description |
+|------|-------------|
+| `create_page` | Create a new page in a space |
+| `update_page` | Update page title and/or content |
+| `update_page_title` | Update only the page title |
+| `get_page_content` | Get content of a specific page |
+| `get_pages_in_space` | Get all pages in a space |
+| `get_child_pages` | Get child pages of a parent page |
+| `search_pages` | Search pages by title |
+| `search_content` | Full-text search across all content |
+| `get_spaces` | Get all accessible spaces |
+| `get_space` | Get details of a specific space |
+| `get_page_versions` | Get version history of a page |
+| `comment_on_page` | Add a comment to a page |
+
+---
+
+## Setup
+
+<AccordionGroup>
+
+<Accordion title="Setup" icon="gear">
+
+### Step 1: Access Atlassian Developer Console
+
+1. Navigate to [developer.atlassian.com/console/myapps/](https://developer.atlassian.com/console/myapps/)
+2. Sign in with your Atlassian account
+
+<div className="text-center">
+  <img
+    src="/images/connectors/jira/create_new_app.png"
+    alt="Atlassian Developer Console"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+<Info>
+  You can use the same Atlassian OAuth application for both Jira and Confluence toolsets.
+</Info>
+
+### Step 2: Create OAuth 2.0 Integration (if needed)
+
+1. Click **"Create"** in the top right corner
+2. Select **"OAuth 2.0 integration"**
+3. Enter a name (e.g., "PipesHub Confluence Toolset")
+4. Click **"Create"**
+
+<div className="text-center">
+  <img
+    src="/images/toolsets/confluence/create_new_app_form.png"
+    alt="Create OAuth Integration"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+### Step 3: Get Redirect URI from PipesHub
+
+1. In PipesHub, go to **Settings > Toolsets**
+2. Find **Confluence** and click **"Configure"**
+3. Copy the **Redirect URI** shown in the dialog
+
+<div className="text-center">
+  <img
+    src="/images/toolsets/confluence/pipeshub-config.png"
+    alt="Copy Redirect URI from PipesHub"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+### Step 4: Configure Callback URL
+
+1. In Atlassian Developer Console, go to **Authorization**
+2. Click **"Add"** under OAuth 2.0 (3LO)
+3. Paste the **Redirect URI** from PipesHub into the **Callback URL** field
+4. Click **"Save changes"**
+
+<div className="text-center">
+  <img
+    src="/images/toolsets/confluence/add_callback_url.png"
+    alt="Add Callback URL"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+### Step 5: Add Required Scopes
+
+1. In the left sidebar, click **"Permissions"**
+2. Add scopes for both **User identity API** and **Confluence API**
+
+#### User Identity API
+
+Click **"Add"** next to User identity API and select:
+
+| Scope | Description |
+|-------|-------------|
+| `read:account` | View user profiles (required for user identification) |
+
+<div className="text-center">
+  <img
+    src="/images/connectors/confluence/user_identity_scopes.png"
+    alt="User Identity API Scopes"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+#### Confluence API - Classic Scopes
+
+Click **"Add"** next to Confluence API. You'll see two tabs: **"Classic scopes"** and **"Granular scopes"**. Add scopes from both tabs.
+
+First, select the **"Classic scopes"** tab and add:
+
+| Scope | Description |
+|-------|-------------|
+| `read:confluence-content.all` | Read all Confluence content |
+| `write:confluence-content` | Create and update pages |
+| `read:confluence-content.summary` | Read content summaries |
+| `read:confluence-props` | Read content properties |
+| `read:confluence-space.summary` | Read space summaries |
+| `read:confluence-user` | Read user information |
+| `read:confluence-groups` | Read group information |
+| `search:confluence` | Search Confluence content |
+
+<div className="text-center">
+  <img
+    src="/images/toolsets/confluence/classic_scopes.png"
+    alt="Confluence Classic Scopes"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+#### Confluence API - Granular Scopes
+
+Next, select the **"Granular scopes"** tab and add:
+
+| Scope | Description |
+|-------|-------------|
+| `read:content-details:confluence` | View content details and properties |
+| `read:page:confluence` | View page content |
+| `write:page:confluence` | Create and update pages |
+| `read:blogpost:confluence` | View blog post content |
+| `read:attachment:confluence` | View and download attachments |
+| `read:comment:confluence` | View comments |
+| `write:comment:confluence` | Create comments on pages |
+| `delete:comment:confluence` | Delete comments |
+| `read:space:confluence` | View space details |
+| `read:user:confluence` | View user details |
+| `read:group:confluence` | View groups and memberships |
+| `read:permission:confluence` | View content restrictions |
+| `read:audit-log:confluence` | View audit records |
+| `read:folder:confluence` | View folder data |
+| `read:email-address:confluence` | View user email addresses |
+
+<div className="text-center">
+  <img
+    src="/images/connectors/confluence/granular_scopes_1.png"
+    alt="Confluence Granular Scopes - Part 1"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+<div className="text-center">
+  <img
+    src="/images/connectors/confluence/granular_scopes_2.png"
+    alt="Confluence Granular Scopes - Part 2"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+### Step 6: Get OAuth Credentials
+
+1. In the left sidebar, click **"Settings"**
+2. Under **"Authentication details"**, copy:
+   - **Client ID**
+   - **Secret** (click the copy button)
+
+<div className="text-center">
+  <img
+    src="/images/connectors/jira/auth_creds.png"
+    alt="Copy OAuth Credentials"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+### Step 7: Configure in PipesHub
+
+1. Return to the PipesHub Confluence toolset configuration dialog
+2. Enter your **Client ID** and **Client Secret**
+3. Click **"Authenticate"**
+
+<div className="text-center">
+  <img
+    src="/images/toolsets/confluence/enter-credentials.png"
+    alt="Enter Credentials in PipesHub"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+### Step 8: Authorize Access
+
+1. A popup window will open to Atlassian's authorization page
+2. Select your Confluence site from the dropdown
+3. Review the permissions and click **"Accept"**
+
+<div className="text-center">
+  <img
+    src="/images/connectors/jira/oauth_page_accept.png"
+    alt="Accept Permissions"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+4. You'll be redirected back to PipesHub
+5. The toolset will show **"Authenticated"** status
+
+</Accordion>
+
+</AccordionGroup>
+
+---
+
+## Usage Tips
+
+**How do I create a page?**  
+Ask your agent to "create a Confluence page" and provide the space name, page title, and content. The agent will handle the HTML formatting automatically.
+
+**How do I search for pages?**  
+Simply ask to "search Confluence for [topic]". You can search across all spaces or specify a particular space.
+
+**How do I update a page?**  
+Ask to "update the [page name]" and provide the new content. The entire page content will be replaced with your update.
+
+**How do I find space IDs?**  
+Ask the agent to "list all Confluence spaces" to see available spaces and their IDs before creating pages.

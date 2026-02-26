@@ -1,0 +1,274 @@
+---
+title: "Jira Toolset"
+description: "Issue tracking and project management integration for AI agents"
+icon: "/logo/jira.png"
+---
+
+<div className="max-w-2xl mx-auto mt-12">
+  <div className="p-6 border border-gray-200 dark:border-gray-700 rounded-lg bg-blue-50 dark:bg-gray-800">
+    <div className="flex items-center mb-4">
+      <img 
+        src="/logo/jira.png" 
+        alt="Jira Logo" 
+        className="w-8 h-8 mr-3 object-contain flex-shrink-0"
+      />
+      <h2 className="text-2xl font-semibold m-0">Jira Toolset</h2>
+    </div>
+    <p className="text-lg text-gray-700 dark:text-gray-300 mb-4">Issue tracking, project management, and team collaboration</p>
+    <div className="flex items-center gap-2">
+      <span className="px-3 py-1 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 rounded-full text-sm font-medium">
+        Ready
+      </span>
+      <span className="px-3 py-1 bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200 rounded-full text-sm font-medium">
+        Atlassian
+      </span>
+    </div>
+  </div>
+</div>
+
+## Overview
+
+The Jira toolset enables AI agents to interact with your Jira workspace. Agents can create issues, search tickets, add comments, update issues, and more. This toolset is ideal for automating project management workflows and integrating Jira into conversational AI experiences.
+
+### Key Capabilities
+
+- **Create and manage issues** - Create new tickets, update existing ones, change status
+- **Search with JQL** - Find issues using Jira Query Language
+- **Comment management** - Add and retrieve comments on issues
+- **Project operations** - List projects, get project metadata
+- **User operations** - Search users, get current user info
+
+---
+
+## Available Tools
+
+| Tool | Description | Type |
+|------|-------------|------|
+| `create_issue` | Create a new Jira issue | Action |
+| `update_issue` | Update an existing issue (summary, description, status, assignee, etc.) | Action |
+| `get_issue` | Get details of a specific issue | Search |
+| `get_issues` | Get issues from a project | Search |
+| `search_issues` | Search issues using JQL queries | Search |
+| `add_comment` | Add a comment to an issue | Action |
+| `get_comments` | Get comments for an issue | Search |
+| `get_projects` | Get all Jira projects | Search |
+| `get_project` | Get details of a specific project | Search |
+| `get_project_metadata` | Get project metadata (issue types, components) | Search |
+| `search_users` | Search users by name or email | Search |
+| `get_current_user` | Get current authenticated user info | Search |
+| `validate_connection` | Validate Jira connection status | Utility |
+| `convert_text_to_adf` | Convert plain text to Atlassian Document Format | Utility |
+
+---
+
+## Configuration Guide
+
+<AccordionGroup>
+
+<Accordion title="Setup" icon="gear">
+
+### Step 1: Access Atlassian Developer Console
+
+1. Navigate to [developer.atlassian.com/console/myapps/](https://developer.atlassian.com/console/myapps/)
+2. Sign in with your Atlassian account
+
+<div className="text-center">
+  <img
+    src="/images/connectors/jira/create_new_app.png"
+    alt="Atlassian Developer Console"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+### Step 2: Create OAuth 2.0 Integration
+
+1. Click **"Create"** in the top right corner
+2. Select **"OAuth 2.0 integration"**
+3. Enter a name (e.g., "PipesHub Jira Toolset")
+4. Click **"Create"**
+
+<div className="text-center">
+  <img
+    src="/images/toolsets/jira/create_new_app_form.png"
+    alt="Create OAuth Integration"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+### Step 3: Get Redirect URI from PipesHub
+
+1. In PipesHub, go to **Settings > Toolsets**
+2. Find **Jira** and click **"Configure"**
+3. Copy the **Redirect URI** shown in the dialog
+
+<div className="text-center">
+  <img
+    src="/images/toolsets/jira/pipeshub-config.png"
+    alt="Copy Redirect URI from PipesHub"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+### Step 4: Configure Callback URL
+
+1. In Atlassian Developer Console, go to **Authorization**
+2. Click **"Add"** under OAuth 2.0 (3LO)
+3. Paste the **Redirect URI** from PipesHub into the **Callback URL** field
+4. Click **"Save changes"**
+
+<div className="text-center">
+  <img
+    src="/images/toolsets/jira/add_callback_url.png"
+    alt="Add Callback URL"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+<Warning>
+  The Callback URL must match exactly. Any mismatch will cause authentication to fail.
+</Warning>
+
+### Step 5: Add Required Scopes
+
+1. In the left sidebar, click **"Permissions"**
+2. Add scopes for both **User identity API** and **Jira API**
+
+#### User Identity API
+
+Click **"Add"** next to User identity API and select:
+
+| Scope | Description |
+|-------|-------------|
+| `read:account` | View user profiles (required for user identification) |
+
+<div className="text-center">
+  <img
+    src="/images/connectors/jira/user_identity_scopes.png"
+    alt="User Identity API Scopes"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+#### Jira API - Classic Scopes
+
+Click **"Add"** next to Jira API. You'll see two tabs: **"Classic scopes"** and **"Granular scopes"**. Add scopes from both tabs.
+
+First, select the **"Classic scopes"** tab and add:
+
+Select the **"Classic scopes"** tab and add:
+
+| Scope | Description |
+|-------|-------------|
+| `read:jira-work` | Read Jira project and issue data |
+| `write:jira-work` | Create and update issues, add comments |
+| `read:jira-user` | Read user information |
+
+<div className="text-center">
+  <img
+    src="/images/connectors/jira/classic_scopes.png"
+    alt="Jira Classic Scopes"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+#### Jira API - Granular Scopes
+
+Next, select the **"Granular scopes"** tab and add:
+
+| Scope | Description |
+|-------|-------------|
+| `read:user:jira` | View user details |
+| `read:group:jira` | View groups and group members |
+| `read:avatar:jira` | View user and project avatars |
+| `read:audit-log:jira` | Read audit logs |
+| `read:application-role:jira` | Read application roles |
+| `read:project-role:jira` | Read project roles and role assignments |
+
+<div className="text-center">
+  <img
+    src="/images/connectors/jira/granular_scopes.png"
+    alt="Jira Granular Scopes"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+### Step 6: Get OAuth Credentials
+
+1. In the left sidebar, click **"Settings"**
+2. Under **"Authentication details"**, copy:
+   - **Client ID**
+   - **Secret** (click the copy button)
+
+<div className="text-center">
+  <img
+    src="/images/connectors/jira/auth_creds.png"
+    alt="Copy OAuth Credentials"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+### Step 7: Configure in PipesHub
+
+1. Return to the PipesHub Jira toolset configuration dialog
+2. Enter your **Client ID** and **Client Secret**
+3. Click **"Save Configuration"**
+
+<div className="text-center">
+  <img
+    src="/images/toolsets/jira/enter-credentials.png"
+    alt="Enter Credentials in PipesHub"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+### Step 8: Authorize Access
+
+1. A popup window will open to Atlassian's authorization page
+2. Select your Jira site from the dropdown
+
+<div className="text-center">
+  <img
+    src="/images/connectors/jira/oauth_page_choose_app.png"
+    alt="Select Jira Site"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+3. Review the permissions and click **"Accept"**
+
+<div className="text-center">
+  <img
+    src="/images/connectors/jira/oauth_page_accept.png"
+    alt="Accept Permissions"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+4. You'll be redirected back to PipesHub
+5. The toolset will show **"Authenticated"** status
+
+</Accordion>
+
+</AccordionGroup>
+
+---
+
+<Info>
+  When searching issues, always include a time range (e.g., "from the last 30 days" or "updated this week") to get accurate results.
+</Info>
+
+---
+
+## Usage Tips
+
+**How do I create an issue?**  
+Simply ask your agent to "create a Jira ticket" and provide the project key, title, and issue type (Task, Bug, or Story). You can also specify assignee, priority, and labels.
+
+**How do I search for issues?**  
+Ask to "find Jira issues" with specific criteria. The agent will use JQL syntax automatically. For example: "show me all in-progress issues in project PA from the last week"
+
+**How do I assign issues?**  
+You can assign by name (e.g., "assign to John Smith") or by email. The agent will look up the correct account ID automatically.
+
+**How do I update issue status?**  
+Ask to "move issue PA-123 to In Progress" or "mark PA-456 as Done". Common statuses include "To Do", "In Progress", and "Done".

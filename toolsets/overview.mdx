@@ -1,0 +1,246 @@
+---
+title: "Toolsets Overview"
+description: "Connect your AI agents to external applications with toolsets"
+icon: "tools"
+---
+
+<div className="max-w-2xl mx-auto mt-12">
+  <div className="p-6 border border-gray-200 dark:border-gray-700 rounded-lg bg-purple-50 dark:bg-gray-800">
+    <div className="flex items-center mb-4">
+      <span className="text-4xl mr-3">🔧</span>
+      <h2 className="text-2xl font-semibold m-0">PipesHub Toolsets</h2>
+    </div>
+    <p className="text-lg text-gray-700 dark:text-gray-300 mb-4">Give your AI agents the ability to interact with external applications</p>
+  </div>
+</div>
+
+## What are Toolsets?
+
+Toolsets are collections of tools that enable AI agents to interact with external applications. Each toolset provides a set of actions (tools) that agents can use to read data, create content, and perform operations in connected services.
+
+Unlike **Connectors** (which sync and index data for search), **Toolsets** provide real-time API access for performing actions.
+
+| Feature | Connectors | Toolsets |
+|---------|------------|----------|
+| **Purpose** | Sync and index data for search | Perform actions via API |
+| **Data Flow** | One-way (import) | Two-way (read/write) |
+| **Use Case** | Knowledge retrieval | Agent actions |
+| **Real-time** | Periodic sync | Instant API calls |
+
+## Available Toolsets
+
+### Google Workspace
+
+| Toolset | Description | Auth Type |
+|---------|-------------|-----------|
+| [Gmail](/toolsets/google-workspace/gmail) | Send and manage emails | OAuth 2.0 |
+| [Calendar](/toolsets/google-workspace/calendar) | Manage calendar events | OAuth 2.0 |
+| [Drive](/toolsets/google-workspace/drive) | Access and manage files | OAuth 2.0 |
+
+### Atlassian
+
+| Toolset | Description | Auth Type |
+|---------|-------------|-----------|
+| [Jira](/toolsets/jira/jira) | Issue tracking and project management | OAuth 2.0 |
+| [Confluence](/toolsets/confluence/confluence) | Wiki and documentation | OAuth 2.0 |
+
+### Slack
+
+| Toolset | Description | Auth Type |
+|---------|-------------|-----------|
+| [Slack](/toolsets/slack/slack) | Team messaging and collaboration | OAuth 2.0 |
+
+---
+
+## Configuring Toolsets
+
+### Step 1: Navigate to Toolsets Settings
+
+1. Click on your **Connector Settings** in the navigation
+2. Go to **Settings** in the sidebar
+3. Click **Toolsets**
+
+<div className="text-center">
+  <img
+    src="/images/toolsets/navigate-to-toolsets.png"
+    alt="Navigate to Toolsets Settings"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+### Step 2: Browse Available Toolsets
+
+The Toolsets page has two tabs:
+
+- **My Toolsets** - Toolsets you've already configured
+- **Available** - All available toolsets ready to configure
+
+<div className="text-center">
+  <img
+    src="/images/toolsets/toolsets-page.png"
+    alt="Toolsets Page"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+### Step 3: Configure a Toolset
+
+1. Find the toolset you want to configure in the **Available** tab
+2. Click the **"Configure"** button on the toolset card
+3. The **Configuration Dialog** will open
+
+<div className="text-center">
+  <img
+    src="/images/toolsets/config-dialog.png"
+    alt="Toolset Configuration Dialog"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+### Step 4: Authenticate
+
+Follow the authentication flow for the toolset:
+
+#### OAuth 2.0
+
+1. Enter your **Client ID** and **Client Secret** (from the application's developer console)
+2. Click **"Authenticate"**
+3. A popup window will open for authorization
+4. Grant the requested permissions
+5. You'll be redirected back with authentication confirmed
+
+<Info>
+  See individual toolset documentation for specific authentication setup steps and requirements.
+</Info>
+
+### Step 5: Verify Configuration
+
+Once configured, the toolset will appear in your **My Toolsets** tab with an "Authenticated" status.
+
+<div className="text-center">
+  <img
+    src="/images/toolsets/authenticated-toolset.png"
+    alt="Authenticated Toolset"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+### Managing Toolset Configuration
+
+You can manage your toolset by clicking on it in the **My Toolsets** tab to open the configuration dialog. Available actions:
+
+- **Update Configuration** - Modify credentials or settings
+- **Reauthenticate** - Refresh authentication if it expires or encounters issues
+- **Delete** - Remove the toolset configuration entirely
+
+<div className="text-center">
+  <img
+    src="/images/toolsets/manage-toolset.png"
+    alt="Manage Toolset Configuration"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+---
+
+## Using Toolsets in Agents
+
+Once a toolset is configured, it becomes available in the Agent Builder:
+
+1. Open the **Agent Builder** (create new or edit existing agent)
+2. In the left sidebar, expand the **"Tools"** section
+3. Find your configured toolset and drag it onto the canvas
+4. Connect it to your agent flow
+
+<div className="text-center">
+  <img
+    src="/images/toolsets/toolset-in-agent-builder.png"
+    alt="Toolset in Agent Builder"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+<Warning>
+  Only authenticated toolsets appear in the Agent Builder. If a toolset is missing, check its configuration status in **Settings > Toolsets**.
+</Warning>
+
+---
+
+## Authentication Types
+
+### OAuth 2.0
+
+OAuth 2.0 is the recommended authentication method for most toolsets. It provides:
+
+- **Secure token-based access** - No passwords stored
+- **Automatic token refresh** - Tokens are refreshed automatically
+- **Granular permissions** - Only request necessary scopes
+- **User authorization** - Users explicitly grant access
+
+**Requirements:**
+- Create an OAuth application in the service's developer console
+- Configure redirect URI (provided by PipesHub)
+- Obtain Client ID and Client Secret
+---
+
+## Troubleshooting
+
+<AccordionGroup>
+
+<Accordion title="OAuth authentication failing">
+
+**Possible causes:**
+- Incorrect Client ID or Client Secret
+- Redirect URI mismatch
+- OAuth application not properly configured
+
+**Solution:**
+1. Verify Client ID and Secret are correct (no extra spaces)
+2. Check that the Redirect URI in PipesHub matches exactly what's configured in the OAuth app
+3. Ensure the OAuth application is active/enabled
+
+</Accordion>
+
+<Accordion title="Toolset not appearing in Agent Builder">
+
+**Possible causes:**
+- Toolset not authenticated
+- Authentication expired
+- Browser cache issue
+
+**Solution:**
+1. Go to **Settings > Toolsets** and check the toolset status
+2. If not authenticated, click "Configure" and complete authentication
+3. If expired, click "Reauthenticate"
+4. Try refreshing the Agent Builder page
+
+</Accordion>
+
+<Accordion title="Tools returning errors">
+
+**Possible causes:**
+- Insufficient permissions for the action
+- Service API rate limits
+
+**Solution:**
+1. Check that the OAuth app or API token has write permissions if needed
+2. Wait and retry if rate limited
+
+</Accordion>
+
+</AccordionGroup>
+
+---
+
+## Next Steps
+
+<div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
+  <a href="/agent-guide/setup-guide" className="block p-4 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+    <h3 className="text-lg font-semibold mb-2">Create an Agent</h3>
+    <p className="text-gray-600 dark:text-gray-400">Build an agent using your configured toolsets</p>
+  </a>
+  <a href="/toolsets/jira/jira" className="block p-4 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+    <h3 className="text-lg font-semibold mb-2">Jira Toolset</h3>
+    <p className="text-gray-600 dark:text-gray-400">Popular toolset for issue tracking</p>
+  </a>
+</div>

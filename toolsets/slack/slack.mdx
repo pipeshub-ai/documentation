@@ -1,0 +1,279 @@
+---
+title: "Slack Toolset"
+description: "Team messaging and communication integration for AI agents"
+icon: "/logo/slack.png"
+---
+
+<div className="max-w-2xl mx-auto mt-12">
+  <div className="p-6 border border-gray-200 dark:border-gray-700 rounded-lg bg-purple-50 dark:bg-gray-800">
+    <div className="flex items-center mb-4">
+      <img 
+        src="/logo/slack.png" 
+        alt="Slack Logo" 
+        className="w-8 h-8 mr-3 object-contain flex-shrink-0"
+      />
+      <h2 className="text-2xl font-semibold m-0">Slack Toolset</h2>
+    </div>
+    <p className="text-lg text-gray-700 dark:text-gray-300 mb-4">Team messaging, channels, and collaboration</p>
+    <div className="flex items-center gap-2">
+      <span className="px-3 py-1 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 rounded-full text-sm font-medium">
+        Ready
+      </span>
+      <span className="px-3 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-full text-sm font-medium">
+        Communication
+      </span>
+    </div>
+  </div>
+</div>
+
+## Overview
+
+The Slack toolset enables AI agents to interact with your Slack workspace. Send messages, search conversations, manage channels, and collaborate with your team.
+
+### Key Capabilities
+
+- Send messages to channels and direct messages
+- Reply to messages and manage threads
+- Search messages, files, and channels
+- View channel history and members
+- Get user and group information
+- Add reactions and pin messages
+- Update and delete messages
+
+---
+
+## Available Tools
+
+| Tool | Description |
+|------|-------------|
+| `send_message` | Send a message to a channel |
+| `send_direct_message` | Send a direct message to a user |
+| `send_message_with_mentions` | Send a message with user mentions |
+| `send_message_to_multiple_channels` | Send a message to multiple channels |
+| `reply_to_message` | Reply to a specific message in a channel |
+| `update_message` | Update an existing message in a channel |
+| `delete_message` | Delete a message from a channel |
+| `schedule_message` | Schedule a message to be sent at a specific time |
+| `get_scheduled_messages` | Get scheduled messages |
+| `get_channel_history` | Get message history from a channel |
+| `get_unread_messages` | Get unread messages from a channel |
+| `get_thread_replies` | Get replies in a thread |
+| `get_message_permalink` | Get a permalink for a specific message |
+| `search_all` | Search messages, files, and channels |
+| `search_messages` | Search for messages in Slack |
+| `fetch_channels` | Fetch all conversations in the workspace |
+| `get_user_conversations` | Get all conversations for the authenticated user |
+| `get_user_channels` | Get all conversations that the user is a member of |
+| `get_channel_info` | Get information about a channel |
+| `get_channel_members` | Get the members of a channel |
+| `get_channel_members_by_id` | Get the members of a channel by ID |
+| `get_user_info` | Get information about a Slack user |
+| `get_users_list` | Get list of all users in the organization |
+| `resolve_user` | Resolve a Slack user ID to display name and email |
+| `get_user_groups` | Get list of user groups in the organization |
+| `get_user_group_info` | Get information about a specific user group |
+| `set_user_status` | Set or clear user status |
+| `add_reaction` | Add an emoji reaction to a message |
+| `remove_reaction` | Remove a reaction from a message |
+| `get_reactions` | Get reactions for a specific message |
+| `pin_message` | Pin a message to a channel |
+| `unpin_message` | Unpin a message from a channel |
+| `get_pinned_messages` | Get pinned messages from a channel |
+| `check_token_info` | Check Slack token information and available scopes |
+
+---
+
+## Configuration Guide
+
+<AccordionGroup>
+
+<Accordion title="Setup" icon="gear">
+
+### Step 1: Create Slack App
+
+1. Go to [api.slack.com/apps](https://api.slack.com/apps)
+2. Click **"Create New App"**
+3. Choose **"From a manifest"**
+
+<div className="text-center">
+  <img
+    src="/images/toolsets/slack/create-app-dialog-new.png"
+    alt="Create App From Manifest"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+4. Select your workspace where you want to install the app
+
+<div className="text-center">
+  <img
+    src="/images/toolsets/slack/pick-workspace.png"
+    alt="Pick Workspace for Your App"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+5. The manifest JSON editor will be displayed. Click **"Next"** to proceed
+
+<div className="text-center">
+  <img
+    src="/images/toolsets/slack/manifest-json.png"
+    alt="App Manifest JSON"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+6. Review the app summary and click **"Create"**
+
+<div className="text-center">
+  <img
+    src="/images/toolsets/slack/review-create-app.png"
+    alt="Review and Create App"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+### Step 2: Get Redirect URI from PipesHub
+
+1. In PipesHub, go to **Settings > Toolsets**
+2. Find **Slack** and click **"Configure"**
+3. Copy the **Redirect URI** shown in the dialog
+
+<div className="text-center">
+  <img
+    src="/images/toolsets/slack/pipeshub-config.png"
+    alt="Copy Redirect URI from PipesHub"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+### Step 3: Configure Redirect URL
+
+1. In your Slack app settings, go to **OAuth & Permissions**
+2. Under **Redirect URLs**, click **"Add New Redirect URL"**
+3. Paste the **Redirect URI** from PipesHub
+4. Click **"Add"** and then **"Save URLs"**
+
+<div className="text-center">
+  <img
+    src="/images/toolsets/slack/redirect-urls.png"
+    alt="Add Redirect URL"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+### Step 4: Add Required Scopes
+
+1. In **OAuth & Permissions**, scroll to **"Scopes"**
+2. Under **"Bot Token Scopes"**, add the following scopes:
+
+**Messaging Scopes:**
+- `chat:write` - Send messages, update, delete, schedule
+
+**Channel Scopes:**
+- `channels:read` - View basic channel info, list channels
+- `channels:history` - Read channel message history
+- `channels:write` - Create, archive, rename channels, set topic/purpose
+- `groups:read` - View private channel info
+- `groups:history` - Read private channel history
+- `groups:write` - Create, archive, rename private channels
+- `mpim:read` - View group DM info
+- `mpim:history` - Read group DM history
+- `mpim:write` - Create group DMs
+- `im:read` - View DM info
+- `im:history` - Read DM history
+- `im:write` - Open and send DMs
+
+**User Scopes:**
+- `users:read` - View user info, list users
+- `users:read.email` - Look up users by email
+- `users.profile:read` - Read user profiles
+- `users.profile:write` - Write user profiles (for set_user_status)
+
+**File Scopes:**
+- `files:write` - Upload files
+- `files:read` - Read file info
+
+**Search Scope:**
+- `search:read` - Search messages and files
+
+**Reaction Scopes:**
+- `reactions:read` - View reactions
+- `reactions:write` - Add/remove reactions
+
+**Pin Scopes:**
+- `pins:read` - View pinned messages
+- `pins:write` - Pin/unpin messages
+
+**User Group Scopes:**
+- `usergroups:read` - View user groups
+
+<div className="text-center">
+  <img
+    src="/images/toolsets/slack/user-token-scopes.png"
+    alt="Configure Bot Token Scopes"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+### Step 5: Get OAuth Credentials
+
+1. In Slack app settings, go to **Basic Information**
+2. Copy your **Client ID** and **Client Secret** (click "Show" to reveal)
+
+<div className="text-center">
+  <img
+    src="/images/toolsets/slack/app-credentials-new.png"
+    alt="Copy Slack App Credentials"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+### Step 6: Configure in PipesHub
+
+1. Return to the PipesHub Slack toolset configuration dialog
+2. Enter your **Client ID** and **Client Secret**
+3. Click **"Authenticate"**
+
+<div className="text-center">
+  <img
+    src="/images/toolsets/slack/enter-credentials.png"
+    alt="Enter Credentials in PipesHub"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+### Step 7: Authorize Access
+
+1. A popup window will open to Slack's authorization page
+2. Select your workspace
+3. Review the permissions and click **"Allow"**
+4. You'll be redirected back to PipesHub
+5. The toolset will show **"Authenticated"** status
+
+</Accordion>
+
+</AccordionGroup>
+
+---
+
+## Usage Tips
+
+**How do I send a message to a channel?**  
+Ask your agent to "send a message to #marketing" with your content.
+
+**How do I send a direct message?**  
+Ask to "send a DM to John about the meeting" or "directly message sarah@company.com". The agent can send private messages to any user.
+
+**How do I reply to a message?**  
+Ask to "reply to that message in thread" or "respond to the latest message in #engineering". The agent can reply in threads to keep conversations organized.
+
+**How do I search for messages?**  
+Ask to "search Slack for [keyword]" or "find messages about the project launch". The agent searches across messages, files, and channels.
+
+**How do I add reactions?**  
+Ask to "add a ✅ reaction to that message" or "react with 👍 to John's message". The agent can add emoji reactions to any message.
+
+**How do I get channel history?**  
+Ask to "show me recent messages in #support" or "get the last 10 messages from #engineering". The agent can retrieve message history from any channel.
+

@@ -1,0 +1,168 @@
+---
+title: "Google Drive Toolset"
+description: "Cloud file storage integration for AI agents"
+icon: "/logo/gdrive.png"
+---
+
+<div className="max-w-2xl mx-auto mt-12">
+  <div className="p-6 border border-gray-200 dark:border-gray-700 rounded-lg bg-yellow-50 dark:bg-gray-800">
+    <div className="flex items-center mb-4">
+      <img 
+        src="/logo/gdrive.png" 
+        alt="Google Drive Logo" 
+        className="w-8 h-8 mr-3 object-contain flex-shrink-0"
+      />
+      <h2 className="text-2xl font-semibold m-0">Google Drive Toolset</h2>
+    </div>
+    <p className="text-lg text-gray-700 dark:text-gray-300 mb-4">Cloud file storage and management</p>
+    <div className="flex items-center gap-2">
+      <span className="px-3 py-1 bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200 rounded-full text-sm font-medium">
+        Documentation in Progress
+      </span>
+      <span className="px-3 py-1 bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200 rounded-full text-sm font-medium">
+        Google Workspace
+      </span>
+    </div>
+  </div>
+</div>
+
+## Overview
+
+The Google Drive toolset enables AI agents to manage files and folders in Google Drive.
+
+### Key Capabilities
+
+- List and search files across Drive
+- View file details and metadata
+- Create folders and organize content
+- Check file permissions and sharing settings
+- Access shared drives
+
+---
+
+## Available Tools
+
+| Tool | What it does |
+|------|-------------|
+| `get_files_list` | Get list of files in Google Drive |
+| `get_file_details` | Get detailed information about a file |
+| `create_folder` | Create a new folder in Google Drive |
+| `search_files` | Search for files using query syntax |
+| `get_drive_info` | Get information about the user's Drive |
+| `get_shared_drives` | Get list of shared drives |
+| `get_file_permissions` | Get permissions for a specific file |
+
+---
+
+## Setup
+
+<AccordionGroup>
+
+<Accordion title="Setup" icon="gear">
+
+### Step 1: Create Google Cloud Project
+
+1. Go to [Google Cloud Console](https://console.cloud.google.com/)
+2. Create a new project or select an existing one
+3. Note your project ID
+
+### Step 2: Enable Google Drive API
+
+1. Navigate to **APIs & Services > Library**
+2. Search for **"Google Drive API"**
+3. Click **"Enable"**
+
+<div className="text-center">
+  <img
+    src="/images/connectors/googleWorkspace/enterprise/apis.png"
+    alt="Enable Drive API"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+### Step 3: Configure OAuth Consent Screen
+
+1. Navigate to **APIs & Services > OAuth consent screen**
+2. Configure the OAuth consent screen with your app information
+3. Add the required scopes (see Step 6)
+
+### Step 4: Get Redirect URI from PipesHub
+
+1. In PipesHub, go to **Settings > Toolsets**
+2. Find **Drive** and click **"Configure"**
+3. Copy the **Redirect URI** shown in the dialog
+
+<div className="text-center">
+  <img
+    src="/images/toolsets/drive/pipeshub-config.png"
+    alt="Copy Redirect URI from PipesHub"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+### Step 5: Create OAuth Client ID
+
+1. Navigate to **APIs & Services > Credentials**
+2. Click **"Create Credentials"** > **"OAuth client ID"**
+3. Select **"Web application"**
+4. Set the **Authorized redirect URI** to the URI from PipesHub
+5. Click **"Create"**
+6. Copy your **Client ID** and **Client Secret**
+
+<Info>
+  The redirect URI must match exactly your PipesHub URL.
+</Info>
+
+### Step 6: Add Required Scopes
+
+Add these OAuth scopes in the **OAuth consent screen > Scopes** section:
+
+**Required Scopes:**
+- `https://www.googleapis.com/auth/drive` - Full Drive access
+- `https://www.googleapis.com/auth/drive.file` - Access files created by the app
+- `https://www.googleapis.com/auth/drive.metadata.readonly` - Read file metadata
+
+### Step 7: Configure in PipesHub
+
+1. Return to the PipesHub Drive configuration dialog
+2. Enter your **Client ID** and **Client Secret**
+3. Click **"Authenticate"**
+
+<div className="text-center">
+  <img
+    src="/images/toolsets/drive/enter-credentials.png"
+    alt="Enter Credentials in PipesHub"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+### Step 8: Authorize Access
+
+1. A popup will open to Google's consent screen
+2. Sign in and grant permission for Drive access
+3. Click **"Allow"**
+
+<div className="text-center">
+  <img
+    src="/images/connectors/googleWorkspace/individual/gmail_consent_screen.png"
+    alt="Google Consent Screen"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+4. You'll be redirected back to PipesHub
+5. The toolset will show **"Authenticated"** status
+
+</Accordion>
+
+</AccordionGroup>
+
+---
+
+## Usage Tips
+
+**How do I find files?**  
+Ask your agent to "search Drive for [filename]" or "find my presentation about Q4 results". The agent searches both file names and content.
+
+**How do I create folders?**  
+Ask to "create a folder called Project Files" and specify the parent folder if needed. Folders help organize your Drive content.

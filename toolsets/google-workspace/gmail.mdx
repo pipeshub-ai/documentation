@@ -1,0 +1,187 @@
+---
+title: "Gmail Toolset"
+description: "Email management integration for AI agents"
+icon: "/logo/gmail.png"
+---
+
+<div className="max-w-2xl mx-auto mt-12">
+  <div className="p-6 border border-gray-200 dark:border-gray-700 rounded-lg bg-red-50 dark:bg-gray-800">
+    <div className="flex items-center mb-4">
+      <img 
+        src="/logo/gmail.png" 
+        alt="Gmail Logo" 
+        className="w-8 h-8 mr-3 object-contain flex-shrink-0"
+      />
+      <h2 className="text-2xl font-semibold m-0">Gmail Toolset</h2>
+    </div>
+    <p className="text-lg text-gray-700 dark:text-gray-300 mb-4">Email management and communication</p>
+    <div className="flex items-center gap-2">
+      <span className="px-3 py-1 bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200 rounded-full text-sm font-medium">
+        Documentation in Progress
+      </span>
+      <span className="px-3 py-1 bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200 rounded-full text-sm font-medium">
+        Google Workspace
+      </span>
+    </div>
+  </div>
+</div>
+
+## Overview
+
+The Gmail toolset enables AI agents to send, read, and manage emails in Gmail.
+
+### Key Capabilities
+
+- Send and reply to emails
+- Create draft emails
+- Search and read messages
+- Access email attachments
+- View user profile information
+
+---
+
+## Available Tools
+
+| Tool | What it does |
+|------|-------------|
+| `send_email` | Send an email with subject, body, and recipients |
+| `reply` | Reply to an email message |
+| `draft_email` | Create a draft email |
+| `search_emails` | Search emails using Gmail search syntax |
+| `get_email_details` | Get details of a specific email |
+| `get_email_attachments` | Get attachments for a specific email |
+| `get_user_profile` | Get the authenticated user's Gmail profile |
+
+---
+
+## Setup
+
+<AccordionGroup>
+
+<Accordion title="Setup" icon="gear">
+
+### Step 1: Create Google Cloud Project
+
+1. Go to [Google Cloud Console](https://console.cloud.google.com/)
+2. Click the project dropdown and select **"New Project"**
+3. Enter a project name
+4. Click **"Create"**
+
+<div className="text-center">
+  <img
+    src="/images/connectors/googleWorkspace/enterprise/create_project.png"
+    alt="Create Google Cloud Project"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+### Step 2: Enable Gmail API
+
+1. Navigate to **APIs & Services > Library**
+2. Search for **"Gmail API"**
+3. Click on it and click **"Enable"**
+
+<div className="text-center">
+  <img
+    src="/images/connectors/googleWorkspace/enterprise/apis.png"
+    alt="Enable Gmail API"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+### Step 3: Configure OAuth Consent Screen
+
+1. Navigate to **APIs & Services > OAuth consent screen**
+2. Choose **External** user type (or **Internal** for Workspace accounts)
+3. Fill in app information:
+   - **App name**: e.g., "PipesHub Gmail Toolset"
+   - **User support email**: Your email
+   - **Developer contact email**: Your email
+4. Click **"Save and Continue"**
+
+### Step 4: Add Required Scopes
+
+1. On the **Scopes** page, click **"Add or Remove Scopes"**
+2. Search and add these Gmail API scopes:
+
+**Required Scopes:**
+- `https://www.googleapis.com/auth/gmail.send` - Send emails
+- `https://www.googleapis.com/auth/gmail.readonly` - Read emails
+- `https://www.googleapis.com/auth/gmail.modify` - Modify labels and metadata
+
+3. Click **"Update"** and **"Save and Continue"**
+
+### Step 5: Get Redirect URI from PipesHub
+
+1. In PipesHub, go to **Settings > Toolsets**
+2. Find **Gmail** and click **"Configure"**
+3. Copy the **Redirect URI** shown in the dialog
+
+<div className="text-center">
+  <img
+    src="/images/toolsets/gmail/pipeshub-config.png"
+    alt="Copy Redirect URI from PipesHub"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+### Step 6: Create OAuth Client ID
+
+1. Navigate to **APIs & Services > Credentials**
+2. Click **"Create Credentials"** > **"OAuth client ID"**
+3. Select **"Web application"**
+4. Enter a name (e.g., "PipesHub Gmail")
+5. Under **"Authorized redirect URIs"**, click **"Add URI"**
+6. Paste the **Redirect URI** from PipesHub
+7. Click **"Create"**
+
+<Info>
+  The redirect URI must match exactly. Any mismatch will cause authentication to fail.
+</Info>
+
+8. Copy the **Client ID** and **Client Secret** from the popup
+
+### Step 7: Configure in PipesHub
+
+1. Return to the PipesHub Gmail configuration dialog
+2. Enter your **Client ID** and **Client Secret**
+3. Click **"Authenticate"**
+
+<div className="text-center">
+  <img
+    src="/images/toolsets/gmail/enter-credentials.png"
+    alt="Enter Credentials in PipesHub"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+### Step 8: Authorize Access
+
+1. A popup window will open to Google's authorization page
+2. Sign in with your Google account
+3. Review the permissions and click **"Allow"**
+
+<div className="text-center">
+  <img
+    src="/images/connectors/googleWorkspace/individual/gmail_consent_screen.png"
+    alt="Google Authorization Screen"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+4. You'll be redirected back to PipesHub
+5. The toolset will show **"Authenticated"** status
+
+</Accordion>
+
+</AccordionGroup>
+
+---
+
+## Usage Tips
+
+**How do I send an email?**  
+Ask your agent to "send an email to user@example.com" and provide the subject and message.
+
+**How do I search for emails?**  
+Ask to "search my emails for [keyword]" or use specific criteria like "find emails from john@example.com with subject report".

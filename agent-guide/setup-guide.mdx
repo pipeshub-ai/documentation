@@ -1,0 +1,325 @@
+---
+title: "Agent Setup Guide"
+description: "Step-by-step guide to creating and configuring AI agents"
+icon: "wrench"
+---
+
+<div className="max-w-2xl mx-auto mt-12">
+  <div className="p-6 border border-gray-200 dark:border-gray-700 rounded-lg bg-blue-50 dark:bg-gray-800">
+    <div className="flex items-center mb-4">
+      <span className="text-4xl mr-3">🛠️</span>
+      <h2 className="text-2xl font-semibold m-0">Agent Setup Guide</h2>
+    </div>
+    <p className="text-lg text-gray-700 dark:text-gray-300 mb-4">Create your first AI agent with the visual flow builder</p>
+  </div>
+</div>
+
+## Prerequisites
+
+Before creating an agent, ensure you have:
+
+1. **AI Models Configured** - At least one reasoning-enabled LLM provider set up in your organization
+2. **Toolsets Configured** (optional) - Any external toolsets you want the agent to use
+3. **Knowledge Sources** (optional) - Connectors or collections for document search
+
+<Warning>
+  Toolsets must be authenticated before they can be added to an agent. If you plan to use Jira, Slack, or other external toolsets, configure them first in **Settings > Toolsets**.
+</Warning>
+
+---
+
+## Step 1: Navigate to Agents
+
+1. From the main navbar, click **"Agent (Beta)"**
+
+<div className="text-center">
+  <img
+    src="/images/agents/navigate-to-agents.png"
+    alt="Navigate to Agents in sidebar"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+2. You'll land on the **Agents Management** page showing your existing agents (if any)
+
+<div className="text-center">
+  <img
+    src="/images/agents/agents-management-page.png"
+    alt="Agents Management Page"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+---
+
+## Step 2: Create New Agent
+
+Click the **"+ New Agent"** button in the top-right corner
+
+<div className="text-center">
+  <img
+    src="/images/agents/new-agent-button.png"
+    alt="New Agent Button"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+---
+
+## Step 3: Configure Agent Core
+
+The **Agent Builder** opens with a visual flow canvas. You'll see an **Agent Core** node already placed on the canvas.
+
+<div className="text-center">
+  <img
+    src="/images/agents/agent-builder-canvas.png"
+    alt="Agent Builder Canvas"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+### Configure the Agent Core
+
+1. Click the **edit pencil icon** near the System Prompt section to open the configuration dialog
+2. Fill in the following fields:
+
+| Field | Description | Example |
+|-------|-------------|---------|
+| **System Prompt** | Instructions that define the agent's behavior | "You are a helpful project management assistant..." |
+| **Description** | Brief description of what the agent does | "Helps manage Jira tickets and Confluence docs" |
+| **Start Message** | Initial greeting when users start a conversation | "Hi! I can help you manage your projects. What would you like to do?" |
+| **Instruction** | Detailed instructions for the agent's behavior and capabilities | "You can create Jira tickets, search documentation, and answer questions about projects." |
+
+<div className="text-center">
+  <img
+    src="/images/agents/agent-core-config.png"
+    alt="Agent Core Configuration Dialog"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+3. Click **"Save Changes"** to apply the configuration
+
+<Info>
+  The **System Prompt** is crucial for defining your agent's behavior. Be specific about what the agent should and shouldn't do, its tone, and any constraints.
+</Info>
+
+---
+
+## Step 4: Add Reasoning LLM Model
+
+Every agent needs at least one reasoning-enabled LLM model to power its intelligence.
+
+1. In the left sidebar, expand the **"LLM Models"** section
+2. Drag a LLM model node onto the canvas
+
+<div className="text-center">
+  <img
+    src="/images/agents/drag-llm-model.png"
+    alt="Drag Reasoning Model to Canvas"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+3. **Connect** the reasoning LLM model node to the Agent Core:
+   - Click and drag from the output handle of the **Agent Core** node
+   - Connect to the input handle of the **MODEL PROVIDER** node
+
+<div className="text-center">
+  <img
+    src="/images/agents/connect-llm-model.png"
+    alt="Connect Reasoning Model to Agent Core"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+<Info>
+  **Reasoning models** are LLM models with reasoning capabilities enabled, allowing the agent to think through complex problems step-by-step before responding.
+</Info>
+---
+
+## Step 5: Add Toolsets (Optional)
+
+Toolsets give your agent the ability to interact with external applications.
+
+<Note>
+  All toolsets appear in the sidebar, but you can only **drag and use** authenticated toolsets. If a toolset is not authenticated, go to **Settings > Toolsets** to configure and authenticate it first.
+</Note>
+
+### Viewing Available Toolsets
+
+1. In the left sidebar, expand the **"Tools"** section
+2. Expand **"APPLICATIONS"** to see authenticated toolsets with the number of tools each provides:
+
+
+<div className="text-center">
+  <img
+    src="/images/agents/sidebar-toolsets.png"
+    alt="Toolsets in Sidebar"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+### Adding Toolsets to Your Agent
+
+You have two options for adding tools:
+
+**Option 1: Drag Entire Toolset**
+- **Drag** the entire toolset onto the canvas to add all its tools
+- **Connect** the toolset node to your Agent Core
+
+**Option 2: Drag Individual Tools**
+- Expand a toolset to see its individual tools
+- **Drag** specific tools you need onto the canvas
+- This gives you more control over which tools the agent can use
+
+<div className="text-center">
+  <img
+    src="/images/agents/add-toolset-to-flow.png"
+    alt="Add Toolset to Agent Flow"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+### Managing Tools
+
+- **Remove individual tool**: Click the remove button on the right side of any tool in the toolset node
+- **Remove entire toolset**: Click the delete button in the top-right corner of the toolset node
+
+<Info>
+  See the individual [Toolset Documentation](/toolsets/overview) for complete details on each toolset's tools and capabilities.
+</Info>
+
+---
+
+## Step 6: Add Knowledge Sources (Optional)
+
+Give your agent access to your indexed documents and collections.
+
+1. In the left sidebar, expand the **"Knowledge"** section
+2. You'll see:
+   - **Apps** - Indexed content from connected applications
+   - **Collections** - Your custom document collections
+
+
+<div className="text-center">
+  <img
+    src="/images/agents/sidebar-knowledge.png"
+    alt="Knowledge Sources in Sidebar"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+3. **Drag** the knowledge source onto the canvas
+4. **Connect** it to your agent flow
+
+The **Internal Retrieval** tool is a built-in utility that searches across all your indexed content. It requires no additional configuration and is always available.
+
+## Step 7: Save Your Agent
+
+1. Enter a name for your agent in the **header input field** (top of the page)
+2. Click the **"Save Agent"** button
+
+<div className="text-center">
+  <img
+    src="/images/agents/save-agent.png"
+    alt="Save Agent"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+3. Your agent is now saved and ready to use!
+
+---
+
+## Step 8: Test Your Agent
+
+1. After saving, you can navigate to the agent's chat interface
+2. Click on your agent from the **Agents Management** page
+3. Start a conversation to test its capabilities
+
+<div className="text-center">
+  <img
+    src="/images/agents/agent-chat.png"
+    alt="Agent Chat Interface"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+---
+
+## Troubleshooting
+
+<AccordionGroup>
+
+<Accordion title="Toolset not appearing in sidebar">
+
+**Possible causes:**
+- The toolset is not configured in Settings > Toolsets
+- The toolset is not authenticated (OAuth flow not completed)
+
+**Solution:**
+1. Go to **Settings > Toolsets**
+2. Find the toolset and click "Configure"
+3. Complete the authentication flow
+4. Return to the Agent Builder - the toolset should now appear
+
+</Accordion>
+
+<Accordion title="Agent not responding or timing out">
+
+**Possible causes:**
+- Reasoning model not properly configured or reasoning not enabled
+- Toolset authentication expired
+- System prompt causing issues
+
+**Solution:**
+1. Check that your LLM provider is properly configured with reasoning enabled in **Settings > AI Models**
+2. Re-authenticate any toolsets that may have expired tokens
+3. Simplify the system prompt and test again
+
+</Accordion>
+
+<Accordion title="Knowledge retrieval returning no results">
+
+**Possible causes:**
+- No content indexed for the connected sources
+- Filters too restrictive
+- Indexing still in progress
+
+**Solution:**
+1. Check **Connector Settings** to verify connectors are synced
+2. Verify collections have content
+3. Wait for indexing to complete if recently added
+
+</Accordion>
+
+<Accordion title="Cannot save agent">
+
+**Possible causes:**
+- Missing required fields (name, reasoning model)
+- Invalid node connections
+
+**Solution:**
+1. Ensure the agent has a name
+2. Verify at least one reasoning model is connected to the Agent Core
+3. Check all node connections are valid
+
+</Accordion>
+
+</AccordionGroup>
+
+---
+
+## Next Steps
+
+<div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
+  <a href="/toolsets/overview" className="block p-4 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+    <h3 className="text-lg font-semibold mb-2">Configure Toolsets</h3>
+    <p className="text-gray-600 dark:text-gray-400">Set up external service integrations</p>
+  </a>
+  <a href="/agent-guide/overview" className="block p-4 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+    <h3 className="text-lg font-semibold mb-2">Agents Overview</h3>
+    <p className="text-gray-600 dark:text-gray-400">Learn more about agent capabilities</p>
+  </a>
+</div>

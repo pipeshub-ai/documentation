@@ -1,0 +1,168 @@
+---
+title: "Google Calendar Toolset"
+description: "Calendar and scheduling integration for AI agents"
+icon: "/logo/gcalendar.png"
+---
+
+<div className="max-w-2xl mx-auto mt-12">
+  <div className="p-6 border border-gray-200 dark:border-gray-700 rounded-lg bg-blue-50 dark:bg-gray-800">
+    <div className="flex items-center mb-4">
+      <img 
+        src="/logo/gcalendar.png" 
+        alt="Google Calendar Logo" 
+        className="w-8 h-8 mr-3 object-contain flex-shrink-0"
+      />
+      <h2 className="text-2xl font-semibold m-0">Google Calendar Toolset</h2>
+    </div>
+    <p className="text-lg text-gray-700 dark:text-gray-300 mb-4">Calendar and event management</p>
+    <div className="flex items-center gap-2">
+      <span className="px-3 py-1 bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200 rounded-full text-sm font-medium">
+        Documentation in Progress
+      </span>
+      <span className="px-3 py-1 bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200 rounded-full text-sm font-medium">
+        Google Workspace
+      </span>
+    </div>
+  </div>
+</div>
+
+## Overview
+
+The Google Calendar toolset enables AI agents to manage calendar events and scheduling.
+
+### Key Capabilities
+
+- View upcoming events and schedules
+- Create and schedule new events
+- Update and delete existing events
+- Create Google Meet links for events
+- Manage multiple calendars
+
+---
+
+## Available Tools
+
+| Tool | What it does |
+|------|-------------|
+| `get_calendar_events` | Get upcoming calendar events |
+| `create_calendar_event` | Create a new calendar event |
+| `update_calendar_event` | Update a calendar event |
+| `create_meet_link` | Create a Google Meet link and attach it to a calendar event |
+| `delete_calendar_event` | Delete a calendar event |
+| `get_calendar_list` | List all calendars |
+| `get_calendar_list_by_id` | Get a specific calendar by ID |
+
+---
+
+## Setup
+
+<AccordionGroup>
+
+<Accordion title="Setup" icon="gear">
+
+### Step 1: Create Google Cloud Project
+
+1. Go to [Google Cloud Console](https://console.cloud.google.com/)
+2. Create a new project or select an existing one
+3. Note your project ID
+
+### Step 2: Enable Google Calendar API
+
+1. Navigate to **APIs & Services > Library**
+2. Search for **"Google Calendar API"**
+3. Click **"Enable"**
+
+<div className="text-center">
+  <img
+    src="/images/connectors/googleWorkspace/enterprise/apis.png"
+    alt="Enable Calendar API"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+### Step 3: Configure OAuth Consent Screen
+
+1. Navigate to **APIs & Services > OAuth consent screen**
+2. Configure the OAuth consent screen with your app information
+3. Add the required scopes (see Step 6)
+
+### Step 4: Get Redirect URI from PipesHub
+
+1. In PipesHub, go to **Settings > Toolsets**
+2. Find **Calendar** and click **"Configure"**
+3. Copy the **Redirect URI** shown in the dialog
+
+<div className="text-center">
+  <img
+    src="/images/toolsets/calendar/pipeshub-config.png"
+    alt="Copy Redirect URI from PipesHub"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+### Step 5: Create OAuth Client ID
+
+1. Navigate to **APIs & Services > Credentials**
+2. Click **"Create Credentials"** > **"OAuth client ID"**
+3. Select **"Web application"**
+4. Set the **Authorized redirect URI** to the URI from PipesHub
+5. Click **"Create"**
+6. Copy your **Client ID** and **Client Secret**
+
+<Info>
+  The redirect URI must match exactly your PipesHub URL.
+</Info>
+
+### Step 6: Add Required Scopes
+
+Add these OAuth scopes in the **OAuth consent screen > Scopes** section:
+
+**Required Scopes:**
+- `https://www.googleapis.com/auth/calendar` - Full calendar access
+- `https://www.googleapis.com/auth/calendar.events` - Manage events
+- `https://www.googleapis.com/auth/gmail.send` - Send calendar invites and notifications
+
+### Step 7: Configure in PipesHub
+
+1. Return to the PipesHub Calendar configuration dialog
+2. Enter your **Client ID** and **Client Secret**
+3. Click **"Authenticate"**
+
+<div className="text-center">
+  <img
+    src="/images/toolsets/calendar/enter-credentials.png"
+    alt="Enter Credentials in PipesHub"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+### Step 8: Authorize Access
+
+1. A popup will open to Google's consent screen
+2. Sign in and grant permission for Calendar access
+3. Click **"Allow"**
+
+<div className="text-center">
+  <img
+    src="/images/connectors/googleWorkspace/individual/gmail_consent_screen.png"
+    alt="Google Consent Screen"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+4. You'll be redirected back to PipesHub
+5. The toolset will show **"Authenticated"** status
+
+</Accordion>
+
+</AccordionGroup>
+
+---
+
+## Usage Tips
+
+**How do I create an event?**  
+Ask your agent to "schedule a meeting" and provide the date, time, title, and attendees. For example: "schedule a team meeting tomorrow at 2pm with john@example.com".
+
+**How do I update an event?**  
+Ask to "move my 2pm meeting to 3pm" or "add sarah@example.com to the team meeting". The agent will find and update the event.

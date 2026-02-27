@@ -74,7 +74,7 @@ Toolsets are collections of tools that allow agents to interact with external ap
 
 Agents can access your indexed knowledge sources:
 
-- **Connectors** - Data synced from connected applications (Google Drive, SharePoint, etc.)
+- **Connectors** - Data synced and indexed from connected applications for querying and search (Google Drive, SharePoint, etc.)
 - **Collections** - Custom document collections you've uploaded
 
 ## Agent Capabilities
@@ -93,6 +93,85 @@ Agents can access your indexed knowledge sources:
 1. **Configure Toolsets** - Set up the toolsets your agent will use ([Toolsets Overview](/toolsets/overview))
 2. **Create an Agent** - Use the visual builder to create your agent ([Setup Guide](/agent-guide/setup-guide))
 3. **Test and Iterate** - Chat with your agent and refine its configuration
+
+---
+
+## Frequently Asked Questions
+
+<AccordionGroup>
+
+<Accordion title="What's the difference between Connectors and Toolsets?">
+
+| Aspect | Connectors | Toolsets |
+|--------|-----------|----------|
+| **Purpose** | Sync and index data for search | Enable agents to perform actions |
+| **Data Flow** | One-way (import data into PipesHub) | Two-way (read and write via API) |
+| **When to Use** | Query/search data | Perform actions on data |
+
+**Example:** Use a **Gmail Connector** to index and search your email history. Use a **Gmail Toolset** to send new emails through an agent.
+
+</Accordion>
+
+<Accordion title="Can I use one OAuth app for both Connector and Toolset?">
+
+Yes! You can create a single OAuth app in the service's developer console and use it for both:
+
+**What you need to add in your OAuth app:**
+
+1. **Both redirect URLs:**
+   - Connector callback URL (e.g., `/connectors/oauth/callback/Gmail`)
+   - Toolset callback URL (e.g., `/api/oauth/callback/Gmail`)
+
+2. **Both scope types:**
+   - Read-only scopes for the Connector (to index data)
+   - Read/write/delete scopes for the Toolset (to perform actions)
+
+**Benefits:**
+- Simpler setup - One OAuth app instead of two
+- Same Client ID and Client Secret for both configurations
+- Easier management in the service's developer console
+
+</Accordion>
+
+<Accordion title="How do I know which nodes to connect in Agent Builder?">
+
+Follow this pattern:
+
+1. **Agent Core** (required) - The center of your agent
+2. **Reasoning Model** (required) - Connect at least one AI model
+3. **Toolset nodes** (optional) - For actions like sending emails, creating tickets
+4. **Collection nodes** (optional) - For searching indexed data from Connectors
+
+All nodes must connect to the Agent Core. The agent will have access to all connected toolsets and collections.
+
+</Accordion>
+
+<Accordion title="Can I choose what knowledge source or tool the agent uses during chat?">
+
+Yes! While chatting with an agent, you can select:
+
+- **Specific Collections** - Query data from particular Connectors (e.g., search only Confluence or only Drive)
+- **Specific Toolsets** - Use particular tools (e.g., send via Gmail or create Jira ticket)
+- **Reasoning Model** - Choose which AI model to use for the query
+
+This gives you control at any time during the conversation to specify where the agent should search or which action to perform.
+
+</Accordion>
+
+<Accordion title="Can I connect multiple Reasoning Models to one agent?">
+
+Yes! You can connect multiple Reasoning Model nodes to the Agent Core. 
+
+When chatting with the agent, users can select which model to use for specific queries from the chat interface. This allows:
+
+- Using different models for different complexity levels
+- Flexibility to choose the best model for each task
+
+</Accordion>
+
+</AccordionGroup>
+
+---
 
 ## Next Steps
 

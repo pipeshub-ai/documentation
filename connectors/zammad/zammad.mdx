@@ -171,6 +171,10 @@ The Zammad connector uses **API Access Token** authentication (HTTP Token Authen
 2. Find the **Zammad** connector and click **"Save Configuration"**
 3. The configuration dialog will appear with authentication settings
 
+<Warning>
+  **Important:** Generate the API token from a Zammad account that uses the same email address as your PipesHub account. Using a different email will cause permission issues on the PipesHub platform.
+</Warning>
+
 <div className="text-center">
   <img
     src="/images/connectors/zammad/pipeshub_config.png"
@@ -426,6 +430,21 @@ The connector syncs data in the following order:
   
   - **Include specific groups**: Set Operator to `In` and select the groups
   - **Exclude specific groups**: Set Operator to `Not In` and select the groups to exclude
+</Accordion>
+
+<Accordion title="Queries not returning results. What could be wrong?">
+
+There are three common causes:
+
+1. **Email mismatch** - The email used during connector authentication doesn't match your PipesHub account email. This causes permission issues preventing you from accessing synced data.
+   - **Fix:** Reconfigure the connector and authenticate using the same email as your PipesHub account.
+
+2. **Records show in "All Records" but not in search** - Documents display in the All Records section but don't appear in search query results.
+   - **Fix:** Verify sync filters in the connector settings and ensure indexing has completed. Check that the data matches your search query criteria.
+
+3. **Data not yet indexed** - The connector is still syncing or hasn't completed the initial indexing process.
+   - **Fix:** Go to **Settings > Connectors**, check the sync status, and wait for indexing to complete.
+
 </Accordion>
 
 </AccordionGroup>

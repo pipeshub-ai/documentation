@@ -511,7 +511,9 @@ The Gmail connector uses OAuth 2.0 for authentication. This requires users to gr
      />
    </div>
 
-<Info>Give consent with the same email as used for email in PipesHub.</Info>
+<Warning>
+  **Important:** Authorize using the same email address as your PipesHub account. Using a different email will cause permission issues on the PipesHub platform.
+</Warning>
 
 <Info>
   For setting up Google PubSub notifications, please refer to the [Google PubSub Configuration Guide](/enterprise/connectors/googleWorkspace#google-pubsub-configuration) in the Enterprise documentation.
@@ -538,6 +540,21 @@ The Gmail connector uses OAuth 2.0 for authentication. This requires users to gr
 | **When to Use** | Query/search email history and conversations | Send emails, manage messages, create drafts |
 
 **Example:** Use **Gmail Connector** to search past email conversations. Use **Gmail Toolset** to let agents send replies or forward messages.
+
+</Accordion>
+
+<Accordion title="Queries not returning results. What could be wrong?">
+
+There are three common causes:
+
+1. **Email mismatch** - The email used during connector authentication doesn't match your PipesHub account email. This causes permission issues preventing you from accessing synced data.
+   - **Fix:** Reconfigure the connector and authenticate using the same email as your PipesHub account.
+
+2. **Records show in "All Records" but not in search** - Documents display in the All Records section but don't appear in search query results.
+   - **Fix:** Verify sync filters in the connector settings and ensure indexing has completed. Check that the data matches your search query criteria.
+
+3. **Data not yet indexed** - The connector is still syncing or hasn't completed the initial indexing process.
+   - **Fix:** Go to **Settings > Connectors**, check the sync status, and wait for indexing to complete.
 
 </Accordion>
 

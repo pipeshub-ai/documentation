@@ -181,7 +181,11 @@ Click **Next** here you can setup your sync strategy either **Manual**, **Schedu
 
 ### Step 3: Authenticate and Enable
 
-1. Click **Save Configuration**. Now the authenticate button will be active, click on it and you will be taken to dropbox to authorize your app (make sure you are logged in to correct dropbox account).
+1. Click **Save Configuration**. Now the authenticate button will be active, click on it and you will be taken to dropbox to authorize your app.
+
+<Warning>
+  **Important:** Authorize using the same email address as your PipesHub account. Using a different email will cause permission issues on the PipesHub platform.
+</Warning>
 
 2. After granting access, you will be redirected back to PipesHub, and your Dropbox account will be successfully connected, once you enable the connector your files will start syncing.
 
@@ -355,6 +359,29 @@ This is an incremental, event-driven process designed to keep file and folder pe
 4. **Process and Update:** The fresh data is processed, and the item's permissions are updated in the database to reflect the latest state.
 
 5. **Update Cursor:** Finally, the new cursor is saved to mark the position for the next sync.
+
+</Accordion>
+
+</AccordionGroup>
+
+---
+
+## FAQ
+
+<AccordionGroup>
+
+<Accordion title="Queries not returning results. What could be wrong?">
+
+There are three common causes:
+
+1. **Email mismatch** - The email used during connector authentication doesn't match your PipesHub account email. This causes permission issues preventing you from accessing synced data.
+   - **Fix:** Reconfigure the connector and authenticate using the same email as your PipesHub account.
+
+2. **Records show in "All Records" but not in search** - Documents display in the All Records section but don't appear in search query results.
+   - **Fix:** Verify sync filters in the connector settings and ensure indexing has completed. Check that the data matches your search query criteria.
+
+3. **Data not yet indexed** - The connector is still syncing or hasn't completed the initial indexing process.
+   - **Fix:** Go to **Settings > Connectors**, check the sync status, and wait for indexing to complete.
 
 </Accordion>
 

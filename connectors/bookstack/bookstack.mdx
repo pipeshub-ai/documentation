@@ -127,6 +127,10 @@ The integration requires three pieces of information:
 - Paste the **BookStack Token ID**.
 - Paste the **BookStack Token Secret**.
 
+<Warning>
+  **Important:** Use API credentials generated from a BookStack account that has the same email address as your PipesHub account. Using a different email will cause permission issues on the PipesHub platform.
+</Warning>
+
 #### Step 3: Set Sync Strategy
   - Set your sync strategy as **Manual** or **Webhooks** (to be implemented)
 
@@ -169,6 +173,20 @@ The integration requires three pieces of information:
   If you're experiencing issues not covered in this documentation, please check the docker logs for bookstack to see if it's failing from there, otherwise feel free to reach out to our support team for assistance on our [discord](https://discord.com/invite/K5RskzJBm2). 
 </Accordion>
 
+<Accordion title="Queries not returning results. What could be wrong?">
+
+There are three common causes:
+
+1. **Email mismatch** - The email used during connector authentication doesn't match your PipesHub account email. This causes permission issues preventing you from accessing synced data.
+   - **Fix:** Reconfigure the connector and authenticate using the same email as your PipesHub account.
+
+2. **Records show in "All Records" but not in search** - Documents display in the All Records section but don't appear in search query results.
+   - **Fix:** Verify sync filters in the connector settings and ensure indexing has completed. Check that the data matches your search query criteria.
+
+3. **Data not yet indexed** - The connector is still syncing or hasn't completed the initial indexing process.
+   - **Fix:** Go to **Settings > Connectors**, check the sync status, and wait for indexing to complete.
+
+</Accordion>
 
 </AccordionGroup>
 

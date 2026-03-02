@@ -216,6 +216,10 @@ Before creating the OAuth application in Linear, you need to get the Redirect UR
 
 3. Click **"Authorize"** to grant access
 
+<Warning>
+  **Important:** Authorize using the same email address as your PipesHub account. Using a different email will cause permission issues on the PipesHub platform.
+</Warning>
+
 <Info>
   The connector requests only **read access** to your workspace. This provides read-only access to your Linear data. The connector does not create, modify, or delete any Linear data.
 </Info>
@@ -516,6 +520,21 @@ The connector syncs data in the following order:
   - **Created Date**: Sync only recently created content
   
   Since projects belong to teams, filtering by team will effectively filter the associated projects as well.
+</Accordion>
+
+<Accordion title="Queries not returning results. What could be wrong?">
+
+There are three common causes:
+
+1. **Email mismatch** - The email used during connector authentication doesn't match your PipesHub account email. This causes permission issues preventing you from accessing synced data.
+   - **Fix:** Reconfigure the connector and authenticate using the same email as your PipesHub account.
+
+2. **Records show in "All Records" but not in search** - Documents display in the All Records section but don't appear in search query results.
+   - **Fix:** Verify sync filters in the connector settings and ensure indexing has completed. Check that the data matches your search query criteria.
+
+3. **Data not yet indexed** - The connector is still syncing or hasn't completed the initial indexing process.
+   - **Fix:** Go to **Settings > Connectors**, check the sync status, and wait for indexing to complete.
+
 </Accordion>
 
 </AccordionGroup>

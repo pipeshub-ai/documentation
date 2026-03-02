@@ -3,6 +3,27 @@ title: "Overview"
 description: "Connectors are software components that enable different applications, systems, or platforms to communicate and share data with each other."
 ---
 
+## What are Connectors?
+
+Connectors are software components that **sync and index data** from external applications into PipesHub. They enable your chatbot and agents to search through your organization's knowledge base.
+
+**Use Connectors when you want to query or search data.** The indexed data becomes searchable knowledge for your AI assistants.
+
+**Key characteristics:**
+- **One-way data sync** - Import data into PipesHub for indexing
+- **Knowledge retrieval** - Make data searchable for AI assistants
+- **Periodic syncing** - Data is synced on a schedule, not in real-time
+
+<Warning>
+  **Important:** When authenticating a connector, use the same email address as your PipesHub account. Using a different email will cause permission issues on the PipesHub platform.
+</Warning>
+
+<Info>
+  Looking to perform actions like sending emails or creating tickets? You need [**Toolsets**](/toolsets/overview) instead. Toolsets enable agents to perform actions on data, not just search it.
+</Info>
+
+---
+
 ## Available Connectors
 
 Our platform supports a wide range of connectors organized by ecosystem to help you integrate with your favorite tools and services.
@@ -92,3 +113,59 @@ Our platform supports a wide range of connectors organized by ecosystem to help 
 ## Security & Compliance
 
 All connectors are built with enterprise-grade security in mind, supporting OAuth 2.0 authentication, data encryption, and compliance with major industry standards including SOC 2, GDPR, and HIPAA where applicable.
+
+---
+
+## Frequently Asked Questions
+
+<AccordionGroup>
+
+<Accordion title="What's the difference between Connectors and Toolsets?">
+
+| Aspect | Connectors | Toolsets |
+|--------|-----------|----------|
+| **Purpose** | Sync and index data for search | Enable agents to perform actions |
+| **Data Flow** | One-way (import data into PipesHub) | Two-way (read and write via API) |
+| **When to Use** | Query/search data | Perform actions on data |
+
+**Example:** Use a **Gmail Connector** to index and search your email history. Use a **Gmail Toolset** to send new emails through an agent.
+
+</Accordion>
+
+<Accordion title="Where do I find the callback URL for my OAuth app?">
+
+The callback URL is displayed in PipesHub when configuring a connector:
+
+1. Go to **Settings > Connectors**
+2. Click **"Configure"** on the connector you want to set up
+3. Copy the **Redirect URI** shown in the dialog
+4. Add it to your OAuth app's allowed redirect URIs in the service's developer console
+
+The callback URL must match exactly between PipesHub and the OAuth app for authentication to succeed.
+
+</Accordion>
+
+<Accordion title="What OAuth scopes do Connectors require?">
+
+Connectors need **read-only permissions** to sync and index data. When creating your OAuth app in the service's developer console, grant only the scopes listed in the specific connector's documentation page.
+
+Using read-only scopes ensures connectors can access your data for indexing but cannot modify or delete anything in your external applications.
+
+</Accordion>
+
+<Accordion title="Queries not returning results. What could be wrong?">
+
+There are three common causes:
+
+1. **Email mismatch** - The email used during connector authentication doesn't match your PipesHub account email. This causes permission issues preventing you from accessing synced data.
+   - **Fix:** Reconfigure the connector and authenticate using the same email as your PipesHub account.
+
+2. **Records not displaying in "All Records"** - Documents or data from the connector are not showing up at all in the All Records section.
+   - **Fix:** Check permissions in the connector configuration, verify email match, and go to **Settings > Connectors** to ensure all records have synced successfully.
+
+3. **Data not yet indexed** - The connector is still syncing or hasn't completed the initial indexing process.
+   - **Fix:** Go to **Settings > Connectors**, check the sync status, and wait for indexing to complete.
+
+</Accordion>
+
+</AccordionGroup>

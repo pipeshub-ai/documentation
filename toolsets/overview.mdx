@@ -16,15 +16,27 @@ icon: "tools"
 
 ## What are Toolsets?
 
-Toolsets are collections of tools that enable AI agents to interact with external applications. Each toolset provides a set of actions (tools) that agents can use to read data, create content, and perform operations in connected services.
+Toolsets are collections of tools that enable AI agents to **perform actions** in external applications. Each toolset provides a set of actions (tools) that agents can use to read data, create content, and perform operations in connected services.
 
-Unlike **Connectors** (which sync and index data for search), **Toolsets** provide real-time API access for performing actions.
+**Use Toolsets when you want agents to take action on data** — sending emails, creating tickets, updating documents, or modifying content in external services.
+
+**Key characteristics:**
+- **Two-way API access** - Read and write data in real-time
+- **Action-oriented** - Send emails, create tickets, update documents
+- **OAuth callback URL required** - Secure authorization flow
+- **Instant execution** - Actions happen immediately when agents invoke tools
+
+Unlike **Connectors** (which index data for querying and search), **Toolsets** provide real-time API access for performing actions.
+
+<Info>
+  Need to search or query through documents or emails? You need [**Connectors**](/connectors/overview) instead. Connectors index data for knowledge retrieval, while Toolsets enable actions.
+</Info>
 
 | Feature | Connectors | Toolsets |
 |---------|------------|----------|
 | **Purpose** | Sync and index data for search | Perform actions via API |
 | **Data Flow** | One-way (import) | Two-way (read/write) |
-| **Use Case** | Knowledge retrieval | Agent actions |
+| **Use Case** | Query/search data | Actions on data |
 | **Real-time** | Periodic sync | Instant API calls |
 
 ## Available Toolsets
@@ -181,48 +193,57 @@ OAuth 2.0 is the recommended authentication method for most toolsets. It provide
 - Obtain Client ID and Client Secret
 ---
 
-## Troubleshooting
+## Frequently Asked Questions
 
 <AccordionGroup>
 
-<Accordion title="OAuth authentication failing">
+<Accordion title="What's the difference between Connectors and Toolsets?">
 
-**Possible causes:**
-- Incorrect Client ID or Client Secret
-- Redirect URI mismatch
-- OAuth application not properly configured
+| Aspect | Connectors | Toolsets |
+|--------|-----------|----------|
+| **Purpose** | Sync and index data for search | Enable agents to perform actions |
+| **Data Flow** | One-way (import data into PipesHub) | Two-way (read and write via API) |
+| **When to Use** | Query/search data | Perform actions on data |
 
-**Solution:**
-1. Verify Client ID and Secret are correct (no extra spaces)
-2. Check that the Redirect URI in PipesHub matches exactly what's configured in the OAuth app
-3. Ensure the OAuth application is active/enabled
+**Example:** Use a **Gmail Connector** to index and search your email history. Use a **Gmail Toolset** to send new emails through an agent.
 
 </Accordion>
 
-<Accordion title="Toolset not appearing in Agent Builder">
+<Accordion title="Where do I find the callback URL to add in the OAuth app?">
 
-**Possible causes:**
-- Toolset not authenticated
-- Authentication expired
-- Browser cache issue
+The callback URL is displayed in PipesHub when configuring a toolset:
 
-**Solution:**
-1. Go to **Settings > Toolsets** and check the toolset status
-2. If not authenticated, click "Configure" and complete authentication
-3. If expired, click "Reauthenticate"
-4. Try refreshing the Agent Builder page
+1. Go to **Settings > Toolsets**
+2. Click **"Configure"** on the toolset you want to set up
+3. Copy the **Redirect URI** shown in the dialog
+4. Add it to your OAuth app's allowed redirect URIs in the service's developer console
+
+The callback URL must match exactly between PipesHub and the OAuth app for authentication to succeed.
 
 </Accordion>
 
-<Accordion title="Tools returning errors">
+<Accordion title="What OAuth scopes do Toolsets require?">
 
-**Possible causes:**
-- Insufficient permissions for the action
-- Service API rate limits
+Toolsets need **read, write and delete permissions** to perform actions on your behalf:
 
-**Solution:**
-1. Check that the OAuth app or API token has write permissions if needed
-2. Wait and retry if rate limited
+- **Read permissions** - Access existing data (messages, tickets, files)
+- **Write permissions** - Create and update content (send emails, create tickets)
+- **Delete permissions** - Remove items (delete messages, delete comment)
+
+The required scopes depend on what actions your agents will perform. Check each toolset's documentation page for the complete list of required scopes based on your use case.
+
+</Accordion>
+
+<Accordion title="Why can't I drag and use a Toolset in Agent Builder?">
+
+Toolsets appear in the Agent Builder but can only be used after authentication:
+
+1. Check **Settings > Toolsets** for the authentication status
+2. If not "Authenticated", click **"Configure"** and complete the OAuth flow
+3. If expired, click **"Reauthenticate"**
+4. Return to Agent Builder and the toolset will be available to drag and connect
+
+Unauthenticated toolsets are visible but cannot be added to agents.
 
 </Accordion>
 

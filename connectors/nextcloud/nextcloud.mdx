@@ -136,6 +136,10 @@ Click **Next**. You can configure your sync strategy:
 
 ### Step 4: Save and Sync
 
+<Warning>
+  **Important:** Use the App Password from a Nextcloud account that has the same email address as your PipesHub account. Using a different email will cause permission issues on the PipesHub platform.
+</Warning>
+
 1. Click **Save Configuration**.
 2. The connection will be tested automatically to verify your credentials.
 3. Once verified, click **Start Sync** to begin the initial synchronization.
@@ -427,6 +431,21 @@ The connector provides authenticated file downloads:
 - **Use App Passwords:** Always use generated app passwords rather than your main Nextcloud password
 - **Revoke Unused Tokens:** Regularly review and revoke unused app passwords in Nextcloud Security settings
 - **Secure Transmission:** All API calls use HTTPS for encrypted communication
+
+</Accordion>
+
+<Accordion title="Queries not returning results. What could be wrong?">
+
+There are three common causes:
+
+1. **Email mismatch** - The email used during connector authentication doesn't match your PipesHub account email. This causes permission issues preventing you from accessing synced data.
+   - **Fix:** Reconfigure the connector and authenticate using the same email as your PipesHub account.
+
+2. **Records show in "All Records" but not in search** - Documents display in the All Records section but don't appear in search query results.
+   - **Fix:** Verify sync filters in the connector settings and ensure indexing has completed. Check that the data matches your search query criteria.
+
+3. **Data not yet indexed** - The connector is still syncing or hasn't completed the initial indexing process.
+   - **Fix:** Go to **Settings > Connectors**, check the sync status, and wait for indexing to complete.
 
 </Accordion>
 

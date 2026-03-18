@@ -3,12 +3,6 @@ title: "Deploy with Helm"
 description: "Install, verify, access, upgrade, and uninstall PipesHub on Kubernetes using Helm"
 ---
 
-## Add the chart to your repo (recommended)
-
-If you are working from this documentation repo, the chart is available at `deployment/helm/pipeshub-ai` (symlinked from the `pipeshub-ai` repo).
-
-If you vendor the chart into your own repo/CI, keep the same directory layout so the commands below remain correct.
-
 ## Install PipesHub
 
 <Steps>
@@ -20,11 +14,32 @@ kubectl create namespace pipeshub
 
   </Step>
 
+  <Step title="Clone the official repo">
+
+```bash
+git clone https://github.com/pipeshub-ai/pipeshub-ai.git
+cd pipeshub-ai/deployment/helm/pipeshub-ai
+```
+
+  </Step>
+
+  <Step title="Create a minimal values file (recommended)">
+
+Create `my-values.yaml` and set at least `secretKey`:
+
+```bash
+cat > my-values.yaml <<'YAML'
+secretKey: "REPLACE_ME_WITH_A_LONG_RANDOM_VALUE"
+YAML
+```
+
+  </Step>
+
   <Step title="Install the chart">
 
 ```bash
-helm dependency update ./deployment/helm/pipeshub-ai
-helm install pipeshub ./deployment/helm/pipeshub-ai -n pipeshub
+helm dependency update .
+helm install pipeshub . -n pipeshub -f my-values.yaml
 ```
 
   </Step>
@@ -84,12 +99,12 @@ Most deployments should set at least:
 - `persistence.storageClass` (if your cluster doesn’t have a default)
 - `config.frontendPublicUrl` / `config.connectorPublicBackend` (when using Ingress)
 
-See [`deployment/kubernetes/configuration.mdx`](./configuration.mdx) for a complete set of recommended overrides.
+See [`deployment/kubernetes/configuration`](./configuration) for a complete set of recommended overrides.
 
 ## Upgrade PipesHub
 
 ```bash
-helm upgrade pipeshub ./deployment/helm/pipeshub-ai -n pipeshub -f my-values.yaml
+helm upgrade pipeshub . -n pipeshub -f my-values.yaml
 ```
 
 ## Uninstall

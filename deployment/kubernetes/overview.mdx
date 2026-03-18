@@ -31,6 +31,19 @@ Most of these services are stateful and require Persistent Volumes. Plan for sto
 - **StorageClass**: A default StorageClass, or provide explicit `storageClass` values for the PVCs.
 - **Ingress controller (optional)**: Only required if you plan to expose PipesHub via Ingress.
 
+Before you install, it helps to confirm your `kubectl` context is pointing at the right cluster:
+
+```bash
+kubectl cluster-info
+kubectl get nodes
+```
+
+And confirm you have a StorageClass available:
+
+```bash
+kubectl get storageclass
+```
+
 ## Sizing baseline
 
 The chart defaults are aimed at a reasonably-sized cluster:
@@ -40,7 +53,11 @@ The chart defaults are aimed at a reasonably-sized cluster:
 For local clusters like `kind` or small nodes, you’ll likely need to lower requests so the pod can schedule:
 
 ```bash
-helm install pipeshub ./deployment/helm/pipeshub-ai -n pipeshub \
+git clone https://github.com/pipeshub-ai/pipeshub-ai.git
+cd pipeshub-ai/deployment/helm/pipeshub-ai
+
+helm dependency update .
+helm install pipeshub . -n pipeshub \
   --set resources.requests.cpu=500m \
   --set resources.requests.memory=1Gi
 ```

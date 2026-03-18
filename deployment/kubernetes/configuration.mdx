@@ -1,0 +1,114 @@
+---
+title: "Helm values and configuration"
+description: "How to configure PipesHub’s Helm chart: secrets, storage, URLs, resources, and optional components"
+---
+
+## Recommended baseline `values.yaml`
+
+Create your own `my-values.yaml` and keep secrets out of git.
+
+At minimum, set **`secretKey`**:
+
+```yaml
+secretKey: "REPLACE_ME_WITH_A_LONG_RANDOM_VALUE"
+```
+
+<Note>
+If `secretKey` is left empty, the chart will generate a random value during install. This is fine for quick tests, but for production it can break sessions/encryption across upgrades if the value changes.
+</Note>
+
+## Storage and persistence
+
+The chart creates multiple PVCs (app data plus stateful services). If your cluster does not have a default StorageClass, set one explicitly:
+
+```yaml
+persistence:
+  enabled: true
+  storageClass: "gp3" # example
+
+mongodb:
+  persistence:
+    storageClass: "gp3"
+
+redis:
+  persistence:
+    storageClass: "gp3"
+
+arango:
+  persistence:
+    storageClass: "gp3"
+
+etcd:
+  persistence:
+    storageClass: "gp3"
+
+qdrant:
+  persistence:
+    storageClass: "gp3"
+```
+
+## Public URLs (important when using Ingress)
+
+If you expose PipesHub via hostnames, set:
+
+```yaml
+config:
+  frontendPublicUrl: "https://pipeshub.example.com"
+  connectorPublicBackend: "https://pipeshub-connector.example.com"
+  allowedOrigins: "https://pipeshub.example.com"
+```
+
+## Ingress
+
+Ingress is disabled by default. Enable it and set `className`, `annotations`, `hosts`, and `tls` as needed.
+
+See [`deployment/kubernetes/ingress.mdx`](./ingress.mdx) for complete examples.
+
+## Resources (CPU / memory)
+
+The PipesHub app container defaults to:
+
+- requests \(4 CPU / 4Gi\)
+- limits \(8 CPU / 8Gi\)
+
+For smaller clusters, lower the requests:
+
+```bash
+helm upgrade pipeshub ./deployment/helm/pipeshub-ai -n pipeshub \
+  --set resources.requests.cpu=500m \
+  --set resources.requests.memory=1Gi
+```
+
+## Images and private registries
+
+```yaml
+image:
+  repository: pipeshubai/pipeshub-ai
+  tag: latest
+  pullPolicy: Always
+
+imagePullSecrets:
+  - name: my-registry-cred
+```
+
+## Optional: Neo4j graph database
+
+Neo4j is disabled by default:
+
+```yaml
+neo4j:
+  enabled: false
+  auth:
+    password: "REPLACE_ME"
+```
+
+When enabled, the chart injects Neo4j settings into the PipesHub pod and also stores credentials in the chart-managed Secret.
+
+## Known startup issue: log path permissions
+
+If startup fails due to permissions on `/app/process_monitor.log`, rebuild the image with:
+
+- `LOG_FILE=/data/pipeshub/process_monitor.log`
+
+This aligns with the chart’s default persistent volume mount at `/data/pipeshub`.
+

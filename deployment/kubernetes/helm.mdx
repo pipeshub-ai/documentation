@@ -1,0 +1,104 @@
+---
+title: "Deploy with Helm"
+description: "Install, verify, access, upgrade, and uninstall PipesHub on Kubernetes using Helm"
+---
+
+## Add the chart to your repo (recommended)
+
+If you are working from this documentation repo, the chart is available at `deployment/helm/pipeshub-ai` (symlinked from the `pipeshub-ai` repo).
+
+If you vendor the chart into your own repo/CI, keep the same directory layout so the commands below remain correct.
+
+## Install PipesHub
+
+<Steps>
+  <Step title="Create a namespace (recommended)">
+
+```bash
+kubectl create namespace pipeshub
+```
+
+  </Step>
+
+  <Step title="Install the chart">
+
+```bash
+helm dependency update ./deployment/helm/pipeshub-ai
+helm install pipeshub ./deployment/helm/pipeshub-ai -n pipeshub
+```
+
+  </Step>
+</Steps>
+
+<Note>
+Release names affect resource names. For example, with release name `pipeshub`, the main Service becomes `pipeshub-pipeshub-ai`.
+</Note>
+
+## Verify the installation
+
+```bash
+helm list -n pipeshub
+kubectl get pods -n pipeshub
+kubectl get svc -n pipeshub
+```
+
+Wait until all pods are `Running` and readiness probes are healthy.
+
+## Access PipesHub
+
+By default, the chart creates a ClusterIP Service exposing these ports:
+
+- **3000**: frontend
+- **8088**: connector
+- **8091**: main backend (indexing backend uses the same pod, different port naming)
+- **8000**: query
+- **8081**: indexing
+
+For local testing, port-forward the frontend:
+
+```bash
+kubectl -n pipeshub port-forward service/pipeshub-pipeshub-ai 3000:3000
+```
+
+Then open `http://localhost:3000`.
+
+<Note>
+If you used a different Helm release name, the Service name will be different. You can always discover it with:
+
+```bash
+kubectl -n pipeshub get svc
+```
+</Note>
+
+If you also need the connector endpoint locally:
+
+```bash
+kubectl -n pipeshub port-forward service/pipeshub-pipeshub-ai 8088:8088
+```
+
+## Configure PipesHub
+
+Most deployments should set at least:
+
+- `secretKey`
+- `persistence.storageClass` (if your cluster doesn’t have a default)
+- `config.frontendPublicUrl` / `config.connectorPublicBackend` (when using Ingress)
+
+See [`deployment/kubernetes/configuration.mdx`](./configuration.mdx) for a complete set of recommended overrides.
+
+## Upgrade PipesHub
+
+```bash
+helm upgrade pipeshub ./deployment/helm/pipeshub-ai -n pipeshub -f my-values.yaml
+```
+
+## Uninstall
+
+```bash
+helm uninstall pipeshub -n pipeshub
+```
+
+<Note>
+PersistentVolumeClaims are not always deleted automatically depending on your cluster’s reclaim policies. If you are deleting a test environment, verify and clean up PVCs in the namespace.
+</Note>
+

@@ -5,9 +5,9 @@ description: "Expose PipesHub with Kubernetes Ingress, including host routing an
 
 ## Enable Ingress
 
-The chart’s Ingress is driven entirely by `ingress.hosts[].paths[]`, where each path specifies a **service name** and **port number**.
+The chart’s Ingress is driven entirely by `ingress.hosts[].paths[]`, where each path specifies a **service name** and a **port** field. That field must match the **numeric** port shown for the correct **named** port on your Service (check `kubectl get svc` / `kubectl describe svc` — e.g. the rows named `frontend` and `connector`).
 
-Start with a `my-values.yaml` like:
+Start with a `my-values.yaml` like (fill `port` from your cluster after `kubectl get svc -n pipeshub`):
 
 ```yaml
 ingress:
@@ -19,13 +19,13 @@ ingress:
       paths:
         - path: /
           pathType: ImplementationSpecific
-          port: 3000
+          port: <frontend-port-from-kubectl-get-svc>
           serviceName: pipeshub-pipeshub-ai
     - host: pipeshub-connector.example.com
       paths:
         - path: /
           pathType: ImplementationSpecific
-          port: 8088
+          port: <connector-port-from-kubectl-get-svc>
           serviceName: pipeshub-pipeshub-ai
   tls:
     - secretName: pipeshub-example-com-tls

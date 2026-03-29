@@ -1,0 +1,75 @@
+---
+title: "Troubleshooting"
+description: "Common issues and fixes when running PipesHub on Kubernetes"
+---
+
+## Pods stuck in Pending
+
+### PVC Pending / unbound
+
+If pods are waiting on volumes, check PVCs:
+
+```bash
+kubectl get pvc -n pipeshub
+kubectl describe pvc -n pipeshub
+```
+
+Common causes:
+
+- No default StorageClass in the cluster
+- Wrong `storageClass` name in values
+
+Fix by setting the StorageClass in values (see [`deployment/kubernetes/configuration`](./configuration.mdx)) and re-running `helm upgrade`.
+
+## CrashLoopBackOff on the app pod
+
+### Log file permissions (`/app/process_monitor.log`)
+
+If the container fails early due to permissions on `/app/process_monitor.log`, rebuild the image with:
+
+- `LOG_FILE=/data/pipeshub/process_monitor.log`
+
+Then redeploy with the new `image.tag`.
+
+### Pod can’t schedule (resource requests too high)
+
+The chart’s default requests for the app container are \(4 CPU / 4Gi\). For kind/small clusters, lower them:
+
+```bash
+helm upgrade pipeshub . -n pipeshub \
+  --set resources.requests.cpu=500m \
+  --set resources.requests.memory=1Gi
+```
+
+## ImagePullBackOff
+
+Check events and confirm registry credentials:
+
+```bash
+kubectl describe pod -n pipeshub <pod-name>
+```
+
+If using a private image registry, configure `imagePullSecrets` in your values file.
+
+## Ingress issues
+
+If Ingress is enabled but traffic doesn’t route:
+
+- Verify you have an ingress controller installed.
+- Confirm `serviceName` + `port` in `ingress.hosts[].paths[]` matches the Service created by your Helm release.
+
+## Neo4j Browser can’t connect (WebSocket failure)
+
+If you enabled Neo4j and opened Neo4j Browser on `http://localhost:7474` but get a WebSocket connection failure, you likely forwarded only the HTTP port (7474).
+
+Neo4j Browser also needs access to **Bolt** (7687). Port-forward both:
+
+```bash
+kubectl -n pipeshub port-forward service/<release>-pipeshub-ai-neo4j 7474:7474 7687:7687
+```
+
+Then connect in Neo4j Browser using:
+
+- URL: `neo4j://localhost:7687` (or `bolt://localhost:7687`)
+- Username: `neo4j`
+- Password: the value you configured in `neo4j.auth.password` (or the chart-generated secret)

@@ -1,0 +1,118 @@
+---
+title: "Deploy with Helm"
+description: "Install, verify, access, upgrade, and uninstall PipesHub on Kubernetes using Helm"
+---
+
+## Install PipesHub
+
+<Steps>
+  <Step title="Create a namespace (recommended)">
+
+```bash
+kubectl create namespace pipeshub
+```
+
+  </Step>
+
+  <Step title="Clone the official repo">
+
+```bash
+git clone https://github.com/pipeshub-ai/pipeshub-ai.git
+cd pipeshub-ai/deployment/helm/pipeshub-ai
+```
+
+  </Step>
+
+  <Step title="Create a minimal values file (recommended)">
+
+Create `my-values.yaml` and set at least `secretKey`:
+
+```bash
+cat > my-values.yaml <<'YAML'
+secretKey: "REPLACE_ME_WITH_A_LONG_RANDOM_VALUE"
+YAML
+```
+
+  </Step>
+
+  <Step title="Install the chart">
+
+```bash
+helm dependency update .
+helm install pipeshub . -n pipeshub -f my-values.yaml
+```
+
+  </Step>
+</Steps>
+
+<Note>
+Release names affect resource names. For example, with release name `pipeshub`, the main Service becomes `pipeshub-pipeshub-ai`.
+</Note>
+
+## Verify the installation
+
+```bash
+helm list -n pipeshub
+kubectl get pods -n pipeshub
+kubectl get svc -n pipeshub
+```
+
+Wait until all pods are `Running` and readiness probes are healthy.
+
+## Access PipesHub
+
+By default, the chart creates a **ClusterIP** Service for the PipesHub app. That Service is only reachable from inside the cluster unless you add Ingress, change the Service type, or use **port-forward** from your machine.
+
+See how the app is exposed:
+
+```bash
+kubectl -n pipeshub get svc
+kubectl -n pipeshub describe svc <your-release>-pipeshub-ai
+```
+
+Replace `<your-release>-pipeshub-ai` with the Service name from `get svc` (for example, release name `pipeshub` often yields `pipeshub-pipeshub-ai`).
+
+To try the **web UI** locally, forward the Service using the port **name** `frontend`:
+
+```bash
+kubectl -n pipeshub port-forward service/<your-release>-pipeshub-ai :frontend
+```
+
+`kubectl` prints a local address; open that URL in your browser.
+
+To reach the **connector** locally, run a separate forward using the port **name** `connector`:
+
+```bash
+kubectl -n pipeshub port-forward service/<your-release>-pipeshub-ai :connector
+```
+
+<Note>
+If you used a different Helm release name, the Service name will differ. Always confirm with `kubectl -n pipeshub get svc`.
+</Note>
+
+## Configure PipesHub
+
+Most deployments should set at least:
+
+- `secretKey`
+- `persistence.storageClass` (if your cluster doesn’t have a default)
+- `config.frontendPublicUrl` / `config.connectorPublicBackend` (when using Ingress)
+
+See [`deployment/kubernetes/configuration`](./configuration) for a complete set of recommended overrides.
+
+## Upgrade PipesHub
+
+```bash
+helm upgrade pipeshub . -n pipeshub -f my-values.yaml
+```
+
+## Uninstall
+
+```bash
+helm uninstall pipeshub -n pipeshub
+```
+
+<Note>
+PersistentVolumeClaims are not always deleted automatically depending on your cluster’s reclaim policies. If you are deleting a test environment, verify and clean up PVCs in the namespace.
+</Note>
+

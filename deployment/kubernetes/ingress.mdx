@@ -1,0 +1,68 @@
+---
+title: "Ingress and TLS"
+description: "Expose PipesHub with Kubernetes Ingress, including host routing and HTTPS"
+---
+
+## Enable Ingress
+
+The chart’s Ingress is driven entirely by `ingress.hosts[].paths[]`, where each path specifies a **service name** and a **port** field. That field must match the **numeric** port shown for the correct **named** port on your Service (check `kubectl get svc` / `kubectl describe svc` — e.g. the rows named `frontend` and `connector`).
+
+Start with a `my-values.yaml` like (fill `port` from your cluster after `kubectl get svc -n pipeshub`):
+
+```yaml
+ingress:
+  enabled: true
+  className: "nginx"
+  annotations: {}
+  hosts:
+    - host: pipeshub.example.com
+      paths:
+        - path: /
+          pathType: ImplementationSpecific
+          port: <frontend-port-from-kubectl-get-svc>
+          serviceName: pipeshub-pipeshub-ai
+    - host: pipeshub-connector.example.com
+      paths:
+        - path: /
+          pathType: ImplementationSpecific
+          port: <connector-port-from-kubectl-get-svc>
+          serviceName: pipeshub-pipeshub-ai
+  tls:
+    - secretName: pipeshub-example-com-tls
+      hosts:
+        - pipeshub.example.com
+    - secretName: pipeshub-connector-example-com-tls
+      hosts:
+        - pipeshub-connector.example.com
+```
+
+<Note>
+The `serviceName` must match the actual Kubernetes Service created by the release. With the install command `helm install pipeshub ...`, the default service name is `pipeshub-pipeshub-ai`.
+</Note>
+
+## Set public URLs
+
+When using ingress, set:
+
+```yaml
+config:
+  frontendPublicUrl: "https://pipeshub.example.com"
+  connectorPublicBackend: "https://pipeshub-connector.example.com"
+```
+
+## Apply the change
+
+```bash
+helm upgrade pipeshub . -n pipeshub -f my-values.yaml
+kubectl get ingress -n pipeshub
+```
+
+## Troubleshooting Ingress
+
+- If Ingress exists but routing fails, verify your ingress controller is installed and watching the namespace.
+- If you get 404s, confirm `hosts` and `paths` match what your controller expects and that the service/port exist:
+
+```bash
+kubectl get svc -n pipeshub
+```
+

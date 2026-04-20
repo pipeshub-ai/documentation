@@ -1,0 +1,176 @@
+---
+title: "Web"
+description: "Crawl and index public website content"
+icon: "/logo/web.svg"
+---
+
+<div className="max-w-2xl mx-auto mt-12">
+  <div className="p-6 border rounded-lg bg-blue-50">
+    <div className="flex items-center mb-4">
+      <img
+        src="/logo/web.svg"
+        alt="Web connector"
+        className="w-8 h-8 mr-3 object-contain flex-shrink-0"
+      />
+      <h2 className="text-2xl font-semibold text-emerald-600 m-0">Web</h2>
+    </div>
+    <p className="text-lg text-gray-700 mb-4">Crawl and sync content from websites into PipesHub</p>
+    <div className="flex items-center gap-2">
+      <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium">
+        ✅ Ready
+      </span>
+      <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
+        📝 Documentation Available
+      </span>
+    </div>
+  </div>
+</div>
+
+## Overview
+
+The Web connector ingests **publicly reachable** pages and files from a website you specify. It fetches content over HTTP(S) like a browser, with configurable crawl scope and limits. 
+You can index a **single page** or use **recursive** mode to discover more pages by following links. 
+
+---
+
+## Configuration setup
+
+<AccordionGroup>
+
+<Accordion title="Setup guide" icon="gear">
+
+### Step 1: Create a Web connector
+
+In PipesHub, add a Web connector instance. There are two scopes to choose from: **personal** and **team**. 
+
+You can create a **personal** connector from Workspace Settings > *Your Connectors* > Web > Setup. The records created by this connector will be visible to you only.
+
+You can create a **team** connector from Workspace Settings > *Connectors* > Web > Setup. The records created by this connector will be visible to all users in your organization. This connector can be created by Admins only.
+
+<div style={{ textAlign: "center" }}>
+  <img
+    src="/images/connectors/web/1.png"
+    alt="Web connector"
+    style={{ display: 'block', margin: '0 auto' }}
+    width="90%"
+  />
+</div>
+
+### Step 2: Name the connector and continue
+
+After you select the scope, enter a **name** for this Web connector (how it will appear in your workspace), then press **Next**.
+
+<div style={{ textAlign: "center" }}>
+  <img
+    src="/images/connectors/web/2.png"
+    alt="Web connector"
+    style={{ display: 'block', margin: '0 auto' }}
+    width="90%"
+  />
+</div>
+
+### Step 3: Website URL
+
+Enter the full **Website URL** to crawl (for example `https://docs.example.com/guides/`). This value is **required** and becomes the connector’s root; it **cannot** be edited later—use a new connector if you need a different URL.
+
+<div style={{ textAlign: "center" }}>
+  <img
+    src="/images/connectors/web/3.png"
+    alt="Web connector"
+    style={{ display: 'block', margin: '0 auto' }}
+    width="90%"
+  />
+</div>
+
+### Step 4: Crawl type and limits
+
+| Field | Description |
+|--------|-------------|
+| **Crawl type** | **Single** — one URL only. **Recursive** — follow links extracted from each page’s HTML, subject to host, depth, path rules, and your caps. |
+| **Crawl depth** | Maximum link depth to which pages are crawled. |
+| **Maximum pages** | Upper bound on how many distinct URLs are processed during sync. |
+| **Maximum size (MB)** | Largest HTTP body to download per URL; larger responses are skipped. |
+| **Follow external links** | When enabled, links to **other domains** may be followed. When disabled, crawling stays on the **same host** as the start URL. Disabled by default. |
+| **Restrict to start path** | When enabled, only URLs whose path stays **under** the starting path prefix are crawled (useful for subsites). If this is on, **Follow external links** is effectively off—you cannot combine path restriction with arbitrary external domains. |
+| **URL should contain** | Optional tags: if any are set, only URLs containing **at least one** of the substrings (case-insensitive) are synced—except the **configured start URL**, which is always allowed. |
+
+### Step 5: Filters and indexing
+
+- **Enable manual sync filter:** This allows you to have control over which records are indexed. It stops records from being automatically indexed. You can then go to **All Records** section to index the records manually.
+- **File extension filter:** Restrict which file extensions are synced and skipped.
+- **Indexing toggles:** Turn indexing on or off by category for **webpages**, **images**, and **documents** (and related options shown in connector settings) to control what downstream search indexing receives.
+
+<div style={{ textAlign: "center" }}>
+  <img
+    src="/images/connectors/web/4.png"
+    alt="Web connector"
+    style={{ display: 'block', margin: '0 auto' }}
+    width="90%"
+  />
+</div>
+
+### Step 6: Save configuration
+
+After you finish configuring connector settings, click **Save Configuration**. Then toggle the connector to enable the crawling process.
+
+</Accordion>
+
+</AccordionGroup>
+
+---
+
+## Connector Workflow
+
+<AccordionGroup>
+
+<Accordion title="How Web connector works" icon="globe">
+
+### What the connector does
+
+- **Crawling:** Starts from your configured **Website URL**. In recursive mode, discovers links from HTML, resolves them against the page URL, and visits URLs that pass validation (scheme, domain, path, extension, and optional URL substring filters).
+- **Fetching:** Uses a **multi-strategy** HTTP pipeline (standard client, then browser-like TLS profiles and fallbacks where available) to improve success on sites that use bot detection or CDN challenges. Requests use realistic browser headers and respect a per-response **maximum size** cap.
+- **Content types:** Treats HTML as web pages (title and cleaned text are derived for indexing). Also supports common **documents** (for example PDF, Office formats, CSV, JSON, XML, Markdown) and **images** (with processing for some formats in HTML context). Extension and indexing filters can narrow what is stored or sent for indexing.
+- **Structure:** Builds a **record group** for the configured root URL and **file records** per URL, with parent links so paths appear hierarchically where applicable. URLs are **normalized** (for example deduplication, trailing-slash handling for “directory” pages) to avoid duplicate records.
+- **Sync:** Supports **scheduled** sync (default daily) and connector **filters** (manual sync selection, file extensions, and indexing toggles in the product UI). **Team** vs **personal** scope controls who receives permissions on synced records.
+
+### Key limitations
+
+- **Public content only:** Anything that requires login, cookies, or private APIs is out of scope unless the URL returns the content without authentication.
+- **Robots and rate limits:** Respect your own policies and the target site’s terms of use. Heavy crawling can trigger **429** or blocks; the connector retries some transient errors with backoff but cannot guarantee access to every site.
+- **Starting URL is fixed:** After creation, the root **Website URL** (and its domain) **cannot** be changed; create a new connector for a different site or domain.
+
+</Accordion>
+
+</AccordionGroup>
+
+---
+
+## FAQ
+
+<AccordionGroup>
+
+<Accordion title="The site returns 403 or blocks the connector. What can I do?">
+
+Many sites use bot protection (CDNs, CAPTCHAs, or geographic rules). The connector tries multiple fetch strategies, but **no integration can guarantee** access. Try a simpler entry URL, reduce crawl rate by lowering scope (URL filters, single-page mode), or host documentation on a domain that allows automated access. Sites that require interactive login cannot be indexed with this connector alone.
+
+</Accordion>
+
+<Accordion title="Why did my crawl stop at fewer pages than the maximum?">
+
+Common reasons include: **maximum pages** or **depth** reached, **URL should contain** filtering out branches, **same-domain** rules excluding external links, **path restriction** excluding parent or sibling paths, **extension** filters, **size** limits skipping large files, non-retryable HTTP errors (for example **404**), or links pointing only to asset types the crawler does not follow as pages.
+
+</Accordion>
+
+<Accordion title="Can I change the website URL after setup?">
+
+No. The root URL and domain are fixed for the lifetime of the connector instance. To index a different site or domain, **create a new Web connector**.
+
+</Accordion>
+
+<Accordion title="How are permissions applied?">
+
+For **team** scope, records are readable at the organization level as configured by PipesHub. For **personal** scope, ownership-style permissions are tied to the user who created the connector. Exact behavior matches your workspace’s connector permission model.
+
+</Accordion>
+
+</AccordionGroup>

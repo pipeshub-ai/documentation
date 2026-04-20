@@ -107,7 +107,17 @@ On the **App registrations** page, click **+ New registration**.
 
 1. **Name**: Enter a display name (for example, `PipesHub Outlook Toolset`).
 2. **Supported account types**: Choose who can sign in—for example **Accounts in any organizational directory and personal Microsoft accounts** for the broadest support, or a single-tenant option if you only use your organization.
-3. **Redirect URI (optional)**: You can skip this here and add the web redirect under **Authentication** after you copy the exact callback URL from PipesHub (see Step 10).
+3. **Redirect URI**: Get the Redirect URI from the PipesHub **Configure Outlook** dialog in **connector settings** (where Outlook is set up—for example **Workspace → Actions** and Outlook **+ Setup** / **Configure**).
+
+<div style={{ textAlign: "center" }}>
+  <img
+    src="/images/toolsets/outlook/outlook_toolset_page.png"
+    alt="PipesHub Configure Outlook dialog showing Redirect URI"
+    style={{ display: 'block', margin: '0 auto' }}
+    width="90%"
+  />
+</div>
+
 4. Click **Register**.
 
 <div style={{ textAlign: "center" }}>
@@ -159,27 +169,7 @@ On the **Overview** page for your app, copy:
   If you leave this page without copying the secret, you cannot read it again—create a new client secret instead.
 </Warning>
 
-### Step 6: Add the redirect URI under Authentication
-
-1. In the left sidebar, open **Authentication** (the portal may label it **Authentication (Preview)**).
-2. Open **Redirect URI configuration** (or the Web platform section), then click **+ Add Redirect URI**.
-3. Choose the **Web** platform if prompted, and paste the **Redirect URI** copied from the Outlook toolset setup in PipesHub (Step 10). It must match **exactly** (including `http` vs `https`, host, port, and path).
-4. Save your changes (**Configure** / **Save** depending on the UI).
-
-<div style={{ textAlign: "center" }}>
-  <img
-    src="/images/toolsets/outlook/redirect_uri.png"
-    alt="Authentication redirect URI configuration in Azure"
-    style={{ display: 'block', margin: '0 auto' }}
-    width="90%"
-  />
-</div>
-
-<Info>
-  If you have not copied the callback URL yet, open **Workspace → Actions**, start Outlook setup, and copy **Redirect URI** from the configuration dialog (Step 9), then return here and paste it into Azure.
-</Info>
-
-### Step 7: Add Microsoft Graph API permissions
+### Step 6: Add Microsoft Graph API permissions
 
 1. In the left sidebar, open **API permissions**.
 2. Click **+ Add a permission** → **Microsoft Graph** → **Delegated permissions**.
@@ -208,7 +198,7 @@ On the **Overview** page for your app, copy:
   The Outlook toolset uses **Delegated** permissions so actions run as the signed-in user, not as the app alone.
 </Info>
 
-### Step 8: Grant admin consent
+### Step 7: Grant admin consent
 
 Click **Grant admin consent for** your organization (the button includes your tenant name) and confirm, so delegated permissions show as granted for the tenant (especially for permissions that require admin approval).
 
@@ -221,11 +211,11 @@ Click **Grant admin consent for** your organization (the button includes your te
   />
 </div>
 
-### Step 9: Configure the Outlook toolset in PipesHub
+### Step 8: Configure the Outlook toolset in PipesHub
 
 1. In PipesHub, go to **Workspace** → **Actions**.
 2. Find **Outlook** and open setup / configuration (**+ Setup** or **Configure**).
-3. Copy the **Redirect URI** shown in the dialog and ensure it is registered in Azure (Step 6).
+3. Confirm the **Redirect URI** in the dialog matches the **Web** redirect URI you registered in Azure **Step 3**.
 4. Enter **Client ID**, **Client Secret**, and optionally **Tenant ID** (`common` or your tenant/domain per the form), then create or save the instance.
 
 <div style={{ textAlign: "center" }}>
@@ -237,7 +227,7 @@ Click **Grant admin consent for** your organization (the button includes your te
   />
 </div>
 
-### Step 10: Authenticate the toolset under Your actions
+### Step 9: Authenticate the toolset under Your actions
 
 1. Open **Your actions** (or the equivalent **Your actions** entry under **Personal** in the sidebar).
 2. Select your **Outlook** instance and complete **Authenticate with OAuth** (popup sign-in to Microsoft, then accept permissions).
@@ -251,7 +241,7 @@ Click **Grant admin consent for** your organization (the button includes your te
   />
 </div>
 
-### Step 11: Add Outlook to an agent
+### Step 10: Add Outlook to an agent
 
 1. Go to the **Home** page.
 2. Next to **Agents**, click **+** to create a new agent.

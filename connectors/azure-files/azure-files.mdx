@@ -1,13 +1,14 @@
 ---
 title: "Azure File Shares"
 description: "Microsoft cloud file share connector"
-icon: "/assets/icons/connectors/azurefiles.svg"
+icon: "/logo/azure-files.svg"
 ---
+
 <div className="max-w-2xl mx-auto mt-12">
   <div className="p-6 border border-gray-200 dark:border-gray-700 rounded-lg bg-blue-50 dark:bg-gray-800">
     <div className="flex items-center mb-4">
       <img 
-        src="/assets/icons/connectors/azurefiles.svg" 
+        src="/logo/azure-files.svg" 
         alt="Azure File Shares Logo" 
         className="w-8 h-8 mr-3 object-contain flex-shrink-0"
       />
@@ -25,321 +26,296 @@ icon: "/assets/icons/connectors/azurefiles.svg"
   </div>
 </div>
 
-## Overview
+## What is this?
 
-Azure File Shares provide **SMB-compatible** cloud file storage with a **real directory hierarchy**. Files and folders are organized under storage accounts and file shares, making them ideal for documents, team shares, and application data that expect a traditional file system layout.
+Azure File Shares is Microsoft's cloud version of a shared network drive — the kind of thing your company might call the "S: drive" or "team share".
 
-The Azure File Shares connector enables you to sync file shares, directories, and files from your Azure Storage account into PipesHub, making your content searchable through AI-powered search and easily accessible across your organization.
+This connector copies those files into PipesHub so you can **search them from the PipesHub chat and knowledge base**, just like any other document.
 
-### Azure File Shares Data Structure
+You do **not** move or delete anything in Azure. PipesHub only reads the files.
 
-The connector understands Azure File Storage's hierarchy:
+### How Azure organises your files
 
-**Storage Account → File Shares → Directories → Files**
+Three words you'll see again and again:
 
-| Entity | Description |
-|--------|-------------|
-| **Storage Account** | Top-level Azure resource that owns one or more file shares |
-| **File Shares** | Named shares (like network drives) that contain directories and files |
-| **Directories** | Real folders with metadata; can be nested recursively |
-| **Files** | Individual files stored in directories with paths and metadata |
+| Word | Means |
+|------|-------|
+| **Storage account** | Your top-level Azure storage. Like a house. |
+| **File share** | One shared drive. You can have many per storage account. |
+| **Directory / file** | Regular folders and files, just like on your laptop. |
 
-### What Gets Synced
+When you set up this connector, PipesHub will read the files from the shares you pick.
 
-The connector indexes the following content for AI-powered search:
+### What you need before you start
 
-- **Files**: All supported file types stored in selected shares (documents, images, archives, etc.)
-- **Directories**: Real folder structure with metadata
-- **Metadata**: File names, sizes, modification dates, MIME types
-- **Permissions**: Access scope (Personal vs Team) controlled via connector configuration
+1. An Azure account with access to a Storage account that contains file shares.
+2. Permission to view the storage account's **Access keys** (usually Owner or Contributor role).
+3. A PipesHub account where you can add connectors.
+
+That's it. You don't need to install anything.
 
 ---
 
-## Configuration Guide
+## Setup
 
 <AccordionGroup type="single" collapsible>
 
-<Accordion title="Setup">
+<Accordion title="Setup" defaultOpen>
 
 <div className="mt-4">
 
-### Setup Overview
+### Step 1 — Get the connection string from Azure
 
-The Azure File Shares connector uses an **Azure Storage connection string** from the Azure Portal. It syncs file shares, directories, and files, enabling comprehensive search and access across your Azure content.
+The **connection string** is one long password-like line that tells PipesHub how to reach your storage. We just need to copy it.
 
-### Authentication
-
-The connector uses **Connection String authentication**:
-
-- Connection string is generated from your Azure Storage account
-- Contains account name, key, and endpoint
-- Stored securely in PipesHub as a secret
-
-<Info>
-  Connection strings provide full access to your storage account. Treat them like passwords and store them securely. Rotate keys regularly following Azure security best practices.
-</Info>
-
-### How to configure and enable the Azure File Shares Connector
-
-### Step 1: Get the Azure Storage Connection String
-
-1. **Sign in to Azure Portal:**  
-   Go to `https://portal.azure.com` and sign in with your Azure account.
-
-2. **Open your Storage Account:**
-   - In the left navigation, select **"Storage accounts"**
-   - Click the storage account you want PipesHub to use
-
-3. **Navigate to Access Keys:**
-   - In the storage account menu, go to **"Security + networking" → "Access keys"** (or **"Access keys"** section)
+1. Go to [https://portal.azure.com](https://portal.azure.com) and sign in.
+2. In the search bar at the top, type **Storage accounts** and click it.
+3. Click the storage account that holds your file share.
+4. In the left menu, click **Security + networking → Access keys**.
 
 <div className="text-center">
   <img
-    src="/images/connectors/azure-blob/storage_account_access_keys.png"
-    alt="Azure Storage Account Access Keys"
+    src="/images/connectors/azure-files/storage_account_access_keys.png"
+    alt="Azure Access keys page"
     className="block mx-auto w-11/12"
   />
 </div>
 
-<Info>
-  The Azure Portal steps are the same for both Azure Blob and Azure File Shares; the screenshot above shows the Access keys section. Use the same connection string for the Azure File Shares connector.
-</Info>
+5. Under **key1**, click **Show** next to **Connection string**.
+6. Click the **copy** icon next to it.
 
-4. **Copy the Connection String:**
-   - Under **key1** (or key2), click **"Show"** to reveal the connection string
-   - Click **"Copy"** next to **Connection string**
-   - Keep this value secure – you will paste it into PipesHub
-
-<Warning>
-  <div className="text-lg font-semibold">
-    Do not share your connection string publicly or commit it to version control. Anyone with this string can access your storage account.
-  </div>
-</Warning>
-
-### Step 2: Configure Connector in PipesHub
-
-1. **Navigate to Connectors:**
-   - In PipesHub, go to **Settings → Connectors**
-   - Find the **Azure File Shares** connector in the list
-   - Click **"Configure"**
-
-<div className="text-center">
-  <img
-    src="/images/connectors/azure-files/azure_files_config.png"
-    alt="PipesHub Azure File Shares Configuration"
-    className="block mx-auto w-11/12"
-  />
-</div>
-
-2. **Enter Connection String:**
-   - In the **Connection String** field, paste the connection string you copied from Azure Portal
-   - Click **"Save Auth Settings"** or **"Next"**
-
-<div className="text-center">
-  <img
-    src="/images/connectors/azure-blob/connection_string.png"
-    alt="Azure Connection String Input"
-    className="block mx-auto w-11/12"
-  />
-</div>
+You now have the connection string in your clipboard. Don't close the tab yet — if something goes wrong you'll want to come back.
 
 <Info>
-  The connection string field is the same for Azure Blob and Azure File Shares; the steps above apply to both.
+  The same Access keys page is used for Azure Blob and Azure File Shares. If you already set up Azure Blob on this storage account, you can reuse the same connection string here.
 </Info>
 
 <Warning>
-  Ensure the connection string is complete and copied without extra spaces. Invalid or partial values will cause authentication failures.
+  Treat this string like a password. Anyone who gets it can read (and change) your storage. Don't paste it into chat, email, or a public file.
 </Warning>
 
-### Step 3: Configure Sync Settings
+---
 
-1. **Choose Sync Strategy:**
-   - **Scheduled**: Automatically sync at regular intervals (recommended)
-   - **Manual**: Sync only when triggered manually
+### Step 2 — Open Azure Files in PipesHub
+
+1. In PipesHub, look at the left sidebar.
+2. Under **Workspace**, click **Connectors**.
+3. In the list, find **Azure Files**.
+4. Click **Setup** on its tile.
+
+A panel slides in from the right. This is where you enter your details.
+
+---
+
+### Step 3 — Paste your connection string
+
+The panel opens on the first tab, **Authenticate Instance**.
 
 <div className="text-center">
   <img
-    src="/images/connectors/azure-files/sync_strategy.png"
-    alt="Azure File Shares Sync Strategy"
+    src="/images/connectors/azure-files/authenticate_tab.png"
+    alt="Authenticate Instance tab with Connection String field"
     className="block mx-auto w-11/12"
   />
 </div>
 
-2. **Set Sync Interval (if Scheduled):**
-   - Choose how often to sync (e.g., 15 min, 30 min, 1 hour, 4 hours, 24 hours)
-   - Default is typically 60 minutes
+1. In **Instance name**, type a short name so you can recognise it later (for example `Azure files` or `Team share`).
+2. Scroll to **Connection String**.
+3. Paste the string you copied from Azure.
+4. Click **Next →** at the bottom.
 
 <Info>
-  More frequent syncs keep your data fresher but use more Azure API and PipesHub resources. For large file shares, consider longer intervals.
+  The eye icon next to the Connection String field hides and shows the value. Use it if you need to double-check what you pasted.
 </Info>
 
-### Step 4: Configure Filters (Optional)
+<Warning>
+  If you see "authentication failed", the string probably has extra spaces or got cut off. Go back to Azure, click **Copy** on the connection string again, and paste it fresh.
+</Warning>
 
-Filters control which data is **synced** and which data is **indexed** for search.
+---
+
+### Step 4 — Choose how often to sync
+
+The panel moves you to the second tab, **Configure Records**.
 
 <div className="text-center">
   <img
-    src="/images/connectors/azure-files/azure_files_filters.png"
-    alt="Azure File Shares Filters Configuration"
+    src="/images/connectors/azure-files/configure_tab.png"
+    alt="Configure Records tab with Sync settings"
     className="block mx-auto w-11/12"
   />
 </div>
 
-#### Sync Filters
+Under **Sync settings** there are two choices:
 
-Sync filters decide what content is downloaded from Azure File Storage. Data excluded by sync filters is never fetched.
-
-**Available Sync Filters:**
-
-1. **File Share Names**
-   - **Operator**: `In` (include only) or `Not In` (exclude)
-   - **Selection**: Choose from a **searchable dropdown** of file shares in your storage account
-   - Select one or more shares to scope the sync
-
-2. **File Extensions**
-   - **Operator**: `In` (include) or `Not In` (exclude)
-   - **Value**: Comma-separated list of extensions, e.g. `pdf, docx, txt`
-   - Case-insensitive; do not include leading dots
-
-3. **Modified Date**
-   - **Operators**: `Is After`, `Is Before`, `Is Between`
-   - Use to sync only recently updated files (e.g., last 6 months)
-
-4. **Created Date**
-   - **Operators**: `Is After`, `Is Before`, `Is Between`
-   - Use to include or exclude older files based on creation time
-
-#### Indexing Filters
-
-Indexing filters control what synced data is processed for AI-powered search.
-
-- **Index Files** (default: enabled) – Include file content in search
-- **Index Folders** (default: enabled) – Include directory structure in search
-
-**Example Configurations:**
-
-- **Sync only certain shares**: File Share Names → `In` → select shares
-- **Documents only**: File Extensions → `In` → `pdf, docx, txt, pptx`
-- **Exclude media**: File Extensions → `Not In` → `jpg, png, mp4, mov`
-- **Recent files only**: Modified Date → `Is After` → `YYYY-MM-DD`
+- **Sync Strategy** — leave as **Scheduled** if you want PipesHub to update on its own. Pick **Manual** if you want to press a button every time.
+- **Sync Interval** — how often PipesHub checks Azure for new files. **1 Hour** is a good starting point.
 
 <Info>
-  Filters can be changed anytime. Updates take effect on the next sync.
+  Not sure? Keep **Scheduled** and **1 Hour**. You can change it later.
 </Info>
 
-### Step 5: Enable the Connector
+---
 
-1. After configuration, toggle the connector status to **"Enable"**
-2. Use the toggle switch or **"Enable"** button in the connector panel
+### Step 5 — (Optional) Narrow down what gets synced
+
+If your file shares have lots of files you don't need, you can tell PipesHub to skip some.
+
+Scroll to **Indexing & sync filters**. Click **+ Add filter** on the right.
+
+A small menu opens with the fields you can filter by:
 
 <div className="text-center">
   <img
-    src="/images/connectors/azure-files/enable_connector.png"
-    alt="Enable Azure File Shares Connector"
+    src="/images/connectors/azure-files/filter_fields.png"
+    alt="+ Add filter menu showing File Share Names, File Extensions, Modified Date, Created Date"
     className="block mx-auto w-11/12"
   />
 </div>
 
-3. PipesHub will validate your connection string and start the initial sync
-4. Wait until the connector status shows **"Active"** or **"Syncing"**
-5. Use the **Indexing Progress** panel to monitor sync status
+- **File Share Names** — pick specific shares
+- **File Extensions** — pick file types (e.g. PDFs only)
+- **Modified Date** — only files changed after / before / between dates
+- **Created Date** — only files created after / before / between dates
+
+You only need filters if one of these is true:
+
+- You want only **certain shares** (not all of them).
+- You want only **some file types** (e.g. PDFs, not images).
+- You want only **recent files** (say, the last year).
+
+Common examples:
+
+- **PDFs only** — field: *File Extensions* · operator: *In* · value: `pdf`
+- **Skip images** — field: *File Extensions* · operator: *Not In* · value: `jpg, png, gif`
+- **Only one share** — field: *File Share Names* · operator: *In* · pick the share
+
+<Info>
+  If you don't add any filters, PipesHub will sync every file it can read. That's fine for small shares.
+</Info>
+
+When you're done, click **Save Configuration** at the bottom of the panel.
+
+---
+
+### Step 6 — Turn sync on
+
+You're now on the **Azure Files** instance page. You'll see one row (your new instance).
+
+<div className="text-center">
+  <img
+    src="/images/connectors/azure-files/instance_card.png"
+    alt="Azure Files instance card — sync not yet enabled"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+Right now it says **Sync Paused**. To start syncing:
+
+1. Find the **Sync Enabled** toggle on the right side of the row.
+2. Click it.
+
+The status changes to **Syncing** and PipesHub starts reading your files.
+
+---
+
+### Step 7 — Check progress
+
+Click anywhere on the row to open the **Overview** panel on the right.
+
+<div className="text-center">
+  <img
+    src="/images/connectors/azure-files/instance_panel.png"
+    alt="Overview panel with Records Status tiles"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+Here you can see:
+
+- **Total** — how many files PipesHub has found.
+- **Failed** — files it couldn't read (usually permission or file-type issues).
+- **Processing** — files it's still reading right now.
+- **Not Started** — files waiting their turn.
+- **Sync** / **Full sync** buttons — press if you want to run a sync right now.
+- **Manage Configuration** — open the setup panel again to change credentials or filters.
+
+You can close the panel and come back any time — the sync keeps running in the background.
+
+That's it! 🎉 Your Azure file shares are now searchable in PipesHub.
 
 </div>
 
 </Accordion>
 
-<Accordion title="Features and Behavior">
+<Accordion title="How syncing works">
 
 <div className="mt-4">
 
-### Supported Features
+### First sync (full scan)
 
-The Azure File Shares connector syncs:
+The very first time, PipesHub reads **everything** in the shares you chose. Big shares take longer:
 
-- **File Shares** as top-level record groups
-- **Files** with metadata such as name, size, last modified time, MIME type
-- **Directories** (real folders) with full hierarchy and metadata
-- **Permissions** via connector scope (Personal vs Team)
+| Number of files | Roughly how long |
+|-----------------|------------------|
+| Under 1,000 | 5 – 15 minutes |
+| 1,000 – 10,000 | 15 – 60 minutes |
+| 10,000 – 100,000 | 1 – 3 hours |
+| Over 100,000 | Several hours or more |
 
-### Data Sync Behavior
+Tip: using filters (e.g. PDFs only) makes the first sync much faster.
 
-#### Initial Sync
+### Later syncs (just what's new)
 
-The first sync scans the selected file shares:
+After the first sync, PipesHub only looks at **what changed**:
 
-- Discovers file shares and creates corresponding record groups in PipesHub
-- Recursively traverses directories and lists files within each share
-- Extracts metadata and builds the directory hierarchy
-- Indexes supported file content for AI-powered search
+- New files — added.
+- Updated files — refreshed.
+- Deleted files — removed from search.
 
-<Info>
-  Use file share and file extension filters to significantly reduce initial sync time, especially for large storage accounts.
-</Info>
+These later syncs are usually quick, even for big shares.
 
-#### Incremental Sync
+### Who can see the synced files?
 
-Subsequent syncs are incremental:
+When you set up the connector you picked a scope:
 
-- Uses file timestamps and sync points per share (`last_sync_time`) to fetch only new or updated content
-- Tracks sync state per share to avoid reprocessing unchanged data
-- Handles deletions by marking records as deleted and removing them from search results
+- **Personal** — only you can search the files inside PipesHub.
+- **Team** — everyone in your organisation can search them.
 
-### Permission Handling
+This only controls PipesHub. It does **not** change access in Azure.
 
-The connector respects Azure security and PipesHub scopes:
+</div>
 
-- **Azure-level permissions**: Connector can only access shares and files allowed by the connection string
-- **PipesHub scopes**:
-  - **Personal**: Only the connector creator can see synced content
-  - **Team**: All organization users have read access to synced content
-- **Permission inheritance**: Files inherit access from their share and connector scope
+</Accordion>
 
-### Sync Frequency
+<Accordion title="What PipesHub can read">
 
-**Scheduled Sync:**
-- Default: ~60 minutes
-- Options: 15 min, 30 min, 1 hour, 4 hours, 24 hours
+<div className="mt-4">
 
-**Manual Sync:**
-- Triggered from the connector UI
-- Recommended for testing or after large content changes
+### Indexed for search
 
-<Info>
-  For very large file shares or infrequently updated content, prefer less frequent syncs (4–24 hours) to optimize cost and performance.
-</Info>
+Text-based files get read word-for-word so you can search inside them:
+
+- Documents — **PDF**, **DOCX**, **PPTX**, **XLSX**, **ODT**, **RTF**
+- Plain text — **TXT**, **MD**, **CSV**, **JSON**, **XML**, **HTML**
+- Code — **.py**, **.js**, **.ts**, **.java**, and more
+
+### Synced but not searched inside
+
+These are stored as records but their contents aren't indexed for text search:
+
+- Images (JPG, PNG, GIF, …)
+- Video and audio
+- Archives (ZIP, RAR, …)
+- Other binary files
+
+They still show up in results by filename.
 
 </div>
 
 </Accordion>
 
 </AccordionGroup>
-
-### Azure File Storage Compatibility
-
-This connector is designed specifically for **Azure File Storage** and uses Azure's official SDKs and APIs.
-
-It supports:
-
-- **All Azure regions** supported by Azure Files
-- **Standard redundancy options** (LRS, ZRS, GRS, RA-GRS etc.)
-- **SMB and NFS** protocol endpoints; connector uses REST API for sync
-
-<Info>
-  The connector is optimized for file share content used in knowledge management and document search scenarios.
-</Info>
-
-### Useful Links
-
-- **Azure Portal**: `https://portal.azure.com`
-- **Azure Files documentation**: `https://learn.microsoft.com/azure/storage/files/`
-- **Connection Strings**: `https://learn.microsoft.com/azure/storage/common/storage-configure-connection-string`
-
-<div className="text-center mt-12 p-6 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg max-w-2xl mx-auto">
-  <h3 className="text-lg font-semibold mb-2">Ready to Get Started?</h3>
-  <p className="text-gray-600 dark:text-gray-400">
-    Connect your Azure File Shares to PipesHub in just a few minutes. Follow the steps above to unlock organization-wide search across your Azure file content.
-  </p>
-</div>
 
 ---
 
@@ -347,108 +323,94 @@ It supports:
 
 <AccordionGroup type="single" collapsible>
 
-<Accordion title="Troubleshooting" icon="circle-exclamation">
+<Accordion title="I get an 'authentication failed' error">
 
-**Invalid connection string:**
+- Go back to Azure, click **Copy** on the Connection string again, and paste it fresh in PipesHub.
+- Check you didn't paste an extra space or line break.
+- If the connection string was recently rotated in Azure, you need the new one.
+- Make sure the storage account still exists.
 
-*Symptoms:*
-- Error messages like "Authentication failed" or "Invalid connection string"
-- Connector fails to initialize
+</Accordion>
 
-*Solutions:*
-1. Verify the connection string is copied completely from Azure Portal
-2. Ensure there are no extra spaces or line breaks
-3. Regenerate and replace the access keys if they may have been rotated
-4. Confirm that the storage account is active and not deleted
+<Accordion title="I can't see my shares in the filter">
 
-**Access denied or missing shares:**
+- Double-check the connection string is the right one.
+- Make sure the storage account actually has **file shares** (the icons look like folders — not blob containers).
+- Some storage accounts have firewall rules — ask your Azure admin to allow PipesHub.
 
-*Symptoms:*
-- Some file shares do not appear in the share filter
-- Sync fails with permission-related errors
+</Accordion>
 
-*Solutions:*
-1. Confirm you are using a connection string with correct permissions
-2. Check share-level access policies in Azure Portal
-3. Ensure the storage account is in the correct subscription and region
+<Accordion title="Sync is on but I see 0 files">
 
-**No data syncing:**
+- Give it a minute. The first sync on a large share takes time.
+- Check your filters — they might be excluding everything.
+- Make sure the connection string's storage account actually has files.
 
-*Symptoms:*
-- Connector shows "Active" but no files or folders appear
-- Indexing progress remains at 0%
+</Accordion>
 
-*Solutions:*
-1. Check that at least one file share is selected in filters
-2. Verify file extension filters are not excluding all relevant file types
-3. Confirm date filters are not set too restrictively
-4. Validate that files actually exist in the selected shares
+<Accordion title="Sync is very slow">
 
-**Sync taking too long:**
+- Add filters (share names, file extensions, date range) to sync only what you need.
+- Very large shares (millions of files) will always take several hours on the first run. Later syncs are fast.
 
-*Symptoms:*
-- Initial sync runs for many hours
-- Progress appears slow for very large shares
+</Accordion>
 
-*Solutions:*
-1. Use file share filters to limit scope
-2. Restrict file extensions to document-heavy types (e.g., `pdf, docx, txt`)
-3. Use date filters to focus on recent content
-4. Increase sync interval for large storage accounts
+<Accordion title="Files don't show up in search">
 
-**Files not appearing in search:**
+- Check the file type is one that can be read (PDF, Word, plain text — not raw images or videos).
+- Wait a bit — big files take longer to index.
+- Make sure the file isn't password-protected.
 
-*Symptoms:*
-- Files are visible in connector records, but not searchable
+</Accordion>
 
-*Solutions:*
-1. Ensure **Index Files** is enabled in indexing filters
-2. Confirm the file type is text-based and supported for indexing
-3. Check that files are not encrypted or password-protected
-4. Allow time for indexing to complete, especially for large files
+<Accordion title="It used to work, but now it doesn't">
+
+Usually this means the Azure access keys were changed.
+
+- Go back to Step 1 and copy the new connection string.
+- In PipesHub, open the instance panel and click **Manage Configuration**.
+- Paste the new string on the Authenticate Instance tab and save.
 
 </Accordion>
 
 </AccordionGroup>
 
-## FAQ
+---
+
+## Frequently asked questions
 
 <AccordionGroup type="single" collapsible>
 
-<Accordion title="How long does the initial sync take?">
-  Sync time depends on the number and size of files and directories:
-  
-  | Storage Size | Estimated Time |
-  |--------------|----------------|
-  | Small (< 1,000 files) | 5–15 minutes |
-  | Medium (1,000–10,000 files) | 15–60 minutes |
-  | Large (10,000–100,000 files) | 1–3 hours |
-  | Very Large (100,000–1,000,000 files) | 3–8+ hours |
-  
-  Use file share and extension filters to reduce initial sync time dramatically.
+<Accordion title="Can I connect more than one storage account?">
+  Yes. On the Azure Files instance page click **+ Add Another Instance** and repeat the steps with the new connection string.
 </Accordion>
 
-<Accordion title="Can I connect multiple storage accounts?">
-  **Yes.** Create one Azure File Shares connector instance per storage account.  
-  Each instance uses its own connection string and filter configuration.
-</Accordion>
-
-<Accordion title="What file types can be indexed for search?">
-  Text-based and document formats are indexed, including:
-  
-  - Documents: PDF, DOCX, PPTX, XLSX, ODT, RTF  
-  - Text: TXT, MD, CSV, JSON, XML, HTML  
-  - Code files (e.g., `.py`, `.js`, `.ts`, `.java`)
-  
-  Binary-only formats (images, videos, archives) are synced and visible but their contents are not searchable.
+<Accordion title="Does PipesHub change anything in Azure?">
+  No. The connector only **reads** files. It doesn't upload, move, rename, or delete anything.
 </Accordion>
 
 <Accordion title="What happens if I delete a file in Azure?">
-  Deletions are detected during the next incremental sync:
-  
-  - The record is marked as deleted in PipesHub  
-  - The file is removed from search results  
-  - Historical behavior depends on your organization's retention policies
+  On the next sync, PipesHub notices it's gone and removes it from search.
+</Accordion>
+
+<Accordion title="Can I sync just one folder inside a share?">
+  Not directly. The easiest workaround is to filter by **file extensions** or split content into separate shares.
+</Accordion>
+
+<Accordion title="Is the connection string encrypted?">
+  Yes. PipesHub stores it as a secret — it's not visible in logs or to other users.
+</Accordion>
+
+<Accordion title="What's the difference between Azure Files and Azure Blob?">
+  Both live in the same storage account. **Blob** is object storage (flat — uses prefixes to look like folders). **Files** is a real file share with real folders, usually mounted as a network drive. Pick the connector that matches where your files actually live.
 </Accordion>
 
 </AccordionGroup>
+
+---
+
+## Useful links
+
+- **Azure Portal** — [https://portal.azure.com](https://portal.azure.com)
+- **Azure Files docs** — [https://learn.microsoft.com/azure/storage/files/](https://learn.microsoft.com/azure/storage/files/)
+- **What is a connection string?** — [https://learn.microsoft.com/azure/storage/common/storage-configure-connection-string](https://learn.microsoft.com/azure/storage/common/storage-configure-connection-string)

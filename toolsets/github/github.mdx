@@ -1,0 +1,304 @@
+---
+title: "GitHub Toolset"
+description: "Repository, issue, and pull request management for AI agents"
+icon: "/logo/github.png"
+---
+
+<div className="max-w-2xl mx-auto mt-12">
+  <div className="p-6 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800">
+    <div className="flex items-center mb-4">
+      <img 
+        src="/logo/github.png" 
+        alt="GitHub Logo" 
+        className="w-8 h-8 mr-3 object-contain flex-shrink-0"
+      />
+      <h2 className="text-2xl font-semibold m-0">GitHub Toolset</h2>
+    </div>
+    <p className="text-lg text-gray-700 dark:text-gray-300 mb-4">Repositories, issues, pull requests, and code review</p>
+    <div className="flex items-center gap-2">
+      <span className="px-3 py-1 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 rounded-full text-sm font-medium">
+        Ready
+      </span>
+      <span className="px-3 py-1 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-full text-sm font-medium">
+        Developer Tools
+      </span>
+    </div>
+  </div>
+</div>
+
+## Overview
+
+The GitHub toolset enables AI agents to interact with your GitHub account and organizations. Agents can create and update repositories, manage issues, open and review pull requests, add comments, and merge branches — all through natural language. This toolset is ideal for automating engineering workflows and bringing code review into conversational AI experiences.
+
+### Key Capabilities
+
+- **Repository management** - Create, inspect, and list repositories
+- **Issue tracking** - Create, update, close, comment on issues
+- **Pull requests** - Open, list, merge, and inspect PR commits and file diffs
+- **Code review** - Leave line-level review comments and submit approvals or change requests
+- **Search** - Find repositories by keyword, language, or stars
+- **User and org lookup** - Read profile data for users and organizations
+
+---
+
+## Available Tools
+
+### Repositories
+
+| Tool | Description |
+|------|-------------|
+| `create_repository` | Create a new repository (private by default) |
+| `get_repository` | Get repository details (description, stars, forks, default branch) |
+| `list_repositories` | List repositories for a user or org with pagination |
+| `search_repositories` | Search repositories by keyword, language, or stars |
+| `get_owner` | Get a user or organization profile |
+
+### Issues
+
+| Tool | Description |
+|------|-------------|
+| `create_issue` | Create an issue with title, body, assignees, and labels |
+| `get_issue` | Get a single issue by number |
+| `list_issues` | List issues filtered by state, labels, or assignee |
+| `update_issue` | Update title, body, state, assignees, or labels |
+| `close_issue` | Close an issue |
+| `list_issue_comments` | Get all comments on an issue |
+| `get_issue_comment` | Get a single comment by ID |
+| `create_issue_comment` | Post a comment on an issue (supports Markdown) |
+
+### Pull Requests
+
+| Tool | Description |
+|------|-------------|
+| `create_pull_request` | Open a PR between head and base branches (supports draft mode) |
+| `get_pull_request` | Get PR details plus conversation comments |
+| `list_pull_requests` | List PRs filtered by state, head, or base |
+| `merge_pull_request` | Merge a PR using merge, squash, or rebase |
+| `get_pull_request_commits` | List commits in a PR with the last commit SHA |
+| `get_pull_request_file_changes` | Get per-file diffs with configurable context lines |
+
+### Code Review
+
+| Tool | Description |
+|------|-------------|
+| `list_pull_request_comments` | List line-level and file-level review comments |
+| `create_pull_request_review_comment` | Add a review comment on a specific file and line |
+| `get_pull_request_reviews` | Get PR reviews (approved, changes requested, comment) |
+| `create_pull_request_review` | Submit a review (approve, request changes, or comment) |
+
+---
+
+## Configuration Guide
+
+<AccordionGroup>
+
+<Accordion title="Setup" icon="gear">
+
+### Step 1: Open GitHub Developer settings
+
+1. Sign in to GitHub.
+2. Click your profile picture in the top-right corner and choose **Settings**.
+3. In the left sidebar, scroll down and click **Developer settings**.
+4. Select **OAuth Apps**, then click **New OAuth App** (or **Register a new application** if this is your first one).
+
+<div style={{ textAlign: "center" }}>
+  <img
+    src="/images/toolsets/github/new_oauth_app.png"
+    alt="Create a new GitHub OAuth App"
+    style={{ display: 'block', margin: '0 auto' }}
+    width="90%"
+  />
+</div>
+
+<Info>
+  To create an OAuth App under a **GitHub organization** instead of your personal account, open the organization's **Settings → Developer settings → OAuth Apps**. You need **admin access** to the organization.
+</Info>
+
+### Step 2: Get the Redirect URI from PipesHub
+
+Before filling in the GitHub form, copy the Redirect URI from PipesHub so the values match exactly.
+
+1. In PipesHub, go to **Workspace Settings** → **Actions**.
+2. Find **GitHub** in the list and click **+ Setup** (or **Configure**).
+3. Copy the **Redirect URI** shown in the dialog.
+
+<div style={{ textAlign: "center" }}>
+  <img
+    src="/images/toolsets/github/github_toolset_page.png"
+    alt="PipesHub Configure GitHub dialog showing Redirect URI"
+    style={{ display: 'block', margin: '0 auto' }}
+    width="90%"
+  />
+</div>
+
+### Step 3: Register the OAuth App
+
+In the GitHub **Register a new OAuth application** form:
+
+| Field | Value |
+|-------|-------|
+| **Application name** | For example, `PipesHub GitHub Toolset` |
+| **Homepage URL** | Your PipesHub URL (for example, `https://your-domain.com`) |
+| **Application description** | Optional — short description of the integration |
+| **Authorization callback URL** | Paste the **Redirect URI** you copied from PipesHub |
+
+Click **Register application**.
+
+<div style={{ textAlign: "center" }}>
+  <img
+    src="/images/toolsets/github/register_application.png"
+    alt="Register a new OAuth application on GitHub"
+    style={{ display: 'block', margin: '0 auto' }}
+    width="90%"
+  />
+</div>
+
+<Warning>
+  GitHub OAuth Apps support only **one** Authorization callback URL. If you need the toolset to work across multiple PipesHub environments, create a separate OAuth App for each.
+</Warning>
+
+### Step 4: Copy Client ID and generate a Client Secret
+
+After registration, GitHub shows the OAuth App settings page with your **Client ID** visible.
+
+1. Copy the **Client ID** — used as **Client ID** in PipesHub.
+2. Under **Client secrets**, click **Generate a new client secret**.
+3. Copy the secret immediately — used as **Client Secret** in PipesHub.
+
+<div style={{ textAlign: "center" }}>
+  <img
+    src="/images/toolsets/github/app_credentials.png"
+    alt="Copy GitHub Client ID and generate Client Secret"
+    style={{ display: 'block', margin: '0 auto' }}
+    width="90%"
+  />
+</div>
+
+<Warning>
+  The **Client Secret is shown only once**. Copy it before leaving the page — you cannot view it again later, only regenerate it.
+</Warning>
+
+### Step 5: Required scopes
+
+PipesHub requests the following scopes during the OAuth consent flow. You don't configure them on the GitHub side — they are requested automatically when the user authorizes.
+
+| Scope | Purpose |
+|-------|---------|
+| `repo` | Full access to repositories, issues, and pull requests (including private repos) |
+| `public_repo` | Read/write access to public repositories (fallback when full `repo` isn't granted) |
+| `read:org` | Read organization membership and teams |
+| `read:user` | Read the authenticated user's profile |
+| `user:email` | Read the authenticated user's email address |
+
+<Info>
+  If your GitHub organization has **OAuth App access restrictions** enabled (the default for new orgs), members may need to request approval from an organization owner before the toolset can access org-owned repositories.
+</Info>
+
+### Step 6: Configure the GitHub toolset in PipesHub
+
+1. In PipesHub, return to **Workspace Settings** → **Actions**.
+2. Find **GitHub** and open setup / configuration (**+ Setup** or **Configure**).
+3. Confirm the **Redirect URI** in the dialog matches the **Authorization callback URL** you registered in GitHub in **Step 3**.
+4. Paste your **Client ID** and **Client Secret**, then save the instance.
+
+<div style={{ textAlign: "center" }}>
+  <img
+    src="/images/toolsets/github/enter_credentials.png"
+    alt="Enter GitHub Client ID and Secret in PipesHub"
+    style={{ display: 'block', margin: '0 auto' }}
+    width="90%"
+  />
+</div>
+
+### Step 7: Authenticate the GitHub toolset
+
+Authentication uses the same OAuth flow in either location:
+
+- **Admins** can authenticate the shared instance directly under **Workspace Settings → Actions**.
+- **Users** can authenticate their own personal instance under **Your actions** (in the **Personal** section of the sidebar).
+
+1. On the GitHub tile (in **Actions** or **Your actions**), click **Authenticate with OAuth**.
+2. A popup opens to GitHub's authorization page — review the requested scopes and click **Authorize**.
+3. The popup closes and the GitHub tile now shows **Authenticated** status.
+
+<div style={{ textAlign: "center" }}>
+  <img
+    src="/images/toolsets/github/github_auth_page.png"
+    alt="Authenticate GitHub toolset with OAuth"
+    style={{ display: 'block', margin: '0 auto' }}
+    width="90%"
+  />
+</div>
+
+<div style={{ textAlign: "center" }}>
+  <img
+    src="/images/toolsets/github/oauth_authorize.png"
+    alt="GitHub authorization — review and authorize"
+    style={{ display: 'block', margin: '0 auto' }}
+    width="90%"
+  />
+</div>
+
+### Step 8: Add GitHub to an agent
+
+1. Go to the **Home** page.
+2. Next to **Agents**, click **+** to create a new agent.
+3. Give the agent a name, drag the **GitHub** toolset onto the canvas, connect it to the **Agent Core** node with your model and chat input/output, then create the agent.
+
+<div style={{ textAlign: "center" }}>
+  <img
+    src="/images/toolsets/github/create_agent.png"
+    alt="Agent builder with GitHub toolset connected"
+    style={{ display: 'block', margin: '0 auto' }}
+    width="90%"
+  />
+</div>
+
+</Accordion>
+
+</AccordionGroup>
+
+---
+
+## FAQ
+
+<AccordionGroup>
+
+<Accordion title="What's the difference between GitHub Connector and GitHub Toolset?">
+
+| Aspect | GitHub Connector | GitHub Toolset |
+|--------|------------------|----------------|
+| **Purpose** | Sync and index repositories, issues, and PRs for search | Enable agents to perform actions on GitHub |
+| **Data Flow** | One-way (import data into PipesHub) | Two-way (read and write via API) |
+| **When to Use** | Query/search code, issues, and PR history | Open issues, merge PRs, leave review comments |
+
+**Example:** Use the **GitHub Connector** to search past issues and PRs across your repos. Use the **GitHub Toolset** to let agents file bugs, merge PRs, or post review comments on your behalf.
+
+</Accordion>
+
+<Accordion title="Should I use a GitHub OAuth App or a GitHub App?">
+
+PipesHub's GitHub toolset uses an **OAuth App** because the integration acts on behalf of a user. GitHub Apps offer finer-grained per-repository permissions and short-lived tokens, but require installation on each repo or organization. For most teams, the OAuth App flow is simpler to set up.
+
+</Accordion>
+
+<Accordion title="My organization blocked the OAuth App. What now?">
+
+GitHub organizations can restrict which OAuth Apps access their data. If authorization fails with an organization access warning, ask an organization owner to **approve the app** under **Organization Settings → Third-party access → OAuth app policy**.
+
+</Accordion>
+
+</AccordionGroup>
+
+---
+
+## Usage Tips
+
+**How do I create an issue?**  
+Ask your agent to "open an issue in acme/widgets titled 'Login page 500 error' and assign it to alice". The agent fills in title, body, assignees, and labels.
+
+**How do I review a pull request?**  
+Ask to "review PR #57 and approve it with a comment" or "request changes on PR #91 saying the tests need updating". The agent submits the review in the right state.
+
+**How do I leave a line-level comment?**  
+Ask to "comment on line 42 of src/auth.py in PR #88 saying this should be a constant". The agent attaches the comment to the specific file and line.

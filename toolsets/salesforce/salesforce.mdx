@@ -1,0 +1,356 @@
+---
+title: "Salesforce Toolset"
+description: "Salesforce CRM integration for managing accounts, contacts, leads, opportunities, cases, and more"
+icon: "/logo/salesforce.png"
+---
+
+<div className="max-w-2xl mx-auto mt-12">
+  <div className="p-6 border border-gray-200 dark:border-gray-700 rounded-lg bg-blue-50 dark:bg-gray-800">
+    <div className="flex items-center mb-4">
+      <img 
+        src="/logo/salesforce.png" 
+        alt="Salesforce Logo" 
+        className="w-8 h-8 mr-3 object-contain flex-shrink-0"
+      />
+      <h2 className="text-2xl font-semibold m-0">Salesforce Toolset</h2>
+    </div>
+    <p className="text-lg text-gray-700 dark:text-gray-300 mb-4">CRM integration for accounts, contacts, leads, opportunities, cases, and more</p>
+    <div className="flex items-center gap-2">
+      <span className="px-3 py-1 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 rounded-full text-sm font-medium">
+        Ready
+      </span>
+      <span className="px-3 py-1 bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200 rounded-full text-sm font-medium">
+        CRM
+      </span>
+    </div>
+  </div>
+</div>
+
+## Overview
+
+The Salesforce toolset enables AI agents to interact with your Salesforce CRM — searching and creating records, running SOQL/SOSL queries, managing the sales pipeline, posting to Chatter, and more. It uses OAuth so agents act on behalf of the authenticated user via a Salesforce Connected App.
+
+### Key Capabilities
+
+- **SOQL & SOSL queries** - Run structured object queries or full-text searches across any Salesforce object
+- **Account & Contact management** - Search, create, and update accounts and contacts
+- **Lead & Opportunity management** - Manage your pipeline from lead creation through opportunity close
+- **Case management** - Create and search support cases
+- **Product catalog** - Search products, list price books, and add products to opportunities
+- **Task management** - Create and track activities across any related record
+- **Chatter** - Read Chatter feeds and post comments or updates on any record
+- **Generic record CRUD** - Get, create, and update any standard or custom Salesforce object
+- **Object metadata** - Describe any object to discover its fields and picklist values
+
+---
+
+## Available Tools
+
+### Query Tools
+
+| Tool | Description |
+|------|-------------|
+| `soql_query` | Execute a SOQL query against any Salesforce object |
+| `sosl_search` | Execute a full-text SOSL search across multiple objects |
+
+### Generic Record Tools
+
+| Tool | Description |
+|------|-------------|
+| `get_record` | Retrieve a Salesforce record by its ID |
+| `create_record` | Create a new record for any standard or custom object |
+| `update_record` | Update fields on an existing record by ID |
+| `describe_object` | Get field metadata, picklist values, and relationships for an object |
+| `list_recent_records` | List the most recently viewed records of a given object type |
+
+### Account Tools
+
+| Tool | Description |
+|------|-------------|
+| `search_accounts` | Search accounts by name and/or industry |
+| `create_account` | Create a new Account record |
+
+### Contact Tools
+
+| Tool | Description |
+|------|-------------|
+| `search_contacts` | Search contacts by name, email, or parent account |
+| `create_contact` | Create a new Contact record |
+
+### Lead Tools
+
+| Tool | Description |
+|------|-------------|
+| `search_leads` | Search leads by name, company, or status |
+| `create_lead` | Create a new Lead record |
+
+### Opportunity Tools
+
+| Tool | Description |
+|------|-------------|
+| `search_opportunities` | Search opportunities by name, stage, or account |
+| `create_opportunity` | Create a new Opportunity record |
+
+### Case Tools
+
+| Tool | Description |
+|------|-------------|
+| `search_cases` | Search cases by subject, status, priority, or account |
+| `create_case` | Create a new Case (support ticket) |
+
+### Product & Pricebook Tools
+
+| Tool | Description |
+|------|-------------|
+| `search_products` | Search the product catalog by name, code, or family |
+| `create_product` | Add a new product to the Salesforce product catalog |
+| `list_pricebooks` | List available price books (Pricebook2) |
+| `add_product_to_opportunity` | Add a product line item to an opportunity |
+
+### Task Tools
+
+| Tool | Description |
+|------|-------------|
+| `search_tasks` | Search tasks by subject, status, priority, owner, or related record |
+| `create_task` | Create a new Task activity |
+
+### Chatter Tools
+
+| Tool | Description |
+|------|-------------|
+| `get_record_chatter` | Get the Chatter feed (posts, comments, activity) for any record |
+| `post_chatter_comment` | Reply to an existing Chatter feed item |
+| `post_chatter_to_record` | Post a new top-level Chatter update on a record |
+
+### User Tools
+
+| Tool | Description |
+|------|-------------|
+| `get_current_user` | Get the currently authenticated Salesforce user's profile and org details |
+
+---
+
+## Configuration Guide
+
+<AccordionGroup>
+
+<Accordion title="Setup" icon="gear">
+
+### Step 1: Open Salesforce Setup
+
+1. Log in to your Salesforce instance and click the **gear icon** (⚙️) in the top-right navigation bar.
+2. Select **Setup** from the dropdown menu.
+
+<div style={{ textAlign: "center" }}>
+  <img
+    src="/images/toolsets/salesforce/home_page.png"
+    alt="Salesforce gear icon with Setup menu open"
+    style={{ display: 'block', margin: '0 auto' }}
+    width="90%"
+  />
+</div>
+
+### Step 2: Navigate to App Manager
+
+1. In the Setup search bar, type **App Manager** and open **App Manager**.
+2. Click **New External Client App** in the top-right corner.
+
+<div style={{ textAlign: "center" }}>
+  <img
+    src="/images/toolsets/salesforce/setup_page.png"
+    alt="Lightning Experience App Manager with New External Client App button"
+    style={{ display: 'block', margin: '0 auto' }}
+    width="90%"
+  />
+</div>
+
+### Step 3: Fill in basic information
+
+Fill in the **External Client App Manager** form:
+
+1. **External Client App Name** — Enter a name, for example `PipesHub Salesforce Toolset`.
+2. **API Name** — Auto-filled from the app name; leave as-is.
+3. **Contact Email** — Enter your admin email address.
+
+<div style={{ textAlign: "center" }}>
+  <img
+    src="/images/toolsets/salesforce/new_app.png"
+    alt="External Client App Manager basic information form"
+    style={{ display: 'block', margin: '0 auto' }}
+    width="90%"
+  />
+</div>
+
+### Step 4: Enable OAuth and add scopes
+
+Scroll down to the **API (Enable OAuth Settings)** section:
+
+1. Check **Enable OAuth**.
+2. **Callback URL** — Paste the **Redirect URI** shown in the PipesHub **Action configuration** dialog (go to **Workspace → Actions → Salesforce → + Setup**). It will look like `https://your-pipeshub-domain/toolsets/oauth/callback/salesforce`.
+3. Under **OAuth Scopes**, move the following from **Available** to **Selected**:
+
+| Scope | Description |
+|-------|-------------|
+| `Manage user data via APIs (api)` | Full REST API access to Salesforce data |
+| `Perform requests at any time (refresh_token, offline_access)` | Allows token refresh without re-authentication |
+| `Access the identity URL service (id, profile, email, address, phone)` | Read user identity |
+
+<div style={{ textAlign: "center" }}>
+  <img
+    src="/images/toolsets/salesforce/permissions.png"
+    alt="Enable OAuth with Callback URL and selected OAuth scopes"
+    style={{ display: 'block', margin: '0 auto' }}
+    width="90%"
+  />
+</div>
+
+### Step 5: Configure flow enablement and security
+
+Scroll down to the **Flow Enablement** and **Security** sections:
+
+1. Under **Flow Enablement**, check **Enable Authorization Code and Credentials Flow**.
+2. Under **Security**, ensure the following are checked:
+   - **Require secret for Web Server Flow**
+   - **Require secret for Refresh Token Flow**
+   - **Require Proof Key for Code Exchange (PKCE) extension for Supported Authorization Flows**
+3. Click **Save**.
+
+<div style={{ textAlign: "center" }}>
+  <img
+    src="/images/toolsets/salesforce/flow_enable.png"
+    alt="Flow Enablement and Security settings"
+    style={{ display: 'block', margin: '0 auto' }}
+    width="90%"
+  />
+</div>
+
+### Step 6: Copy the Consumer Key and Consumer Secret
+
+1. After saving, click the **Consumer Key and Secret** button in the **OAuth Settings** panel.
+2. On the **Consumer Details** page, copy:
+   - **Consumer Key** → this is your **Client ID** in PipesHub.
+   - **Consumer Secret** → this is your **Client Secret** in PipesHub.
+
+<div style={{ textAlign: "center" }}>
+  <img
+    src="/images/toolsets/salesforce/OAuth_settings.png"
+    alt="OAuth Settings panel with Consumer Key and Secret button"
+    style={{ display: 'block', margin: '0 auto' }}
+    width="90%"
+  />
+</div>
+
+<div style={{ marginTop: '24px', textAlign: "center" }}>
+  <img
+    src="/images/toolsets/salesforce/client_id_secret.png"
+    alt="Consumer Details page showing Consumer Key and Consumer Secret"
+    style={{ display: 'block', margin: '0 auto' }}
+    width="90%"
+  />
+</div>
+
+<Warning>
+  Copy both values before closing this page. The Consumer Secret cannot be viewed again after you navigate away — you would need to reset it.
+</Warning>
+
+### Step 7: Find your Salesforce Instance URL
+
+Your **Instance URL** is the base domain shown in your browser's address bar when you are in Salesforce — for example `https://yourcompany.my.salesforce.com`. 
+
+<div style={{ textAlign: "center" }}>
+  <img
+    src="/images/toolsets/salesforce/instance_url.png"
+    alt="Browser address bar highlighting the Salesforce instance URL"
+    style={{ display: 'block', margin: '0 auto' }}
+    width="90%"
+  />
+</div>
+
+### Step 8: Configure the Salesforce toolset in PipesHub
+
+1. In PipesHub, go to **Workspace → Actions**.
+2. Find **Salesforce** and click **+ Setup**.
+3. In the **Action configuration** dialog, fill in:
+   - **Instance name** — A label for this connection (e.g., `Salesforce`).
+   - **Salesforce Instance URL** — the URL from Step 7.
+   - **Client ID** — the Consumer Key from Step 6.
+   - **Client Secret** — the Consumer Secret from Step 6.
+4. Confirm that the **Redirect URI** at the top of the dialog matches the Callback URL you entered in Salesforce Step 4.
+5. Click **Create**.
+
+<div style={{ textAlign: "center" }}>
+  <img
+    src="/images/toolsets/salesforce/salesforce_toolsetconfig.png"
+    alt="PipesHub Action configuration dialog for Salesforce"
+    style={{ display: 'block', margin: '0 auto' }}
+    width="90%"
+  />
+</div>
+
+### Step 9: Authenticate the toolset
+
+1. In the sidebar, open **Your Actions** under the **Personal** section.
+2. Select your **Salesforce** instance — you will see all available actions listed.
+3. Click **Authenticate with OAuth** in the dialog that appears.
+4. A sign-in popup will open — log in to Salesforce and approve the requested permissions.
+
+<div style={{ textAlign: "center" }}>
+  <img
+    src="/images/toolsets/salesforce/toolset_auth_page.png"
+    alt="Your Actions page for Salesforce with Authenticate with OAuth button"
+    style={{ display: 'block', margin: '0 auto' }}
+    width="90%"
+  />
+</div>
+
+### Step 10: Add Salesforce to an agent
+
+1. Go to the **Home** page and click **+** next to **Agents**.
+2. Give the agent a name.
+3. From the **Palette**, drag the **Salesforce** toolset block onto the canvas.
+4. Connect it to the **Agent** node (along with your model, chat input, and chat output), then click **Create agent**.
+
+<div style={{ textAlign: "center" }}>
+  <img
+    src="/images/toolsets/salesforce/create_agent.png"
+    alt="Agent builder canvas with Salesforce toolset connected to the Agent node"
+    style={{ display: 'block', margin: '0 auto' }}
+    width="90%"
+  />
+</div>
+
+</Accordion>
+
+</AccordionGroup>
+
+---
+
+## FAQ
+
+<AccordionGroup>
+
+<Accordion title="What's the difference between Salesforce Connector and Salesforce Toolset?">
+
+| Aspect | Salesforce Connector | Salesforce Toolset |
+|--------|----------------------|--------------------|
+| **Purpose** | Sync and index Salesforce records for search | Enable agents to perform CRM actions |
+| **Data Flow** | One-way (import data into PipesHub) | Two-way (read and write via API) |
+| **Auth Type** | OAuth with read permissions | OAuth with full API access |
+| **When to Use** | Query/search Salesforce records and history | Create records, update deals, post to Chatter |
+
+</Accordion>
+
+</AccordionGroup>
+
+---
+
+## Usage Tips
+
+**Example: Search for open opportunities in the Qualification stage**  
+Ask your agent to find all opportunities currently in the Qualification stage
+
+**Example: Create a new lead**  
+Ask to create a lead for Jane Doe from TechCorp with email jane@techcorp.com
+
+**Example: Post a Chatter update on a deal**  
+Ask to post "Proposal sent — waiting on legal review" on the Chatter feed of the Acme Enterprise opportunity

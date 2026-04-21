@@ -3,37 +3,406 @@ title: "Azure Blob Storage"
 description: "Microsoft cloud object storage service connector"
 icon: "/logo/azure-blob.png"
 ---
-<div className="flex flex-col items-center justify-center text-center pt-10">
-  <h1 className="text-4xl font-bold">✅ Azure Blob Storage Connector Ready</h1>
-  <h3 className="text-xl mt-2">
-    Connector is live and ready to use. Documentation in process!
-  </h3>
-</div>
+
 <div className="max-w-2xl mx-auto mt-12">
-  <div className="p-6 border rounded-lg bg-blue-50">
+  <div className="p-6 border border-gray-200 dark:border-gray-700 rounded-lg bg-blue-50 dark:bg-gray-800">
     <div className="flex items-center mb-4">
-      <img 
-        src="/logo/azure-blob.png" 
-        alt="Azure Blob Storage Logo" 
+      <img
+        src="/logo/azure-blob.png"
+        alt="Azure Blob Storage Logo"
         className="w-8 h-8 mr-3 object-contain flex-shrink-0"
       />
-      <h2 className="text-2xl font-semibold m-0"> Azure Blob Storage</h2>
+      <h2 className="text-2xl font-semibold m-0">Azure Blob Storage</h2>
     </div>
-    <p className="text-lg text-gray-700 mb-4">Microsoft cloud object storage service</p>
+    <p className="text-lg text-gray-700 dark:text-gray-300 mb-4">Microsoft cloud object storage service</p>
     <div className="flex items-center gap-2">
-      <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium">
+      <span className="px-3 py-1 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 rounded-full text-sm font-medium">
         ✅ Ready
       </span>
-      <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
-        📝 Documentation in process
+      <span className="px-3 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-full text-sm font-medium">
+        📖 Documentation Available
       </span>
     </div>
   </div>
 </div>
-<div className="text-center mt-12 p-6 bg-gray-50 rounded-lg max-w-2xl mx-auto">
-  <h3 className="text-lg font-semibold mb-2">Need Help Getting Started?</h3>
-  <p className="text-gray-600">
-    The Azure Blob Storage connector is fully operational and ready for use. While we're finalizing the documentation, 
-    feel free to reach out to our support team for setup assistance.
-  </p>
+
+## What is this?
+
+Azure Blob Storage is Microsoft's cloud place to keep files — documents, images, backups, anything.
+
+This connector copies those files into PipesHub so you can **search them from the PipesHub chat and knowledge base**, just like any other document.
+
+You do **not** move or delete anything in Azure. PipesHub only reads the files.
+
+### How Azure organises your files
+
+Three words you'll see again and again:
+
+| Word | Means |
+|------|-------|
+| **Storage account** | Your top-level Azure storage. Like a house. |
+| **Container** | A folder at the top of the house. You can have many. |
+| **Blob** | One file inside a container (PDF, image, CSV — anything). |
+
+When you set up this connector, PipesHub will read the blobs from the containers you pick.
+
+### What you need before you start
+
+1. An Azure account with access to a Storage account.
+2. Permission to view the storage account's **Access keys** (usually Owner or Contributor role).
+3. A PipesHub account where you can add connectors.
+
+That's it. You don't need to install anything.
+
+---
+
+## Setup
+
+<AccordionGroup type="single" collapsible>
+
+<Accordion title="Setup" defaultOpen>
+
+<div className="mt-4">
+
+### Step 1 — Get the connection string from Azure
+
+The **connection string** is one long password-like line that tells PipesHub how to reach your storage. We just need to copy it.
+
+1. Go to [https://portal.azure.com](https://portal.azure.com) and sign in.
+2. In the search bar at the top, type **Storage accounts** and click it.
+3. Click the storage account you want PipesHub to read.
+4. In the left menu, click **Security + networking → Access keys**.
+
+<div className="text-center">
+  <img
+    src="/images/connectors/azure-blob/storage_account_access_keys.png"
+    alt="Azure Access keys page"
+    className="block mx-auto w-11/12"
+  />
 </div>
+
+5. Under **key1**, click **Show** next to **Connection string**.
+6. Click the **copy** icon next to it.
+
+You now have the connection string in your clipboard. Don't close the tab yet — if something goes wrong you'll want to come back.
+
+<Warning>
+  Treat this string like a password. Anyone who gets it can read (and change) your storage. Don't paste it into chat, email, or a public file.
+</Warning>
+
+---
+
+### Step 2 — Open Azure Blob in PipesHub
+
+1. In PipesHub, look at the left sidebar.
+2. Under **Workspace**, click **Connectors**.
+3. In the list, find **Azure Blob**.
+4. Click **Setup** on its tile.
+
+A panel slides in from the right. This is where you enter your details.
+
+---
+
+### Step 3 — Paste your connection string
+
+The panel opens on the first tab, **Authenticate Instance**.
+
+<div className="text-center">
+  <img
+    src="/images/connectors/azure-blob/authenticate_tab.png"
+    alt="Authenticate Instance tab with Connection String field"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+1. In **Instance name**, type a short name so you can recognise it later (for example `Azure blob` or `Marketing files`).
+2. Scroll to **Connection String**.
+3. Paste the string you copied from Azure.
+4. Click **Next →** at the bottom.
+
+<Info>
+  The eye icon next to the Connection String field hides and shows the value. Use it if you need to double-check what you pasted.
+</Info>
+
+<Warning>
+  If you see "authentication failed", the string probably has extra spaces or got cut off. Go back to Azure, click **Copy** on the connection string again, and paste it fresh.
+</Warning>
+
+---
+
+### Step 4 — Choose how often to sync
+
+The panel moves you to the second tab, **Configure Records**.
+
+<div className="text-center">
+  <img
+    src="/images/connectors/azure-blob/configure_tab.png"
+    alt="Configure Records tab with Sync settings"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+Under **Sync settings** there are two choices:
+
+- **Sync Strategy** — leave as **Scheduled** if you want PipesHub to update on its own. Pick **Manual** if you want to press a button every time.
+- **Sync Interval** — how often PipesHub checks Azure for new files. **1 Hour** is a good starting point.
+
+<Info>
+  Not sure? Keep **Scheduled** and **1 Hour**. You can change it later.
+</Info>
+
+---
+
+### Step 5 — (Optional) Narrow down what gets synced
+
+If your storage account has lots of files you don't need, you can tell PipesHub to skip some.
+
+Scroll to **Indexing & sync filters**. Click **+ Add filter** on the right.
+
+A small menu opens with the fields you can filter by:
+
+<div className="text-center">
+  <img
+    src="/images/connectors/azure-blob/filter_fields.png"
+    alt="+ Add filter menu showing Container Names, File Extensions, Modified Date, Created Date"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+- **Container Names** — pick specific containers
+- **File Extensions** — pick file types (e.g. PDFs only)
+- **Modified Date** — only files changed after / before / between dates
+- **Created Date** — only files created after / before / between dates
+
+You only need filters if one of these is true:
+
+- You want only **certain containers** (not all of them).
+- You want only **some file types** (e.g. PDFs, not images).
+- You want only **recent files** (say, the last year).
+
+Common examples:
+
+- **PDFs only** — field: *File Extensions* · operator: *In* · value: `pdf`
+- **Skip images** — field: *File Extensions* · operator: *Not In* · value: `jpg, png, gif`
+- **Only one container** — field: *Container Names* · operator: *In* · pick the container
+
+<Info>
+  If you don't add any filters, PipesHub will sync every file it can read. That's fine for small accounts.
+</Info>
+
+When you're done, click **Save Configuration** at the bottom of the panel.
+
+---
+
+### Step 6 — Turn sync on
+
+You're now on the **Azure Blob** instance page. You'll see one row (your new instance).
+
+<div className="text-center">
+  <img
+    src="/images/connectors/azure-blob/instance_card.png"
+    alt="Azure Blob instance card — sync not yet enabled"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+Right now it says **Sync Paused**. To start syncing:
+
+1. Find the **Sync Enabled** toggle on the right side of the row.
+2. Click it.
+
+The status changes to **Syncing** and PipesHub starts reading your files.
+
+---
+
+### Step 7 — Check progress
+
+Click anywhere on the row to open the **Overview** panel on the right.
+
+<div className="text-center">
+  <img
+    src="/images/connectors/azure-blob/instance_panel.png"
+    alt="Overview panel with Records Status tiles"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+Here you can see:
+
+- **Total** — how many files PipesHub has found.
+- **Failed** — files it couldn't read (usually permission or file-type issues).
+- **Processing** — files it's still reading right now.
+- **Not Started** — files waiting their turn.
+- **Sync** / **Full sync** buttons — press if you want to run a sync right now.
+- **Manage Configuration** — open the setup panel again to change credentials or filters.
+
+You can close the panel and come back any time — the sync keeps running in the background.
+
+That's it! 🎉 Your Azure Blob files are now searchable in PipesHub.
+
+</div>
+
+</Accordion>
+
+<Accordion title="How syncing works">
+
+<div className="mt-4">
+
+### First sync (full scan)
+
+The very first time, PipesHub reads **everything** in the containers you chose. Big accounts take longer:
+
+| Number of files | Roughly how long |
+|-----------------|------------------|
+| Under 1,000 | 5 – 15 minutes |
+| 1,000 – 10,000 | 15 – 60 minutes |
+| 10,000 – 100,000 | 1 – 3 hours |
+| Over 100,000 | Several hours or more |
+
+Tip: using filters (e.g. PDFs only) makes the first sync much faster.
+
+### Later syncs (just what's new)
+
+After the first sync, PipesHub only looks at **what changed**:
+
+- New files — added.
+- Updated files — refreshed.
+- Deleted files — removed from search.
+
+These later syncs are usually quick, even for big accounts.
+
+### Who can see the synced files?
+
+When you set up the connector you picked a scope:
+
+- **Personal** — only you can search the files inside PipesHub.
+- **Team** — everyone in your organisation can search them.
+
+This only controls PipesHub. It does **not** change access in Azure.
+
+</div>
+
+</Accordion>
+
+<Accordion title="What PipesHub can read">
+
+<div className="mt-4">
+
+### Indexed for search
+
+Text-based files get read word-for-word so you can search inside them:
+
+- Documents — **PDF**, **DOCX**, **PPTX**, **XLSX**, **ODT**, **RTF**
+- Plain text — **TXT**, **MD**, **CSV**, **JSON**, **XML**, **HTML**
+- Code — **.py**, **.js**, **.ts**, **.java**, and more
+
+### Synced but not searched inside
+
+These are stored as records but their contents aren't indexed for text search:
+
+- Images (JPG, PNG, GIF, …)
+- Video and audio
+- Archives (ZIP, RAR, …)
+- Other binary files
+
+They still show up in results by filename.
+
+</div>
+
+</Accordion>
+
+</AccordionGroup>
+
+---
+
+## Troubleshooting
+
+<AccordionGroup type="single" collapsible>
+
+<Accordion title="I get an 'authentication failed' error">
+
+- Go back to Azure, click **Copy** on the Connection string again, and paste it fresh in PipesHub.
+- Check you didn't paste an extra space or line break.
+- If the connection string was recently rotated in Azure, you need the new one.
+- Make sure the storage account still exists.
+
+</Accordion>
+
+<Accordion title="I can't see my containers in the filter">
+
+- Double-check the connection string is the right one.
+- Make sure the storage account has containers (blob containers, not file shares).
+- Some storage accounts have firewall rules — ask your Azure admin to allow PipesHub.
+
+</Accordion>
+
+<Accordion title="Sync is on but I see 0 files">
+
+- Give it a minute. The first sync on a large account takes time.
+- Check your filters — they might be excluding everything.
+- Make sure the connection string's storage account actually has files.
+
+</Accordion>
+
+<Accordion title="Sync is very slow">
+
+- Add filters (container names, file extensions, date range) to sync only what you need.
+- Very large accounts (millions of files) will always take several hours on the first run. Later syncs are fast.
+
+</Accordion>
+
+<Accordion title="Files don't show up in search">
+
+- Check the file type is one that can be read (PDF, Word, plain text — not raw images or videos).
+- Wait a bit — big files take longer to index.
+- Make sure the file isn't password-protected.
+
+</Accordion>
+
+<Accordion title="It used to work, but now it doesn't">
+
+Usually this means the Azure access keys were changed.
+
+- Go back to Step 1 and copy the new connection string.
+- In PipesHub, open the instance panel and click **Manage Configuration**.
+- Paste the new string on the Authenticate Instance tab and save.
+
+</Accordion>
+
+</AccordionGroup>
+
+---
+
+## Frequently asked questions
+
+<AccordionGroup type="single" collapsible>
+
+<Accordion title="Can I connect more than one storage account?">
+  Yes. On the Azure Blob instance page click **+ Add Another Instance** and repeat the steps with the new connection string.
+</Accordion>
+
+<Accordion title="Does PipesHub change anything in Azure?">
+  No. The connector only **reads** files. It doesn't upload, move, rename, or delete anything.
+</Accordion>
+
+<Accordion title="What happens if I delete a file in Azure?">
+  On the next sync, PipesHub notices it's gone and removes it from search.
+</Accordion>
+
+<Accordion title="Can I sync just one folder inside a container?">
+  Not directly. The easiest workaround is to filter by **file extensions** or split content into separate containers.
+</Accordion>
+
+<Accordion title="Is the connection string encrypted?">
+  Yes. PipesHub stores it as a secret — it's not visible in logs or to other users.
+</Accordion>
+
+</AccordionGroup>
+
+---
+
+## Useful links
+
+- **Azure Portal** — [https://portal.azure.com](https://portal.azure.com)
+- **Azure Blob Storage docs** — [https://learn.microsoft.com/azure/storage/blobs/](https://learn.microsoft.com/azure/storage/blobs/)
+- **What is a connection string?** — [https://learn.microsoft.com/azure/storage/common/storage-configure-connection-string](https://learn.microsoft.com/azure/storage/common/storage-configure-connection-string)

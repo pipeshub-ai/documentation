@@ -1,0 +1,346 @@
+---
+title: "Zoom Toolset"
+description: "Meetings, recordings, and contacts integration for AI agents"
+icon: "/logo/zoom.png"
+---
+
+<div className="max-w-2xl mx-auto mt-12">
+  <div className="p-6 border border-gray-200 dark:border-gray-700 rounded-lg bg-blue-50 dark:bg-gray-800">
+    <div className="flex items-center mb-4">
+      <img 
+        src="/logo/zoom.png" 
+        alt="Zoom Logo" 
+        className="w-8 h-8 mr-3 object-contain flex-shrink-0"
+      />
+      <h2 className="text-2xl font-semibold m-0">Zoom Toolset</h2>
+    </div>
+    <p className="text-lg text-gray-700 dark:text-gray-300 mb-4">Meetings, recurring schedules, transcripts, and contacts</p>
+    <div className="flex items-center gap-2">
+      <span className="px-3 py-1 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 rounded-full text-sm font-medium">
+        Ready
+      </span>
+      <span className="px-3 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-full text-sm font-medium">
+        Video & Meetings
+      </span>
+    </div>
+  </div>
+</div>
+
+## Overview
+
+The Zoom toolset enables AI agents to interact with your Zoom account. Agents can schedule and update meetings (including recurring series), look up upcoming calls, fetch meeting invitations and transcripts, browse contacts, and list Zoom Docs — all through natural language. This toolset is ideal for automating calendar-adjacent workflows and bringing meeting context into conversational AI.
+
+### Key Capabilities
+
+- **Meeting management** - Create, update, delete, and list meetings (single and recurring)
+- **Recurring series** - Update or delete a single occurrence or the entire series
+- **Invitations** - Pull the invitation text and join link for any meeting
+- **Transcripts** - Fetch parsed, timestamp-aligned transcripts for recorded meetings
+- **Contacts** - List and look up company, external, or personal Zoom contacts
+- **Zoom Docs** - Browse files and folders inside Zoom Docs
+
+---
+
+## Available Tools
+
+### Meetings
+
+| Tool | Description |
+|------|-------------|
+| `list_meetings` | List meetings for a user within a date range, with optional search filtering |
+| `list_upcoming_meetings` | List a user's upcoming meetings |
+| `list_recurring_meetings_ending_in_range` | List recurring meeting series ending within a date range |
+| `get_meeting` | Get details for a specific meeting (join URL, time, settings) |
+| `create_meeting` | Create a one-off or recurring meeting with full recurrence options |
+| `update_meeting` | Update a meeting series or a specific occurrence (only supplied fields change) |
+| `delete_meeting` | Delete a meeting series or occurrence, with optional cancellation reminder |
+| `get_meeting_invitation` | Get the invitation text and join link for a meeting |
+
+### Transcripts
+
+| Tool | Description |
+|------|-------------|
+| `get_meeting_transcript` | Fetch and parse the VTT transcript of a recorded meeting into timestamped segments |
+
+### Contacts
+
+| Tool | Description |
+|------|-------------|
+| `list_contacts` | List the user's contacts, filtered by type (company, external, personal) |
+| `get_contact` | Get details for a specific contact by email, user ID, or member ID |
+
+### User Profile
+
+| Tool | Description |
+|------|-------------|
+| `get_my_profile` | Get the authenticated Zoom user (name, email, timezone, account type) |
+
+### Zoom Docs
+
+| Tool | Description |
+|------|-------------|
+| `list_folder_children` | List files and folders inside a Zoom Docs folder |
+
+---
+
+## Configuration Guide
+
+<AccordionGroup>
+
+<Accordion title="Setup" icon="gear">
+
+### Step 1: Create a Zoom General App
+
+Zoom replaced the standalone "OAuth App" type with the **General App** type, which supports the same 3-legged OAuth flow.
+
+1. Sign in to the [Zoom App Marketplace](https://marketplace.zoom.us/) with your Zoom account.
+2. Click **Develop** in the top-right corner, then **Build App**.
+3. Select **General App** and click **Create**.
+
+<div style={{ textAlign: "center" }}>
+  <img
+    src="/images/toolsets/zoom/build_general_app.png"
+    alt="Build a General App on Zoom Marketplace"
+    style={{ display: 'block', margin: '0 auto' }}
+    width="90%"
+  />
+</div>
+
+<Info>
+  You need the **Developer role** on your Zoom account to create apps. If you don't see the **Develop** menu, ask your Zoom account owner or admin to grant the Developer role.
+</Info>
+
+### Step 2: Choose App Type — User-managed
+
+In the app creation dialog, choose:
+
+| Field | Value |
+|-------|-------|
+| **Select how the app is managed** | **User-managed** |
+| **Would you like to publish this app on Zoom App Marketplace?** | **No** (keep private) |
+
+<Warning>
+  The choice between **Account-level** and **User-managed** is **permanent** — it cannot be changed after the app is created. User-managed apps let each Zoom user install and authorize individually, which matches how the PipesHub integration works.
+</Warning>
+
+### Step 3: Get the Redirect URI from PipesHub
+
+Before filling in the Zoom form, copy the Redirect URI from PipesHub so the values match exactly.
+
+1. In PipesHub, go to **Workspace Settings** → **Actions**.
+2. Find **Zoom** in the list and click **+ Setup** (or **Configure**).
+3. Copy the **Redirect URI** shown in the dialog.
+
+<div style={{ textAlign: "center" }}>
+  <img
+    src="/images/toolsets/zoom/zoom_toolset_page.png"
+    alt="PipesHub Configure Zoom dialog showing Redirect URI"
+    style={{ display: 'block', margin: '0 auto' }}
+    width="90%"
+  />
+</div>
+
+### Step 4: Configure OAuth Information
+
+In the Zoom app builder, open **Basic Information** and scroll to **OAuth Information**:
+
+1. Paste the PipesHub **Redirect URI** into the **OAuth Redirect URL** field.
+2. Add the same URL to the **OAuth Allow List** below.
+3. Click **Save**.
+
+<div style={{ textAlign: "center" }}>
+  <img
+    src="/images/toolsets/zoom/oauth_redirect.png"
+    alt="Configure OAuth Redirect URL and Allow List"
+    style={{ display: 'block', margin: '0 auto' }}
+    width="90%"
+  />
+</div>
+
+<Warning>
+  Zoom allows only **one primary OAuth Redirect URL** per app, and the URL must match exactly (protocol + host + path). HTTPS is required except for `http://localhost` during development.
+</Warning>
+
+### Step 5: Add required scopes
+
+Open the **Scopes** section in the app builder and add the following granular scopes:
+
+#### Meeting Scopes
+| Scope | Purpose |
+|-------|---------|
+| `meeting:read:meeting` | Read meeting details |
+| `meeting:write:meeting` | Create meetings |
+| `meeting:update:meeting` | Update meetings |
+| `meeting:delete:meeting` | Delete meetings |
+| `meeting:read:list_meetings` | List a user's meetings |
+| `meeting:read:list_upcoming_meetings` | List upcoming meetings |
+| `meeting:read:list_past_instances` | List past instances of recurring meetings (needed for transcripts) |
+| `meeting:read:invitation` | Read the meeting invitation text |
+
+#### User Scopes
+| Scope | Purpose |
+|-------|---------|
+| `user:read:user` | Read the authenticated user's profile |
+| `user:read:email` | Read the authenticated user's email |
+
+#### Recording / Transcript Scopes
+| Scope | Purpose |
+|-------|---------|
+| `cloud_recording:read:recording` | Read cloud recording metadata |
+| `cloud_recording:read:meeting_transcript` | Read meeting transcripts |
+
+#### Contact Scopes
+| Scope | Purpose |
+|-------|---------|
+| `contact:read:list_contacts` | List the user's Zoom contacts |
+
+#### Zoom Docs Scopes
+| Scope | Purpose |
+|-------|---------|
+| `docs:read:list_children` | List contents of a Zoom Docs folder |
+
+<div style={{ textAlign: "center" }}>
+  <img
+    src="/images/toolsets/zoom/scopes.png"
+    alt="Add granular scopes to the Zoom app"
+    style={{ display: 'block', margin: '0 auto' }}
+    width="90%"
+  />
+</div>
+
+<Info>
+  Use the **Granular scopes** format shown above — Zoom's classic scopes (e.g., `meeting:read`) are being phased out. If you add or remove scopes later, existing users must re-authorize to pick up the changes.
+</Info>
+
+### Step 6: Copy Client ID and Client Secret
+
+1. Go to **Basic Information → App Credentials** in the Zoom app builder.
+2. Copy the **Client ID** — used as **Client ID** in PipesHub.
+3. Copy the **Client Secret** — used as **Client Secret** in PipesHub.
+
+<div style={{ textAlign: "center" }}>
+  <img
+    src="/images/toolsets/zoom/app_credentials.png"
+    alt="Copy Zoom Client ID and Client Secret"
+    style={{ display: 'block', margin: '0 auto' }}
+    width="90%"
+  />
+</div>
+
+### Step 7: Configure the Zoom toolset in PipesHub
+
+1. In PipesHub, return to **Workspace Settings** → **Actions**.
+2. Find **Zoom** and open setup / configuration (**+ Setup** or **Configure**).
+3. Confirm the **Redirect URI** in the dialog matches the **OAuth Redirect URL** you registered in Zoom in **Step 4**.
+4. Paste your **Client ID** and **Client Secret**, then save the instance.
+
+<div style={{ textAlign: "center" }}>
+  <img
+    src="/images/toolsets/zoom/enter_credentials.png"
+    alt="Enter Zoom Client ID and Secret in PipesHub"
+    style={{ display: 'block', margin: '0 auto' }}
+    width="90%"
+  />
+</div>
+
+### Step 8: Authenticate the Zoom toolset
+
+Authentication uses the same OAuth flow in either location:
+
+- **Admins** can authenticate the shared instance directly under **Workspace Settings → Actions**.
+- **Users** can authenticate their own personal instance under **Your actions** (in the **Personal** section of the sidebar).
+
+1. On the Zoom tile (in **Actions** or **Your actions**), click **Authenticate with OAuth**.
+2. A popup opens to Zoom's authorization page — review the requested scopes and click **Allow**.
+3. The popup closes and the Zoom tile now shows **Authenticated** status.
+
+<div style={{ textAlign: "center" }}>
+  <img
+    src="/images/toolsets/zoom/zoom_auth_page.png"
+    alt="Authenticate Zoom toolset with OAuth"
+    style={{ display: 'block', margin: '0 auto' }}
+    width="90%"
+  />
+</div>
+
+<div style={{ textAlign: "center" }}>
+  <img
+    src="/images/toolsets/zoom/oauth_authorize.png"
+    alt="Zoom authorization — review and allow"
+    style={{ display: 'block', margin: '0 auto' }}
+    width="90%"
+  />
+</div>
+
+### Step 9: Add Zoom to an agent
+
+1. Go to the **Home** page.
+2. Next to **Agents**, click **+** to create a new agent.
+3. Give the agent a name, drag the **Zoom** toolset onto the canvas, connect it to the **Agent Core** node with your model and chat input/output, then create the agent.
+
+<div style={{ textAlign: "center" }}>
+  <img
+    src="/images/toolsets/zoom/create_agent.png"
+    alt="Agent builder with Zoom toolset connected"
+    style={{ display: 'block', margin: '0 auto' }}
+    width="90%"
+  />
+</div>
+
+</Accordion>
+
+</AccordionGroup>
+
+---
+
+## FAQ
+
+<AccordionGroup>
+
+<Accordion title="What's the difference between Zoom Connector and Zoom Toolset?">
+
+| Aspect | Zoom Connector | Zoom Toolset |
+|--------|----------------|--------------|
+| **Purpose** | Sync and index meetings, recordings, and transcripts for search | Enable agents to perform actions on Zoom |
+| **Data Flow** | One-way (import data into PipesHub) | Two-way (read and write via API) |
+| **When to Use** | Query/search past meetings, recordings, and transcripts | Schedule meetings, update recurring series, fetch transcripts on demand |
+
+**Example:** Use **Zoom Connector** to search past meeting transcripts across your organization. Use **Zoom Toolset** to let agents schedule meetings, reschedule a specific occurrence, or pull a transcript in-conversation.
+
+</Accordion>
+
+<Accordion title="Why am I creating a 'General App' instead of an 'OAuth App'?">
+
+Zoom replaced the standalone "OAuth App" type with the **General App** type in 2024. General Apps support the same 3-legged OAuth flow plus additional capabilities. All new OAuth integrations should be built as General Apps — the old OAuth App type is considered legacy.
+
+</Accordion>
+
+<Accordion title="Do I need to publish the app on the Zoom Marketplace?">
+
+No. Keep the app **unpublished** (private) — it will only be usable by users within your own Zoom account, which is what you want for an internal integration. If you need to share the app with users in other Zoom accounts without publishing to the Marketplace, Zoom offers a **Publishable URL** approval process.
+
+</Accordion>
+
+</AccordionGroup>
+
+---
+
+## Usage Tips
+
+**How do I schedule a meeting?**  
+Ask your agent to "schedule a 30-minute Zoom meeting tomorrow at 3pm titled Design Review". The agent picks the right timezone from your profile and returns the join URL.
+
+**How do I schedule a recurring meeting?**  
+Ask to "create a weekly standup every Monday at 10am for the next 12 weeks". The agent configures the recurrence pattern automatically.
+
+**How do I update just one occurrence of a recurring meeting?**  
+Ask to "move next Monday's standup to 11am without changing the rest of the series". The agent updates only that occurrence.
+
+**How do I fetch a meeting transcript?**  
+Ask to "get the transcript from yesterday's Product Review meeting". The agent finds the meeting, retrieves the VTT transcript, and returns it as readable timestamped segments.
+
+**How do I find my upcoming meetings?**  
+Ask "what Zoom meetings do I have today?" or "list my Zoom calls this week". The agent lists upcoming meetings with times and join links.
+
+**How do I look up a contact?**  
+Ask to "find the Zoom contact for alice@acme.com" or "list my company contacts". The agent searches across company, external, and personal contacts.

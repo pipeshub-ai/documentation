@@ -26,36 +26,28 @@ icon: "/logo/gcs.png"
   </div>
 </div>
 
-## Overview
+## What is this?
 
-Google Cloud Storage (GCS) is a scalable object storage service designed to store and retrieve any amount of data from anywhere on the web. It provides industry-leading scalability, data availability, security, and performance.
+**Google Cloud Storage (GCS)** is where a lot of teams keep their files in the cloud — documents, images, backups, anything.
 
-The GCS connector enables you to sync files and folders from your GCS buckets into PipesHub, making your cloud storage content searchable through AI-powered search and accessible across your organization.
+This connector copies those files into PipesHub so you can **search them with AI**, just like any other file in your workspace.
 
-### GCS Data Structure
+### What you'll need before you start
 
-The connector understands GCS's hierarchical structure:
+- A Google Cloud account with access to the project that owns your GCS buckets
+- Permission to create a **service account** in that project (usually a project owner or admin)
+- About 10 minutes
 
-**Buckets → Folders → Files**
+### What gets synced
 
-| Entity | Description |
-|--------|-------------|
-| **Buckets** | Top-level containers for organizing objects (similar to root directories) |
-| **Folders** | Logical groupings of objects using prefixes (e.g., `documents/reports/`) |
-| **Files** | Individual objects (blobs) stored in buckets with unique keys (paths) |
-
-### What Gets Synced
-
-The connector indexes the following content for AI-powered search:
-
-- **Files**: All file types stored in GCS buckets (documents, images, videos, archives, etc.)
-- **Folders**: Directory structure and organization
-- **Metadata**: File names, sizes, modification dates, MIME types
-- **Permissions**: Access control based on bucket and object permissions
+- **Files** of any type (PDFs, Word docs, images, videos, code, archives)
+- **Folders** (including the nested folder structure inside each bucket)
+- **Details** like file name, size, when it was last changed
+- **Who can see what** — PipesHub respects the permissions already set in Google Cloud
 
 ---
 
-## Configuration Guide
+## Step-by-step setup
 
 <AccordionGroup type="single" collapsible>
 
@@ -63,258 +55,230 @@ The connector indexes the following content for AI-powered search:
 
 <div className="mt-4">
 
-### Setup Overview
+### How the connector signs in
 
-The GCS connector provides access to your Google Cloud Storage buckets through Service Account authentication. It syncs files, folders, and metadata, enabling comprehensive search and access across your GCS content.
+Instead of logging in with a password, the connector uses a **service account** — a kind of robot user inside Google Cloud that has its own key file.
 
-### Authentication
-
-The GCS connector uses **Service Account JSON key** for authentication. This method allows secure programmatic access to your GCS buckets without requiring OAuth setup.
+You'll create this service account, download its key (a small `.json` file), and upload that file into PipesHub. That's it.
 
 <Info>
-  Service Account authentication is the recommended method for server-to-server access. Ensure you follow Google Cloud security best practices when creating and storing service account keys.
+  Service accounts are the standard way to let one system talk to Google Cloud on your behalf. Keep the key file safe — anyone who has it can read the buckets you give it access to.
 </Info>
 
-### How to configure and enable the GCS Connector
+### Part A — In Google Cloud (about 5 minutes)
 
-### Step 1: Create a Service Account in Google Cloud
+### Step 1: Create a service account
 
-1. **Sign in to Google Cloud Console:**  
-   Navigate to [console.cloud.google.com](https://console.cloud.google.com) and sign in with your Google Cloud account credentials.
-
-2. **Access IAM & Admin Service:**
-   - In the Google Cloud Console, click on the navigation menu (☰) in the top left
-   - Navigate to **"IAM & Admin"** → **"Service Accounts"**
+1. Go to [console.cloud.google.com](https://console.cloud.google.com) and sign in.
+2. Click the menu (**☰**) in the top-left and pick **IAM & Admin → Service Accounts**.
 
 <div className="text-center">
   <img
     src="/images/connectors/gcs/service_accounts.png"
-    alt="Google Cloud Service Accounts"
+    alt="Google Cloud Service Accounts page"
     className="block mx-auto w-11/12"
   />
 </div>
 
-3. **Create Service Account:**
-   - Click the **"Create Service Account"** button at the top
-   - Enter a descriptive name for the service account (e.g., "PipesHub-GCS-Connector")
-   - Optionally add a description
-   - Click **"Create and Continue"**
+3. Click **Create Service Account** at the top.
+4. Give it a name you'll recognise later, like **`pipeshub-gcs-connector`**. You can skip the description.
+5. Click **Create and Continue**.
 
 <div className="text-center">
   <img
     src="/images/connectors/gcs/create_service_account.png"
-    alt="Create Service Account"
+    alt="Create Service Account form"
     className="block mx-auto w-11/12"
   />
 </div>
 
-### Step 2: Grant Permissions
+### Step 2: Give it permission to read your files
 
-1. **Grant Storage Object Viewer Role:**
-   - In the "Grant this service account access to project" section
-   - Search for and select **"Storage Object Viewer"** role
-   - This role provides read-only access to all GCS buckets and objects
-   - Click **"Continue"**
+Google Cloud needs to know what this service account is allowed to do. We only want it to **read** files — never write or delete.
 
-<Info>
-  For more granular control, you can create a custom IAM role that restricts access to specific buckets. See the "Advanced: Custom IAM Role" section below for details.
-</Info>
+1. In the **Role** dropdown, search for and select **Storage Object Viewer**. This is read-only access to everything in GCS.
+2. Click **Continue**, then **Done**.
 
 <div className="text-center">
   <img
     src="/images/connectors/gcs/grant_permissions.png"
-    alt="Grant Storage Object Viewer Role"
+    alt="Grant Storage Object Viewer role"
     className="block mx-auto w-11/12"
   />
 </div>
 
-2. **Complete Service Account Creation:**
-   - Optionally grant users access to this service account (not required for PipesHub)
-   - Click **"Done"** to complete the service account creation
+<Info>
+  Want to limit it to just one or two buckets instead of everything? See **Advanced Configuration** further down for a custom role.
+</Info>
 
-### Step 3: Create and Download Service Account Key
+### Step 3: Download the key file
 
-1. **Access Service Account Keys:**
-   - After creating the service account, you'll be redirected to the service accounts list
-   - Click on the service account you just created
-   - Navigate to the **"Keys"** tab
-   - Click **"Add Key"** → **"Create new key"**
+This is the file you'll upload to PipesHub.
+
+1. You'll land on the list of service accounts. Click the one you just made.
+2. Open the **Keys** tab.
+3. Click **Add Key → Create new key**.
 
 <div className="text-center">
   <img
     src="/images/connectors/gcs/add_key.png"
-    alt="Add Service Account Key"
+    alt="Add Key menu open"
     className="block mx-auto w-11/12"
   />
 </div>
 
-2. **Create JSON Key:**
-   - Select **"JSON"** as the key type
-   - Click **"Create"** button
+4. Choose **JSON** and click **Create**.
 
 <div className="text-center">
   <img
     src="/images/connectors/gcs/create_json_key.png"
-    alt="Create JSON Key"
+    alt="Create private key dialog with JSON selected"
     className="block mx-auto w-11/12"
   />
 </div>
 
-3. **Download Key File:**
-   - The JSON key file will be automatically downloaded to your computer
-   - **Important**: Store this file securely - it contains sensitive credentials
+5. A `.json` file downloads automatically. Keep it somewhere safe — you can't download it again later.
 
 <Warning>
-  <div className="text-lg font-semibold">
-    **Important:** The service account key is shown only once. If you don't save it now, you'll need to create a new key. Store these credentials securely and never commit them to version control.
-  </div>
+  **Treat this file like a password.** Anyone who gets it can read the same files. Don't email it, don't check it into Git, don't paste it in chat. If you ever think it leaked, delete the key in Google Cloud and create a new one.
 </Warning>
 
 <div className="text-center">
   <img
     src="/images/connectors/gcs/download_key.png"
-    alt="Download Service Account Key"
+    alt="Key file downloaded"
     className="block mx-auto w-11/12"
   />
 </div>
 
-### Step 4: Configure Connector in PipesHub
+That's the Google Cloud side done. Now over to PipesHub.
 
-1. **Navigate to Connectors:**
-   - In PipesHub, go to **Settings** → **Connectors**
-   - Find the **GCS** connector in the list
-   - Click **"Configure"** button or link
+### Part B — In PipesHub (about 3 minutes)
+
+### Step 4: Open the GCS connector
+
+1. In PipesHub, click **Workspace → Connectors** on the left sidebar.
+2. Find the tile called **GCS** ("Sync files and folders from Google Cloud Storage").
+3. Click **+ Setup** on that tile.
+
+A panel slides in from the right with two tabs: **Authenticate Instance** and **Configure Records**. You'll fill them in order.
+
+### Step 5: Upload your key (Authenticate Instance tab)
 
 <div className="text-center">
   <img
-    src="/images/connectors/gcs/gcs_config.png"
-    alt="PipesHub GCS Configuration"
+    src="/images/connectors/gcs/authenticate_tab.png"
+    alt="Authenticate Instance tab with the Service Account JSON uploaded"
     className="block mx-auto w-11/12"
   />
 </div>
 
-2. **Upload Service Account JSON:**
-   - Click on the **"Service Account JSON"** file upload field
-   - Select the JSON key file you downloaded in Step 3
-   - The file will be uploaded and parsed automatically
-   - Click **"Save Auth Settings"** or **"Next"** button
-
-<div className="text-center">
-  <img
-    src="/images/connectors/gcs/upload_json.png"
-    alt="Upload Service Account JSON"
-    className="block mx-auto w-11/12"
-  />
-</div>
+1. **Instance name** — Type a friendly name like `GCS` or `Marketing GCS`. This is just a label for you.
+2. **Service Account JSON** — Click **Upload JSON** and pick the `.json` file you downloaded in Step 3. Once it's uploaded, you'll see its filename on screen.
+3. Click **Next →**.
 
 <Warning>
-  Ensure the JSON file is valid and contains all required fields (type, project_id, private_key_id, private_key, client_email, etc.). Invalid JSON will cause authentication to fail.
+  Upload the **original file** Google gave you — don't copy-paste its contents into a new file. If any character is off, sign-in will fail.
 </Warning>
 
-### Step 5: Configure Sync Settings
-
-1. **Choose Sync Strategy:**
-   - **Scheduled**: Automatically sync at regular intervals (default: every 60 minutes)
-   - **Manual**: Sync only when you trigger it manually
+### Step 6: Decide how often to sync (Configure Records tab)
 
 <div className="text-center">
   <img
-    src="/images/connectors/gcs/sync_strategy.png"
-    alt="Configure Sync Strategy"
+    src="/images/connectors/gcs/configure_tab.png"
+    alt="Configure Records tab — Sync settings"
     className="block mx-auto w-11/12"
   />
 </div>
 
-2. **Set Sync Interval (if Scheduled):**
-   - Choose how often to sync (e.g., 15 min, 30 min, 1 hour, 4 hours, 24 hours)
-   - Default is 60 minutes
+At the top of this tab, set how the connector should keep PipesHub up to date:
+
+- **Sync Strategy**
+  - **Scheduled** — runs on its own. (Recommended for most people.)
+  - **Manual** — only runs when you click the sync button yourself.
+- **Sync Interval** — how often a scheduled sync happens. **1 Hour** is the default. You can pick 15 min, 30 min, 4 hours, or 24 hours.
 
 <Info>
-  More frequent syncs keep your data up-to-date but consume more API resources. For large buckets, consider longer intervals to reduce Google Cloud API usage.
+  Not sure? Leave it on **Scheduled** every **1 Hour**. You can change it any time.
 </Info>
 
-### Step 6: Configure Filters (Optional)
-
-Filters allow you to control what data is synced and indexed from your GCS buckets.
+### Step 7: Choose what to pull in (still on Configure Records)
 
 <div className="text-center">
   <img
-    src="/images/connectors/gcs/gcs-filters.png"
-    alt="GCS Filters Configuration"
+    src="/images/connectors/gcs/filters.png"
+    alt="+ Add filter dropdown with Bucket Names, File Extensions, Modified Date, Created Date"
     className="block mx-auto w-11/12"
   />
 </div>
 
-#### Sync Filters
+Scroll down to **Indexing & sync filters**. By default, the connector will pull in **everything** it has access to. That's usually too much. Filters let you trim it down.
 
-Sync filters determine which content is downloaded from GCS. Data excluded by sync filters is never downloaded.
+Click **+ Add filter** and pick one or more:
 
-**Available Sync Filters:**
+| Filter | What it does | When to use it |
+|---|---|---|
+| **Bucket Names** | Only sync specific buckets. The list is auto-filled from your Google Cloud project. | You only care about one or two buckets out of many |
+| **File Extensions** | Only sync certain file types. Enter extensions separated by commas, like `pdf, docx, txt`. | You only want documents, not images or videos |
+| **Modified Date** | Only sync files changed after/before/between certain dates. | You want to skip very old files |
+| **Created Date** | Like Modified Date, but based on when the file was first uploaded. | Same idea, different timestamp |
 
-1. **Bucket Names** - Filter by specific GCS buckets
-   - **Operator**: `In` (include only) or `Not In` (exclude)
-   - **Selection**: Choose from a **searchable dropdown list** of all your GCS buckets
-   - The dropdown displays all accessible buckets
-   - Type to search and filter buckets by name
-   - Select multiple buckets as needed
+Each filter has an operator — usually **In** ("only these") or **Not In** ("everything except these").
 
-<Info>
-  The bucket list is dynamically fetched from your Google Cloud project. You don't need to manually enter bucket names - simply search and select from the dropdown.
-</Info>
+There's also an **Enable Manual Indexing** toggle. Leave it off unless someone on your team has told you otherwise — with it off, synced files become searchable automatically.
 
-2. **File Extensions** - Filter files by extension
-   - **Operator**: `In` (include) or `Not In` (exclude)
-   - **Value**: Enter file extensions separated by commas (e.g., `pdf, docx, txt`)
-   - **Note**: Extensions are case-insensitive and don't require the leading dot
-   - **Use case**: Sync only specific file types (e.g., documents only, exclude images)
-
-3. **Modified Date** - Filter by last modification date
-   - **Operators**: `Is After`, `Is Before`, or `Is Between`
-   - **Use case**: Sync only recently updated files (e.g., files modified in the last 6 months)
-
-4. **Created Date** - Filter by creation date
-   - **Operators**: `Is After`, `Is Before`, or `Is Between`
-   - **Use case**: Sync only newly created files or exclude legacy files
-
-#### Indexing Filters
-
-Indexing filters control what synced data gets processed for AI search. All data is synced, but only enabled content types are indexed.
-
-**Available Indexing Filters:**
-
-- **Index Files** (default: enabled) - Include file content in search
-- **Index Folders** (default: enabled) - Include folder structure in search
-
-**Example Configurations:**
-
-- **Sync only specific buckets**: Bucket Names → Operator: `In`, select buckets from dropdown
-- **Sync only documents**: File Extensions → Operator: `In`, Value: `pdf, docx, txt, pptx`
-- **Exclude images**: File Extensions → Operator: `Not In`, Value: `jpg, png, gif, svg`
-- **Recent files only**: Modified Date → Operator: `Is After`, Date: `YYYY-MM-DD` (e.g., files modified in the last 6 months)
-- **Sync all but index only documents**: Enable all sync filters, disable indexing for non-document files
+When you're happy, click **Save Configuration**.
 
 <Info>
-  Filters can be configured during initial setup or modified later. Changes to filters will take effect on the next sync.
+  **Start small.** Pick one bucket and maybe `pdf, docx, txt` for extensions. You can always loosen the filters later — but a first sync over a huge bucket with no filters can take hours.
 </Info>
 
-### Step 7: Enable the Connector
-
-1. After configuration is complete, toggle the connector status to **"Enable"**
-2. You can do this by:
-   - Using the toggle switch next to **"Connector Status"**
-   - Or clicking the **"Enable"** button in the Quick Actions panel
+### Step 8: Turn sync on
 
 <div className="text-center">
   <img
-    src="/images/connectors/gcs/enable_connector.png"
-    alt="Enable GCS Connector"
+    src="/images/connectors/gcs/instance_card.png"
+    alt="GCS instance card with the Sync Enabled toggle"
     className="block mx-auto w-11/12"
   />
 </div>
 
-3. The connector will verify credentials and begin initial synchronization
-4. Wait for the status to show **"Active"** or **"Syncing"**
-5. Monitor the **Indexing Progress** to track sync completion
+After you save, you'll see a **GCS** card in the Connectors list. It starts out as **Sync Paused** — nothing is happening yet.
+
+1. Flip the **Sync Enabled** toggle on the card.
+2. The status changes to **Sync Enabled** and the first sync starts in the background.
+
+Want to connect a second Google Cloud project too? Click **+ Add Another Instance** at the top and repeat from Step 4 — each instance has its own key, its own filters, its own on/off toggle.
+
+### Step 9: Watch the sync progress
+
+Click the instance card to open the **Overview** panel. This is where you'll come back later to check on things.
+
+<div className="text-center">
+  <img
+    src="/images/connectors/gcs/instance_panel.png"
+    alt="Overview panel with Records Status tiles and Records by Type"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+**Records Status** — tells you how the sync is going:
+
+- **Total** — how many files the connector has picked up so far
+- **Failed** — files it couldn't read (usually a permission problem)
+- **Unsupported** — files it *can* store but can't read the text of (images, videos, archives)
+- **Processing** — files currently being read and indexed
+- **Not Started** — files waiting in the queue
+
+**Records by Type** — a breakdown of what kinds of files got indexed.
+
+**Buttons you'll use here:**
+
+- **Sync** — run an extra sync right now (only grabs what's changed)
+- **Full sync** — re-scan everything from scratch (use sparingly, it's slow)
+- **Manage Configuration** — re-opens the two tabs from Steps 5–7 so you can change credentials or filters later
+
+That's it — once **Not Started** and **Processing** both hit zero, your GCS files are fully searchable in PipesHub.
 
 </div>
 
@@ -324,17 +288,15 @@ Indexing filters control what synced data gets processed for AI search. All data
 
 <div className="mt-4">
 
-### Advanced: Custom IAM Role
+### Limiting access to specific buckets (custom role)
 
-For enhanced security, you can create a custom IAM role that restricts access to specific buckets or prefixes.
+**Storage Object Viewer** gives the service account read access to **every** bucket in the project. If that's more than you want, you can make a custom role with a narrower scope.
 
-### Example Custom IAM Role
-
-Here's a basic example role for read-only access to specific buckets:
+Here's an example role with just the permissions the connector actually needs:
 
 ```yaml
 title: "PipesHub GCS Read Only"
-description: "Read-only access to specific GCS buckets for PipesHub connector"
+description: "Read-only access for PipesHub's GCS connector"
 stage: "GA"
 includedPermissions:
   - storage.buckets.get
@@ -343,375 +305,246 @@ includedPermissions:
   - storage.objects.list
 ```
 
-**Steps to apply custom role:**
+**How to apply it:**
 
-1. In Google Cloud Console, go to **"IAM & Admin"** → **"Roles"**
-2. Click **"Create Role"**
-3. Enter role details and add the permissions listed above
-4. In **"IAM & Admin"** → **"Service Accounts"**, edit your service account
-5. Click **"Grant Access"** and assign the custom role instead of the managed role
+1. In Google Cloud Console, go to **IAM & Admin → Roles**.
+2. Click **Create Role**, paste in the permissions above, and save.
+3. Go to **IAM & Admin → Service Accounts**, open your service account, and assign the new role instead of (or in addition to) Storage Object Viewer.
 
 <Info>
-  For bucket-specific access, you can also use bucket-level IAM policies to grant the service account access only to specific buckets, rather than creating a custom role.
+  Want to scope the service account to one specific bucket? Skip the custom role and instead go to the bucket in GCS, open **Permissions**, and grant **Storage Object Viewer** to just your service account's email address. That's simpler than a custom role.
 </Info>
 
 </div>
 
 </Accordion>
 
-<Accordion title="Features and Behavior">
+<Accordion title="How syncing actually works">
 
 <div className="mt-4">
 
-### Supported Features
+### The first sync
 
-The GCS connector syncs the following data from your Google Cloud Storage buckets:
+The first time you turn the connector on, it does a full scan:
 
-- **Buckets**: All accessible buckets in your Google Cloud project
-- **Files**: All file types with their metadata (name, size, modification date, MIME type)
-- **Folders**: Directory structure and organization using GCS prefixes
-- **Permissions**: Access control based on bucket and object-level permissions
+1. Lists every bucket you gave it access to (or just the ones in your filter)
+2. Walks through every object (file) inside
+3. Grabs the file's text content so you can search it
 
-### Data Sync Behavior
-
-### Initial Sync
-
-The first sync performs a complete scan of your configured GCS buckets:
-
-- **Bucket Discovery**: Lists all accessible buckets in your Google Cloud project (or uses configured bucket filters)
-- **Full Object Listing**: Fetches all objects from selected buckets using pagination
-- **Metadata Extraction**: Extracts file names, sizes, modification dates, MIME types, and paths
-- **Folder Structure**: Creates logical folder structure from GCS object prefixes
-- **Indexing**: Indexes file content for AI-powered search (based on indexing filter settings)
-- **Permission Assignment**: Assigns permissions based on connector scope (Personal or Team)
+This is the slow one. A few thousand files takes minutes. A few million takes hours.
 
 <Info>
-  Use bucket and file extension filters to significantly reduce initial sync time. For example, syncing only PDF files from a specific bucket can reduce sync time by 80-90%. For detailed sync duration estimates, see the FAQ section below.
+  **Want it faster?** Filters are the lever. Syncing only PDFs from one bucket is 90% quicker than syncing everything.
 </Info>
 
-### Incremental Sync
+### Every sync after that
 
-After the initial sync, subsequent syncs are much faster:
+Once the first sync is done, the connector only asks Google Cloud: *"what's changed since last time?"* So scheduled syncs usually finish in 5–15 minutes no matter how big the bucket is.
 
-- **Timestamp-Based Detection**: Uses `updated` timestamps to identify changed objects
-- **Sync Point Tracking**: Stores the last sync timestamp per bucket in sync points
-- **Change Detection**: Only fetches objects modified since the last sync timestamp
-- **Pagination Resume**: Uses page tokens to resume interrupted syncs
-- **Efficient Updates**: Processes only new, modified, or deleted objects
-- **API Optimization**: Reduces API calls by 90%+ compared to full syncs
+### Who can see the synced files?
 
-**How It Works:**
+PipesHub respects two things:
 
-1. Connector reads the sync point for each bucket (stored in our database)
-2. Retrieves the `last_sync_time` timestamp
-3. Queries GCS for objects with `updated` >= `last_sync_time`
-4. Processes only the changed objects
-5. Updates the sync point with the new maximum timestamp
+1. **Google Cloud permissions** — the connector can only pull files the service account has access to.
+2. **The scope you picked when setting up the connector**:
+   - **Personal** — only you can see the files in PipesHub
+   - **Team** — everyone in your organization can see them
 
-<Info>
-  Incremental syncs typically take 5-15 minutes for most buckets, regardless of total bucket size, as they only process changes.
-</Info>
+Bucket-level IAM rules and ACLs in Google Cloud are also respected.
 
-### Permission Handling
+### Sync frequency — scheduled vs manual
 
-The connector respects Google Cloud IAM permissions and PipesHub access controls:
+**Scheduled sync** (the default) runs on its own every hour (or whatever interval you picked). Set it and forget it.
 
-- **IAM-Based Access**: Only syncs buckets and objects the service account has permission to access
-- **Bucket Policies**: Respects GCS bucket IAM policies and ACLs
-- **PipesHub Scope**: 
-  - **Personal Scope**: Only the connector creator can access synced content
-  - **Team Scope**: All organization users have read access to synced content
-- **Permission Inheritance**: Files inherit permissions from their parent bucket (Record Group)
-- **Access Control**: Users see only content they have permission to view in both Google Cloud and PipesHub
+**Manual sync** only runs when you click **Sync** or **Full sync** on the Overview panel. Useful when:
 
-### Sync Frequency
-
-**Scheduled Sync:**
-- Default interval: 60 minutes
-- Configurable: 15 min, 30 min, 1 hour, 4 hours, 24 hours
-- Runs automatically in the background
-- Best for: Keeping data up-to-date with minimal manual intervention
-
-**Manual Sync:**
-- Triggered on-demand from the connector settings
-- Best for: Testing, troubleshooting, or syncing after bulk changes
-- Useful when: You need immediate sync after uploading many files
-
-<Info>
-  For large buckets with infrequent changes, consider longer sync intervals (4-24 hours) to reduce Google Cloud API usage and costs.
-</Info>
+- You just uploaded a batch of files and want them searchable right now
+- You're testing filter changes
+- You're debugging why something didn't sync
 
 </div>
-
-</Accordion>
-
-</AccordionGroup>
-
-### Troubleshooting
-
-<AccordionGroup type="single" collapsible>
-
-<Accordion title="Troubleshooting" icon="circle-exclamation">
-
-**Invalid service account credentials error:**
-
-*Symptoms:*
-- Error message: "Invalid credentials" or "Authentication failed"
-- Connector fails to initialize
-- Authentication fails immediately
-
-*Solutions:*
-1. Verify the JSON key file is valid and complete
-2. Ensure you uploaded the correct JSON file (not a text copy)
-3. Check that the service account still exists in Google Cloud Console
-4. Verify the service account key hasn't been deleted or rotated
-5. Try creating a new service account key if the old one is compromised
-6. Ensure the JSON file contains all required fields (type, project_id, private_key_id, private_key, client_email, etc.)
-
-**Bucket access denied:**
-
-*Symptoms:*
-- Error: "PermissionDenied" when listing or accessing buckets
-- Some buckets appear but others don't
-- Sync fails with permission errors
-
-*Solutions:*
-1. Verify the service account has the following IAM roles:
-   - `Storage Object Viewer` - To list and read objects
-   - `Storage Legacy Bucket Reader` - To list buckets (if using legacy permissions)
-2. Check that bucket-level IAM policies allow access from your service account
-3. Ensure the bucket exists and is in the same Google Cloud project
-4. Verify the service account email matches the one in your JSON key
-5. Review IAM policy bindings to ensure service account has necessary permissions
-
-**No buckets appearing:**
-
-*Symptoms:*
-- Bucket dropdown is empty
-- No buckets available to select
-- "No buckets found" message
-
-*Solutions:*
-1. Check that the service account has `storage.buckets.list` permission
-2. Verify credentials are correctly uploaded in PipesHub
-3. Ensure the service account has access to at least one bucket
-4. Check Google Cloud audit logs for permission errors
-5. Verify the service account is in the same Google Cloud project as the buckets
-6. Try refreshing the bucket list in the filter configuration
-
-**No data syncing:**
-
-*Symptoms:*
-- Connector shows "Active" but no files appear
-- Sync completes but no records are indexed
-- Indexing progress stays at 0%
-
-*Solutions:*
-1. Verify the connector status shows "Active" or "Syncing"
-2. Check that buckets are selected in the filter configuration
-3. Ensure file extension filters aren't excluding all files
-4. Verify date filters aren't excluding all files (e.g., "Modified After" set to future date)
-5. Review sync logs for specific error messages
-6. Verify the service account has `storage.objects.get` and `storage.objects.list` permissions
-7. Check that objects exist in the selected buckets
-8. Ensure indexing filters are enabled (Index Files, Index Folders)
-
-**Sync taking too long:**
-
-*Symptoms:*
-- Initial sync runs for hours without completion
-- Progress bar moves very slowly
-- High Google Cloud API usage
-
-*Solutions:*
-1. **Use Bucket Filters**: Sync only necessary buckets instead of all buckets
-2. **Use File Extension Filters**: Filter to specific file types (e.g., `pdf, docx, txt`)
-3. **Use Date Filters**: Sync only recently modified files (e.g., last 6 months)
-4. **Increase Sync Interval**: For large buckets, use 4-24 hour intervals
-5. **Check Bucket Size**: Very large buckets (millions of objects) will take longer
-6. **Monitor Progress**: Check indexing progress to ensure sync is actually running
-
-<Info>
-  A bucket with 1 million objects can take 6-12 hours for initial sync. Using filters to sync only 10% of objects reduces this to 1-2 hours.
-</Info>
-
-**Token expired or sync stopped:**
-
-*Symptoms:*
-- Sync was working but suddenly stopped
-- Authentication errors after working previously
-- "Credentials invalid" errors
-
-*Solutions:*
-1. Service account keys don't expire automatically, but they can be rotated or deleted
-2. If service account keys were rotated in Google Cloud, update credentials in PipesHub immediately
-3. Check if the service account or key was deleted in Google Cloud Console
-4. Re-authenticate by uploading a new JSON key file in connector settings
-5. Verify the service account still exists and is active
-6. Check Google Cloud audit logs for any credential-related events
-
-**Files not appearing in search:**
-
-*Symptoms:*
-- Files synced but not searchable
-- Search returns no results for known files
-- Indexing shows 0% complete
-
-*Solutions:*
-1. Verify indexing filters are enabled (Index Files should be ON)
-2. Check that file types are supported for indexing (PDF, DOCX, TXT, etc.)
-3. Images and binary files cannot be indexed for text search
-4. Wait for indexing to complete - large files take time to process
-5. Check indexing progress in connector status
-6. Verify file content is not encrypted or password-protected
-7. Ensure files have readable text content (not just images)
-
-**Partial sync or missing files:**
-
-*Symptoms:*
-- Some files appear but others don't
-- Files in certain folders are missing
-- Inconsistent sync results
-
-*Solutions:*
-1. Check file extension filters - files may be excluded by filter settings
-2. Verify date filters aren't excluding files
-3. Check bucket permissions - service account may not have access to all objects
-4. Review sync logs for specific errors about missing files
-5. Verify files actually exist in GCS (check GCS console)
-6. Ensure files aren't in excluded buckets (if bucket filter is active)
-7. Check if files are in Archive or Coldline storage classes (may require special handling)
 
 </Accordion>
 
 </AccordionGroup>
 
 <Warning>
-  If you rotate or change Google Cloud service account keys, you must update the configuration in PipesHub immediately. The connector will fail to sync until new credentials are provided.
+  If you ever rotate or delete the service account key in Google Cloud, **the connector stops working**. Open the Overview panel, click **Manage Configuration → Authenticate Instance**, and upload the new `.json` file.
 </Warning>
 
-### Google Cloud Storage Compatibility
+### What this connector works with
 
-This connector is designed for **Google Cloud Storage** and uses the GCS API. It supports:
+- **All Google Cloud regions** worldwide
+- **All storage classes** — Standard, Nearline, Coldline, and Archive (Archive / Coldline may be slower to read)
+- **Encrypted buckets** — Google-managed encryption works out of the box
 
-- **All GCS Regions**: Works with buckets in any Google Cloud region worldwide
-- **Standard GCS Storage Classes**: Standard, Nearline, Coldline, Archive
-- **All GCS Features**: Object versioning, lifecycle management, encryption
+**Not supported:**
+- Requester Pays buckets
+- Customer-supplied encryption keys (CSEK)
+- Customer-managed encryption keys (CMEK) need extra KMS permissions on the service account
 
-**Not Supported:**
-- Requester Pays buckets (not currently supported)
-- Customer-managed encryption keys (CMEK) may require additional permissions
+### Useful links
 
-<Info>
-  The connector uses the standard GCS API and is optimized for Google Cloud Storage.
-</Info>
+- [Google Cloud Console](https://console.cloud.google.com)
+- [GCS documentation](https://cloud.google.com/storage/docs)
+- [Service account guide](https://cloud.google.com/iam/docs/service-accounts)
+- [GCS IAM roles](https://cloud.google.com/storage/docs/access-control/iam-roles)
+- [GCS bucket list](https://console.cloud.google.com/storage)
 
-### FAQ
+<div className="text-center mt-12 p-6 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg max-w-2xl mx-auto">
+  <h3 className="text-lg font-semibold mb-2">Ready to connect?</h3>
+  <p className="text-gray-600 dark:text-gray-400">
+    Follow the nine steps above and your GCS files will be searchable across your whole organization in minutes.
+  </p>
+</div>
+
+<div className="mt-16 pt-12 border-t border-gray-200 dark:border-gray-700">
+
+### Something not working?
 
 <AccordionGroup type="single" collapsible>
 
-<Accordion title="How long does the initial sync take?">
-  The initial sync duration depends on the size of your GCS buckets:
-  
-  | Bucket Size | Estimated Time |
-  |-------------|----------------|
-  | Small (< 1,000 objects) | 5-15 minutes |
-  | Medium (1,000 - 10,000 objects) | 15-45 minutes |
-  | Large (10,000 - 100,000 objects) | 1-3 hours |
-  | Very Large (100,000 - 1,000,000 objects) | 3-8 hours |
-  | Enterprise (1,000,000+ objects) | 8+ hours |
-  
-  **Tip**: Use bucket and file extension filters to significantly reduce initial sync time. For example, syncing only PDF files from specific buckets can reduce sync time by 80-90%.
-</Accordion>
+<Accordion title="Troubleshooting" icon="circle-exclamation">
 
-<Accordion title="Can I sync multiple Google Cloud projects?">
-  **No**, each connector instance connects to a single Google Cloud project. To sync buckets from multiple projects, you'll need to:
-  
-  1. Create separate service accounts in each Google Cloud project
-  2. Create separate GCS connector instances in PipesHub
-  3. Configure each connector with credentials from the respective project
-  
-  This allows you to manage and filter buckets from different projects separately.
-</Accordion>
+**"Invalid credentials" or "Authentication failed"**
 
-<Accordion title="What file types can be indexed for search?">
-  The connector can index text-based file types for AI-powered search:
-  
-  **Supported:**
-  - Documents: PDF, DOCX, XLSX, PPTX, ODT, RTF
-  - Text: TXT, MD, CSV, JSON, XML, HTML
-  - Code: Python, JavaScript, TypeScript, Java, Go, and many others
-  
-  **Not Supported (no text content):**
-  - Images: JPG, PNG, GIF, SVG, WebP
-  - Videos: MP4, AVI, MOV, etc.
-  - Archives: ZIP, RAR, TAR, etc.
-  - Binary files without extractable text
-  
-  Images and binary files are synced and can be accessed, but their content cannot be indexed for text search.
-</Accordion>
+Usually means the JSON key file is wrong or out of date.
 
-<Accordion title="How does incremental sync work?">
-  After the initial sync, the connector uses timestamp-based incremental sync:
-  
-  1. **Stores Sync Point**: Saves the last sync timestamp for each bucket
-  2. **Queries Changes**: On next sync, queries GCS for objects modified since that timestamp
-  3. **Processes Only Changes**: Downloads and indexes only new or modified objects
-  4. **Updates Timestamp**: Saves the new maximum timestamp for the next sync
-  
-  This makes subsequent syncs 90%+ faster than full syncs, typically completing in 5-15 minutes regardless of bucket size.
-</Accordion>
+- Make sure you uploaded the **original file** you downloaded from Google Cloud — not a copy-paste of the contents
+- Check the service account still exists in Google Cloud → IAM & Admin → Service Accounts
+- Check the key hasn't been deleted under the service account's **Keys** tab
+- Worst case, delete the old key, create a fresh one, and upload it via **Manage Configuration**
 
-<Accordion title="Can I sync GCS Archive or Coldline files?">
-  **Yes**, the connector supports all GCS storage classes including Archive and Coldline. However, accessing Archive or Coldline objects may have additional latency or costs. The connector will sync these objects, but retrieval times may be longer for Archive storage class objects.
-  
-  Consider using Nearline or Standard storage classes for frequently accessed files that need to be searchable.
-</Accordion>
+---
 
-<Accordion title="What happens if I delete a file in GCS?">
-  When a file is deleted from GCS:
-  
-  - The deletion is detected during the next incremental sync
-  - The file record is marked as deleted in PipesHub
-  - The file is removed from search results
-  - Historical access to the file may still be available depending on your retention settings
-  
-  **Note**: If you use GCS object versioning, deleted files may still appear if previous versions exist.
-</Accordion>
+**Some buckets are missing from the filter dropdown**
 
-<Accordion title="Can I sync encrypted GCS buckets?">
-  **Yes**, the connector supports GCS buckets with encryption:
-  
-  - **Google-managed encryption**: Fully supported (default)
-  - **Customer-managed encryption keys (CMEK)**: Requires additional IAM permissions for the service account
-  - **Customer-supplied encryption keys (CSEK)**: Not supported
-  
-  Ensure your service account has the necessary KMS permissions if using CMEK.
-</Accordion>
+The service account can only list buckets it has permission to see.
 
-<Accordion title="How do I sync only specific folders in a bucket?">
-  Currently, the connector syncs entire buckets. To sync only specific folders:
-  
-  1. **Use Bucket Filters**: Create separate buckets for different content types
-  2. **Use File Extension Filters**: Filter to specific file types
-  3. **Use Date Filters**: Sync only recently modified files
-  
-  Folder-level filtering within a bucket is not currently supported, but may be added in future releases.
+- Give it **Storage Object Viewer** at the project level (or on each bucket individually)
+- Check you're in the right project — the connector talks to the project your JSON key came from
+- Reopen **+ Add filter → Bucket Names** to refresh the list
+
+---
+
+**Connector shows "Sync Enabled" but no files show up**
+
+Walk through these in order:
+
+1. Are your filters too strict? Open **Manage Configuration** and check.
+2. Does the service account actually have read access to objects, not just buckets?
+3. Look at the **Failed** tile on the Overview panel — errors there will tell you why.
+4. Any files at all in the bucket you picked?
+
+---
+
+**First sync is taking forever**
+
+Big buckets take real time. Things that help:
+
+- Limit to specific buckets with a **Bucket Names** filter
+- Limit to the file types you care about with **File Extensions** (e.g. `pdf, docx`)
+- Skip old files with a **Modified Date** filter
+- For gigantic buckets (millions of objects), raise the Sync Interval to 4–24 hours — less API usage, less cost
+
+As a rough guide, a bucket with 1 million objects takes 6–12 hours the first time. Cutting it to 10% with filters gets that down to 1–2 hours.
+
+---
+
+**Sync used to work, now it doesn't**
+
+Most often, the service account key was rotated or deleted in Google Cloud.
+
+- Check the service account's **Keys** tab — is the key you uploaded still there?
+- Create a new key and re-upload via **Manage Configuration → Authenticate Instance**
+- Also check the service account itself wasn't deleted or had its role removed
+
+---
+
+**Files are synced but I can't find them in search**
+
+- **Processing** tile still above zero? Indexing hasn't finished yet — give it time.
+- Files showing as **Unsupported**? That's expected for images, videos, archives — they're stored but their content can't be read.
+- Password-protected or encrypted PDFs can't be indexed either.
+
+---
+
+**Some files synced, others didn't**
+
+- Check file extension filters aren't excluding them
+- Check date filters aren't excluding them
+- Check the service account has access to those specific objects (some might live in a bucket with extra IAM rules)
+- Archive / Coldline files may take longer to fetch
+
 </Accordion>
 
 </AccordionGroup>
 
-### Useful Links
+### Frequently asked questions
 
-- **Google Cloud Console**: [console.cloud.google.com](https://console.cloud.google.com)
-- **GCS Documentation**: [cloud.google.com/storage/docs](https://cloud.google.com/storage/docs)
-- **Service Accounts Guide**: [cloud.google.com/iam/docs/service-accounts](https://cloud.google.com/iam/docs/service-accounts)
-- **GCS IAM Roles**: [cloud.google.com/storage/docs/access-control/iam-roles](https://cloud.google.com/storage/docs/access-control/iam-roles)
-- **GCS Console**: [console.cloud.google.com/storage](https://console.cloud.google.com/storage)
+<AccordionGroup type="single" collapsible>
 
-<div className="text-center mt-12 p-6 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg max-w-2xl mx-auto">
-  <h3 className="text-lg font-semibold mb-2">Ready to Get Started?</h3>
-  <p className="text-gray-600 dark:text-gray-400">
-    Connect your GCS buckets to PipesHub in just a few minutes. Follow the step-by-step guide above to enable organization-wide file search and access across all your GCS content.
-  </p>
+<Accordion title="How long does the first sync take?">
+  Depends entirely on how many files are in the buckets you picked.
+  
+  | Bucket size | Rough time |
+  |---|---|
+  | Under 1,000 files | 5–15 minutes |
+  | 1,000 – 10,000 | 15–45 minutes |
+  | 10,000 – 100,000 | 1–3 hours |
+  | 100,000 – 1,000,000 | 3–8 hours |
+  | 1,000,000+ | 8+ hours |
+  
+  Using filters to sync only what you actually need is the biggest speedup.
+</Accordion>
+
+<Accordion title="Can I connect more than one Google Cloud project?">
+  Yes. Each instance is linked to one project, but you can add as many instances as you like. Click **+ Add Another Instance** at the top of the GCS panel and repeat the setup with a different key file. Each instance has its own filters and its own on/off toggle.
+</Accordion>
+
+<Accordion title="Which file types can actually be searched?">
+  **Fully searchable** (we can read the text):
+  - Documents — PDF, DOCX, XLSX, PPTX, ODT, RTF
+  - Text — TXT, MD, CSV, JSON, XML, HTML
+  - Code — Python, JavaScript, Java, Go, and most others
+  
+  **Stored but not searchable by content** (they'll show up as **Unsupported**):
+  - Images — JPG, PNG, GIF, SVG
+  - Video and audio
+  - Archives — ZIP, RAR, TAR
+  - Anything password-protected or encrypted
+</Accordion>
+
+<Accordion title="How does the incremental sync know what's new?">
+  Every file in GCS has an `updated` timestamp. After each sync, the connector remembers the most recent timestamp it saw. Next time it runs, it just asks Google Cloud for files with a newer timestamp than that. Fast and efficient.
+</Accordion>
+
+<Accordion title="Will it sync Archive and Coldline files?">
+  Yes, but Archive and Coldline are designed for infrequent access — reading them can be slower and, depending on your Google Cloud billing, more expensive. For files you expect people to search often, Standard or Nearline storage is a better fit.
+</Accordion>
+
+<Accordion title="What happens when I delete a file from GCS?">
+  On the next sync, the connector notices it's gone and removes it from PipesHub too — including from search results.
+  
+  If you use **object versioning** in GCS, older versions may still appear until they're also deleted.
+</Accordion>
+
+<Accordion title="Does it work with encrypted buckets?">
+  - **Google-managed encryption** — yes, works by default
+  - **Customer-managed keys (CMEK)** — yes, but the service account needs KMS decrypt permission on the key
+  - **Customer-supplied keys (CSEK)** — not supported
+</Accordion>
+
+<Accordion title="Can I sync just one folder inside a bucket?">
+  Not directly — filters work at the bucket level, not the folder level. A few workarounds:
+  
+  - Split content into separate buckets so you can pick the right one
+  - Use a **File Extensions** filter if the folder you care about has a distinct file type
+  - Use a **Modified Date** filter if the folder you care about has freshly-changed files
+  
+  Folder-level filtering is on our roadmap.
+</Accordion>
+
+</AccordionGroup>
+
 </div>

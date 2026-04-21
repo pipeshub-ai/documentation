@@ -192,142 +192,122 @@ The S3 connector uses **AWS Access Key ID and Secret Access Key** for authentica
    - Click **"Download .csv file"** button to save credentials to a secure location
    - Click **"Done"** button to complete the process
 
-### Step 4: Configure Connector in PipesHub
+### Step 4: Open S3 in PipesHub
 
-1. **Navigate to Connectors:**
-   - In PipesHub, go to **Settings** → **Connectors**
-   - Find the **S3** connector in the list
-   - Click **"Configure"** button or link
+1. Open the PipesHub app.
+2. In the left sidebar, click **Connectors** (under **Workspace**).
+3. Find the **S3** tile.
+4. Click **+ Setup** on the tile.
+
+A panel called **S3 Configuration** opens on the right. It has two tabs: **Authenticate Instance** and **Configure Records**. You start on **Authenticate Instance**.
+
+### Step 5: Fill in your S3 credentials
 
 <div className="text-center">
   <img
-    src="/images/connectors/s3/s3_config.png"
-    alt="PipesHub S3 Configuration"
+    src="/images/connectors/s3/authenticate_tab.png"
+    alt="S3 Authenticate Instance tab in PipesHub"
     className="block mx-auto w-11/12"
   />
 </div>
 
-2. **Enter Access Credentials:**
-   - **Access Key**: Paste your AWS Access Key ID
-   - **Secret Key**: Paste your AWS Secret Access Key
-   - Click **"Save Auth Settings"** or **"Next"** button
+Fill in the fields from top to bottom:
 
-<div className="text-center">
-  <img
-    src="/images/connectors/s3/enter_credentials.png"
-    alt="Enter S3 Credentials"
-    className="block mx-auto w-11/12"
-  />
-</div>
+1. **Instance name** — type any name you like (for example `S3`). This is just a label so you can recognise it later.
+2. **Access Key** — paste the **Access Key ID** you copied from AWS in Step 3.
+3. **Secret Key** — paste the **Secret Access Key** you copied from AWS in Step 3.
+4. Click **Next →** (bottom right).
 
 <Warning>
-  Ensure you copy the credentials exactly as shown. Extra spaces or line breaks will cause authentication to fail.
+  Paste the keys exactly as you copied them. Extra spaces or line breaks will make the connection fail.
 </Warning>
 
-### Step 5: Configure Sync Settings
+<Info>
+  The two links at the top (**S3 Access Key Setup** and **Pipeshub Documentation**) are just help links. You can ignore them if you've already followed Steps 1–3.
+</Info>
 
-1. **Choose Sync Strategy:**
-   - **Scheduled**: Automatically sync at regular intervals (default: every 60 minutes)
-   - **Manual**: Sync only when you trigger it manually
+### Step 6: Choose how often S3 should sync
+
+You're now on the **Configure Records** tab. The top part is called **Sync settings**.
 
 <div className="text-center">
   <img
-    src="/images/connectors/s3/sync_strategy.png"
-    alt="Configure Sync Strategy"
+    src="/images/connectors/s3/configure_tab.png"
+    alt="S3 Configure Records tab in PipesHub — sync settings and filters"
     className="block mx-auto w-11/12"
   />
 </div>
 
-2. **Set Sync Interval (if Scheduled):**
-   - Choose how often to sync (e.g., 15 min, 30 min, 1 hour, 4 hours, 24 hours)
-   - Default is 60 minutes
+1. **Sync Strategy** — pick one:
+   - **Scheduled** — PipesHub checks S3 for new or changed files automatically. (Recommended.)
+   - **Manual** — nothing is pulled until you click **Sync** yourself.
+2. **Sync Interval** — only shown if you chose **Scheduled**. Pick how often to check S3 (for example `1 Hour`).
+
+### Step 7: Pick what to sync (filters)
+
+Still on the same tab, scroll down to **Indexing & sync filters**. Filters let you limit what PipesHub pulls from S3. **If you don't add any filters, everything will be synced.**
+
+1. **Enable Manual Indexing** — leave this **off**. (Turning it on stops PipesHub from automatically indexing new files for search.)
+2. Click **+ Add filter** to add a filter. You'll see four options:
+   - **Bucket Names** — pick which S3 buckets to include or exclude. PipesHub loads your bucket list automatically — just select from the dropdown.
+   - **File Extensions** — include or exclude specific file types. Type them comma-separated, e.g. `pdf, docx, txt`.
+   - **Modified Date** — only sync files changed after / before / between the dates you choose.
+   - **Created Date** — same idea, but based on when the file was first uploaded to S3.
+3. Click **Save Configuration** (bottom right) when you're done.
 
 <Info>
-  More frequent syncs keep your data up-to-date but consume more API resources. For large buckets, consider longer intervals to reduce AWS API usage.
+  You can change filters any time later. New filters take effect on the next sync.
 </Info>
 
-### Step 6: Configure Filters (Optional)
+### Step 8: Turn on sync
 
-Filters allow you to control what data is synced and indexed from your S3 buckets.
+After saving, the S3 tile now shows a card for your new instance.
 
 <div className="text-center">
   <img
-    src="/images/connectors/s3/s3-filters.png"
-    alt="S3 Filters Configuration"
+    src="/images/connectors/s3/instance_card.png"
+    alt="S3 instance card with Sync Paused and Sync Enabled toggle"
     className="block mx-auto w-11/12"
   />
 </div>
 
-#### Sync Filters
+Right now the card says **Sync Paused** — nothing is being synced yet.
 
-Sync filters determine which content is downloaded from S3. Data excluded by sync filters is never downloaded.
+1. Find the **Sync Enabled** row at the bottom of the card.
+2. Click the toggle so it turns **on**.
 
-**Available Sync Filters:**
-
-1. **Bucket Names** - Filter by specific S3 buckets
-   - **Operator**: `In` (include only) or `Not In` (exclude)
-   - **Selection**: Choose from a **searchable dropdown list** of all your S3 buckets
-   - The dropdown displays all accessible buckets
-   - Type to search and filter buckets by name
-   - Select multiple buckets as needed
+That's it — PipesHub will now start pulling files from S3.
 
 <Info>
-  The bucket list is dynamically fetched from your AWS account. You don't need to manually enter bucket names - simply search and select from the dropdown.
+  Want to connect a second AWS account? Click **+ Add Another Instance** in the top-right and repeat Steps 5–8 with the new account's keys.
 </Info>
 
-2. **File Extensions** - Filter files by extension
-   - **Operator**: `In` (include) or `Not In` (exclude)
-   - **Value**: Enter file extensions separated by commas (e.g., `pdf, docx, txt`)
-   - **Note**: Extensions are case-insensitive and don't require the leading dot
-   - **Use case**: Sync only specific file types (e.g., documents only, exclude images)
+### Step 9: Check that sync is working
 
-3. **Modified Date** - Filter by last modification date
-   - **Operators**: `Is After`, `Is Before`, or `Is Between`
-   - **Use case**: Sync only recently updated files (e.g., files modified in the last 6 months)
-
-4. **Created Date** - Filter by creation date
-   - **Operators**: `Is After`, `Is Before`, or `Is Between`
-   - **Use case**: Sync only newly created files or exclude legacy files
-
-#### Indexing Filters
-
-Indexing filters control what synced data gets processed for AI search. All data is synced, but only enabled content types are indexed.
-
-**Available Indexing Filters:**
-
-- **Index Files** (default: enabled) - Include file content in search
-- **Index Folders** (default: enabled) - Include folder structure in search
-
-**Example Configurations:**
-
-- **Sync only specific buckets**: Bucket Names → Operator: `In`, select buckets from dropdown
-- **Sync only documents**: File Extensions → Operator: `In`, Value: `pdf, docx, txt, pptx`
-- **Exclude images**: File Extensions → Operator: `Not In`, Value: `jpg, png, gif, svg`
-- **Recent files only**: Modified Date → Operator: `Is After`, Date: `YYYY-MM-DD` (e.g., files modified in the last 6 months)
-- **Sync all but index only documents**: Enable all sync filters, disable indexing for non-document files
-
-<Info>
-  Filters can be configured during initial setup or modified later. Changes to filters will take effect on the next sync.
-</Info>
-
-### Step 7: Enable the Connector
-
-1. After configuration is complete, toggle the connector status to **"Enable"**
-2. You can do this by:
-   - Using the toggle switch next to **"Connector Status"**
-   - Or clicking the **"Enable"** button in the Quick Actions panel
+Click the instance card to open the **Overview** panel. This shows you live progress.
 
 <div className="text-center">
   <img
-    src="/images/connectors/s3/enable_connector.png"
-    alt="Enable S3 Connector"
+    src="/images/connectors/s3/instance_panel.png"
+    alt="S3 instance Overview panel with Records Status and Records by Type"
     className="block mx-auto w-11/12"
   />
 </div>
 
-3. The connector will verify credentials and begin initial synchronization
-4. Wait for the status to show **"Active"** or **"Syncing"**
-5. Monitor the **Indexing Progress** to track sync completion
+What to look at:
+
+- **Records Status** — the main scoreboard:
+  - **Total** — how many files PipesHub knows about.
+  - **Failed** — files that couldn't be fetched (usually a permission problem in AWS).
+  - **Unsupported** — file types PipesHub can't read (e.g. encrypted or unknown binary).
+  - **Processing** — being indexed right now.
+  - **Not Started** — waiting in the queue.
+- **Records by Type** — shows how many **FILE** records have been synced.
+- **Sync** (top right) — click it to pull the latest changes right now.
+- **Full sync** — click this to re-scan everything from scratch (slower; use only if something looks wrong).
+- **Manage Configuration** — opens the setup panel again if you need to change keys or filters.
+
+If **Total** keeps going up and **Failed** stays at `0`, everything's working.
 
 ## Advanced: Custom IAM Policy
 

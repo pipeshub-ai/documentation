@@ -82,7 +82,7 @@ The GitHub connector uses **OAuth Apps** for secure authentication.
 <div className="text-center">
   <img
     src="/images/connectors/github/oauth_app_page.png"
-    alt="GitHub Oauth Apps"
+    alt="GitHub OAuth Apps"
     className="block mx-auto w-11/12"
   />
 </div>
@@ -92,7 +92,7 @@ The GitHub connector uses **OAuth Apps** for secure authentication.
 1. Click the **"New OAuth App"** button in the top right corner
 2. Fill in the application details:
    - **Application Name**: Enter a meaningful name (e.g., "PipesHub GitHub Connector")
-   - **Homepage URL**: Enter Pipeshub Homepage URL (e.g., "http://localhost:3001")
+   - **Homepage URL**: Enter PipesHub Homepage URL (e.g., "http://localhost:3001")
    - **Application description**: Description about app (Optional)
    - **Authorization callback URL**: 
       - You need to enter the redirect URI provided by PipesHub
@@ -131,7 +131,7 @@ The GitHub connector uses **OAuth Apps** for secure authentication.
 
 ### Step 4: Configure Connector in PipesHub
 
-1. Return to the PipesHub GitHub configuration dialog (if you closed it, navigate to **Pipeshub(bottom left corner)** → **Workspace settings** → **Connectors** → **Your Connectors**, find the **Github** connector, and click **Setup**)
+1. Return to the Pipeshub Github configuration dialog (if you closed it, navigate to **Pipeshub (bottom left corner)** → **Workspace settings** → **Connectors** → **Your Connectors**, find the **Github** connector, and click **Setup**)
 2. The configuration dialog has two steps:
    - **Step 1: Authentication** - Enter OAuth credentials
    - **Step 2: Sync Settings** - Configure synchronization
@@ -167,7 +167,7 @@ The GitHub connector uses **OAuth Apps** for secure authentication.
 <div className="text-center">
   <img
     src="/images/connectors/github/github-permissions-page.png"
-    alt="GitHub sign-in redirect"
+    alt="GitHub permissions page"
     className="block mx-auto w-11/12"
   />
 </div>
@@ -260,7 +260,7 @@ The GitHub connector syncs the following data from your GitHub repositories:
 - Update both configurations to use the same URL
 
 **Authorization failed:**
-- Verify you're signing in with an account that has GitHub
+- Verify you're signing in with a valid GitHub account that has access to the required repositories
 
 **No data syncing:**
 - Verify the connector status shows "Active"
@@ -294,7 +294,7 @@ The `run_sync` method executes a complete synchronization cycle in a specific or
 
 | Step | Function | Data Synced | Purpose |
 |------|----------|-------------|---------|
-| 1 | `_fetch_users()` | Users | Sync Github user |
+| 1 | `_fetch_users()` | Users | Sync GitHub user |
 | 2 | `_sync_all_repo_issue()` | Issues and Pull requests | Fetch issues and pull requests of repositories |
 
 ### Full Sync vs Incremental Sync
@@ -307,8 +307,7 @@ The connector automatically determines whether to perform a full or incremental 
 
 **Incremental Sync** occurs when:
 - A valid sync checkpoint exists
-- Uses API requests with params `updated >= "last_sync_time"` to fetch only changes
-
+- Uses the saved sync checkpoint to fetch or filter for records updated since the last sync time
 ### Issue and Pull Requests Synchronization
 
 <Note>
@@ -386,7 +385,7 @@ Common causes:
 </Accordion>
 
 <Accordion title="Why do I see no issues after authenticating?">
-  The most common causes are missing scopes or selecting the wrong GitHub account. Re-run authentication, ensure the PipesHub mail and GitHub account mail matches.
+  The most common causes are missing scopes or selecting the wrong GitHub account. Re-run authentication, ensure the PipesHub email and GitHub account email matches.
 </Accordion>
 
 </AccordionGroup>

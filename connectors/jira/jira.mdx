@@ -119,7 +119,7 @@ This prerequisite applies to **both** authentication methods (OAuth and API Toke
 
 <Tabs>
 
-<Tab title="OAuth 2.0 (Recommended)">
+<Tab title="OAuth 2.0">
 
 #### Step 1: Access the Atlassian Developer Console
 
@@ -440,17 +440,17 @@ Available sync filters:
 - *Recent issues only:* Modified Date → Operator `Is After` → Date `2024-06-01`
 - *Index issues but not attachments:* disable the **Index Issue and Comment Attachments** toggle
 
-Click **Save** to save your configuration. PipesHub confirms the instance is ready with a final dialog — **"Instance is configured and ready to sync"** — offering two choices: **I'll do it later** or **Sync now**.
+Click **Save** to save your configuration. PipesHub confirms the instance is ready with a final dialog — **"Instance is configured and ready to sync"** — offering two choices: **I'll do it later** or **Start syncing now**.
 
 <div className="text-center">
   <img
     src="/images/connectors/jira/enable_connector.png"
-    alt="Instance is configured and ready to sync — I'll do it later or Sync now"
+    alt="Instance is configured and ready to sync — I'll do it later or Start syncing now"
     className="block mx-auto w-11/12"
   />
 </div>
 
-Choose **Sync now** to kick off the initial sync immediately, or **I'll do it later** to enable the connector without an immediate sync. Monitor the **Indexing Progress** to track sync completion.
+Choose **Start syncing now** to kick off the initial sync immediately, or **I'll do it later** to enable the connector without an immediate sync. Monitor the **Indexing Progress** to track sync completion.
 
 </Tab>
 
@@ -496,7 +496,7 @@ Use this method when you want the fastest setup and only need a single user acco
 2. The connector panel opens as a right-side drawer with three tabs: **Authenticate Instance**, **Authorize**, and **Configure Records**.
 3. On the **Authenticate Instance** tab, pick **API Token** in the **Authentication method** dropdown.
 4. Enter:
-   - **Atlassian Site URL** — your Jira site URL (e.g., `https://your-domain.atlassian.net`; no trailing slash)
+   - **Base URL** — your Jira site URL (e.g., `https://your-domain.atlassian.net`; no trailing slash)
    - **Email** — your Atlassian account email (the account that created the API token)
    - **API Token** — the token you copied in Step 1
 5. Click **Next**. PipesHub validates the credentials and advances directly to the **Configure Records** tab (the **Authorize** tab is skipped for API Token because the token authenticates on its own).
@@ -504,7 +504,7 @@ Use this method when you want the fastest setup and only need a single user acco
 <div className="text-center">
   <img
     src="/images/connectors/jira/connector_api_token_form.png"
-    alt="Authenticate Instance tab with API Token method — Email, API Token, Atlassian Site URL fields"
+    alt="Authenticate Instance tab with API Token method — Base URL, Email, API Token fields"
     className="block mx-auto w-11/12"
   />
 </div>
@@ -553,17 +553,17 @@ Available sync filters:
 - **Index Issues** (default: enabled) — include issue content (description + comments) in search
 - **Index Issue and Comment Attachments** (default: enabled) — include attachments in search
 
-Click **Save** to save your configuration. PipesHub confirms the instance is ready with a final dialog — **"Instance is configured and ready to sync"** — offering two choices: **I'll do it later** or **Sync now**.
+Click **Save** to save your configuration. PipesHub confirms the instance is ready with a final dialog — **"Instance is configured and ready to sync"** — offering two choices: **I'll do it later** or **Start syncing now**.
 
 <div className="text-center">
   <img
     src="/images/connectors/jira/enable_connector.png"
-    alt="Instance is configured and ready to sync — I'll do it later or Sync now"
+    alt="Instance is configured and ready to sync — I'll do it later or Start syncing now"
     className="block mx-auto w-11/12"
   />
 </div>
 
-Choose **Sync now** to kick off the initial sync immediately, or **I'll do it later** to enable the connector without an immediate sync.
+Choose **Start syncing now** to kick off the initial sync immediately, or **I'll do it later** to enable the connector without an immediate sync.
 
 </Tab>
 
@@ -614,9 +614,9 @@ The Jira connector syncs the following data from your Jira Cloud workspace:
 - Confirm the token was copied correctly — no leading/trailing whitespace
 - The token may have been revoked or expired; create a new one at [id.atlassian.com/manage-profile/security/api-tokens](https://id.atlassian.com/manage-profile/security/api-tokens)
 - Verify the **Email** field matches the Atlassian account that created the token
-- Verify the **Atlassian Site URL** matches your Jira site (must include `https://`, no trailing slash, match `*.atlassian.net`)
+- Verify the **Base URL** matches your Jira site (must include `https://`, no trailing slash, match `*.atlassian.net`)
 
-**Atlassian Site URL format issues:**
+**Site URL format issues (OAuth: Atlassian Site URL / API Token: Base URL):**
 - Must include the protocol: `https://`
 - Must **not** include a trailing slash — use `https://acme.atlassian.net`, not `https://acme.atlassian.net/`
 - Must match the actual Jira Cloud site (usually `*.atlassian.net`)
@@ -756,7 +756,6 @@ After each successful sync:
 |---|-----------|-----------|
 | **Best for** | Multi-user / org-wide rollouts, production | Single-account setups, quick POCs |
 | **Credentials model** | Per-user consent, rotating refresh tokens | Single token, long-lived until revoked |
-| **Audit trail** | Per-user in Atlassian audit log | All activity attributed to the token owner |
 | **Prerequisites** | Atlassian Developer Console admin access | Any Atlassian account |
 
 Choose **OAuth** for production and anything that needs per-user attribution. Choose **API Token** when you cannot register a developer-console app or just want to get syncing quickly. Both methods sync the same data.

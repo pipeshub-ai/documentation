@@ -3,12 +3,7 @@ title: "GitHub"
 description: "Code repository and version control connector"
 icon: "/logo/github.png"
 ---
-<div className="flex flex-col items-center justify-center text-center pt-10">
-  <h1 className="text-4xl font-bold">✅ GitHub Connector Ready</h1>
-  <h3 className="text-xl mt-2">
-    Connector is live and ready to use. Documentation in process!
-  </h3>
-</div>
+
 <div className="max-w-2xl mx-auto mt-12">
   <div className="p-6 border rounded-lg bg-gray-50">
     <div className="flex items-center mb-4">
@@ -17,7 +12,7 @@ icon: "/logo/github.png"
         alt="GitHub Logo" 
         className="w-8 h-8 mr-3 object-contain flex-shrink-0"
       />
-      <h2 className="text-2xl font-semibold m-0"> GitHub</h2>
+      <h2 className="text-2xl font-semibold m-0">GitHub</h2>
     </div>
     <p className="text-lg text-gray-700 mb-4">Code repository and version control</p>
     <div className="flex items-center gap-2">
@@ -25,15 +20,381 @@ icon: "/logo/github.png"
         ✅ Ready
       </span>
       <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
-        📝 Documentation in process
+        📖 Documentation Available
       </span>
     </div>
   </div>
 </div>
-<div className="text-center mt-12 p-6 bg-gray-50 rounded-lg max-w-2xl mx-auto">
-  <h3 className="text-lg font-semibold mb-2">Need Help Getting Started?</h3>
-  <p className="text-gray-600">
-    The GitHub connector is fully operational and ready for use. While we're finalizing the documentation, 
-    feel free to reach out to our support team for setup assistance.
+## Overview
+
+GitHub is the world's most widely used platform for hosting, versioning, and collaborating on software development projects. It is trusted by individual developers, engineering teams, and enterprises to manage code repositories, automate CI/CD workflows, perform peer code reviews, and track project progress through integrated issue and project management tools.
+
+### GitHub Data Structure
+
+The connector understands various entities of GitHub.
+
+**Repositories → Issues & Pull Requests → Comments/Attachments**
+
+| Entity | Description |
+|--------|-------------|
+| **Repositories** | Top-level containers for code |
+| **Issues** | Work items such as bugs, tasks, and feature requests |
+| **Pull Requests** | Proposed code changes with reviews and merge history |
+| **Comments** | Discussion on issues, pull requests, and review feedback |
+| **Attachments** | Files and images uploaded to or embedded in issues, pull requests, and comments |
+
+### What Gets Synced
+
+The connector indexes the following content for AI-powered search:
+
+- **Issues**: Title, description (Markdown with embedded images), status, labels; assignee, created/updated timestamps
+- **Pull requests**: Same body, comment, and attachment coverage as issues, plus **commit SHAs**, **changed files with patches (diffs)**, **per-file review comments** on the diff, and **PR review submissions** (approve / request changes / comment); assignee and created/updated timestamps
+- **Comments**: Full threads on issues and on pull requests (including the PR conversation), with author context where available
+- **Attachments**: Files and images attached to or embedded in issue/PR bodies and comments
+
+---
+
+## Configuration Guide
+
+<AccordionGroup type="single" collapsible>
+
+<Accordion title="Setup" icon="gear">
+
+<div className="mt-4">
+### Authentication Method
+
+The GitHub connector uses **OAuth Apps** for secure authentication.
+
+<Info>
+  An OAuth App is used as it provides secure, token-based access without requiring users to share their passwords.
+</Info>
+
+### Generating Client ID and Secret
+
+### Step 1: Access GitHub Developer Settings
+
+1. **Navigate to the Developer Console:**  
+   Go to [settings/developers](https://github.com/settings/developers) and sign in with your GitHub account.
+
+2. **View Your Apps:**
+   You'll see the "OAuth apps" page where you can create and manage OAuth 2.0 apps.
+
+<div className="text-center">
+  <img
+    src="/images/connectors/github/oauth_app_page.png"
+    alt="GitHub OAuth Apps"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+### Step 2: Create a New OAuth App
+
+1. Click the **"New OAuth App"** button in the top right corner
+2. Fill in the application details:
+   - **Application Name**: Enter a meaningful name (e.g., "PipesHub GitHub Connector")
+   - **Homepage URL**: Enter PipesHub Homepage URL (e.g., "http://localhost:3001")
+   - **Application description**: Description about app (Optional)
+   - **Authorization callback URL**: 
+      - You need to enter the redirect URI provided by PipesHub
+      - To get this URL, open PipesHub in another tab, navigate to **PipesHub (bottom left corner)** → **Workspace settings** → **Connectors** → **Your Connectors**, find the **Github** connector, and click **"Setup"**
+        <Info>
+          GitHub OAuth App allows only one callback URL.
+        </Info>
+      - Copy the **Redirect URL** shown in the configuration dialog:
+    <div className="text-center">
+      <img
+        src="/images/connectors/github/copy_redirect_url.png"
+        alt="PipesHub GitHub Configuration - Copy Redirect URL"
+        className="block mx-auto w-11/12"
+      />
+    </div>
+
+3. Click **"Register Application"** to proceed
+
+### Step 3: Get OAuth Credentials
+
+1. Copy the following credentials:
+   - **Client ID**: Your app's unique identifier
+   - **Secret**: Your app's client secret (click **"Generate a new client secret"**)
+
+<div className="text-center">
+  <img
+    src="/images/connectors/github/copy_github_creds.png"
+    alt="OAuth Credentials"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+<Warning>
+  Store the Client ID and Client Secret securely. The secret can be regenerated if needed, but you'll need to update your PipesHub configuration with the new value.
+</Warning>
+
+### Step 4: Configure Connector in PipesHub
+
+1. Return to the Pipeshub Github configuration dialog (if you closed it, navigate to **Pipeshub (bottom left corner)** → **Workspace settings** → **Connectors** → **Your Connectors**, find the **Github** connector, and click **Setup**)
+2. The configuration dialog has two steps:
+   - **Step 1: Authentication** - Enter OAuth credentials
+   - **Step 2: Sync Settings** - Configure synchronization
+
+3. Verify the **Redirect URI** displayed matches the callback URL you configured in GitHub Developer Settings (Step 2)
+
+4. Enter your OAuth 2.0 credentials:
+   - **Application (Client) ID**: From previous step
+   - **Client Secret**: From previous step
+<div className="text-center">
+  <img
+    src="/images/connectors/github/ph-github-auth.png"
+    alt="Enter OAuth Credentials in PipesHub"
+    className="block mx-auto w-11/12"
+  />
+</div>
+5. Click **"Next"** to move forward
+
+### Step 5: Authorize the Connection
+
+1. After saving the configuration, click **"Authenticate GitHub to Proceed"**
+2. You'll be redirected to GitHub's authorization page
+<div className="text-center">
+  <img
+    src="/images/connectors/github/ph-github-redirect.png"
+    alt="GitHub sign-in redirect"
+    className="block mx-auto w-11/12"
+  />
+</div>
+3. Enter GitHub login credentials and click **Sign In**
+4. User will be shown the set of permissions needed, click **Authorize** to grant permissions
+
+<div className="text-center">
+  <img
+    src="/images/connectors/github/github-permissions-page.png"
+    alt="GitHub permissions page"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+| Scope | Description |
+|-------|-------------|
+| `user` | View user details |
+| `repo` | Grants full access to public and private repositories including read and write access |
+
+5. You'll be redirected back to PipesHub with a success message
+6. The connector status will update to show **"Connected — you can continue to Configure records"**
+
+<div className="text-center">
+  <img
+    src="/images/connectors/github/ph-github-oauth-done.png"
+    alt="GitHub OAuth completed"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+### Step 6: Enable and Configure the Connector
+
+1. After successful authentication, click **"Continue to configuration"** to activate the connector
+2. A configuration dialog will appear with a section:
+   - **Sync Settings** - Configure synchronization strategy and schedule
+<div className="text-center">
+  <img
+    src="/images/connectors/github/ph-github-sync-settings.png"
+    alt="Sync settings GitHub Connector"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+#### Sync Settings
+
+Configure your synchronization preferences:
+
+1. **Sync Strategy**: Choose between "Scheduled" or "Manual"
+2. **Sync Interval**: Choose how often to sync (default: 60 minutes)
+
+<Note>
+  **Scheduled sync** runs automatically at the specified intervals, keeping your data up-to-date without manual intervention. **Manual sync** requires you to trigger synchronization on-demand.
+</Note>
+
+#### Save and Activate
+
+1. Click **"Save Configuration"** to save your configuration.
+2. User will be prompted to begin synchronization.
+3. The connector will verify credentials and begin initial synchronization
+4. Monitor the **Indexing Progress** to track sync completion
+
+## Supported Features
+
+The GitHub connector syncs the following data from your GitHub repositories:
+
+- **Repositories**: All accessible repositories
+- **Issues**: Full issue content including description, status, comments
+- **Pull Requests**: Full pull request content including description, merge status, commit history, review comments, comments and file changes
+- **Comments**: All comments on issues and pull requests with author information
+- **Attachments**: Files attached to issues, pull requests (images, documents, etc.)
+
+## Useful Links
+
+- **GitHub Developer Settings**: [settings/developers](https://github.com/settings/developers)
+- **OAuth App Documentation**: [oauth-apps/building-oauth-apps/creating-an-oauth-app](https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/creating-an-oauth-app)
+- **GitHub REST API Documentation**: [github/rest](https://docs.github.com/en/rest)
+
+</div>
+</Accordion>
+
+</AccordionGroup>
+
+## Troubleshooting
+
+<AccordionGroup>
+
+<Accordion title="Troubleshooting" icon="circle-exclamation">
+
+### Common Issues
+
+**Invalid client credentials error:**
+- Verify Client ID and Client Secret are correct
+- Ensure you copied the full values without extra spaces
+- Check that the OAuth app is active in GitHub Developer Settings
+- Regenerate the secret if necessary and update PipesHub
+
+**Callback URL mismatch error:**
+- Ensure the Redirect URI in PipesHub exactly matches the callback URL in GitHub
+- Check for trailing slashes or protocol differences (http vs https)
+- Update both configurations to use the same URL
+
+**Authorization failed:**
+- Verify you're signing in with a valid GitHub account that has access to the required repositories
+
+**No data syncing:**
+- Verify the connector status shows "Active"
+- Check that the authenticating user has owned repositories
+- Review sync logs for specific error messages
+
+**Token expired or sync stopped:**
+- Disable and re-enable the connector to re-authenticate
+- Check if the OAuth app is still active in GitHub Developer Settings
+
+<Warning>
+  If you modify OAuth application settings in GitHub Developer Settings (Client ID, Secret, callback URL), you must update the configuration in PipesHub and re-authorize the connection.
+</Warning>
+
+</Accordion>
+
+</AccordionGroup>
+
+
+## Connector Workflow
+
+<AccordionGroup>
+
+<Accordion title="Synchronization Process" icon="sync">
+
+The GitHub connector follows a structured synchronization process to ensure all data is accurately synced with proper permissions.
+
+### Sync Overview
+
+The `run_sync` method executes a complete synchronization cycle in a specific order:
+
+| Step | Function | Data Synced | Purpose |
+|------|----------|-------------|---------|
+| 1 | `_fetch_users()` | Users | Sync GitHub user |
+| 2 | `_sync_all_repo_issue()` | Issues and Pull requests | Fetch issues and pull requests of repositories |
+
+### Full Sync vs Incremental Sync
+
+The connector automatically determines whether to perform a full or incremental sync:
+
+**Full Sync** occurs when:
+- First-time synchronization (no sync checkpoint exists)
+- Manual full sync is triggered
+
+**Incremental Sync** occurs when:
+- A valid sync checkpoint exists
+- Uses the saved sync checkpoint to fetch or filter for records updated since the last sync time
+### Issue and Pull Requests Synchronization
+
+<Note>
+  GitHub considers all **Pull requests** as issues.
+</Note>
+
+For each repository, the connector fetches **issues and pull requests** from the GitHub API. Each record is normalized into a **hierarchical BlockGroup layout** inside a **BlocksContainer**: the description, conversation, and (for pull requests) code-review context are kept in separate block groups so search and retrieval can target the right slice of content.
+
+#### Body, comments, and attachments
+
+For each **issue and pull request**, the connector:
+
+- **Description**: Stores the body as the first **BlockGroup** (index 0). Markdown is preserved and inline images are embedded in the indexed representation.
+- **Comments**: Stores each top-level comment as its own **BlockGroup** in thread order.
+- **Attachments and images**: Applies the same extraction and **placement** rules for issues and pull requests—files and images are mapped to the **description** or the **specific comment** they belong to.
+
+<Info>
+  Pull requests use the same body, comment, and attachment handling as issues. The section below lists **additional** content indexed only for pull requests.
+</Info>
+
+#### Additionally for pull requests
+
+- **Commits**: **Commit SHAs** (and related commit context) are synced as dedicated blocks so answers can be tied to the commits on the PR.
+- **Changed files**: For files touched by the PR, the connector indexes **file content** together with the **diff** (patch) for that change.
+- **Review comments on the diff**: **Per-file** review comments on the PR changes—including line-associated feedback where GitHub provides it—are indexed separately from regular issue/PR conversation comments.
+- **Reviews**: PR-level **review submissions** (for example approve, request changes, or comment-only review) are indexed as distinct material from inline review-comment threads.
+
+#### Sync pipeline (summary)
+
+1. **Fetch** all issues and pull requests for the repository (respecting full vs incremental sync rules above).
+2. **Batch** records for processing.
+3. **Build BlockGroups** for description and comments; **map** attachments and images to the description or the correct comment.
+4. **For pull requests only**, add blocks for commits, changed files with diffs, review comments on changes, and review submissions.
+
+<Note>
+  Comments are stored as **BlockGroups** within the parent issue or pull request **BlocksContainer** (not as separate top-level records). That keeps threads organized and ensures comments are removed when the parent record is deleted.
+</Note>
+
+### Checkpoint Management
+
+After each successful sync:
+- Stores the latest issue update timestamp as checkpoint for each repository
+
+</Accordion>
+
+</AccordionGroup>
+
+---
+
+## FAQ
+
+<AccordionGroup>
+
+<Accordion title="Queries not returning results. What could be wrong?">
+
+Common causes:
+
+1. **Email mismatch** - The email used during connector authentication doesn't match your PipesHub account email. This causes permission issues preventing you from accessing synced data.
+   - **Fix:** Reconfigure the connector and authenticate using the same email as your PipesHub account.
+
+2. **Data not yet indexed** - The connector is still syncing or hasn't completed the initial indexing process.
+   - **Fix:** Go to **Settings > Connectors**, check the sync status, and wait for indexing to complete.
+
+</Accordion>
+
+<Accordion title="How long does the initial sync take?">
+  The initial sync duration depends on the size of your GitHub repositories:
+  
+  | Approx Issue & PR count | Estimated Time |
+  |----------------|----------------|
+  | Small (< 1,000) | 1-5 minutes |
+  | Medium (1,000 - 10,000 ) | 5-15 minutes |
+  | Large (10,000 - 50,000 ) | 15-45 minutes |
+
+</Accordion>
+
+<Accordion title="Why do I see no issues after authenticating?">
+  The most common causes are missing scopes or selecting the wrong GitHub account. Re-run authentication, ensure the PipesHub email and GitHub account email matches.
+</Accordion>
+
+</AccordionGroup>
+
+---
+
+<div className="text-center mt-12 p-6 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg max-w-2xl mx-auto">
+  <h3 className="text-lg font-semibold mb-2">Ready to Get Started?</h3>
+  <p className="text-gray-600 dark:text-gray-400">
+    Connect your GitHub account to PipesHub in just a few minutes. Follow the step-by-step guide above to enable repository issues and pull-requests search across all your GitHub content.
   </p>
 </div>

@@ -48,7 +48,7 @@ The connector understands various entities of GitLab.
 
 The connector indexes the following content for AI-powered search:
 
-- **Projects**: All accessible projects and their code on default branch
+- **Projects**: All accessible projects and their code on the default branch
 - **Work Items**: All work items and their comments and attachments
 - **Merge Requests**: Same body, comment, and attachment coverage as work items, plus **commit SHAs**, **changed files with patches (diffs)**, **per-file review comments** on the diff, and **MR review submissions** (approve / request changes / comment); assignee and created/updated timestamps
 - **Comments**: All comments on work items, merge requests, and review feedback
@@ -67,6 +67,56 @@ The GitLab connector uses **OAuth 2.0** for secure authentication.
 
 <Info>
   OAuth 2.0 is used as it provides secure, token-based access without requiring users to share their passwords.
+</Info>
+
+### ⚠️ Critical User Configuration Requirement
+
+<Warning>
+  <div className="text-lg font-semibold">
+    **Each user in your organization must set their email address to be publicly visible** in order for PipesHub to correctly assign permissions and make records accessible.
+  </div>
+</Warning>
+
+### Why Email Visibility Matters
+
+PipesHub uses email addresses to match GitLab users with their permissions. If a user's email is hidden:
+- PipesHub cannot identify the user when syncing permissions
+- Records will appear invisible to that user even if they have proper access in GitLab
+- The user won't be able to see any content they should have access to
+
+### How to Configure Email Visibility
+
+Every user must complete these steps in their GitLab account:
+
+1. Sign in to your GitLab account.
+2. Click on your **Profile picture** in the top right → Select **"Edit profile"**
+
+<div className="text-center">
+  <img
+    src="/images/connectors/gitlab/access_user_profile.png"
+    alt="Access User Profile"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+2. Select the **"Profile"** tab
+3. Scroll down to the **"Public email"** section
+4. Choose the email address to show on your public profile
+
+<div className="text-center">
+  <img
+    src="/images/connectors/gitlab/select_public_email.png"
+    alt="Set public email"
+    className="block mx-auto w-11/12"
+  />
+</div>
+5. Click **Update profile settings** to save updated details
+<Warning>
+  **DO NOT select "Do not show on profile"** - this will prevent PipesHub from accessing your email address and matching you to permissions, making all records invisible to you.
+</Warning>
+
+<Info>
+  This is a **per-user setting** that must be configured by each individual user in your organization. Administrators cannot change this setting for other users. We recommend communicating this requirement to your team during the GitLab connector rollout.
 </Info>
 
 ### Generating Client ID and Secret
@@ -214,7 +264,7 @@ Configure your synchronization preferences:
 
 The GitLab connector syncs the following data from your GitLab projects:
 
-- **Projects**: All accessible projects and their code on default branch
+- **Projects**: All accessible projects and their code on the default branch
 - **Work Items**: All work items (issues, tasks, and incidents) content including description, status, comments
 - **Merge Requests**: Full merge request content including description, merge status, commit history, review comments, comments and file changes
 - **Comments**: All comments on work items, merge requests with author information
@@ -250,7 +300,7 @@ The GitLab connector syncs the following data from your GitLab projects:
 - Update both configurations to use the same URL
 
 **Authorization failed:**
-- Verify you're signing in with a valid GitLab account that has access to the required repositories
+- Verify you're signing in with a valid GitLab account that has access to the required projects
 
 **No data syncing:**
 - Verify the connector status shows "Active"
@@ -308,7 +358,7 @@ The connector automatically determines whether to perform a full or incremental 
 2. **Role Assignment**: Syncs project-specific roles (Guest, Planner, Developer, etc.)
 
 ### Code Repository Synchronization
-1. **Code Repository Fetch**: Retrieves the code repository of the project on default branch
+1. **Code Repository Fetch**: Retrieves the code repository of the project on the default branch
 
 ### Work Item Synchronization
 
@@ -381,8 +431,8 @@ Common causes:
 
 </Accordion>
 
-<Accordion title="Why do I see no issues after authenticating?">
-  The most common causes are missing scopes or selecting the wrong GitLab account. Re-run authentication, ensure the PipesHub email and GitLab account email matches.
+<Accordion title="Why do I see no records after authenticating?">
+  The most common causes are missing scopes or selecting the wrong GitLab account. Re-run authentication, ensure the PipesHub email and GitLab account emails match.
 </Accordion>
 
 </AccordionGroup>

@@ -201,6 +201,103 @@ Verify that both `certificate.crt` and `privatekey.key` exist. Open each file, a
   />
 </div>
 
+### Step 6: Configure Connector in PipesHub
+
+1. Navigate to **Workspace Settings** > **Connectors** in your application.
+<div style={{ textAlign: "center" }}>
+  <img
+    src="/images/connectors/microsoft365/sharepoint/6.png"
+    alt="Uploading certificate to Azure App"
+    style={{ display: 'block', margin: '0 auto' }}
+    width="90%"
+  />
+</div>
+2. Find the **SharePoint** connector and click **"Setup"**
+3. Enter the following details:
+   - Enter a name for your connector Instance
+   - **Application (Client) ID**: From Step 2
+   - **Directory (Tenant) ID**: From Step 2
+   - **SharePoint Domain**: The domain of your SharePoint site (e.g., `https://yourcompany.sharepoint.com`)
+   - Check the **"Has Admin Consent"** checkbox
+   - Upload the **Client Certificate** and **Private Key** that you generated in Step 5
+<div style={{ textAlign: "center" }}>
+  <img
+    src="/images/connectors/microsoft365/sharepoint/4.png"
+    alt="Uploading certificate to Azure App"
+    style={{ display: 'block', margin: '0 auto' }}
+    width="90%"
+  />
+</div>
+4.Click **"Save"**
+
+
+
+</Accordion>
+
+<Accordion title="Configure Settings" icon="gear">
+## Sync Settings
+Sync settings allow you to control how the connector syncs data from SharePoint.
+
+**Sync Strategy:**
+- **Scheduled** - The connector will automatically sync data from SharePoint at the scheduled interval.
+- **Manual** - The connector will sync data from SharePoint only when Admin manually triggers the sync from the connector settings page.
+
+**Sync Interval:**
+how often to sync (default: 60 minutes).
+
+## Filters
+Filters let you control exactly what PipesHub syncs and indexes from your SharePoint environment. They are split into two categories:
+ 
+- **Sync filters** — applied during the sync phase. They determine which sites, libraries, files, and content are fetched from SharePoint.
+- **Indexing filters** — applied after content is fetched. They determine which content types are actually indexed and made searchable.
+
+<div style={{ textAlign: "center" }}>
+  <img
+    src="/images/connectors/microsoft365/sharepoint/8.png"
+    alt="Uploading certificate to Azure App"
+    style={{ display: 'block', margin: '0 auto' }}
+    width="90%"
+  />
+</div>
+
+---
+ 
+
+### Sync Filters
+ 
+These filters run before any data is pulled from SharePoint. Content that doesn't pass a sync filter is never fetched, saving time and API quota, also helps exclude unwanted content. 
+ 
+| Filter | Default | What it does |
+|---|---|---|
+| **Site Names** | All sites | Choose from a searchable dropdown list of all your SharePoint sites. Choose whether to **Include** or **Exclude** the selected sites from the sync process. If left empty, all sites are synced. |
+| **Document Library Names** | All libraries | Choose from a searchable dropdown list of all your SharePoint document libraries. Choose whether to **Include** or **Exclude** the selected libraries from the sync process. If left empty, all libraries are synced. |
+| **File Extensions** | All extensions | Filters files by their extension. Supports **Include** (only sync files with the listed extensions) and **Exclude** (sync everything except files with those extensions). ex. Exlude: *jpg*, *mp4* |
+| **Modified Date** | No restriction | Filters files and pages by their last modified date. You can set a start date, an end date, or both. Items modified outside the configured range are skipped. |
+| **Created Date** | No restriction | Filters files and pages by their creation date. You can set a start date, an end date, or both. Items created outside the range are skipped. |
+
+<div style={{ textAlign: "center" }}>
+  <img
+    src="/images/connectors/microsoft365/sharepoint/7.png"
+    alt="Uploading certificate to Azure App"
+    style={{ display: 'block', margin: '0 auto' }}
+    width="90%"
+  />
+</div>
+---
+
+### Indexing Filters
+ 
+These filters run after content has been fetched. They control which content types are passed to the indexing pipeline automatically and made available for search and AI queries.
+ 
+| Filter | Default | What it does |
+|---|---|---|
+| **Enable Manual Indexing** | Off | When enabled, None of the records will be indexed automatically. You can then go to **All Records** section to index the records manually. |
+| **Index Pages** | Enabled | When disabled, sharepoint pages are fetched during sync but not indexed. you can go to **All Records** section to index the pages manually. |
+| **Index Documents** | Enabled | When disabled, files (Word docs, PDFs etc.) are fetched but not indexed. you can go to **All Records** section to index the documents manually. |
+
+---
+Once your settings are configured, click **Save Configuration**. PipesHub confirms the instance is ready with a final dialog — “Instance is configured and ready to sync” — offering two choices: I’ll do it later or Start syncing now.
+
 </Accordion>
 
 </AccordionGroup>
@@ -226,9 +323,9 @@ There are three common causes:
 
 </Accordion>
 
-<Accordion title="Is it possible to index only specific SharePoint sites?">
+<Accordion title="Is it possible to sync data from specific SharePoint sites?">
 
-Yes. When creating a SharePoint connector, the admin has the option to apply filters and select specific SharePoint sites for indexing. This allows you to limit the scope of indexed content to only the sites that are relevant to your organization's needs.
+Yes. When creating a SharePoint connector, the admin has the option to apply filters and select specific SharePoint sites for syncing. This allows you to limit the scope of synced data to only the sites that are relevant to your organization's needs.
 
 </Accordion>
 
@@ -238,7 +335,7 @@ Yes. You can achieve this by following these steps:
 
 1. **Create a dedicated connector instance** — Create a SharePoint connector instance for the site that contains the subfolders you want to index.
 
-2. **Select Manual Indexing** — When configuring the connector, choose the **Manual Indexing** option. This gives you granular control over which content gets indexed.
+2. **Select Manual Indexing** — When configuring the connector, choose the **Enable Manual Indexing** option. This gives you granular control over which content gets indexed.
 
 3. **Select the SharePoint site** — Use the filters to select the specific SharePoint site that contains the subfolders you want to index.
 

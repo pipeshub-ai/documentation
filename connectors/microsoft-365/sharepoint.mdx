@@ -67,7 +67,7 @@ The SharePoint connector uses OAuth 2.0 with Application Permissions via Microso
 <div style={{ textAlign: "center" }}>
   <img
     src="/images/connectors/microsoft365/sharepoint/1.png"
-    alt="SharePoint"
+    alt="Azure Portal: Register an application form in Microsoft Entra ID"
     style={{ display: 'block', margin: '0 auto' }}
     width="90%"
   />
@@ -86,7 +86,7 @@ After registration, you'll see the Overview page. Copy the following values (you
 <div style={{ textAlign: "center" }}>
   <img
     src="/images/connectors/microsoft365/sharepoint/2.png"
-    alt="SharePoint Application Credentials"
+    alt="App registration Overview with Application (client) ID and Directory (tenant) ID"
     style={{ display: 'block', margin: '0 auto' }}
     width="90%"
   />
@@ -117,6 +117,12 @@ Copy the "Application (client) ID" NOT the "Object ID". These are different valu
   - `Sites.FullControl.All`
 - Click **Add permissions**
 
+<Note>
+  **Permission Requirements:**
+  * `Sites.FullControl.All` is strictly required by the SharePoint API to fetch granular site group permissions.
+  * `Files.ReadWrite.All` is required by the Microsoft Graph API to establish and renew webhook subscriptions for document libraries.
+</Note>
+
 ### Step 4: Grant Admin Consent
 
 - On the API permissions page, click **"Grant admin consent for [Your Organization]"**
@@ -126,7 +132,7 @@ Copy the "Application (client) ID" NOT the "Object ID". These are different valu
 <div style={{ textAlign: "center" }}>
   <img
     src="/images/connectors/microsoft365/sharepoint/3.png"
-    alt="SharePoint Admin Consent Page"
+    alt="Microsoft Graph API permissions with Grant admin consent for your organization"
     style={{ display: 'block', margin: '0 auto' }}
     width="90%"
   />
@@ -195,7 +201,7 @@ Verify that both `certificate.crt` and `privatekey.key` exist. Open each file, a
 <div style={{ textAlign: "center" }}>
   <img
     src="/images/connectors/microsoft365/sharepoint/5.png"
-    alt="Uploading certificate to Azure App"
+    alt="App registration Certificates & secrets: client certificate uploaded to the application"
     style={{ display: 'block', margin: '0 auto' }}
     width="90%"
   />
@@ -207,7 +213,7 @@ Verify that both `certificate.crt` and `privatekey.key` exist. Open each file, a
 <div style={{ textAlign: "center" }}>
   <img
     src="/images/connectors/microsoft365/sharepoint/6.png"
-    alt="Uploading certificate to Azure App"
+    alt="PipesHub Workspace Settings with Connectors navigation"
     style={{ display: 'block', margin: '0 auto' }}
     width="90%"
   />
@@ -223,12 +229,12 @@ Verify that both `certificate.crt` and `privatekey.key` exist. Open each file, a
 <div style={{ textAlign: "center" }}>
   <img
     src="/images/connectors/microsoft365/sharepoint/4.png"
-    alt="Uploading certificate to Azure App"
+    alt="SharePoint connector setup form with tenant ID, domain, admin consent, and certificate fields"
     style={{ display: 'block', margin: '0 auto' }}
     width="90%"
   />
 </div>
-4.Click **"Save"**
+4. Click **"Save"**
 
 
 
@@ -243,7 +249,7 @@ Sync settings allow you to control how the connector syncs data from SharePoint.
 - **Manual** - The connector will sync data from SharePoint only when Admin manually triggers the sync from the connector settings page.
 
 **Sync Interval:**
-how often to sync (default: 60 minutes).
+In what interval the connector will sync data (default: 60 minutes).
 
 ## Filters
 Filters let you control exactly what PipesHub syncs and indexes from your SharePoint environment. They are split into two categories:
@@ -254,7 +260,7 @@ Filters let you control exactly what PipesHub syncs and indexes from your ShareP
 <div style={{ textAlign: "center" }}>
   <img
     src="/images/connectors/microsoft365/sharepoint/8.png"
-    alt="Uploading certificate to Azure App"
+    alt="SharePoint connector settings: sync strategy, sync interval, and filter sections"
     style={{ display: 'block', margin: '0 auto' }}
     width="90%"
   />
@@ -271,14 +277,14 @@ These filters run before any data is pulled from SharePoint. Content that doesn'
 |---|---|---|
 | **Site Names** | All sites | Choose from a searchable dropdown list of all your SharePoint sites. Choose whether to **Include** or **Exclude** the selected sites from the sync process. If left empty, all sites are synced. |
 | **Document Library Names** | All libraries | Choose from a searchable dropdown list of all your SharePoint document libraries. Choose whether to **Include** or **Exclude** the selected libraries from the sync process. If left empty, all libraries are synced. |
-| **File Extensions** | All extensions | Filters files by their extension. Supports **Include** (only sync files with the listed extensions) and **Exclude** (sync everything except files with those extensions). ex. Exlude: *jpg*, *mp4* |
+| **File Extensions** | All extensions | Filters files by their extension. Supports **Include** (only sync files with the listed extensions) and **Exclude** (sync everything except files with those extensions). e.g., Exclude: *jpg*, *mp4* |
 | **Modified Date** | No restriction | Filters files and pages by their last modified date. You can set a start date, an end date, or both. Items modified outside the configured range are skipped. |
 | **Created Date** | No restriction | Filters files and pages by their creation date. You can set a start date, an end date, or both. Items created outside the range are skipped. |
 
 <div style={{ textAlign: "center" }}>
   <img
     src="/images/connectors/microsoft365/sharepoint/7.png"
-    alt="Uploading certificate to Azure App"
+    alt="SharePoint connector sync filters: sites, libraries, file extensions, and date ranges"
     style={{ display: 'block', margin: '0 auto' }}
     width="90%"
   />
@@ -289,12 +295,9 @@ These filters run before any data is pulled from SharePoint. Content that doesn'
  
 These filters run after content has been fetched. They control which content types are passed to the indexing pipeline automatically and made available for search and AI queries.
  
-| Filter | Default | What it does |
-|---|---|---|
-| **Enable Manual Indexing** | Off | When enabled, None of the records will be indexed automatically. You can then go to **All Records** section to index the records manually. |
-| **Index Pages** | Enabled | When disabled, sharepoint pages are fetched during sync but not indexed. you can go to **All Records** section to index the pages manually. |
-| **Index Documents** | Enabled | When disabled, files (Word docs, PDFs etc.) are fetched but not indexed. you can go to **All Records** section to index the documents manually. |
-
+| **Enable Manual Indexing** | Off | When enabled, none of the records will be indexed automatically. You can then go to **All Records** section to index the records manually. |
+| **Index Pages** | Enabled | When disabled, SharePoint pages are fetched during sync but not indexed. You can go to **All Records** section to index the pages manually. |
+| **Index Documents** | Enabled | When disabled, files (Word docs, PDFs etc.) are fetched but not indexed. You can go to **All Records** section to index the documents manually. |
 ---
 Once your settings are configured, click **Save Configuration**. PipesHub confirms the instance is ready with a final dialog — “Instance is configured and ready to sync” — offering two choices: I’ll do it later or Start syncing now.
 

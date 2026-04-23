@@ -26,25 +26,29 @@ icon: "/logo/confluence.png"
   </div>
 </div>
 
-## Configuration Guide
-
-<AccordionGroup type="single" collapsible>
-
-<Accordion title="Setup">
-
-<div className="mt-4">
-
 ## Overview
 
-The Confluence connector provides access to your organization's Confluence Cloud workspace through OAuth 2.0 (3LO) authentication. It syncs spaces, pages, blog posts, comments, attachments, and user information, enabling comprehensive knowledge base search and access across your Confluence content.
+Confluence is Atlassian's team workspace and documentation platform, widely used for knowledge bases, product docs, meeting notes, and collaborative content. The Confluence connector syncs spaces, pages, blog posts, comments, attachments, and user information, enabling comprehensive knowledge-base search across your Confluence content.
 
-### Authentication
+### What Gets Synced
 
-The Confluence connector uses OAuth 2.0 with 3-legged OAuth (3LO) for secure authentication. This allows users to authorize the connector to access Confluence data on their behalf while maintaining fine-grained control over permissions through Atlassian's granular API scopes.
+| Entity | Description |
+|--------|-------------|
+| **Spaces** | Top-level containers (e.g., Engineering, Marketing) |
+| **Pages** | Full page content with formatting preserved |
+| **Blog Posts** | All blog post content and metadata |
+| **Comments** | Comments on pages and blog posts |
+| **Attachments** | Files attached to pages and blog posts |
+| **Users & Groups** | User profiles, group memberships |
+| **Permissions** | Space permissions and content restrictions |
 
-## How to configure and enable the Confluence Connector
+---
 
-### ⚠️ Critical User Configuration Requirement
+## Configuration Guide
+
+The Confluence connector supports **two authentication methods**. Both sync the same data — pick whichever fits your rollout.
+
+### Prerequisite: Email Visibility
 
 <Warning>
   <div className="text-lg font-semibold">
@@ -52,18 +56,16 @@ The Confluence connector uses OAuth 2.0 with 3-legged OAuth (3LO) for secure aut
   </div>
 </Warning>
 
-#### Why Email Visibility Matters
+This prerequisite applies to **both** authentication methods (OAuth and API Token).
 
-PipesHub uses email addresses to match Confluence users with their permissions. If a user's email is hidden:
-- PipesHub cannot match the user's Confluence account to their PipesHub account.
-- This prevents permissions from being synced correctly for that user.
-- As a result, the user will not see any Confluence content in PipesHub.
+**Why email visibility matters.** PipesHub uses email addresses to match Confluence users with their permissions. If a user's email is hidden:
+- PipesHub cannot match the user's Confluence account to their PipesHub account
+- Permissions cannot be synced correctly for that user
+- The user will not see any Confluence content in PipesHub
 
-#### How to Configure Email Visibility
+**How to configure email visibility.** Every user must complete these steps in their Atlassian account:
 
-Every user must complete these steps in their Atlassian account:
-
-1. Click on your **profile picture** in the top right → Select **"Account Settings"**
+1. Click your **profile picture** in the top right → select **Account Settings**.
 
 <div className="text-center">
   <img
@@ -73,11 +75,9 @@ Every user must complete these steps in their Atlassian account:
   />
 </div>
 
-2. Select the **"Profile and visibility"** tab
-3. Scroll down to the **"Contact"** section
-4. In the **"Who can see this?"** dropdown for your email address, select either:
-   - **"Anyone"** (recommended), OR
-   - **"Your organization"**
+2. Select the **Profile and visibility** tab.
+3. Scroll down to the **Contact** section.
+4. In the **Who can see this?** dropdown for your email address, select either **Anyone** (recommended) or **Your organization**.
 
 <div className="text-center">
   <img
@@ -88,22 +88,30 @@ Every user must complete these steps in their Atlassian account:
 </div>
 
 <Warning>
-  **DO NOT select "Only you and admins"** - this will prevent PipesHub from accessing your email address and matching you to permissions, making all records invisible to you.
+  **Do not select "Only you and admins"** — this will prevent PipesHub from accessing your email address and matching you to permissions, making all records invisible to you.
 </Warning>
 
-📖 **Official Documentation**: [Configure User Email Visibility in Confluence](https://support.atlassian.com/confluence-cloud/docs/configure-user-email-visibility/)
+📖 **Official documentation:** [Configure User Email Visibility in Confluence](https://support.atlassian.com/confluence-cloud/docs/configure-user-email-visibility/)
 
 <Info>
-  This is a **per-user setting** that must be configured by each individual user in your organization. Administrators cannot change this setting for other users. We recommend communicating this requirement to your team during the Confluence connector rollout.
+  This is a **per-user setting** that must be configured by each individual user. Administrators cannot change this setting for other users. We recommend communicating this requirement to your team during the Confluence connector rollout.
 </Info>
 
-### Step 1: Access Atlassian Developer Console
+### Choose an authentication method
 
-1. **Navigate to the Developer Console:**  
-   Go to [developer.atlassian.com/console/myapps/](https://developer.atlassian.com/console/myapps/) and sign in with your Atlassian account that has administrator access to your Confluence workspace.
+| Method | Best for |
+|--------|----------|
+| **OAuth 2.0 (3LO)** | Multi-user / org-wide rollouts, production — per-user refresh tokens, per-user consent, audit trail. Requires Atlassian Developer Console access. |
+| **API Token** | Single-account setups, quick POCs, or environments where you cannot register an OAuth app. Fastest path to sync. |
 
-2. **View Your Apps:**
-   You'll see the "My apps" page where you can create and manage OAuth 2.0 integrations.
+<Tabs>
+
+<Tab title="OAuth 2.0">
+
+#### Step 1: Access the Atlassian Developer Console
+
+1. Go to [developer.atlassian.com/console/myapps/](https://developer.atlassian.com/console/myapps/) and sign in with your Atlassian account (must have admin access to your Confluence workspace).
+2. You'll see the **My apps** page where you create and manage OAuth 2.0 integrations.
 
 <div className="text-center">
   <img
@@ -113,14 +121,14 @@ Every user must complete these steps in their Atlassian account:
   />
 </div>
 
-### Step 2: Create a New OAuth 2.0 Integration
+#### Step 2: Create a new OAuth 2.0 integration
 
-1. Click the **"Create"** button in the top right corner
-2. Select **"OAuth 2.0 integration"** from the dropdown menu
+1. Click **Create** in the top-right corner.
+2. Select **OAuth 2.0 integration** from the dropdown.
 3. Fill in the application details:
-   - **Name**: Enter a meaningful name (e.g., "PipesHub Confluence Connector")
-   - Check the box to agree to Atlassian's developer terms
-4. Click **"Create"** to proceed
+   - **Name:** Enter a meaningful name (e.g., `PipesHub Confluence Connector`).
+   - Check the box to agree to Atlassian's developer terms.
+4. Click **Create**.
 
 <div className="text-center">
   <img
@@ -131,18 +139,18 @@ Every user must complete these steps in their Atlassian account:
 </div>
 
 <Info>
-  OAuth 2.0 (3LO) integrations use rotating refresh tokens by default, which improves security by limiting token validity and enabling automatic detection of refresh token reuse.
+  OAuth 2.0 (3LO) integrations use rotating refresh tokens by default, which improves security by limiting token validity and enabling automatic detection of refresh-token reuse.
 </Info>
 
-### Step 3: Review Application Overview
+#### Step 3: Review the application overview
 
-After creation, you'll be taken to the app overview page. This page displays:
-- **App ID**: Your application's unique identifier
-- **Distribution status**: Whether the app is shared publicly
-- **Permissions**: API scopes configured for the app
-- **Authorization**: OAuth 2.0 (3LO) authorization settings
+After creation, you'll land on the app overview page. It shows:
+- **App ID** — your application's unique identifier
+- **Distribution status** — whether the app is shared publicly
+- **Permissions** — API scopes configured for the app
+- **Authorization** — OAuth 2.0 (3LO) authorization settings
 
-Use the left sidebar to navigate between **Permissions**, **Authorization**, and **Settings** sections.
+Use the left sidebar to navigate between **Permissions**, **Authorization**, and **Settings**.
 
 <div className="text-center">
   <img
@@ -152,11 +160,11 @@ Use the left sidebar to navigate between **Permissions**, **Authorization**, and
   />
 </div>
 
-### Step 4: Configure OAuth 2.0 Authorization
+#### Step 4: Configure OAuth 2.0 authorization
 
-1. In the left sidebar, click **"Authorization"**
-2. Find **"OAuth 2.0 (3LO)"** in the authorization types list
-3. Click **"Add"** to enable OAuth 2.0 authorization for your app
+1. In the left sidebar, click **Authorization**.
+2. Find **OAuth 2.0 (3LO)** in the authorization types list.
+3. Click **Add** to enable OAuth 2.0 authorization for your app.
 
 <div className="text-center">
   <img
@@ -166,21 +174,20 @@ Use the left sidebar to navigate between **Permissions**, **Authorization**, and
   />
 </div>
 
-4. **Set the Callback URL:**
-   - You need to enter the redirect URI provided by PipesHub
-   - To get this URL, open PipesHub in another tab, navigate to **Settings** → **Connectors**, find the **Confluence** connector, and click **"Configure"**
-   - Copy the **Redirect URI** shown in the configuration dialog:
+4. **Get the Redirect URL from PipesHub:**
+   - In PipesHub, go to **Workspace Settings** → **Connectors**, find **Confluence**, and click **+ Setup** for a new instance.
+   - The connector panel opens as a right-side drawer. On the **Authenticate Instance** tab, copy the **Redirect URL**.
 
 <div className="text-center">
   <img
     src="/images/connectors/confluence/confluence_config.png"
-    alt="PipesHub Confluence Configuration - Copy Redirect URI"
+    alt="PipesHub Confluence Authenticate Instance tab — copy the Redirect URL"
     className="block mx-auto w-11/12"
   />
 </div>
 
-5. Paste the copied Redirect URI into the **Callback URL** field in Atlassian Developer Console
-6. Click **"Save changes"**
+5. Paste the copied URL into the **Callback URL** field in Atlassian Developer Console.
+6. Click **Save changes**.
 
 <div className="text-center">
   <img
@@ -191,14 +198,14 @@ Use the left sidebar to navigate between **Permissions**, **Authorization**, and
 </div>
 
 <Warning>
-  The callback URL must match exactly between Atlassian Developer Console and PipesHub configuration. Any mismatch will cause authentication to fail.
+  The Callback URL must match exactly between Atlassian Developer Console and PipesHub. Any difference — trailing slash, protocol, casing — causes authentication to fail.
 </Warning>
 
-### Step 5: Add API Permissions
+#### Step 5: Add API permissions
 
-1. In the left sidebar, click **"Permissions"**
-2. You'll see a list of available Atlassian APIs
-3. Add scopes for both **User identity API** and **Confluence API**
+1. In the left sidebar, click **Permissions**.
+2. You'll see a list of available Atlassian APIs.
+3. Add scopes for both **User identity API** and **Confluence API**.
 
 <div className="text-center">
   <img
@@ -208,10 +215,13 @@ Use the left sidebar to navigate between **Permissions**, **Authorization**, and
   />
 </div>
 
-#### User Identity API Scopes
+**User Identity API scopes**
 
-Click **"Add"** next to User identity API and select the following scope:
-- `read:account` - View user profiles (required for user identification)
+Click **Add** next to User identity API and select:
+
+| Scope | Description |
+|-------|-------------|
+| `read:account` | View user profiles (required for user identification) |
 
 <div className="text-center">
   <img
@@ -221,13 +231,15 @@ Click **"Add"** next to User identity API and select the following scope:
   />
 </div>
 
-#### Confluence API Scopes
+<Info>
+  The `offline_access` scope is automatically included when you configure OAuth 2.0 (3LO). It enables refresh tokens so scheduled synchronization continues when users are not actively logged in.
+</Info>
 
-Click **"Add"** next to Confluence API. You'll see two tabs: **"Classic scopes"** and **"Granular scopes"**. You need to configure scopes from both tabs.
+**Confluence API — Classic scopes**
 
-##### Classic Scopes
+Click **Add** next to Confluence API. You'll see two tabs: **Classic scopes** and **Granular scopes**. Configure scopes from both.
 
-First, select the **"Classic scopes"** tab and add the following scopes:
+First, the **Classic scopes** tab:
 
 | Scope | Description |
 |-------|-------------|
@@ -240,12 +252,12 @@ First, select the **"Classic scopes"** tab and add the following scopes:
 | `search:confluence` | Search Confluence content |
 
 <Info>
-  Classic scopes provide broader access patterns and are required for certain API endpoints. Some features may not work correctly without these scopes enabled.
+  Classic scopes provide broader access patterns required for certain API endpoints. Some features may not work correctly without them.
 </Info>
 
-##### Granular Scopes
+**Confluence API — Granular scopes**
 
-Next, select the **"Granular scopes"** tab and add the following read permissions for more fine-grained access control:
+Next, the **Granular scopes** tab. Add these read permissions:
 
 | Scope | Description |
 |-------|-------------|
@@ -279,16 +291,16 @@ Next, select the **"Granular scopes"** tab and add the following read permission
 </div>
 
 <Note>
-  Atlassian recommends not adding more than 50 scopes to your app. Both Classic and Granular scopes are required for full connector functionality. Classic scopes provide broad access while Granular scopes enable fine-grained permissions for specific API operations.
+  Atlassian recommends not adding more than 50 scopes to your app. Both Classic and Granular scopes are required for full connector functionality.
 </Note>
 
-### Step 6: Get OAuth 2.0 Credentials
+#### Step 6: Copy Client ID and Client Secret
 
-1. In the left sidebar, click **"Settings"**
-2. Scroll down to the **"Authentication details"** section
-3. Copy the following credentials:
-   - **Client ID**: Your app's unique identifier
-   - **Secret**: Your app's client secret (click the copy button)
+1. In the left sidebar, click **Settings**.
+2. Scroll to the **Authentication details** section.
+3. Copy:
+   - **Client ID** — used as **Client ID** in PipesHub.
+   - **Secret** — used as **Client Secret** in PipesHub. Copy it immediately.
 
 <div className="text-center">
   <img
@@ -299,37 +311,47 @@ Next, select the **"Granular scopes"** tab and add the following read permission
 </div>
 
 <Warning>
-  Store the Client ID and Client Secret securely. The secret can be regenerated if needed, but you'll need to update your PipesHub configuration with the new value.
+  Store the Client ID and Client Secret securely. The secret can be regenerated if needed, but you'll have to update your PipesHub configuration with the new value.
 </Warning>
 
-### Step 7: Configure Connector in PipesHub
+#### Step 7: Authenticate Instance tab — enter credentials
 
-1. Return to the PipesHub Confluence configuration dialog (if you closed it, navigate to **Settings** → **Connectors** and click **"Configure"** on the Confluence connector)
-2. The configuration dialog has two steps:
-   - **Step 1: Authentication** - Enter OAuth credentials
-   - **Step 2: Sync Settings** - Configure synchronization
+The connector drawer in PipesHub has three tabs: **Authenticate Instance**, **Authorize**, and **Configure Records**. Start on the **Authenticate Instance** tab.
 
-3. Verify the **Redirect URI** displayed matches the callback URL you configured in Atlassian Developer Console (Step 4)
-
-4. Enter your OAuth 2.0 credentials:
-   - **Client ID**: From Step 6
-   - **Client Secret**: From Step 6
+1. Confirm the **Redirect URL** matches the Callback URL you saved in Atlassian in Step 4.
+2. If your admin has pre-registered an OAuth app, pick it from the **OAuth app** dropdown. Otherwise leave it blank and enter credentials manually.
+3. Enter:
+   - **Client ID** — from Step 6
+   - **Client Secret** — from Step 6
+   - **Atlassian Site URL** — your Confluence site URL (e.g., `https://your-domain.atlassian.net`; no trailing slash)
+4. Click **Next** to move to the **Authorize** tab.
 
 <div className="text-center">
   <img
     src="/images/connectors/confluence/connector_add_creds.png"
-    alt="Enter OAuth Credentials in PipesHub"
+    alt="Authenticate Instance tab — enter Client ID, Client Secret, and Atlassian Site URL"
     className="block mx-auto w-11/12"
   />
 </div>
 
-5. Click **"Next"** to proceed to authentication
+<Info>
+  The **Atlassian Site URL** targets the specific Confluence Cloud site this connector instance will sync. Use the full site URL including `https://` (e.g., `https://acme.atlassian.net`).
+</Info>
 
-### Step 8: Authorize the Connection
+#### Step 8: Authorize tab — complete the OAuth flow
 
-1. After saving the configuration, click **"Authenticate"** from the Quick Actions panel
-2. You'll be redirected to Atlassian's authorization page
-3. **Select your Confluence site** from the dropdown menu
+On the **Authorize** tab, all the OAuth authorization work happens. The tab shows an **Authenticate** button to kick off the OAuth handshake.
+
+<div className="text-center">
+  <img
+    src="/images/connectors/confluence/connector_authenticate_option.png"
+    alt="PipesHub Authorize tab with the Authenticate button"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+1. Click **Authenticate** to start the OAuth flow. A popup opens to Atlassian's authorization page.
+2. Select your Confluence site from the dropdown.
 
 <div className="text-center">
   <img
@@ -340,11 +362,10 @@ Next, select the **"Granular scopes"** tab and add the following read permission
 </div>
 
 <Warning>
-  **Important:** Authorize using the same email address as your PipesHub account. Using a different email will cause permission issues on the PipesHub platform.
+  **Authorize using the same email as your PipesHub account.** Using a different email causes permission issues on the PipesHub platform.
 </Warning>
 
-4. Review the permissions being requested by the connector
-5. Click **"Accept"** to grant access
+3. Review the permissions requested by the connector and click **Accept**.
 
 <div className="text-center">
   <img
@@ -354,27 +375,18 @@ Next, select the **"Granular scopes"** tab and add the following read permission
   />
 </div>
 
-<Info>
-  The authorization page shows all the Confluence and User permissions your connector will have. Review these carefully before accepting to ensure they align with your data access requirements.
-</Info>
+4. The popup closes and returns you to PipesHub. The connector tile shows an **Authenticated** badge with a **Reauthenticate** option.
 
-6. You'll be redirected back to PipesHub with a success message
-7. The connector status will update to show **"Authenticated"**
+5. Click **Next** to move to the **Configure Records** tab.
 
-<div className="text-center">
-  <img
-    src="/images/connectors/confluence/connector_authenticate_option.png"
-    alt="Connector Authenticated Status"
-    className="block mx-auto w-11/12"
-  />
-</div>
+#### Step 9: Configure Records tab — sync settings, filters, and indexing
 
-### Step 9: Configure Sync Settings
+On the **Configure Records** tab, control how the connector syncs and what gets synced.
 
-1. After successful authentication, configure your sync preferences:
-   - **Sync Strategy**: Choose between "Scheduled" or "Manual"
-   - **Timezone**: Select your preferred timezone for scheduled syncs
-   - **Sync Interval**: Choose how often to sync (e.g., 1 hour, 6 hours, 24 hours)
+**Sync settings** — configure your synchronization preferences first:
+
+1. **Sync Strategy** — `Scheduled` or `Manual`.
+2. **Sync Interval** — how often to sync (default: 60 minutes).
 
 <div className="text-center">
   <img
@@ -384,15 +396,11 @@ Next, select the **"Granular scopes"** tab and add the following read permission
   />
 </div>
 
-2. Click **"Save Configuration"** to save your settings
-
 <Note>
-  **Scheduled sync** runs automatically at the specified intervals, keeping your data up-to-date without manual intervention. **Manual sync** requires you to trigger synchronization on-demand.
+  **Scheduled sync** runs automatically at the specified intervals. **Manual sync** requires you to trigger synchronization on-demand.
 </Note>
 
-### Step 10: Configure Filters (Optional)
-
-Filters allow you to control what data is synced and indexed from your Confluence workspace.
+**Sync filters** — determine which content is downloaded from Confluence. Data excluded by sync filters is never downloaded.
 
 <div className="text-center">
   <img
@@ -402,148 +410,240 @@ Filters allow you to control what data is synced and indexed from your Confluenc
   />
 </div>
 
-#### Sync Filters
+Available sync filters:
 
-Sync filters determine which content is downloaded from Confluence. Data excluded by sync filters is never downloaded.
+1. **Space Keys** — filter by Confluence spaces.
+   - Operator: `In` (include only) or `Not In` (exclude)
+   - Value: one or more space keys (e.g., `ENG`, `MKT`, `PROD`). Space keys are case-sensitive.
+   - *Finding space keys:* check your space URL — `https://yourinstance.atlassian.net/wiki/spaces/SPACEKEY/overview` — the `SPACEKEY` is what you need.
 
-**Available Sync Filters:**
+2. **Page IDs** — filter specific pages (includes all child pages automatically).
+   - Operator: `In` or `Not In`
+   - Value: one or more page IDs (e.g., `88375321`, `90341377`)
+   - *Finding page IDs:* check your page URL — the number after `/pages/` is the page ID.
 
-1. **Space Keys** - Filter by Confluence spaces
-   - **Operator**: `In` (include only) or `Not In` (exclude)
-   - **Value**: Enter one or more space keys (e.g., `ENG`, `MKT`, `PROD`)
-   - **Note**: Space keys are case-sensitive
-   - **Finding Space Keys**: Check your space URL - `https://yourinstance.atlassian.net/wiki/spaces/SPACEKEY/overview` - the `SPACEKEY` is what you need
+3. **Blogpost IDs** — filter specific blog posts.
+   - Operator: `In` or `Not In`
+   - *Finding blogpost IDs:* the number after `/blog/YYYY/MM/DD/` in the URL.
 
-2. **Page IDs** - Filter specific pages (includes all child pages automatically)
-   - **Operator**: `In` (include) or `Not In` (exclude)
-   - **Value**: Enter one or more page IDs (e.g., `88375321`, `90341377`)
-   - **Note**: When you specify a parent page, all its child pages are automatically included
-   - **Finding Page IDs**: Check your page URL - `https://yourinstance.atlassian.net/wiki/spaces/SPACE/pages/88375321/Page+Title` - the number after `/pages/` is the page ID
+4. **Modified Date** — filter by last modification date. Operators: `Is After`, `Is Before`, `Is Between`.
 
-3. **Blogpost IDs** - Filter specific blogposts
-   - **Operator**: `In` or `Not In`
-   - **Value**: Enter one or more blogpost IDs
-   - **Finding Blogpost IDs**: Check your blogpost URL - `https://yourinstance.atlassian.net/wiki/spaces/SPACE/blog/2024/12/09/12345678/Blog+Title` - the number after `/blog/YYYY/MM/DD/` is the blogpost ID
+5. **Created Date** — filter by creation date. Same operators.
 
-4. **Modified Date** - Filter by last modification date
-   - **Operators**: `Is After`, `Is Before`, or `Is Between`
-   - **Use case**: Sync only recently updated content (e.g., content modified in the last 6 months)
+**Indexing filters** — control what synced data gets processed for AI search. All data is synced, but only enabled content types are indexed.
 
-5. **Created Date** - Filter by creation date
-   - **Operators**: `Is After`, `Is Before`, or `Is Between`
-   - **Use case**: Sync only newly created content or exclude legacy documentation
+- **Pages:** Index Pages / Index Page Attachments / Index Page Comments (all default: enabled)
+- **Blog posts:** Index Blogposts / Index Blogpost Attachments / Index Blogpost Comments (all default: enabled)
 
-#### Indexing Filters
+**Example configurations:**
 
-Indexing filters control what synced data gets processed for AI search. All data is synced, but only enabled content types are indexed.
+- *Sync only Engineering space:* Space Keys → Operator `In`, Value `ENG`
+- *Exclude archived spaces:* Space Keys → Operator `Not In`, Value `ARCHIVE, OLD`
+- *Sync specific documentation tree:* Page IDs → Operator `In`, Value `88375321`
+- *Recent content only:* Modified Date → Operator `Is After`, Date `2024-06-01`
+- *Index pages but not attachments:* disable the **Index Page Attachments** toggle
 
-**Available Indexing Filters:**
-
-- **Pages Section:**
-  - Index Pages (default: enabled)
-  - Index Page Attachments (default: enabled)
-  - Index Page Comments (default: enabled)
-
-- **Blogposts Section:**
-  - Index Blogposts (default: enabled)
-  - Index Blogpost Attachments (default: enabled)
-  - Index Blogpost Comments (default: enabled)
-
-**Example Configurations:**
-
-- **Sync only Engineering space**: Space Keys → Operator: `In`, Value: `ENG`
-- **Exclude archived spaces**: Space Keys → Operator: `Not In`, Value: `ARCHIVE, OLD`
-- **Sync specific documentation tree**: Page IDs → Operator: `In`, Value: `88375321`
-- **Recent content only**: Modified Date → Operator: `Is After`, Date: `2024-06-01`
-- **Index pages but not attachments**: Disable "Index Page Attachments" toggle
-
-<Info>
-  Filters can be configured during initial setup or modified later. Changes to filters will take effect on the next sync.
-</Info>
-
-### Step 11: Enable the Connector
-
-1. After configuration is complete, toggle the connector status to **"Enable"**
-2. You can do this by:
-   - Using the toggle switch next to **"Connector Status"**
-   - Or clicking **"Enable"** in the Quick Actions panel
+Click **Save** to save your configuration. PipesHub confirms the instance is ready with a final dialog — **"Instance is configured and ready to sync"** — offering two choices: **I'll do it later** or **Start syncing now**.
 
 <div className="text-center">
   <img
     src="/images/connectors/confluence/enable_connector.png"
-    alt="Enable Confluence Connector"
+    alt="Instance is configured and ready to sync — I'll do it later or Start syncing now"
     className="block mx-auto w-11/12"
   />
 </div>
 
-3. The connector will verify credentials and begin initial synchronization
-4. Wait for the status to show **"Active"** or **"Syncing"**
-5. Monitor the **Indexing Progress** to track sync completion
+Choose **Start syncing now** to kick off the initial sync immediately, or **I'll do it later** to enable the connector without an immediate sync. Monitor the **Indexing Progress** to track sync completion.
+
+</Tab>
+
+<Tab title="API Token">
+
+Use this method when you want the fastest setup and only need a single user account to sync Confluence data. No Atlassian Developer Console access required.
+
+#### Step 1: Generate an API token in Atlassian
+
+1. Sign in to [id.atlassian.com/manage-profile/security/api-tokens](https://id.atlassian.com/manage-profile/security/api-tokens).
+2. Click **Create API token**.
+3. Give it a meaningful label (e.g., `PipesHub Confluence Connector`), set an expiry if you want, and click **Create**.
+
+<div className="text-center">
+  <img
+    src="/images/connectors/confluence/api_token_create.png"
+    alt="Atlassian Create API token dialog"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+4. Atlassian shows the token **once** — click **Copy** and store it securely.
+
+<div className="text-center">
+  <img
+    src="/images/connectors/confluence/api_token_copy.png"
+    alt="Copy the API token — shown once"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+<Warning>
+  The API token is shown only once. If you close the dialog without copying it, you'll have to create a new token.
+</Warning>
+
+<Info>
+  The token inherits the permissions of the account that created it. Use an account that can read the Confluence spaces you want to sync — ideally a dedicated integration user rather than a personal account.
+</Info>
+
+#### Step 2: Authenticate Instance tab — enter credentials
+
+1. In PipesHub, go to **Workspace Settings** → **Connectors**, find **Confluence**, and click **+ Setup**.
+2. The connector panel opens as a right-side drawer with three tabs: **Authenticate Instance**, **Authorize**, and **Configure Records**.
+3. On the **Authenticate Instance** tab, pick **API Token** in the **Authentication method** dropdown.
+4. Enter:
+   - **Base URL** — your Confluence site URL (e.g., `https://your-domain.atlassian.net`; no trailing slash)
+   - **Email** — your Atlassian account email (the account that created the API token)
+   - **API Token** — the token you copied in Step 1
+5. Click **Next**. PipesHub validates the credentials and advances directly to the **Configure Records** tab (the **Authorize** tab is skipped for API Token because the token authenticates on its own).
+
+<div className="text-center">
+  <img
+    src="/images/connectors/confluence/connector_api_token_form.png"
+    alt="Authenticate Instance tab with API Token method — Base URL, Email, API Token fields"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+<Warning>
+  The **Email** must match the Atlassian account that owns the API token. Using a different email causes authentication to fail.
+</Warning>
+
+#### Step 3: Configure Records tab — sync settings, filters, and indexing
+
+On the **Configure Records** tab, control how the connector syncs and what gets synced.
+
+**Sync settings** — configure your synchronization preferences first:
+
+1. **Sync Strategy** — `Scheduled` or `Manual`.
+2. **Sync Interval** — how often to sync (default: 60 minutes).
+
+<div className="text-center">
+  <img
+    src="/images/connectors/confluence/connector_configure_sync_strategy.png"
+    alt="Configure Sync Strategy"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+**Sync filters** — determine which content is downloaded from Confluence. Data excluded by sync filters is never downloaded.
+
+<div className="text-center">
+  <img
+    src="/images/connectors/confluence/confluence-filters.png"
+    alt="Confluence Filters Configuration"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+Available sync filters:
+
+1. **Space Keys** — filter by Confluence spaces. Operator `In` / `Not In`; value is one or more space keys (case-sensitive).
+2. **Page IDs** — filter specific pages. Includes all child pages automatically.
+3. **Blogpost IDs** — filter specific blog posts.
+4. **Modified Date** — filter by last modification date. Operators: `Is After`, `Is Before`, `Is Between`.
+5. **Created Date** — filter by creation date. Same operators.
+
+**Indexing filters** — control what synced data gets processed for AI search.
+
+- **Pages:** Index Pages / Index Page Attachments / Index Page Comments (all default: enabled)
+- **Blog posts:** Index Blogposts / Index Blogpost Attachments / Index Blogpost Comments (all default: enabled)
+
+Click **Save** to save your configuration. PipesHub confirms the instance is ready with a final dialog — **"Instance is configured and ready to sync"** — offering two choices: **I'll do it later** or **Start syncing now**.
+
+<div className="text-center">
+  <img
+    src="/images/connectors/confluence/enable_connector.png"
+    alt="Instance is configured and ready to sync — I'll do it later or Start syncing now"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+Choose **Start syncing now** to kick off the initial sync immediately, or **I'll do it later** to enable the connector without an immediate sync.
+
+</Tab>
+
+</Tabs>
 
 ## Supported Features
 
 The Confluence connector syncs the following data from your Confluence Cloud workspace:
 
-- **Spaces**: All accessible spaces and their configurations
-- **Pages**: Full page content with formatting preserved
-- **Blog Posts**: All blog post content and metadata
-- **Comments**: Comments on pages and blog posts
-- **Attachments**: Files attached to pages and blog posts
-- **Users**: User profiles and account information
-- **Groups**: User groups and memberships
-- **Permissions**: Content restrictions and space permissions
-- **Folders**: Folder structure and organization
-- **Audit Logs**: Activity records for compliance
+- **Spaces** — all accessible spaces and their configurations
+- **Pages** — full page content with formatting preserved
+- **Blog Posts** — all blog post content and metadata
+- **Comments** — comments on pages and blog posts
+- **Attachments** — files attached to pages and blog posts
+- **Users** — user profiles and account information
+- **Groups** — user groups and memberships
+- **Permissions** — content restrictions and space permissions
+- **Folders** — folder structure and organization
+- **Audit Logs** — activity records for compliance
 
-## Data Sync Behavior
+<Info>
+  This connector is designed for **Confluence Cloud** only. Confluence Data Center and Confluence Server (on-premise) deployments are not supported.
+</Info>
 
-### Initial Sync
-- Fetches all accessible content from connected Confluence spaces
-- Indexes pages, blog posts, attachments, and comments
-- Respects user permissions for content visibility
-- Duration depends on the size of your Confluence workspace
+## Useful Links
 
-### Incremental Sync
-- Uses timestamp-based synchronization to detect changes
-- Only syncs new or modified content since last sync
-- Efficiently handles additions, updates, and deletions
-- Reduces API calls and sync duration
+- **Atlassian Developer Console:** [developer.atlassian.com/console/myapps/](https://developer.atlassian.com/console/myapps/)
+- **Atlassian API tokens:** [support.atlassian.com/atlassian-account/docs/manage-api-tokens-for-your-atlassian-account/](https://support.atlassian.com/atlassian-account/docs/manage-api-tokens-for-your-atlassian-account/)
+- **OAuth 2.0 (3LO) documentation:** [developer.atlassian.com/cloud/confluence/oauth-2-3lo-apps/](https://developer.atlassian.com/cloud/confluence/oauth-2-3lo-apps/)
+- **Confluence API scopes reference:** [developer.atlassian.com/cloud/confluence/scopes/](https://developer.atlassian.com/cloud/confluence/scopes/)
 
-### Permission Handling
-- Syncs content based on the authenticating user's permissions
-- Each user sees only content they have access to in Confluence
-- Respects space permissions and page restrictions
-- Maintains Confluence's access control model
+---
 
 ## Troubleshooting
 
-### Common Issues
+<AccordionGroup>
 
-**Invalid client credentials error:**
-- Verify Client ID and Client Secret are correct
-- Ensure you copied the full values without extra spaces
+<Accordion title="Troubleshooting" icon="circle-exclamation">
+
+### Common issues
+
+**Invalid client credentials error (OAuth):**
+- Verify Client ID and Client Secret are correct — no extra spaces
 - Check that the OAuth app is active in Atlassian Developer Console
 - Regenerate the secret if necessary and update PipesHub
 
-**Callback URL mismatch error:**
-- Ensure the Redirect URI in PipesHub exactly matches the callback URL in Atlassian
-- Check for trailing slashes or protocol differences (http vs https)
+**Callback URL mismatch error (OAuth):**
+- Ensure the Redirect URL in PipesHub exactly matches the Callback URL in Atlassian
+- Check for trailing slashes, protocol differences (`http` vs `https`), or casing
 - Update both configurations to use the same URL
 
-**Authorization failed:**
+**API token authentication fails:**
+- Confirm the token was copied correctly — no leading/trailing whitespace
+- The token may have been revoked or expired; create a new one at [id.atlassian.com/manage-profile/security/api-tokens](https://id.atlassian.com/manage-profile/security/api-tokens)
+- Verify the **Email** field matches the Atlassian account that created the token
+- Verify the **Base URL** matches your Confluence site (must include `https://`, no trailing slash, match `*.atlassian.net`)
+
+**Site URL format issues (OAuth: Atlassian Site URL / API Token: Base URL):**
+- Must include the protocol: `https://`
+- Must **not** include a trailing slash — use `https://acme.atlassian.net`, not `https://acme.atlassian.net/`
+- Must match the actual Confluence Cloud site (usually `*.atlassian.net`)
+- Do not include paths like `/wiki` or `/spaces/...`
+
+**Authorization failed (OAuth):**
 - Verify you're signing in with an account that has Confluence access
 - Ensure your Confluence site is selected during authorization
 - Check that all required API scopes are configured
 
 **No data syncing:**
-- Verify the connector status shows "Active"
-- Check that the authenticating user has access to Confluence content
+- Verify the connector status shows **Active**
+- Check that the authenticating user (OAuth) or token-owning user (API Token) has access to Confluence spaces
 - Ensure spaces are not restricted or archived
 - Review sync logs for specific error messages
 
 **Token expired or sync stopped:**
-- OAuth 2.0 tokens may expire based on Atlassian's policies
-- Disable and re-enable the connector to re-authenticate
+- OAuth tokens may expire per Atlassian's policies; disable and re-enable the connector to re-authenticate
+- API tokens can be revoked from the Atlassian account page; generate a new one and update the Authenticate Instance tab
 - Check if the OAuth app is still active in Developer Console
 
 **Permission denied for specific content:**
@@ -552,24 +652,36 @@ The Confluence connector syncs the following data from your Confluence Cloud wor
 - Review page restrictions that may limit access
 
 <Warning>
-  If you modify OAuth application settings in Atlassian Developer Console (Client ID, Secret, callback URL, or scopes), you must update the configuration in PipesHub and re-authorize the connection.
+  If you modify OAuth application settings in Atlassian Developer Console (Client ID, Secret, Callback URL, or scopes), update the configuration in PipesHub and re-authorize. For API tokens, re-enter the token in the Authenticate Instance tab if you regenerate it.
 </Warning>
 
-## Confluence Cloud Compatibility
+</Accordion>
 
-This connector is designed for **Confluence Cloud** and uses Atlassian's REST API v2. It supports all current Confluence Cloud features and is regularly updated for compatibility with Atlassian's API changes.
+</AccordionGroup>
 
-<Info>
-  This connector does not support Confluence Data Center or Confluence Server (on-premise deployments). Only Confluence Cloud workspaces can be connected.
-</Info>
+## Data Sync Behavior
 
-## Useful Links
+<AccordionGroup>
 
-- **Atlassian Developer Console**: [developer.atlassian.com/console/myapps/](https://developer.atlassian.com/console/myapps/)
-- **OAuth 2.0 (3LO) Documentation**: [developer.atlassian.com/cloud/confluence/oauth-2-3lo-apps/](https://developer.atlassian.com/cloud/confluence/oauth-2-3lo-apps/)
-- **Confluence API Scopes Reference**: [developer.atlassian.com/cloud/confluence/scopes/](https://developer.atlassian.com/cloud/confluence/scopes/)
+<Accordion title="Synchronization Process" icon="sync">
 
-</div>
+### Initial sync
+- Fetches all accessible content from connected Confluence spaces
+- Indexes pages, blog posts, attachments, and comments
+- Respects user permissions for content visibility
+- Duration depends on the size of your Confluence workspace
+
+### Incremental sync
+- Uses timestamp-based synchronization to detect changes
+- Only syncs new or modified content since last sync
+- Efficiently handles additions, updates, and deletions
+- Reduces API calls and sync duration
+
+### Permission handling
+- Syncs content based on the authenticating user's permissions
+- Each user sees only content they have access to in Confluence
+- Respects space permissions and page restrictions
+- Maintains Confluence's access control model
 
 </Accordion>
 
@@ -580,6 +692,18 @@ This connector is designed for **Confluence Cloud** and uses Atlassian's REST AP
 ## FAQ
 
 <AccordionGroup>
+
+<Accordion title="Which authentication method should I choose?">
+
+| | OAuth 2.0 | API Token |
+|---|-----------|-----------|
+| **Best for** | Multi-user / org-wide rollouts, production | Single-account setups, quick POCs |
+| **Credentials model** | Per-user consent, rotating refresh tokens | Single token, long-lived until revoked |
+| **Prerequisites** | Atlassian Developer Console admin access | Any Atlassian account |
+
+Choose **OAuth** for production and anything that needs per-user attribution. Choose **API Token** when you cannot register a developer-console app or just want to get syncing quickly. Both methods sync the same data.
+
+</Accordion>
 
 <Accordion title="What's the difference between Confluence Connector and Confluence Toolset?">
 

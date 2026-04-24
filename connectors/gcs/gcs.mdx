@@ -51,7 +51,7 @@ This connector copies those files into PipesHub so you can **search them with AI
 
 <AccordionGroup type="single" collapsible>
 
-<Accordion title="Setup">
+<Accordion title="Setup" defaultOpen>
 
 <div className="mt-4">
 
@@ -230,7 +230,7 @@ There's also an **Enable Manual Indexing** toggle. Leave it off unless someone o
 When you're happy, click **Save Configuration**.
 
 <Info>
-  **Start small.** Pick one bucket and maybe `pdf, docx, txt` for extensions. You can always loosen the filters later — but a first sync over a huge bucket with no filters can take hours.
+  **Start small.** Pick one bucket and maybe `pdf, docx, txt` for extensions. You can always loosen the filters later — but an initial sync over a huge bucket with no filters can take hours.
 </Info>
 
 ### Step 8: Turn sync on
@@ -246,7 +246,7 @@ When you're happy, click **Save Configuration**.
 After you save, you'll see a **GCS** card in the Connectors list. It starts out as **Sync Paused** — nothing is happening yet.
 
 1. Flip the **Sync Enabled** toggle on the card.
-2. The status changes to **Sync Enabled** and the first sync starts in the background.
+2. The status changes to **Sync Enabled** and the initial sync starts in the background.
 
 Want to connect a second Google Cloud project too? Click **+ Add Another Instance** at the top and repeat from Step 4 — each instance has its own key, its own filters, its own on/off toggle.
 
@@ -323,9 +323,9 @@ includedPermissions:
 
 <div className="mt-4">
 
-### The first sync
+### The initial sync
 
-The first time you turn the connector on, it does a full scan:
+When you turn the connector on, it does a full scan:
 
 1. Lists every bucket you gave it access to (or just the ones in your filter)
 2. Walks through every object (file) inside
@@ -339,7 +339,7 @@ This is the slow one. A few thousand files takes minutes. A few million takes ho
 
 ### Every sync after that
 
-Once the first sync is done, the connector only asks Google Cloud: *"what's changed since last time?"* So scheduled syncs usually finish in 5–15 minutes no matter how big the bucket is.
+Once the initial sync is done, the connector only asks Google Cloud: *"what's changed since last time?"* So scheduled syncs usually finish in 5–15 minutes no matter how big the bucket is.
 
 ### Who can see the synced files?
 
@@ -404,7 +404,7 @@ Bucket-level IAM rules and ACLs in Google Cloud are also respected.
 
 <AccordionGroup type="single" collapsible>
 
-<Accordion title="Troubleshooting" icon="circle-exclamation">
+<Accordion title="Troubleshooting" icon="circle-exclamation" defaultOpen>
 
 **"Invalid credentials" or "Authentication failed"**
 
@@ -438,7 +438,7 @@ Walk through these in order:
 
 ---
 
-**First sync is taking forever**
+**Initial sync is taking forever**
 
 Big buckets take real time. Things that help:
 
@@ -447,7 +447,7 @@ Big buckets take real time. Things that help:
 - Skip old files with a **Modified Date** filter
 - For gigantic buckets (millions of objects), raise the Sync Interval to 4–24 hours — less API usage, less cost
 
-As a rough guide, a bucket with 1 million objects takes 6–12 hours the first time. Cutting it to 10% with filters gets that down to 1–2 hours.
+As a rough guide, a bucket with 1 million objects takes 6–12 hours on the initial sync. Cutting it to 10% with filters gets that down to 1–2 hours.
 
 ---
 
@@ -484,7 +484,7 @@ Most often, the service account key was rotated or deleted in Google Cloud.
 
 <AccordionGroup type="single" collapsible>
 
-<Accordion title="How long does the first sync take?">
+<Accordion title="How long does the initial sync take?" defaultOpen>
   Depends entirely on how many files are in the buckets you picked.
   
   | Bucket size | Rough time |

@@ -59,31 +59,17 @@ The connector indexes the following content for AI-powered search:
 
 ## Configuration Guide
 
-<AccordionGroup type="single" collapsible>
-
-<Accordion title="Setup" icon="gear">
-
-<div className="mt-4">
-
-## Getting Started
-
-The Zammad connector provides access to your helpdesk data through API Token authentication. It syncs tickets, knowledge base content, users, and groups, enabling comprehensive support ticket search and access across your Zammad instance.
-
-### Authentication Method
-
-The Zammad connector uses **API Access Token** authentication (HTTP Token Authentication). This is the recommended method by Zammad for external integrations.
+The Zammad connector uses **API Access Token** authentication (HTTP Token Authentication) — the recommended method by Zammad for external integrations.
 
 <Info>
-  API operations performed with the token inherit the same permissions as the user who generated it. For full access to all tickets and data, use an admin user's token.
+  API operations performed with the token inherit the same permissions as the user who generated it. For full access to all tickets and data, generate the token from an **admin user account**.
 </Info>
 
-## How to Configure and Enable the Zammad Connector
+#### Step 1: Access User Profile in Zammad
 
-### Step 1: Access User Profile in Zammad
-
-1. **Log in to your Zammad instance** with an account that has administrator privileges
-2. **Click on your user avatar** in the bottom left corner of the Zammad interface
-3. **Select "Profile"** from the dropdown menu
+1. Log in to your Zammad instance with an account that has administrator privileges.
+2. Click on your **user avatar** in the bottom left corner of the Zammad interface.
+3. Select **Profile** from the dropdown menu.
 
 <div className="text-center">
   <img
@@ -97,11 +83,11 @@ The Zammad connector uses **API Access Token** authentication (HTTP Token Authen
   The API token will have the same permissions as the user who creates it. For full access to all tickets and API endpoints, generate the token from an **admin user account**.
 </Warning>
 
-### Step 2: Navigate to Token Access
+#### Step 2: Navigate to Token Access
 
-1. In the profile settings page, locate the **"Token Access"** tab
-2. Click on it to open the **Personal Access Tokens** section
-3. You'll see a list of any existing tokens (if previously created)
+1. In the profile settings page, locate the **Token Access** tab.
+2. Click on it to open the **Personal Access Tokens** section.
+3. You'll see a list of any existing tokens (if previously created).
 
 <div className="text-center">
   <img
@@ -111,26 +97,26 @@ The Zammad connector uses **API Access Token** authentication (HTTP Token Authen
   />
 </div>
 
-### Step 3: Create a New API Token
+#### Step 3: Create a new API token
 
-1. Click the **"Create"** button to generate a new token
+1. Click the **Create** button to generate a new token.
 2. Fill in the token configuration:
 
    | Field | Description | Recommendation |
    |-------|-------------|----------------|
-   | **Name** | A descriptive identifier for the token | Use something like "PipesHub-Integration" |
+   | **Name** | A descriptive identifier for the token | Use something like `PipesHub-Integration` |
    | **Expiry Date** | Expiration date for security | set based on your security policy |
 
 3. Enable the following **Permissions** for the token:
 
    | Permission | Description |
    |------------|-------------|
-   | **ticket.agent** | Access the tickets as agent based on group access |
+   | **ticket.agent** | Access tickets as agent based on group access |
    | **ticket.customer** | Access tickets as customer |
    | **knowledge_base.editor** | Access the knowledge base editor features |
    | **knowledge_base.reader** | Access the knowledge base reader features |
 
-4. Click **"Create"** or **"Save"** to generate the token
+4. Click **Create** (or **Save**) to generate the token.
 
 <div className="text-center">
   <img
@@ -139,6 +125,7 @@ The Zammad connector uses **API Access Token** authentication (HTTP Token Authen
     className="block mx-auto w-11/12"
   />
 </div>
+
 <div className="text-center">
   <img
     src="/images/connectors/zammad/create_token-2.png"
@@ -147,15 +134,15 @@ The Zammad connector uses **API Access Token** authentication (HTTP Token Authen
   />
 </div>
 
-### Step 4: Copy the API Token
+#### Step 4: Copy the API token
 
 <Warning>
-  **CRITICAL**: The API token will be displayed **immediately and only once**. You must copy it now, as it **cannot be retrieved later**. If you lose the token, you'll need to create a new one.
+  **CRITICAL**: The API token is displayed **immediately and only once**. You must copy it now — it **cannot be retrieved later**. If you lose the token, you'll need to create a new one.
 </Warning>
 
-1. After clicking Create, the token will be displayed in a dialog or on screen
-2. **Immediately copy the token** to a secure location
-3. Store it temporarily until you complete the PipesHub configuration
+1. After clicking Create, the token is displayed in a dialog or on screen.
+2. **Immediately copy the token** to a secure location.
+3. Store it temporarily until you complete the PipesHub configuration.
 
 <div className="text-center">
   <img
@@ -165,97 +152,40 @@ The Zammad connector uses **API Access Token** authentication (HTTP Token Authen
   />
 </div>
 
-### Step 5: Configure Connector in PipesHub
+#### Step 5: Authenticate Instance tab — enter credentials
 
-1. Open PipesHub and navigate to **Connectors Settings**
-2. Find the **Zammad** connector and click **"Save Configuration"**
-3. The configuration dialog will appear with authentication settings
+The connector drawer in PipesHub has three tabs: **Authenticate Instance**, **Authorize**, and **Configure Records**. Start on the **Authenticate Instance** tab.
 
-<Warning>
-  **Important:** Generate the API token from a Zammad account that uses the same email address as your PipesHub account. Using a different email will cause permission issues on the PipesHub platform.
-</Warning>
+1. In PipesHub, go to **Workspace Settings** → **Connectors**, find **Zammad**, and click **+ Setup** for a new instance.
+2. The connector panel opens as a right-side drawer. On the **Authenticate Instance** tab, enter:
+   - **Zammad URL** — your Zammad instance base URL (e.g., `https://support.yourcompany.com`; no trailing slash)
+   - **API Token** — the token you copied in Step 4
+3. Click **Next**. PipesHub validates the credentials and advances directly to the **Configure Records** tab (the **Authorize** tab is skipped because API Token authenticates on its own).
 
 <div className="text-center">
   <img
     src="/images/connectors/zammad/pipeshub_config.png"
-    alt="PipesHub Zammad Configuration"
+    alt="Authenticate Instance tab — enter Zammad URL and API Token"
     className="block mx-auto w-11/12"
   />
 </div>
 
-4. Enter your Zammad instance details:
-
-   | Field | Description | Example |
-   |-------|-------------|---------|
-   | **Zammad URL** | Your Zammad instance base URL | `https://support.yourcompany.com` |
-   | **API Token** | The token you copied in Step 4 | `your-api-token-here` |
-
-5. Click **"Save Auth Settings"** to save the configuration
+<Warning>
+  Generate the API token from a Zammad account that uses the same email address as your PipesHub account. Using a different email will cause permission issues on the PipesHub platform.
+</Warning>
 
 <Info>
-  Ensure the Zammad URL does not include a trailing slash. Use `https://support.yourcompany.com` not `https://support.yourcompany.com/`.
+  The Zammad URL must not include a trailing slash. Use `https://support.yourcompany.com`, not `https://support.yourcompany.com/`.
 </Info>
 
-### Step 6: Enable and Configure the Connector
+#### Step 6: Configure Records tab — sync settings, filters, and indexing
 
-1. After saving the authentication settings, click **"Enable Sync"** to activate the connector
-2. Configure synchronization settings:
+On the **Configure Records** tab, control how the connector syncs and what gets synced.
 
-<div className="text-center">
-  <img
-    src="/images/connectors/zammad/enable_connector.png"
-    alt="Enable Zammad Connector"
-    className="block mx-auto w-11/12"
-  />
-</div>
+**Sync settings** — configure your synchronization preferences first:
 
-#### Sync Filters
-
-Sync filters determine which content is downloaded from Zammad. Data excluded by sync filters is never downloaded.
-
-<div className="text-center">
-  <img
-    src="/images/connectors/zammad/sync_filters.png"
-    alt="Zammad Sync Filters"
-    className="block mx-auto w-11/12"
-  />
-</div>
-
-**Available Sync Filters:**
-
-1. **Enable Manual Indexing** - Control indexing trigger method
-   - **Enabled**: Records are indexed only when you manually trigger it
-   - **Disabled** (default): Records are indexed automatically after sync
-
-2. **Groups** - Filter tickets by support group/department
-   - **Operator**: `In` (include only) or `Not In` (exclude)
-   - **Selection**: Choose from a searchable dropdown of your Zammad groups
-   - Leave empty to sync all groups
-
-3. **Modified Date** - Filter by last modification date
-   - **Operators**: `Is After`, `Is Before`, or `Is Between`
-   - **Use case**: Sync only recently updated tickets
-
-4. **Created Date** - Filter by creation date
-   - **Operators**: `Is After`, `Is Before`, or `Is Between`
-   - **Use case**: Sync only tickets created within a specific timeframe
-
-#### Indexing Filters
-
-Indexing filters control what synced data gets processed for AI search.
-
-**Available Indexing Filters:**
-
-- **Index Tickets** (default: enabled) - Include ticket content in search
-- **Index Attachments** (default: enabled) - Include file attachments in search
-- **Index Knowledge Base** (default: enabled) - Include knowledge base articles in search
-
-#### Sync Settings
-
-Configure your synchronization preferences:
-
-1. **Sync Strategy**: Choose between "Scheduled" or "Manual"
-2. **Sync Interval**: Choose how often to sync (default: 60 minutes)
+1. **Sync Strategy** — `Scheduled` or `Manual`.
+2. **Sync Interval** — how often to sync (default: 60 minutes).
 
 <div className="text-center">
   <img
@@ -269,23 +199,59 @@ Configure your synchronization preferences:
   **Scheduled sync** runs automatically at the specified intervals. **Manual sync** requires you to trigger synchronization on-demand.
 </Note>
 
-#### Save and Activate
+**Sync filters** — determine which content is downloaded from Zammad. Data excluded by sync filters is never downloaded.
 
-1. Click **"Save"** to save your configuration and enable the connector
-2. The connector will verify credentials and begin initial synchronization
-3. Wait for the status to show **"Active"** or **"Syncing"**
-4. Monitor the **Indexing Progress** to track sync completion
+<div className="text-center">
+  <img
+    src="/images/connectors/zammad/sync_filters.png"
+    alt="Zammad Sync Filters"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+Available sync filters:
+
+1. **Enable Manual Indexing** — control indexing trigger method.
+   - Enabled: records are indexed only when you manually trigger it.
+   - Disabled (default): records are indexed automatically after sync.
+
+2. **Groups** — filter tickets by support group/department.
+   - Operator: `In` (include only) or `Not In` (exclude)
+   - Selection: searchable dropdown of your Zammad groups
+   - Leave empty to sync all groups.
+
+3. **Modified Date** — filter by last modification date. Operators: `Is After`, `Is Before`, `Is Between`.
+
+4. **Created Date** — filter by creation date. Same operators.
+
+**Indexing filters** — control what synced data gets processed for AI search.
+
+- **Index Tickets** (default: enabled) — include ticket content in search
+- **Index Attachments** (default: enabled) — include file attachments in search
+- **Index Knowledge Base** (default: enabled) — include knowledge base articles in search
+
+Click **Save** to save your configuration. PipesHub confirms the instance is ready with a final dialog — **"Instance is configured and ready to sync"** — offering two choices: **I'll do it later** or **Start syncing now**.
+
+<div className="text-center">
+  <img
+    src="/images/connectors/zammad/enable_connector.png"
+    alt="Instance is configured and ready to sync — I'll do it later or Start syncing now"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+Choose **Start syncing now** to kick off the initial sync immediately, or **I'll do it later** to enable the connector without an immediate sync. Monitor the **Indexing Progress** to track sync completion.
 
 ## Supported Features
 
 The Zammad connector provides:
 
-- **Full content sync**: Tickets, knowledge base, attachments, users, and groups
-- **Incremental sync**: Only fetches changes since last sync using `updated_at` timestamps
-- **Batch processing**: Fetches data in optimized batches for performance
-- **Permission preservation**: Respects group-based access controls
-- **Attachment handling**: Syncs file attachments from ticket articles
-- **Knowledge Base sync**: Syncs categories and answers with translations
+- **Full content sync** — Tickets, knowledge base, attachments, users, and groups
+- **Incremental sync** — only fetches changes since last sync using `updated_at` timestamps
+- **Batch processing** — fetches data in optimized batches for performance
+- **Permission preservation** — respects group-based access controls
+- **Attachment handling** — syncs file attachments from ticket articles
+- **Knowledge Base sync** — syncs categories and answers with translations
 
 ## Permission Model
 
@@ -295,21 +261,15 @@ Zammad uses different permission models for different content types:
 - **Knowledge Base**: Role-based access controls. Access to knowledge base content is determined by user roles.
 
 The connector preserves these permissions:
-- Group assignments determine which agents can view synced tickets in PipesHub
-- Internal articles respect the internal/public visibility flag
+- Group assignments determine which agents can view synced tickets in PipesHub.
+- Internal articles respect the internal/public visibility flag.
 
 ## Useful Links
 
-- **Zammad API Documentation**: [docs.zammad.org/en/latest/api/intro.html](https://docs.zammad.org/en/latest/api/intro.html)
-- **Zammad REST API Reference**: [docs.zammad.org/en/latest/api/](https://docs.zammad.org/en/latest/api/)
-- **Zammad User Documentation**: [user-docs.zammad.org](https://user-docs.zammad.org/)
-- **Zammad Admin Documentation**: [admin-docs.zammad.org](https://admin-docs.zammad.org/)
-
-</div>
-
-</Accordion>
-
-</AccordionGroup>
+- **Zammad API Documentation:** [docs.zammad.org/en/latest/api/intro.html](https://docs.zammad.org/en/latest/api/intro.html)
+- **Zammad REST API Reference:** [docs.zammad.org/en/latest/api/](https://docs.zammad.org/en/latest/api/)
+- **Zammad User Documentation:** [user-docs.zammad.org](https://user-docs.zammad.org/)
+- **Zammad Admin Documentation:** [admin-docs.zammad.org](https://admin-docs.zammad.org/)
 
 ## Troubleshooting
 
@@ -443,7 +403,7 @@ There are three common causes:
    - **Fix:** Verify sync filters in the connector settings and ensure indexing has completed. Check that the data matches your search query criteria.
 
 3. **Data not yet indexed** - The connector is still syncing or hasn't completed the initial indexing process.
-   - **Fix:** Go to **Settings > Connectors**, check the sync status, and wait for indexing to complete.
+   - **Fix:** Go to **Workspace Settings → Connectors**, check the sync status, and wait for indexing to complete.
 
 </Accordion>
 

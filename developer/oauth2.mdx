@@ -19,8 +19,8 @@ OAuth application management is available exclusively to **administrators**. Onl
 To access the OAuth application management page:
 
 1. Sign in to your PipesHub account with administrator credentials
-2. Navigate to **Connector Settings** from the Navbar
-3. Select **OAuth 2.0 Apps** under the **Developer Settings** section
+2. Open the user menu and click **Workspace Settings**
+3. In the workspace sidebar, under the **Developer Settings** section, select **OAuth 2.0 Apps**
 
 <div style={{ textAlign: "center", padding: "10px" }}>
   <img
@@ -31,17 +31,17 @@ To access the OAuth application management page:
   />
 </div>
 
-This page displays all registered OAuth applications along with their current status (active or suspended).
+The page displays all registered OAuth applications as cards in a grid. Each card shows the application name, description (or client ID), and the number of scopes granted. Use the **search** field in the header to filter applications by name, and the **pagination** controls at the bottom to navigate when you have many applications. Click **Manage** on any card to open its settings.
 
 ---
 
 ## Creating a New OAuth Application
 
-Follow these steps to register a new OAuth application.
+Follow these steps to register a new OAuth application. Application creation happens in a side panel with two tabs — **General** and **Permissions & Scopes** — that you fill out sequentially.
 
-### Step 1: Open the Application Registration Form
+### Step 1: Open the Application Registration Panel
 
-From the **OAuth 2.0 Apps** page, click the **New OAuth application** button.
+From the **OAuth 2.0 Apps** page, click the **New OAuth application** button in the top-right corner.
 
 <div style={{ textAlign: "center", padding: "10px" }}>
   <img
@@ -52,17 +52,19 @@ From the **OAuth 2.0 Apps** page, click the **New OAuth application** button.
   />
 </div>
 
+A side panel opens on the **General** tab. You can click the **Documentation** link in the panel header at any time to open this guide.
+
 ### Step 2: Provide Application Details
 
-Fill in the following fields:
+On the **General** tab, fill in the following fields:
 
 | Field | Required | Description |
 |-------|----------|-------------|
-| **Application Name** | Yes | A descriptive name for the application (1-100 characters). This name is displayed to users during the consent process. |
+| **App name** | Yes | A descriptive name for the application (1-100 characters). This name is displayed to users during the consent process. |
 | **Description** | No | A brief explanation of what the application does (up to 500 characters). Helps users understand why they are granting access. |
-| **Homepage URL** | No | The URL of the application's homepage or landing page. |
-| **Privacy Policy URL** | No | Link to the application's privacy policy. |
-| **Terms of Service URL** | No | Link to the application's terms of service. |
+| **Home page URL** | No | The URL of the application's homepage or landing page. |
+| **Privacy policy URL** | No | Link to the application's privacy policy. |
+| **Terms of service URL** | No | Link to the application's terms of service. |
 
 <Tip>
   Providing a clear description and relevant URLs builds trust with users who are asked to grant access to their data during the consent flow.
@@ -70,7 +72,7 @@ Fill in the following fields:
 
 ### Step 3: Configure Grant Types
 
-Select the authorization grant types that your application requires:
+Under the **Grant types** section, select the authorization grant types that your application requires. By default, **Authorization Code** and **Refresh Token** are enabled. At least one grant type must remain selected.
 
 <AccordionGroup>
 
@@ -114,7 +116,7 @@ The **Refresh Token** grant allows your application to obtain a new access token
 
 ### Step 4: Add Redirect URIs
 
-Redirect URIs define where PipesHub sends users after they authorize (or deny) access. You may register up to **10 redirect URIs** per application.
+When the **Authorization Code** grant type is enabled, a **Redirect URI** section appears. Redirect URIs define where PipesHub sends users after they authorize (or deny) access. You may register up to **10 redirect URIs** per application.
 
 <div style={{ textAlign: "center", padding: "10px" }}>
   <img
@@ -125,14 +127,18 @@ Redirect URIs define where PipesHub sends users after they authorize (or deny) a
   />
 </div>
 
+Use **Add Redirect URI** to register additional callbacks, and the **×** icon next to a row to remove one.
+
 **Requirements:**
+- At least one valid redirect URI is required when the Authorization Code grant type is enabled
 - All redirect URIs must use **HTTPS**, except for `localhost` and `127.0.0.1` (permitted for local development)
 - The URI provided during the authorization request must exactly match one of the registered URIs
-- Redirect URIs are required when the Authorization Code grant type is enabled
+
+After completing the **General** tab, click **Next** to proceed. The button is disabled until the app name, at least one grant type, and (when applicable) a valid redirect URI are provided.
 
 ### Step 5: Select Scopes
 
-Scopes define the specific permissions your application is requesting. Select only the scopes your application genuinely needs — following the principle of least privilege.
+On the **Permissions & Scopes** tab, scopes define the specific permissions your application is requesting. Select only the scopes your application genuinely needs — following the principle of least privilege.
 
 <div style={{ textAlign: "center", padding: "10px" }}>
   <img
@@ -143,7 +149,9 @@ Scopes define the specific permissions your application is requesting. Select on
   />
 </div>
 
-Scopes are organized by category for ease of selection. The following table provides a complete reference:
+Scopes are grouped by category. Each category shows how many of its scopes are selected (for example, `2/4`) and has a group checkbox for selecting or clearing the entire category at once. Use the **Select All** button in the top-right of the tab to toggle every scope at once. A counter at the top of the tab (`N of M permissions selected`) summarizes the current selection, and scopes that require end-user consent are labelled accordingly.
+
+The following table provides a complete reference:
 
 <AccordionGroup>
 
@@ -261,7 +269,7 @@ Scopes are organized by category for ease of selection. The following table prov
 
 ### Step 6: Save and Store Credentials
 
-After submitting the form, PipesHub generates a unique **Client ID** and **Client Secret** for your application.
+Click **Create App** at the bottom of the panel. At least one scope must be selected for the button to be enabled. After creation, the panel switches to a success screen displaying the generated **Client ID** and **Client Secret**.
 
 <div style={{ textAlign: "center", padding: "10px" }}>
   <img
@@ -272,8 +280,10 @@ After submitting the form, PipesHub generates a unique **Client ID** and **Clien
   />
 </div>
 
+Use the **copy** icon next to each value to copy it to the clipboard, and the **eye** icon next to the client secret to toggle between the masked and plain-text view. When you are done, click **Return to OAuth 2.0 Apps** to close the panel, or **Manage** to jump directly to the application's settings.
+
 <Warning>
-  The **Client Secret** is displayed only once at the time of creation. Copy and store it in a secure location immediately. If lost, you will need to regenerate the secret, which invalidates the previous one.
+  The **Client Secret** is displayed only once at the time of creation. Copy and store it in a secure location immediately. If lost, you will need to regenerate the secret from the application's settings, which invalidates the previous one.
 </Warning>
 
 ---
@@ -467,9 +477,9 @@ These endpoints are publicly accessible and do not require authentication. They 
 
 ## Managing OAuth Applications
 
-### Viewing Application Details
+### Opening the Management Panel
 
-Click on any application from the list to view its configuration, including the client ID, allowed scopes, grant types, redirect URIs, and token settings.
+Click **Manage** on any application card to open a side panel with three tabs — **General**, **Permissions & Scopes**, and **Advanced**.
 
 <div style={{ textAlign: "center", padding: "10px" }}>
   <img
@@ -480,13 +490,29 @@ Click on any application from the list to view its configuration, including the 
   />
 </div>
 
+The **General** tab contains:
+
+- An **About** section with the application's **Client ID** and a copy-to-clipboard button
+- A **Client secrets** section with a **Generate new client secret** button
+- **App name** and **Description** fields
+- **Grant types** selection
+- **Redirect URI** configuration (shown when Authorization Code is enabled)
+- Optional **Home page**, **Privacy policy**, and **Terms of service** URLs
+
+The **Permissions & Scopes** tab mirrors the scope selector used during creation, pre-populated with the application's current scopes.
+
+The **Advanced** tab contains the application status, suspend/activate action, and the **Danger Zone** for revoking tokens and deleting the application.
+
+Edits on the **General** or **Permissions & Scopes** tabs are applied with the **Save Changes** button at the bottom of the panel. The button is disabled until you make a change, and all destructive actions on the **Advanced** tab apply immediately on confirmation.
+
 ### Regenerating the Client Secret
 
 If your client secret has been compromised or needs to be rotated:
 
-1. Open the application detail page
-2. Click **Generate new client secret**
-3. Copy and securely store the new secret immediately
+1. Click **Manage** on the application card to open the panel
+2. On the **General** tab, locate the **Client secrets** section
+3. Click **Generate new client secret**
+4. Copy and securely store the new secret from the **New client secret** field immediately
 
 <Warning>
   Regenerating the client secret immediately invalidates the previous secret. Any active integrations using the old secret will stop functioning until updated.
@@ -496,11 +522,12 @@ If your client secret has been compromised or needs to be rotated:
 
 If you need to temporarily disable an application without deleting it:
 
-1. Open the application detail page
-2. Go to Advanced section in sidebar
-3. Click **Suspend Application**
+1. Open the management panel for the application
+2. Switch to the **Advanced** tab
+3. Click **Suspend application** in the top-right of the tab
+4. In the confirmation dialog, type the application name to confirm
 
-A suspended application cannot authorize new users or issue tokens. Existing tokens remain valid until they expire. To restore access, click **Activate application** on the same page.
+A suspended application cannot authorize new users or issue tokens. Existing tokens remain valid until they expire. The status badge on the Advanced tab changes from **Active** (green) to **Suspended** (orange). To restore access, click **Activate** on the same tab — activation does not require typed confirmation.
 
 ### Deleting an Application
 
@@ -510,10 +537,10 @@ Deleting an OAuth application:
 2. Permanently marks the application as revoked
 
 Steps to delete an application:
-1. Open the application detail page
-2. Go to Advanced section in sidebar
-3. Click **Delete Application**
-4. Confirm by putting the application name in dialog box
+1. Open the management panel for the application
+2. Switch to the **Advanced** tab
+3. In the **Danger Zone** at the bottom, click **Delete Application**
+4. In the confirmation dialog, type the application name to confirm
 
 <Warning>
   Application deletion is irreversible. All active integrations will lose access immediately.
@@ -521,15 +548,13 @@ Steps to delete an application:
 
 ### Revoking Active Tokens
 
-From the application detail page, administrators can:
-
-- **Revoke all tokens** at once, which is useful in the event of a security incident
+From the management panel, administrators can revoke every token issued to an application at once. This is useful in the event of a suspected security incident.
 
 Steps to revoke all tokens:
-1. Open the application detail page
-2. Go to Advanced section in sidebar
-3. Click **Revoke all tokens**
-4. Confirm by putting the application name in dialog box
+1. Open the management panel for the application
+2. Switch to the **Advanced** tab
+3. In the **Danger Zone**, click **Revoke Tokens**
+4. In the confirmation dialog, type the application name to confirm
 
 ---
 

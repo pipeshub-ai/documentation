@@ -343,14 +343,14 @@ Every sync runs in this order:
 4. **Per-meeting enrichment** — for each meeting:
    - `GET /v2/meetings/{meetingId}` — meeting detail
    - `GET /v2/meetings/{meetingId}/recordings` — recording **share URL** only (silently skipped if the meeting has no recording)
-   - `GET /v2/report/meetings/{uuid}/participants` — attendee list
-   - `GET /v2/meetings/{uuid}/transcript` — AI Companion transcript (if enabled)
+   - `GET /v2/report/meetings/{meetingId}/participants` — attendee list
+   - `GET /v2/meetings/{meetingId}/transcript` — AI Companion transcript (if enabled)
 5. **Build permissions** — host → Owner; alt-hosts / participants / invitees → Read.
 6. **Persist records** — meeting records and permissions are written per chunk.
 
 ### Full sync vs incremental sync
 
-- **First sync** runs from `max(user.created_at, today − 180 days)` forward.
+- **First sync** runs from `max(user.created_at, today - 180 days)` forward.
 - **Subsequent syncs** start from the per-user checkpoint minus one day (safety overlap) and advance to today, in 30-day chunks.
 - **Lookback cap:** 180 days. Older meetings are never synced.
 - **Chunk size:** 30 days per API call (Zoom Report API constraint).
@@ -398,7 +398,7 @@ The connector syncs meeting history for **every user in the account**, not just 
 - **List all users** in the account → `user:read:list_users:admin`
 - **Read meeting history** per user via the Report API → `report:read:user:admin`
 - **Fetch meeting participants** → `report:read:list_meeting_participants:admin`
-- **Meeting details and recording share URLs** across the account → `meeting:read:meeting:admin`, `cloud_recording:*:admin`
+- **Meeting details and recording share URLs** across the account → `meeting:read:meeting:admin`, `cloud_recording:read:list_recording_files:admin`, `cloud_recording:read:meeting_transcript:admin`
 
 Admin scopes (`*:admin`) are only available to **Admin-managed** apps. A User-managed app cannot request them and would only return data the authorizing user personally hosted — which defeats the purpose of an organization-wide knowledge connector. Admin-managed also means a single authorization covers the entire account, so users don't need to individually connect their Zoom to PipesHub.
 

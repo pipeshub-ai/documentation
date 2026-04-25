@@ -1,0 +1,323 @@
+---
+title: "OneDrive Toolset"
+description: "OneDrive, files, and OneNote management for AI agents via Microsoft Graph"
+icon: "/logo/one-drive.png"
+---
+
+<div className="max-w-2xl mx-auto mt-12">
+  <div className="p-6 border border-gray-200 dark:border-gray-700 rounded-lg bg-blue-50 dark:bg-gray-800">
+    <div className="flex items-center mb-4">
+      <img 
+        src="/logo/one-drive.png" 
+        alt="Microsoft OneDrive Logo" 
+        className="w-8 h-8 mr-3 object-contain flex-shrink-0"
+      />
+      <h2 className="text-2xl font-semibold m-0">OneDrive Toolset</h2>
+    </div>
+    <p className="text-lg text-gray-700 dark:text-gray-300 mb-4">Cloud files, sharing, and OneNote notebooks</p>
+    <div className="flex items-center gap-2">
+      <span className="px-3 py-1 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 rounded-full text-sm font-medium">
+        Ready
+      </span>
+      <span className="px-3 py-1 bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200 rounded-full text-sm font-medium">
+        Microsoft 365
+      </span>
+    </div>
+  </div>
+</div>
+
+## Overview
+
+The OneDrive toolset lets AI agents work with files in Microsoft OneDrive (and other drives you can access through Microsoft Graph), including shared libraries, downloads, sharing with people, and basic OneNote notebook operations. It uses delegated OAuth (user consent) so actions run as the signed-in user.
+
+### Key Capabilities
+
+- **Drives and browsing** - List drives, open the root folder, list folders and files, and fetch item metadata
+- **Search** - Search within a drive by keyword; search across content shared with you
+- **Shared with me** - List and search files others have shared with you without needing a drive ID first
+- **File and folder actions** - Create folders, rename, move, and copy items (copy may complete asynchronously)
+- **Sharing** - Invite specific people by email with read, write, or owner roles
+- **Content and links** - Get short-lived download URLs; read file content (parsed text and structured output for many formats, subject to size limits)
+- **New Word files** - Create a new `.docx` in a folder, optionally with initial text content
+- **OneNote** - Create notebooks, sections, and pages; list sections and pages; read page HTML
+
+Almost every operation that targets a specific drive needs a `drive_id`. Call `get_drives` first when the drive is unknown.
+
+---
+
+## Available Tools
+
+### Drive and navigation
+
+| Tool | Description |
+|------|-------------|
+| `get_drives` | List drives you can use; call first when `drive_id` is unknown |
+| `get_drive` | Get metadata for one drive (for example quota and owner) |
+| `get_root_folder` | Get the root drive item for a drive |
+| `get_files` | List files and folders under the drive root or a given `folder_id` |
+| `get_folder_children` | List items inside a specific folder |
+| `get_file` | Get metadata for one file or folder by `item_id` |
+
+### Search and shared content
+
+| Tool | Description |
+|------|-------------|
+| `search_files` | Search a drive by name, content, or metadata |
+| `get_shared_with_me` | List items shared with you (no `drive_id` required) |
+| `search_shared_with_me` | Search for a keyword across drives that have shared content with you |
+
+### Organize, copy, and share
+
+| Tool | Description |
+|------|-------------|
+| `create_folder` | Create a folder under a parent (defaults to root) |
+| `rename_item` | Rename a file or folder; preserves the file extension when appropriate |
+| `move_item` | Move an item to another folder; optional new name |
+| `copy_item` | Copy an item into a destination folder, optionally on another drive or with a new name |
+| `share_item` | Share with people by email (`read`, `write`, or `owner`), optional message and invitation options |
+
+### Download and read content
+
+| Tool | Description |
+|------|-------------|
+| `get_download_url` | Get a short-lived `@microsoft.graph.downloadUrl` for a file |
+| `get_file_content` | Download file bytes and return parsed content (many text and Office-like formats; large files are rejected) |
+
+### Create files and OneNote
+
+| Tool | Description |
+|------|-------------|
+| `create_word_file` | Create a `.docx` under a parent folder (`file_type` must be `word`); optional `content` |
+| `create_onenote_notebook` | Create a notebook with a display name |
+| `create_onenote_section` | Add a section to a notebook identified by its `web_url` |
+| `create_onenote_page` | Add a page to a section by `section_id`, with optional HTML body |
+| `get_onenote_sections` | List sections for a notebook `web_url` |
+| `get_onenote_pages` | List pages in a section |
+| `get_onenote_page_content` | Read a page’s HTML by `page_id` |
+
+---
+
+## Configuration Guide
+
+<AccordionGroup>
+
+<Accordion title="Setup" icon="gear">
+
+### Step 1: Open App registrations from the Azure portal home
+
+1. Go to [portal.azure.com](https://portal.azure.com) and sign in.
+2. On the home page, find **Azure services** and click **App registrations**. You can also search the top bar for **App registrations** or open **Microsoft Entra ID** and choose **App registrations** from there.
+
+<div style={{ textAlign: "center" }}>
+  <img
+    src="/images/toolsets/onedrive/home_page.png"
+    alt="Azure portal home with App registrations"
+    style={{ display: 'block', margin: '0 auto' }}
+    width="90%"
+  />
+</div>
+
+### Step 2: Start a new registration
+
+On the **App registrations** page, click **+ New registration**.
+
+<div style={{ textAlign: "center" }}>
+  <img
+    src="/images/toolsets/onedrive/app_reg.png"
+    alt="App registrations list with New registration"
+    style={{ display: 'block', margin: '0 auto' }}
+    width="90%"
+  />
+</div>
+
+### Step 3: Register the application
+
+1. **Name**: Enter a display name (for example, `PipesHub OneDrive Toolset`).
+2. **Supported account types**: Choose who can sign in—for example **Accounts in any organizational directory and personal Microsoft accounts** for broad support, or a single-tenant option if you only use your organization.
+3. **Redirect URI**: Use the **Web** redirect URI from the PipesHub **Configure OneDrive** (or Microsoft 365 files) dialog in **connector / toolset settings** where OneDrive is set up—for example **Workspace → Actions** and the OneDrive toolset **+ Setup** / **Configure** flow.
+
+<div style={{ textAlign: "center" }}>
+  <img
+    src="/images/toolsets/onedrive/onedrive_toolset_page.png"
+    alt="PipesHub Configure OneDrive dialog showing Redirect URI"
+    style={{ display: 'block', margin: '0 auto' }}
+    width="90%"
+  />
+</div>
+
+4. Click **Register**.
+
+<div style={{ textAlign: "center" }}>
+  <img
+    src="/images/toolsets/onedrive/new_app.png"
+    alt="Register an application form in Azure"
+    style={{ display: 'block', margin: '0 auto' }}
+    width="90%"
+  />
+</div>
+
+### Step 4: Copy Application (client) ID and Directory (tenant) ID
+
+On the **Overview** page for your app, copy:
+
+- **Application (client) ID** — used as **Client ID** in PipesHub.
+- **Directory (tenant) ID** — used as **Tenant ID** in PipesHub (or use `common` / leave blank per the toolset dialog if you want both work/school and personal accounts).
+
+<div style={{ textAlign: "center" }}>
+  <img
+    src="/images/toolsets/onedrive/app_overview.png"
+    alt="App registration Overview with client and tenant IDs"
+    style={{ display: 'block', margin: '0 auto' }}
+    width="90%"
+  />
+</div>
+
+<Warning>
+  Use the **Application (client) ID**, not the **Object ID**. They are different values.
+</Warning>
+
+### Step 5: Create a client secret
+
+1. In the left sidebar under **Manage**, open **Certificates & secrets**.
+2. On the **Client secrets** tab, click **+ New client secret**.
+3. Add a description, choose an expiration, then click **Add**.
+4. **Copy the secret value immediately** — it is shown only once.
+
+<div style={{ textAlign: "center" }}>
+  <img
+    src="/images/toolsets/onedrive/client_id_secret.png"
+    alt="Certificates and secrets with new client secret"
+    style={{ display: 'block', margin: '0 auto' }}
+    width="90%"
+  />
+</div>
+
+<Warning>
+  If you leave this page without copying the secret, you cannot read it again—create a new client secret instead.
+</Warning>
+
+### Step 6: Add Microsoft Graph API permissions
+
+1. In the left sidebar, open **API permissions**.
+2. Click **+ Add a permission** → **Microsoft Graph** → **Delegated permissions**.
+3. Add the permissions your agents need, for example:
+
+| Permission | Description |
+|-----------|-------------|
+| `Files.ReadWrite.All` | Read, write, move, copy, search, and share files the user can reach |
+| `User.Read` | Read the signed-in user’s profile |
+| `Notes.Create` | Create OneNote notebooks |
+| `Notes.ReadWrite` | Read and update OneNote notebooks, sections, and pages |
+| `offline_access` | Refresh tokens for ongoing access |
+
+If users rely on **SharePoint** document libraries that appear as drives, you may also need delegated **Sites** permissions appropriate to your tenant (for example `Sites.Read.All` or `Sites.ReadWrite.All`). Start with the table above and add permissions if Graph returns authorization errors for specific drives.
+
+<Info>
+  The OneDrive toolset uses **Delegated** permissions so actions run as the signed-in user, not only as the application.
+</Info>
+
+<div style={{ textAlign: "center" }}>
+  <img
+    src="/images/toolsets/onedrive/permissions.png"
+    alt="Microsoft Graph delegated API permissions for OneDrive"
+    style={{ display: 'block', margin: '0 auto' }}
+    width="90%"
+  />
+</div>
+
+### Step 7: Grant admin consent
+
+Click **Grant admin consent for** your organization (the button includes your tenant name) and confirm, so delegated permissions show as granted for the tenant (especially for permissions that require admin approval).
+
+<div style={{ textAlign: "center" }}>
+  <img
+    src="/images/toolsets/onedrive/grant_admin_consent.png"
+    alt="API permissions with Grant admin consent"
+    style={{ display: 'block', margin: '0 auto' }}
+    width="90%"
+  />
+</div>
+
+### Step 8: Configure the OneDrive toolset in PipesHub
+
+1. In PipesHub, go to **Workspace** → **Actions** (or the area where toolsets are configured for your workspace).
+2. Find **OneDrive** (or the Microsoft 365 files toolset that includes these tools) and open setup / configuration (**+ Setup** or **Configure**).
+3. Confirm the **Redirect URI** in the dialog matches the **Web** redirect URI you registered in Azure **Step 3**.
+4. Enter **Client ID**, **Client Secret**, and optionally **Tenant ID** (`common` or your tenant/domain per the form), then create or save the instance.
+
+<div style={{ textAlign: "center" }}>
+  <img
+    src="/images/toolsets/onedrive/onedrive_toolset_page.png"
+    alt="PipesHub OneDrive toolset configuration with Client ID, secret, and redirect URI"
+    style={{ display: 'block', margin: '0 auto' }}
+    width="90%"
+  />
+</div>
+
+### Step 9: Authenticate the toolset under Your actions
+
+1. Open **Your actions** (or the equivalent entry under **Personal** in the sidebar).
+2. Select your **OneDrive** instance and complete **Authenticate with OAuth** (Microsoft sign-in, then accept permissions).
+
+<div style={{ textAlign: "center" }}>
+  <img
+    src="/images/toolsets/onedrive/onedrive_auth_page.png"
+    alt="OneDrive toolset OAuth sign-in and consent in PipesHub"
+    style={{ display: 'block', margin: '0 auto' }}
+    width="90%"
+  />
+</div>
+
+### Step 10: Add OneDrive to an agent
+
+1. Go to the **Home** page.
+2. Next to **Agents**, click **+** to create a new agent.
+3. Give the agent a name, drag the **OneDrive** toolset onto the canvas, connect it to the **Agent** node with your model and chat input/output, then create the agent.
+
+<div style={{ textAlign: "center" }}>
+  <img
+    src="/images/toolsets/onedrive/create_agent.png"
+    alt="Agent builder with a Microsoft 365 toolset connected"
+    style={{ display: 'block', margin: '0 auto' }}
+    width="90%"
+  />
+</div>
+
+</Accordion>
+
+</AccordionGroup>
+
+---
+
+## FAQ
+
+<AccordionGroup>
+
+<Accordion title="What's the difference between the OneDrive Connector and the OneDrive Toolset?">
+
+| Aspect | OneDrive Connector | OneDrive Toolset |
+|--------|--------------------|------------------|
+| **Purpose** | Sync and index files for search in PipesHub | Let agents browse, search, edit metadata, share, and read content through the API |
+| **Data Flow** | One-way import into PipesHub | Two-way actions on live Microsoft 365 content |
+| **Auth Type** | Application permissions (admin consent), background sync | Delegated permissions (user consent), per-user session |
+| **When to Use** | Enterprise search over file corpora | Interactive tasks such as “find this file,” “move to Archive,” or “share with my team” |
+
+**Example:** Use the **OneDrive Connector** to ingest documents for semantic search. Use the **OneDrive Toolset** when the agent should list folders, search by keyword, copy files, or share a document while the user is signed in.
+
+</Accordion>
+
+</AccordionGroup>
+
+---
+
+## Usage Tips
+
+**Example: Find a document by name**  
+Ask the agent to search your OneDrive for “Q3 roadmap” (it should resolve `drive_id`, then run `search_files` or browse folders as needed).
+
+**Example: Move a file into a folder**  
+Ask to move “Budget.xlsx” into the “Archive” folder (the agent can search for IDs, then call `move_item`).
+
+**Example: Share read-only with a colleague**  
+Ask to share a specific file with `alice@contoso.com` with view access.
+

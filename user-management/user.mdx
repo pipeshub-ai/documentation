@@ -1,39 +1,91 @@
 ---
-title: "User"
-description: "Invitation to the users to join the application"
+title: "Users"
+description: "Invite, manage, and remove users in your PipesHub workspace"
 ---
 
-### User Invitation Process
+The **Users** page lists everyone who has been invited to or is part of your workspace. Administrators can invite new members, manage existing ones, and act on pending invites from a single view.
 
-1. Navigate to Users & Groups under Company Settings. Click on Users Tabs and then on Invite Users.
-2. Enter one or multiple email addresses.
-3. Select one or more groups for the new users.
-4. Send invitations. Users will receive an email with login details.
+## Navigating to Users
+
+1. Sign in to your PipesHub account with administrator credentials
+2. Open the user menu and click **Workspace Settings**
+3. In the workspace sidebar, expand the **People** section and select **Users**
+
+The page shows a table of all workspace users with the following columns:
+
+| Column | Description |
+|--------|-------------|
+| **User** | Avatar, display name, and email |
+| **Role** | `Admin` or `Member` |
+| **Groups** | Number of user groups this user belongs to |
+| **Status** | `Active`, `Pending`, or `Blocked` |
+| **Last Active** | Date of the user's most recent activity |
+| **Date Joined** | Date the user was added or invited |
+
+Use the **search** field in the header to look up users by name or email, and the **filters** above the table to narrow results by group, status, last active date, or date joined. Clicking any row opens that user's **profile** panel on the right.
+
+## Inviting Users
+
+1. On the **Users** page, click the **Invite** button in the top-right corner
+2. The **Invite User(s)** panel opens on the right
+3. In the **Invite to** field, type or paste one or more email addresses (separated by comma, space, or Enter). Invalid addresses are flagged inline
+4. (Optional) In **Add to a User Group**, search and select one or more groups. New users inherit access from the groups they are added to
+5. Click **Send Invite**
 
 <div style={{ textAlign: "center" }}>
   <img
-    src="/images/account/userGroups/bulk_invite.png"
-    alt="User Invitation"
+    src="/images/account/users/bulk_invite.png"
+    alt="Invite Users panel with email and group selection"
     width="90%"
   />
 </div>
 
-### Resend Invite
+Each invited user receives an email with instructions to join the workspace. Until they sign in, their status on the Users page is **Pending**.
 
-If there is any problem in the invitation of the user and you want to send another invitation, you can do that.
+## Managing Pending Invites
 
-1. Navigate to Users & Groups under Company Settings. Click on the invite tab.
-2. Select the user you want to send invite to and click on Resend Invite button.
+Click the row actions menu (**⋯**) next to a user with status **Pending** to access invite-specific actions:
+
+- **Resend Invite** — Sends a fresh invitation email to the same address.
+- **Cancel Invite** — Revokes the outstanding invitation.
 
 <div style={{ textAlign: "center" }}>
   <img
-    src="/images/account/userGroups/existing_invitation.png"
-    alt="User Invitation"
+    src="/images/account/users/existing_invitation.png"
+    alt="Pending invite row actions"
     width="90%"
   />
 </div>
 
-### Remove User
+If an invitation expires, the same **Resend Invite** and **Cancel Invite** options appear so you can extend or revoke the invite.
 
-1. If you want to delete the user, then navigate to to Users & Groups under Company Settings. Click on the invite tab.
-2. Select the remove button in front of the user you want to remove.
+## Bulk Actions
+
+Select one or more rows using the checkboxes. A floating action bar appears at the bottom of the table:
+
+- If every selected row is a **Pending** invite: **Resend Invite** or **Cancel Invite**.
+- Otherwise: **Remove from Workplace** (disabled when the selection contains any Admin).
+
+## Managing Active Users
+
+For an active (non-admin) user, the row actions menu offers:
+
+- **View Profile** — Opens the user's profile panel on the right
+- **Deactivate** — Temporarily disables the account (coming soon)
+- **Remove from Workplace** — Permanently removes the user. A confirmation dialog asks you to confirm.
+
+Admin users only expose **View Profile** in the row actions menu; admins cannot be removed from this screen.
+
+## Unblocking Users
+
+If a user is **Blocked**, open the row actions menu and choose **Unblock**. A confirmation dialog asks you to type the user's display name before the action is applied.
+
+## Removing a User
+
+1. Open the row actions menu (**⋯**) for the user
+2. Click **Remove from Workplace**
+3. In the confirmation dialog, click **Remove**
+
+<Warning>
+  Removing a user is immediate. They lose access to the workspace and their group memberships are cleared. Admin accounts cannot be removed from the Users page.
+</Warning>

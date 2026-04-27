@@ -89,167 +89,224 @@ The Slack toolset enables AI agents to interact with your Slack workspace. Send 
 
 <Accordion title="Setup" icon="gear">
 
-### Step 1: Create Slack App
+### Step 1: Create a Slack app
 
-1. Go to [api.slack.com/apps](https://api.slack.com/apps)
-2. Click **"Create New App"**
-3. Choose **"From a manifest"**
+1. Go to [api.slack.com/apps](https://api.slack.com/apps) and sign in.
+2. Click **Create New App**.
+3. Choose **From a manifest**.
 
-<div className="text-center">
+<div style={{ textAlign: "center" }}>
   <img
     src="/images/toolsets/slack/create-app-dialog-new.png"
     alt="Create App From Manifest"
-    className="block mx-auto w-11/12"
+    style={{ display: 'block', margin: '0 auto' }}
+    width="90%"
   />
 </div>
 
-4. Select your workspace where you want to install the app
+4. Select the workspace where you want to install the app.
 
-<div className="text-center">
+<div style={{ textAlign: "center" }}>
   <img
     src="/images/toolsets/slack/pick-workspace.png"
     alt="Pick Workspace for Your App"
-    className="block mx-auto w-11/12"
+    style={{ display: 'block', margin: '0 auto' }}
+    width="90%"
   />
 </div>
 
-5. The manifest JSON editor will be displayed. Click **"Next"** to proceed
+5. The manifest JSON editor opens. Click **Next** to proceed.
 
-<div className="text-center">
+<div style={{ textAlign: "center" }}>
   <img
     src="/images/toolsets/slack/manifest-json.png"
     alt="App Manifest JSON"
-    className="block mx-auto w-11/12"
+    style={{ display: 'block', margin: '0 auto' }}
+    width="90%"
   />
 </div>
 
-6. Review the app summary and click **"Create"**
+6. Review the app summary and click **Create**.
 
-<div className="text-center">
+<div style={{ textAlign: "center" }}>
   <img
     src="/images/toolsets/slack/review-create-app.png"
     alt="Review and Create App"
-    className="block mx-auto w-11/12"
+    style={{ display: 'block', margin: '0 auto' }}
+    width="90%"
   />
 </div>
 
-### Step 2: Get Redirect URI from PipesHub
+<Info>
+  You need **admin access** to install Slack apps in your workspace, or your workspace must allow members to install apps. If app installation is restricted, ask a workspace admin to approve the app after you create it.
+</Info>
 
-1. In PipesHub, go to **Settings > Toolsets**
-2. Find **Slack** and click **"Configure"**
-3. Copy the **Redirect URI** shown in the dialog
+### Step 2: Get the Redirect URI from PipesHub
 
-<div className="text-center">
+Before configuring the Redirect URL in Slack, copy the Redirect URI from PipesHub so the values match exactly.
+
+1. In PipesHub, go to **Workspace Settings** → **Actions**.
+2. Find **Slack** in the list and click **+ Setup** (or **Configure**).
+3. Copy the **Redirect URI** shown in the dialog.
+
+<div style={{ textAlign: "center" }}>
   <img
     src="/images/toolsets/slack/pipeshub-config.png"
-    alt="Copy Redirect URI from PipesHub"
-    className="block mx-auto w-11/12"
+    alt="PipesHub Configure Slack toolset — copy the Redirect URI"
+    style={{ display: 'block', margin: '0 auto' }}
+    width="90%"
   />
 </div>
 
-### Step 3: Configure Redirect URL
+### Step 3: Configure the Redirect URL in Slack
 
-1. In your Slack app settings, go to **OAuth & Permissions**
-2. Under **Redirect URLs**, click **"Add New Redirect URL"**
-3. Paste the **Redirect URI** from PipesHub
-4. Click **"Add"** and then **"Save URLs"**
+1. In your Slack app settings, open **OAuth & Permissions** in the left sidebar.
+2. Under **Redirect URLs**, click **Add New Redirect URL**.
+3. Paste the Redirect URI you copied from PipesHub.
+4. Click **Add**, then **Save URLs**.
 
-<div className="text-center">
+<div style={{ textAlign: "center" }}>
   <img
     src="/images/toolsets/slack/redirect-urls.png"
     alt="Add Redirect URL"
-    className="block mx-auto w-11/12"
+    style={{ display: 'block', margin: '0 auto' }}
+    width="90%"
   />
 </div>
 
-### Step 4: Add Required Scopes
+<Warning>
+  The Redirect URL must match exactly between Slack and PipesHub — protocol, host, path, and trailing slash. Any mismatch causes authentication to fail.
+</Warning>
 
-1. In **OAuth & Permissions**, scroll to **"Scopes"**
-2. Under **"Bot Token Scopes"**, add the following scopes:
+### Step 4: Add required scopes
 
-**Messaging Scopes:**
-- `chat:write` - Send messages, update, delete, schedule
+In **OAuth & Permissions**, scroll to **Scopes** and add the following under **Bot Token Scopes**.
 
-**Channel Scopes:**
-- `channels:read` - View basic channel info, list channels
-- `channels:history` - Read channel message history
-- `channels:write` - Create, archive, rename channels, set topic/purpose
-- `groups:read` - View private channel info
-- `groups:history` - Read private channel history
-- `groups:write` - Create, archive, rename private channels
-- `mpim:read` - View group DM info
-- `mpim:history` - Read group DM history
-- `mpim:write` - Create group DMs
-- `im:read` - View DM info
-- `im:history` - Read DM history
-- `im:write` - Open and send DMs
+**Messaging**
+| Scope | Purpose |
+|-------|---------|
+| `chat:write` | Send, update, delete, and schedule messages |
 
-**User Scopes:**
-- `users:read` - View user info, list users
-- `users:read.email` - Look up users by email
-- `users.profile:read` - Read user profiles
-- `users.profile:write` - Write user profiles (for set_user_status)
+**Channels**
+| Scope | Purpose |
+|-------|---------|
+| `channels:read` | View basic channel info, list channels |
+| `channels:history` | Read channel message history |
+| `channels:write` | Create, archive, rename channels, set topic/purpose |
+| `groups:read` | View private channel info |
+| `groups:history` | Read private channel history |
+| `groups:write` | Create, archive, rename private channels |
+| `mpim:read` | View group DM info |
+| `mpim:history` | Read group DM history |
+| `mpim:write` | Create group DMs |
+| `im:read` | View DM info |
+| `im:history` | Read DM history |
+| `im:write` | Open and send DMs |
 
-**File Scopes:**
-- `files:write` - Upload files
-- `files:read` - Read file info
+**Users**
+| Scope | Purpose |
+|-------|---------|
+| `users:read` | View user info, list users |
+| `users:read.email` | Look up users by email |
+| `users.profile:read` | Read user profiles |
+| `users.profile:write` | Write user profiles (used by `set_user_status`) |
 
-**Search Scope:**
-- `search:read` - Search messages and files
+**Files**
+| Scope | Purpose |
+|-------|---------|
+| `files:write` | Upload files |
+| `files:read` | Read file info |
 
-**Reaction Scopes:**
-- `reactions:read` - View reactions
-- `reactions:write` - Add/remove reactions
+**Search, reactions, pins, user groups**
+| Scope | Purpose |
+|-------|---------|
+| `search:read` | Search messages and files |
+| `reactions:read` | View reactions |
+| `reactions:write` | Add/remove reactions |
+| `pins:read` | View pinned messages |
+| `pins:write` | Pin/unpin messages |
+| `usergroups:read` | View user groups |
 
-**Pin Scopes:**
-- `pins:read` - View pinned messages
-- `pins:write` - Pin/unpin messages
-
-**User Group Scopes:**
-- `usergroups:read` - View user groups
-
-<div className="text-center">
+<div style={{ textAlign: "center" }}>
   <img
     src="/images/toolsets/slack/user-token-scopes.png"
     alt="Configure Bot Token Scopes"
-    className="block mx-auto w-11/12"
+    style={{ display: 'block', margin: '0 auto' }}
+    width="90%"
   />
 </div>
 
-### Step 5: Get OAuth Credentials
+<Info>
+  If you change scopes after the toolset is already authenticated, existing users must re-authorize to pick up the new scopes.
+</Info>
 
-1. In Slack app settings, go to **Basic Information**
-2. Copy your **Client ID** and **Client Secret** (click "Show" to reveal)
+### Step 5: Copy Client ID and Client Secret
 
-<div className="text-center">
+1. In Slack app settings, open **Basic Information**.
+2. Scroll to **App Credentials**.
+3. Copy:
+   - **Client ID** — used as **Client ID** in PipesHub.
+   - **Client Secret** — click **Show** to reveal, then copy. Used as **Client Secret** in PipesHub.
+
+<div style={{ textAlign: "center" }}>
   <img
     src="/images/toolsets/slack/app-credentials-new.png"
     alt="Copy Slack App Credentials"
-    className="block mx-auto w-11/12"
+    style={{ display: 'block', margin: '0 auto' }}
+    width="90%"
   />
 </div>
 
-### Step 6: Configure in PipesHub
+<Warning>
+  Store the Client Secret securely. It can be regenerated if needed, but you'll have to update your PipesHub configuration with the new value and re-authorize.
+</Warning>
 
-1. Return to the PipesHub Slack toolset configuration dialog
-2. Enter your **Client ID** and **Client Secret**
-3. Click **"Authenticate"**
+### Step 6: Configure the Slack toolset in PipesHub
 
-<div className="text-center">
+1. In PipesHub, return to **Workspace Settings** → **Actions**.
+2. Find **Slack** and reopen the setup dialog.
+3. Confirm the **Redirect URI** matches the Redirect URL you saved in Slack in Step 3.
+4. Paste your **Client ID** and **Client Secret**, then save the instance.
+
+<div style={{ textAlign: "center" }}>
   <img
     src="/images/toolsets/slack/enter-credentials.png"
-    alt="Enter Credentials in PipesHub"
-    className="block mx-auto w-11/12"
+    alt="Enter Slack Client ID and Client Secret in PipesHub"
+    style={{ display: 'block', margin: '0 auto' }}
+    width="90%"
   />
 </div>
 
-### Step 7: Authorize Access
+### Step 7: Authenticate the Slack toolset
 
-1. A popup window will open to Slack's authorization page
-2. Select your workspace
-3. Review the permissions and click **"Allow"**
-4. You'll be redirected back to PipesHub
-5. The toolset will show **"Authenticated"** status
+Authentication uses the same OAuth flow in either location:
+
+- **Admins** can authenticate the shared instance directly under **Workspace Settings → Actions**.
+- **Users** can authenticate their own personal instance under **Your actions** (in the **Personal** section of the sidebar).
+
+1. On the Slack tile (in **Actions** or **Your actions**), click **Authenticate with OAuth**.
+2. A popup opens to Slack's authorization page — select your workspace, review the requested scopes, and click **Allow**.
+
+<div style={{ textAlign: "center" }}>
+  <img
+    src="/images/toolsets/slack/slack_oauth_authorize.png"
+    alt="Slack authorization — review and allow"
+    style={{ display: 'block', margin: '0 auto' }}
+    width="90%"
+  />
+</div>
+
+3. The popup closes and the Slack tile shows **Authenticated** status.
+
+<Warning>
+  **Authorize using the same email as your PipesHub account.** Using a different email causes permission issues on the PipesHub platform.
+</Warning>
+
+### Step 8: Add Slack to an agent
+
+1. Go to the **Home** page.
+2. Next to **Agents**, click **+** to create a new agent.
+3. Give the agent a name, drag the **Slack** toolset onto the canvas, connect it to the **Agent Core** node with your model and chat input/output, then create the agent.
 
 </Accordion>
 
@@ -296,4 +353,3 @@ Ask to "add a ✅ reaction to that message" or "react with 👍 to John's messag
 
 **How do I get channel history?**  
 Ask to "show me recent messages in #support" or "get the last 10 messages from #engineering". The agent can retrieve message history from any channel.
-

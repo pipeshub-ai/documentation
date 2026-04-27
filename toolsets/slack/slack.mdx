@@ -180,7 +180,11 @@ Before configuring the Redirect URL in Slack, copy the Redirect URI from PipesHu
 
 ### Step 4: Add required scopes
 
-In **OAuth & Permissions**, scroll to **Scopes** and add the following under **Bot Token Scopes**.
+In **OAuth & Permissions**, scroll to **Scopes**. Slack splits scopes into two sections — **Bot Token Scopes** and **User Token Scopes** — and you'll need to add some in each.
+
+#### Bot Token Scopes
+
+Add these under the **Bot Token Scopes** section.
 
 **Messaging**
 | Scope | Purpose |
@@ -209,23 +213,26 @@ In **OAuth & Permissions**, scroll to **Scopes** and add the following under **B
 | `users:read` | View user info, list users |
 | `users:read.email` | Look up users by email |
 | `users.profile:read` | Read user profiles |
-| `users.profile:write` | Write user profiles (used by `set_user_status`) |
 
-**Files**
+**Files, reactions, pins, user groups**
 | Scope | Purpose |
 |-------|---------|
 | `files:write` | Upload files |
 | `files:read` | Read file info |
-
-**Search, reactions, pins, user groups**
-| Scope | Purpose |
-|-------|---------|
-| `search:read` | Search messages and files |
 | `reactions:read` | View reactions |
 | `reactions:write` | Add/remove reactions |
 | `pins:read` | View pinned messages |
 | `pins:write` | Pin/unpin messages |
 | `usergroups:read` | View user groups |
+
+#### User Token Scopes
+
+Scroll further down on the same page to the **User Token Scopes** section and add these. They are not available as Bot Token Scopes — you must add them here for the corresponding tools to work.
+
+| Scope | Purpose |
+|-------|---------|
+| `search:read` | Search messages and files (powers `search_all` and `search_messages`) |
+| `users.profile:write` | Set user status on behalf of the user (powers `set_user_status`) |
 
 <div style={{ textAlign: "center" }}>
   <img

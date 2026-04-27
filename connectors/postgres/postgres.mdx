@@ -1,0 +1,317 @@
+---
+title: "PostgreSQL"
+description: "Sync schemas, tables, and row data from PostgreSQL into PipesHub"
+icon: "/logo/postgres.png"
+---
+
+<div className="max-w-2xl mx-auto mt-12">
+  <div className="p-6 border border-gray-200 dark:border-gray-700 rounded-lg bg-blue-50 dark:bg-gray-800">
+    <div className="flex items-center mb-4">
+      <img
+        src="/logo/postgres.png"
+        alt="PostgreSQL Logo"
+        className="w-8 h-8 mr-3 object-contain flex-shrink-0"
+      />
+      <h2 className="text-2xl font-semibold m-0">PostgreSQL</h2>
+    </div>
+    <p className="text-lg text-gray-700 dark:text-gray-300 mb-4">Schema, table, and row sync from a PostgreSQL database</p>
+    <div className="flex items-center gap-2">
+      <span className="px-3 py-1 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 rounded-full text-sm font-medium">
+        Ready
+      </span>
+      <span className="px-3 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-full text-sm font-medium">
+        Database
+      </span>
+    </div>
+  </div>
+</div>
+
+## Overview
+
+The PostgreSQL connector indexes schemas, tables, and row data from a PostgreSQL database into PipesHub so your AI assistant can search across structured data alongside your other knowledge sources.
+
+### What Gets Synced
+
+| Content Type | Details |
+|--------------|---------|
+| **Schemas** | All schemas selected by the **Schemas** filter |
+| **Tables** | Table names, columns, data types, primary and foreign keys |
+| **Schema metadata** | `CREATE TABLE` statements and relationships between tables |
+| **Row data** | Row contents from selected tables, capped per table by the **Max rows** filter |
+
+---
+
+## Configuration Guide
+
+<AccordionGroup>
+
+<Accordion title="Step 1: Install PostgreSQL" icon="database">
+
+If you already have a PostgreSQL server, skip this step.
+
+### Install PostgreSQL
+
+Download the installer from the [PostgreSQL Downloads page](https://www.postgresql.org/download/).
+
+Verify the install:
+
+```bash
+psql --version
+```
+
+If `psql` is not recognized, add the `bin` directory to `PATH`:
+
+```powershell
+$env:PATH += ";C:\Program Files\PostgreSQL\16\bin"
+```
+
+### Install pgAdmin
+
+Download the installer from the [pgAdmin Downloads page](https://www.pgadmin.org/download/).
+
+### Set up a local server and database
+
+1. Open pgAdmin.
+2. Register a new server:
+   - Right-click **Servers** > **Register** > **Server**
+   - **General** tab — Name: `Local PostgreSQL`
+   - **Connection** tab — Host: `localhost`, Port: `5432`, Username: `postgres`, Password: the one you set during PostgreSQL install
+   - Save
+3. Create the database:
+   - Expand the server > right-click **Databases** > **Create** > **Database**
+   - Name it `bird_mini_dev`
+   - Save
+
+### Create a user for the connector
+
+Create a dedicated read-only role for PipesHub. Run these as a superuser (e.g. `postgres`) against the target database:
+
+```sql
+CREATE USER pipeshub_user WITH PASSWORD 'a_strong_password';
+GRANT CONNECT ON DATABASE bird_mini_dev TO pipeshub_user;
+GRANT USAGE ON SCHEMA public TO pipeshub_user;
+GRANT SELECT ON ALL TABLES IN SCHEMA public TO pipeshub_user;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES TO pipeshub_user;
+```
+
+The connector also reads schema metadata from `information_schema` and `pg_catalog`, which are available to any authenticated user by default.
+
+<Info>
+  Replace `pipeshub_user` and `a_strong_password` with your own values, and repeat the `USAGE`/`SELECT`/`ALTER DEFAULT PRIVILEGES` grants for each schema you plan to sync.
+</Info>
+
+</Accordion>
+
+<Accordion title="Step 2: (Optional) Load the BIRD Mini Dev sample dataset" icon="upload">
+
+If you already have data, skip this step.
+
+1. Download the dataset from [birdsql/bird_mini_dev on Hugging Face](https://huggingface.co/datasets/birdsql/bird_mini_dev).
+2. Click **Download BIRD Mini-Dev Complete Package** and extract the zip.
+3. Locate `BIRD_dev.sql` in `minidev_0703/minidev/MINIDEV_postgresql`.
+4. Load it with `psql`:
+
+**Windows** (use double quotes and Windows paths):
+
+```bash
+psql -U postgres -d bird_mini_dev -f "D:\Downloads\BIRD_dev.sql"
+```
+
+If `psql` is not on `PATH`, use the full path:
+
+```bash
+"C:\Program Files\PostgreSQL\16\bin\psql.exe" -U postgres -d bird_mini_dev -f "D:\Downloads\BIRD_dev.sql"
+```
+
+**macOS / Linux**:
+
+```bash
+psql -U postgres -d bird_mini_dev -f ~/Downloads/BIRD_dev.sql
+```
+
+The dataset includes Formula 1 tables: `circuits`, `constructors`, `constructorresults`, `constructorstandings`, `drivers`, `laptimes`, `driverstandings`, `pitstops`, `qualifying`, `races`, `results`, `seasons`, `status`. Sample queries are on the [dataset page](https://huggingface.co/datasets/birdsql/bird_mini_dev).
+
+</Accordion>
+
+<Accordion title="Step 3: Configure the connector in PipesHub" icon="plug">
+
+1. In PipesHub, open **Connector Settings**.
+2. In the **Available** tab, find the **PostgreSQL** card and click **Configure**.
+
+<div className="text-center">
+  <img
+    src="/images/connectors/postgres/postgres-connector-card.png"
+    alt="PostgreSQL connector card in Available connectors"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+3. Choose how you want to authenticate.
+
+#### Option 1: Basic Auth
+
+| Field | Example |
+|-------|---------|
+| **Host** | `localhost` |
+| **Port** | `5432` |
+| **Database** | `bird_mini_dev` |
+| **User** | `postgres` |
+| **Password** | your password |
+
+#### Option 2: Connection String
+
+Use a single PostgreSQL connection string:
+
+```
+postgresql://postgres:your_password@localhost:5432/bird_mini_dev
+```
+
+If your password contains special characters, URL-encode them:
+
+```
+@ -> %40
+: -> %3A
+/ -> %2F
+% -> %25
+# -> %23
+```
+
+Example: `p@ss:word` becomes `p%40ss%3Aword`
+
+```
+postgresql://postgres:p%40ss%3Aword@localhost:5432/bird_mini_dev
+```
+
+<div className="text-center">
+  <img
+    src="/images/connectors/postgres/postgres-auth-config.png"
+    alt="PostgreSQL connector auth configuration"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+</Accordion>
+
+<Accordion title="Step 4: Configure sync filters" icon="filter">
+
+Sync filters control what is pulled from PostgreSQL. Anything excluded by a filter is never downloaded.
+
+<div className="text-center">
+  <img
+    src="/images/connectors/postgres/postgres-sync-filters.png"
+    alt="PostgreSQL sync filters"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+| Filter | Description | Default |
+|--------|-------------|---------|
+| **Schemas** | Pick the schemas to sync (e.g. `public`). Leave empty to sync all schemas. | All schemas |
+| **Tables** | Pick the tables to sync (e.g. `public.account`). Leave empty to sync all tables in the selected schemas. | All tables |
+| **Max rows per table** | Maximum number of rows to fetch from each table. | 1000 |
+| **Index tables** | When enabled, table content is indexed for AI search. When disabled, only schema metadata is indexed. | Enabled |
+
+<Info>
+  Schemas and tables are dropdowns populated from your database after the credentials are saved — pick from the list rather than typing names by hand.
+</Info>
+
+</Accordion>
+
+<Accordion title="Step 5: Choose a sync strategy and save" icon="rotate">
+
+1. Pick **Scheduled** or **Manual** sync.
+2. If scheduled, set the **Sync interval** (default: 60 minutes).
+3. Click **Save** to enable the connector.
+
+<div className="text-center">
+  <img
+    src="/images/connectors/postgres/postgres-sync-settings.png"
+    alt="PostgreSQL sync settings"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+The connector verifies the connection, then runs the initial sync. Watch the **Indexing Progress** to track completion.
+
+<div className="text-center">
+  <img
+    src="/images/connectors/postgres/postgres-connector-active.png"
+    alt="PostgreSQL connector active and synced"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+</Accordion>
+
+</AccordionGroup>
+
+---
+
+## Example Use Cases
+
+After syncing the BIRD Mini Dev Formula 1 tables, you can ask your assistant questions like:
+
+- "Which constructor has the most championships?"
+- "Show me the fastest pit stop times across the 2008 season."
+- "List the top 5 drivers by total points across all seasons."
+
+The connector exposes both schema (so the assistant knows which tables and columns exist) and row data (so it can return actual results).
+
+---
+
+## FAQ
+
+<AccordionGroup>
+
+<Accordion title="What privileges does the PostgreSQL user need?">
+
+For read-only sync, grant `USAGE` on the schemas and `SELECT` on the tables you want to sync:
+
+```sql
+GRANT USAGE ON SCHEMA public TO pipeshub_user;
+GRANT SELECT ON ALL TABLES IN SCHEMA public TO pipeshub_user;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES TO pipeshub_user;
+```
+
+The connector also reads schema metadata from `information_schema` and `pg_catalog`, which are available to any authenticated user by default.
+
+</Accordion>
+
+<Accordion title="Can I connect to a remote PostgreSQL server?">
+
+Yes. Use the public host and port. Make sure:
+- `pg_hba.conf` allows connections from the PipesHub deployment IP range.
+- The PostgreSQL service is listening on a reachable interface (`listen_addresses` in `postgresql.conf`).
+- Any firewall or security group allows traffic on the chosen port (default `5432`).
+
+</Accordion>
+
+<Accordion title="My password has special characters and the connection string fails">
+
+URL-encode the special characters in the password. Common replacements:
+
+```
+@ -> %40
+: -> %3A
+/ -> %2F
+% -> %25
+# -> %23
+```
+
+So `p@ss:word` becomes `p%40ss%3Aword` in the connection string.
+
+</Accordion>
+
+<Accordion title="How do I keep large tables from blowing up the sync?">
+
+Use **Max rows per table** in sync filters to cap how many rows are fetched per table, narrow the **Schemas** and **Tables** filters to just what you need, and disable **Index tables** if you only want schema metadata in search.
+
+</Accordion>
+
+<Accordion title="Can I sync only specific tables across multiple schemas?">
+
+Yes. Select multiple schemas in the **Schemas** filter, then pick fully-qualified table names (e.g. `public.account`, `analytics.events`) in the **Tables** filter.
+
+</Accordion>
+
+</AccordionGroup>

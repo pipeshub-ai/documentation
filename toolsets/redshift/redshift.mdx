@@ -1,0 +1,265 @@
+---
+title: "Redshift Toolset"
+description: "Run SQL queries on Amazon Redshift from your AI agents"
+icon: "/logo/redshift.png"
+---
+
+<div className="max-w-2xl mx-auto mt-12">
+  <div className="p-6 border border-gray-200 dark:border-gray-700 rounded-lg bg-orange-50 dark:bg-gray-800">
+    <div className="flex items-center mb-4">
+      <img
+        src="/logo/redshift.png"
+        alt="Redshift Logo"
+        className="w-8 h-8 mr-3 object-contain flex-shrink-0"
+      />
+      <h2 className="text-2xl font-semibold m-0">Redshift Toolset</h2>
+    </div>
+    <p className="text-lg text-gray-700 dark:text-gray-300 mb-4">Schema introspection and SQL execution on Amazon Redshift</p>
+    <div className="flex items-center gap-2">
+      <span className="px-3 py-1 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 rounded-full text-sm font-medium">
+        Ready
+      </span>
+      <span className="px-3 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-full text-sm font-medium">
+        Database
+      </span>
+    </div>
+  </div>
+</div>
+
+## Overview
+
+The Redshift toolset lets agents query your Amazon Redshift database.
+
+<Note>
+  Admin creates the Redshift toolset once. After that, each user authenticates with their own Redshift username and password.
+</Note>
+
+---
+
+## Configuration Guide
+
+<AccordionGroup>
+
+<Accordion title="Step 1: Set up Redshift Serverless in AWS" icon="database">
+
+### Create namespace and workgroup
+
+1. Open AWS Console and go to **Amazon Redshift**.
+2. Click **Try Amazon Redshift Serverless free trial**.
+3. Select **Customize settings**.
+4. Under **Namespace**, set:
+   - **Namespace name**: `redshift-dev`
+   - **Database name**: `dev`
+   - **Admin username**: for example `root`
+   - **Password**: choose **Add password manually** and set a password
+   - Create or attach an IAM role for Redshift access
+5. Under **Workgroup**, set:
+   - **Workgroup name**: `redshift-dev-wg`
+   - **RPU**: change from `128` to `16` for testing
+   - Enable **Turn on public accessibility**
+6. Keep other values as default and click **Save configuration**.
+
+### Open port 5439 in security group
+
+1. In Redshift, open your **Workgroup** page.
+2. Open **Network and security**.
+3. Click the linked **Security group**.
+4. In EC2 security group, click **Edit inbound rules**.
+5. Add rule:
+   - **Type**: `Custom TCP`
+   - **Port range**: `5439`
+   - **Source**: `My IP`
+6. Click **Save rules**.
+
+<Info>
+  Redshift uses port `5439` by default.
+</Info>
+
+### Copy endpoint and database details
+
+From the Redshift **Workgroup** page, copy the endpoint. Example:
+
+`redshift-dev-wg.891377406506.ap-south-1.redshift-serverless.amazonaws.com:5439/dev`
+
+Use these values in PipesHub setup:
+- **Host**: `redshift-dev-wg.891377406506.ap-south-1.redshift-serverless.amazonaws.com` (only hostname before `:`)
+- **Port**: `5439`
+- **Database**: `dev`
+
+</Accordion>
+
+<Accordion title="Step 2: (Optional) Load sample data" icon="upload">
+
+If you already have data in Redshift, skip this step.
+
+### Option A: Load CSV from Query Editor v2
+
+1. Open Redshift workgroup page and click **Query data**.
+2. Open **Query Editor v2**.
+3. Open settings and add your S3 bucket URL (example: `s3://your-bucket-name`).
+4. Click **Load data** and load CSV files.
+
+### Option B: Load SQL using psql
+
+Make sure `psql` is installed:
+
+```bash
+psql --version
+```
+
+Then run:
+
+```bash
+psql "sslmode=require host=redshift-dev-wg.891377406506.ap-south-1.redshift-serverless.amazonaws.com port=5439 user=root dbname=dev" -f "/path/to/tickitdb.sql"
+```
+
+</Accordion>
+
+<Accordion title="Step 3: Create Redshift toolset (admin only)" icon="gear">
+
+<Note>
+  Only admin can create the Redshift toolset instance in the workspace.
+</Note>
+
+### Go to toolset creation flow
+
+1. In PipesHub, open **Workspace Settings**.
+2. Click **Actions**.
+3. Click **Create Toolset**.
+
+<div className="text-center">
+  <img
+    src="/images/toolsets/redshift/open-workspace-settings.png"
+    alt="Open Workspace Settings"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+<div className="text-center">
+  <img
+    src="/images/toolsets/redshift/navigate-to-actions.png"
+    alt="Navigate to Actions"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+<div className="text-center">
+  <img
+    src="/images/toolsets/redshift/click-create-toolset.png"
+    alt="Click Create Toolset"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+### Select Redshift and configure
+
+1. Choose **Redshift** from toolsets.
+2. Fill the form:
+
+| Field | Value |
+|------|-------|
+| **Instance name** | Example: `Redshift` |
+| **Host** | Redshift endpoint host only |
+| **Port** | `5439` |
+| **Database** | Example: `dev` |
+
+3. Click **Create**.
+
+<div className="text-center">
+  <img
+    src="/images/toolsets/redshift/redshift-setup-card.png"
+    alt="Redshift setup card"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+
+<Info>
+  Admin sets only instance connection details. Username and password are not stored at this step.
+</Info>
+
+</Accordion>
+
+<Accordion title="Step 4: Authenticate Redshift (each user)" icon="key">
+
+After admin creates the toolset, each user must authenticate with their own Redshift credentials.
+
+1. Open **Workspace Settings > Actions**.
+2. Open the **Redshift** toolset instance.
+3. Click **Authenticate**.
+4. Enter your Redshift **Username** and **Password**.
+5. Click **Save credentials**.
+
+<div className="text-center">
+  <img
+    src="/images/toolsets/redshift/redshift-inactive-instance.png"
+    alt="Redshift toolset instance inactive before authentication"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+<div className="text-center">
+  <img
+    src="/images/toolsets/redshift/redshift-user-auth.png"
+    alt="Authenticate Redshift with user username and password"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+<div className="text-center">
+  <img
+    src="/images/toolsets/redshift/redshift-authenticated.png"
+    alt="Redshift toolset authenticated"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+</Accordion>
+
+<Accordion title="Step 5: Use Redshift in an agent" icon="robot">
+
+1. Open **Agent Builder**.
+2. In **Tools**, drag **Redshift** to the canvas.
+3. Connect it to your agent.
+4. Ask data questions in plain language.
+
+<div className="text-center">
+  <img
+    src="/images/toolsets/redshift/redshift-in-agent-builder.png"
+    alt="Redshift toolset in agent builder"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+</Accordion>
+
+</AccordionGroup>
+
+---
+
+## FAQ
+
+<AccordionGroup>
+
+<Accordion title="Who creates and who authenticates?">
+
+- **Admin** creates the Redshift toolset instance once.
+- **Each user** authenticates with their own Redshift username and password.
+
+</Accordion>
+
+<Accordion title="What endpoint should I use in Host field?">
+
+Use only the hostname part of the endpoint.
+
+If endpoint is:
+`redshift-dev-wg.891377406506.ap-south-1.redshift-serverless.amazonaws.com:5439/dev`
+
+Then use:
+- **Host**: `redshift-dev-wg.891377406506.ap-south-1.redshift-serverless.amazonaws.com`
+- **Port**: `5439`
+- **Database**: `dev`
+
+</Accordion>
+
+</AccordionGroup>

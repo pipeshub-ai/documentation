@@ -72,6 +72,12 @@ Unlike **Connectors** (which index data for querying and search), **Toolsets** p
 |---------|-------------|-----------|
 | [Slack](/toolsets/slack/slack) | Team messaging and collaboration | OAuth 2.0 |
 
+### Database
+
+| Toolset | Description | Auth Type |
+|---------|-------------|-----------|
+| [MariaDB](/toolsets/mariadb/mariadb) | Schema introspection and SQL execution | Basic Auth |
+
 ---
 
 ## Configuring Toolsets
@@ -123,10 +129,10 @@ The Toolsets page has two tabs:
 
 Follow the authentication flow for the toolset:
 
-1. Enter the required credentials in the configuration dialog (e.g., Client ID and Client Secret)
+1. Enter the required credentials in the configuration dialog (e.g., Client ID and Client Secret, or Username and Password)
 2. Click **"Authenticate"**
-3. If prompted, a popup window will open for authorization
-4. Grant the requested permissions
+3. For OAuth toolsets, a popup window opens for authorization
+4. Grant the requested permissions (OAuth flow)
 5. You'll be redirected back to PipesHub with authentication confirmed
 
 <Info>
@@ -201,6 +207,19 @@ OAuth 2.0 is the recommended authentication method for most toolsets. It provide
 - Create an OAuth application in the service's developer console
 - Configure redirect URI (provided by PipesHub)
 - Obtain Client ID and Client Secret
+
+### Basic Auth
+
+Basic Auth is used by toolsets like MariaDB. It works as follows:
+
+- **Per-user credentials** - Each user enters their own username and password
+- **Secure credential handling** - Credentials are stored securely and scoped to the authenticated user
+- **Admin and user separation** - Admin creates the shared toolset instance; users authenticate their own accounts
+- **No credential sharing** - One user's credentials are not visible to other users
+
+**Requirements:**
+- Admin creates the toolset instance (host, port, database)
+- Each user provides valid username and password for that data source
 ---
 
 ## Frequently Asked Questions

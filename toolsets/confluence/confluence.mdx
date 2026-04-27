@@ -59,16 +59,22 @@ The Confluence toolset enables AI agents to interact with your Confluence worksp
 
 ---
 
-## Setup
+## Configuration Guide
 
-<AccordionGroup>
+The Confluence toolset supports **two authentication methods**. In both, an admin first configures the shared instance under **Workspace Settings → Actions**, then each user connects their personal account under **Your actions**.
 
-<Accordion title="Setup" icon="gear">
+| Method | Best for |
+|--------|----------|
+| **OAuth 2.0 (3LO)** | Multi-user / org-wide rollouts. One Atlassian app, per-user consent via OAuth popup. |
+| **API Token** | When you cannot register an Atlassian OAuth app, or you want per-user tokens. Each user provides their own Email + API Token. |
 
-### Step 1: Access Atlassian Developer Console
+<Tabs>
 
-1. Navigate to [developer.atlassian.com/console/myapps/](https://developer.atlassian.com/console/myapps/)
-2. Sign in with your Atlassian account
+<Tab title="OAuth 2.0">
+
+#### Step 1: Access the Atlassian Developer Console
+
+1. Go to [developer.atlassian.com/console/myapps/](https://developer.atlassian.com/console/myapps/) and sign in with your Atlassian account (must have admin access to your Confluence workspace).
 
 <div className="text-center">
   <img
@@ -79,15 +85,15 @@ The Confluence toolset enables AI agents to interact with your Confluence worksp
 </div>
 
 <Info>
-  You can use the same Atlassian OAuth application for both Jira and Confluence toolsets.
+  You can use the same Atlassian OAuth application for both Jira and Confluence toolsets — just add the relevant API permissions to it.
 </Info>
 
-### Step 2: Create OAuth 2.0 Integration (if needed)
+#### Step 2: Create an OAuth 2.0 integration (if needed)
 
-1. Click **"Create"** in the top right corner
-2. Select **"OAuth 2.0 integration"**
-3. Enter a name (e.g., "PipesHub Confluence Toolset")
-4. Click **"Create"**
+1. Click **Create** in the top-right corner.
+2. Select **OAuth 2.0 integration**.
+3. Enter a name (e.g., `PipesHub Confluence Toolset`) and accept the developer terms.
+4. Click **Create**.
 
 <div className="text-center">
   <img
@@ -97,26 +103,28 @@ The Confluence toolset enables AI agents to interact with your Confluence worksp
   />
 </div>
 
-### Step 3: Get Redirect URI from PipesHub
+#### Step 3: Get the Redirect URI from PipesHub
 
-1. In PipesHub, go to **Settings > Toolsets**
-2. Find **Confluence** and click **"Configure"**
-3. Copy the **Redirect URI** shown in the dialog
+Before configuring the Callback URL in Atlassian, copy the Redirect URI from PipesHub.
+
+1. In PipesHub, go to **Workspace Settings** → **Actions**.
+2. Find **Confluence** in the list and click **+ Setup** for a new instance.
+3. Copy the **Redirect URI** shown in the dialog.
 
 <div className="text-center">
   <img
     src="/images/toolsets/confluence/pipeshub-config.png"
-    alt="Copy Redirect URI from PipesHub"
+    alt="PipesHub Configure Confluence toolset — copy the Redirect URI"
     className="block mx-auto w-11/12"
   />
 </div>
 
-### Step 4: Configure Callback URL
+#### Step 4: Configure the Callback URL in Atlassian
 
-1. In Atlassian Developer Console, go to **Authorization**
-2. Click **"Add"** under OAuth 2.0 (3LO)
-3. Paste the **Redirect URI** from PipesHub into the **Callback URL** field
-4. Click **"Save changes"**
+1. In Atlassian Developer Console, click **Authorization** in the left sidebar.
+2. Click **Add** under **OAuth 2.0 (3LO)**.
+3. Paste the Redirect URI from PipesHub into the **Callback URL** field.
+4. Click **Save changes**.
 
 <div className="text-center">
   <img
@@ -126,14 +134,16 @@ The Confluence toolset enables AI agents to interact with your Confluence worksp
   />
 </div>
 
-### Step 5: Add Required Scopes
+<Warning>
+  The Callback URL must match exactly. Any mismatch — trailing slash, protocol, casing — will cause authentication to fail.
+</Warning>
 
-1. In the left sidebar, click **"Permissions"**
-2. Add scopes for both **User identity API** and **Confluence API**
+#### Step 5: Add required scopes
 
-#### User Identity API
+1. In the left sidebar, click **Permissions**.
+2. Add scopes for both **User identity API** and **Confluence API**.
 
-Click **"Add"** next to User identity API and select:
+**User Identity API**
 
 | Scope | Description |
 |-------|-------------|
@@ -147,11 +157,7 @@ Click **"Add"** next to User identity API and select:
   />
 </div>
 
-#### Confluence API - Classic Scopes
-
-Click **"Add"** next to Confluence API. You'll see two tabs: **"Classic scopes"** and **"Granular scopes"**. Add scopes from both tabs.
-
-First, select the **"Classic scopes"** tab and add:
+**Confluence API — Classic scopes**
 
 | Scope | Description |
 |-------|-------------|
@@ -172,9 +178,7 @@ First, select the **"Classic scopes"** tab and add:
   />
 </div>
 
-#### Confluence API - Granular Scopes
-
-Next, select the **"Granular scopes"** tab and add:
+**Confluence API — Granular scopes**
 
 | Scope | Description |
 |-------|-------------|
@@ -210,12 +214,12 @@ Next, select the **"Granular scopes"** tab and add:
   />
 </div>
 
-### Step 6: Get OAuth Credentials
+#### Step 6: Copy Client ID and Client Secret
 
-1. In the left sidebar, click **"Settings"**
-2. Under **"Authentication details"**, copy:
-   - **Client ID**
-   - **Secret** (click the copy button)
+1. In the left sidebar, click **Settings**.
+2. Under **Authentication details**, copy:
+   - **Client ID** — used as **Client ID** in PipesHub.
+   - **Secret** — used as **Client Secret** in PipesHub.
 
 <div className="text-center">
   <img
@@ -225,46 +229,191 @@ Next, select the **"Granular scopes"** tab and add:
   />
 </div>
 
-### Step 7: Configure in PipesHub
+#### Step 7: Admin — configure the toolset in Actions
 
-1. Return to the PipesHub Confluence toolset configuration dialog
-2. Enter your **Client ID** and **Client Secret**
-3. Click **"Authenticate"**
+1. In PipesHub, return to **Workspace Settings** → **Actions**, find **Confluence**, and reopen the setup dialog.
+2. Confirm the **Redirect URI** matches the Callback URL you saved in Atlassian in Step 4.
+3. Enter:
+   - **Instance Name** (e.g., `Confluence Production`)
+   - **Client ID** — from Step 6
+   - **Client Secret** — from Step 6
+   - **Atlassian Site URL** — your Confluence site URL (e.g., `https://your-domain.atlassian.net`; no trailing slash)
+4. Click **Create**.
 
 <div className="text-center">
   <img
     src="/images/toolsets/confluence/enter-credentials.png"
-    alt="Enter Credentials in PipesHub"
+    alt="Enter Client ID, Client Secret, and Atlassian Site URL in PipesHub"
     className="block mx-auto w-11/12"
   />
 </div>
 
-### Step 8: Authorize Access
+<Info>
+  **Atlassian Site URL** is an org-level field — it points to the specific Confluence Cloud site this toolset instance will act on. Client ID and Client Secret are the org's OAuth app credentials. Per-user tokens are issued by Atlassian when each user authenticates in the next step.
+</Info>
 
-1. A popup window will open to Atlassian's authorization page
-2. Select your Confluence site from the dropdown
-3. Review the permissions and click **"Accept"**
+#### Step 8: Authenticate the toolset
+
+Authentication uses the same OAuth flow in either location:
+
+- **Admins** can authenticate the shared instance directly under **Workspace Settings → Actions**.
+- **Users** can authenticate their own personal instance under **Your actions** (in the **Personal** section of the sidebar).
+
+1. On the Confluence tile (in **Actions** or **Your actions**), click **Authenticate with OAuth**.
+2. A popup opens to Atlassian's authorization page — select your Confluence site from the dropdown.
+3. Review the permissions and click **Accept**.
 
 <div className="text-center">
   <img
-    src="/images/connectors/jira/oauth_page_accept.png"
+    src="/images/toolsets/confluence/oauth_page_accept.png"
     alt="Accept Permissions"
     className="block mx-auto w-11/12"
   />
 </div>
 
-4. You'll be redirected back to PipesHub
-5. The toolset will show **"Authenticated"** status
+4. The popup closes and the Confluence tile shows **Authenticated** status.
 
-</Accordion>
+<Warning>
+  **Authorize using the same email as your PipesHub account.** Using a different email causes permission issues on the PipesHub platform.
+</Warning>
 
-</AccordionGroup>
+#### Step 9: Add Confluence to an agent
+
+1. Go to the **Home** page.
+2. Next to **Agents**, click **+** to create a new agent.
+3. Give the agent a name, drag the **Confluence** toolset onto the canvas, connect it to the **Agent Core** node with your model and chat input/output, then create the agent.
+
+<div className="text-center">
+  <img
+    src="/images/toolsets/confluence/create_agent.png"
+    alt="Agent builder with Confluence toolset connected"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+</Tab>
+
+<Tab title="API Token">
+
+The API Token method has a clear org/user split:
+- **Admin** configures only the **Atlassian Site URL** under **Actions** (org-level field).
+- **Each user** then opens **Your actions** and enters their own **Email** + **API Token** to authenticate the toolset for themselves.
+
+This is different from the connector — here every user that wants to use the toolset needs their own API token, since each agent action runs under that user's identity.
+
+#### Step 1: Each user generates an API token in Atlassian
+
+Each user that will use the toolset must generate their own API token.
+
+1. Sign in to [id.atlassian.com/manage-profile/security/api-tokens](https://id.atlassian.com/manage-profile/security/api-tokens).
+2. Click **Create API token**, set a meaningful label (e.g., `PipesHub Confluence Toolset`) and an expiry if you want, then click **Create**.
+
+<div className="text-center">
+  <img
+    src="/images/toolsets/confluence/api_token_create.png"
+    alt="Atlassian Create API token dialog"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+3. Atlassian shows the token **once** — click **Copy** and store it securely.
+
+<div className="text-center">
+  <img
+    src="/images/toolsets/confluence/api_token_copy.png"
+    alt="Copy the API token — shown once"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+<Warning>
+  The API token is shown only once. If you close the dialog without copying it, create a new token.
+</Warning>
+
+#### Step 2: Admin — configure the toolset instance in Actions
+
+The admin sets up only the **org-level** field (the Atlassian Site URL). No credentials are entered here — those come from each user in the next step.
+
+1. In PipesHub, go to **Workspace Settings** → **Actions**.
+2. Find **Confluence** and click **+ Setup** for a new instance.
+3. In the dialog, choose **API Token** as the authentication method, then enter only:
+   - **Instance Name** (e.g., `Confluence Production`)
+   - **Atlassian Site URL** — your Confluence site URL (e.g., `https://your-domain.atlassian.net`; no trailing slash)
+4. Click **Create**.
+
+<div className="text-center">
+  <img
+    src="/images/toolsets/confluence/api_token_actions_admin.png"
+    alt="Admin Actions dialog — API Token method shows only Instance Name and Atlassian Site URL"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+<Info>
+  Clicking the instance settings later reopens this drawer where you can change **Instance Name** and **Atlassian Site URL**. A button below opens **Your actions** so each user can add their own credentials.
+</Info>
+
+#### Step 3: Each user — add Email + API Token in Your actions
+
+Each user that wants to use the toolset must complete this step with their own credentials.
+
+1. In PipesHub, open **Your actions** (in the **Personal** section of the sidebar).
+2. Find the Confluence instance and open it.
+3. Enter:
+   - **Email** — your Atlassian account email (the account that created the API token in Step 1)
+   - **API Token** — the token you copied in Step 1
+4. Click **Save credentials**.
+
+<div className="text-center">
+  <img
+    src="/images/toolsets/confluence/api_token_your_actions.png"
+    alt="Your actions — enter Email and API Token"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+The Confluence tile in **Your actions** now shows **Authenticated**. The toolset is connected for this user only — every other user must repeat Step 3 with their own email + token.
+
+<Warning>
+  The **Email** must match the Atlassian account that owns the API token. Using a different email causes authentication to fail.
+</Warning>
+
+#### Step 4: Add Confluence to an agent
+
+1. Go to the **Home** page.
+2. Next to **Agents**, click **+** to create a new agent.
+3. Give the agent a name, drag the **Confluence** toolset onto the canvas, connect it to the **Agent Core** node with your model and chat input/output, then create the agent.
+
+<div className="text-center">
+  <img
+    src="/images/toolsets/confluence/create_agent.png"
+    alt="Agent builder with Confluence toolset connected"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+</Tab>
+
+</Tabs>
 
 ---
 
 ## FAQ
 
 <AccordionGroup>
+
+<Accordion title="Which authentication method should I choose?">
+
+| | OAuth 2.0 | API Token |
+|---|-----------|-----------|
+| **Best for** | Multi-user / org-wide rollouts | Cases where OAuth app registration is blocked |
+| **Org-level setup** | Client ID, Client Secret, Atlassian Site URL | Atlassian Site URL only |
+| **Per-user setup** | OAuth popup (one click) | Each user pastes Email + API Token |
+| **Prerequisites** | Atlassian Developer Console admin access | Any Atlassian account |
+
+Choose **OAuth** for the simplest per-user experience. Choose **API Token** when you cannot register an Atlassian OAuth app or when each user wants to manage their own token.
+
+</Accordion>
 
 <Accordion title="What's the difference between Confluence Connector and Confluence Toolset?">
 

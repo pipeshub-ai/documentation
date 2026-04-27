@@ -1,0 +1,225 @@
+---
+title: "MariaDB"
+description: "Sync schema and tabular data from a MariaDB database into PipesHub"
+icon: "/logo/mariadb.png"
+---
+
+<div className="max-w-2xl mx-auto mt-12">
+  <div className="p-6 border border-gray-200 dark:border-gray-700 rounded-lg bg-amber-50 dark:bg-gray-800">
+    <div className="flex items-center mb-4">
+      <img
+        src="/logo/mariadb.png"
+        alt="MariaDB Logo"
+        className="w-8 h-8 mr-3 object-contain flex-shrink-0"
+      />
+      <h2 className="text-2xl font-semibold m-0">MariaDB</h2>
+    </div>
+    <p className="text-lg text-gray-700 dark:text-gray-300 mb-4">Tables sync from a MariaDB database</p>
+    <div className="flex items-center gap-2">
+      <span className="px-3 py-1 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 rounded-full text-sm font-medium">
+        Ready
+      </span>
+      <span className="px-3 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-full text-sm font-medium">
+        Database
+      </span>
+    </div>
+  </div>
+</div>
+
+## Overview
+
+The MariaDB connector indexes schema metadata, table contents from a MariaDB database so your AI assistant can answer questions over structured data alongside your other knowledge sources.
+
+<Note>
+  Looking for query execution from agents (run SQL on demand, no indexing)? Use the [MariaDB Toolset](/toolsets/mariadb/mariadb) instead. Connector = sync & search. Toolset = run actions.
+</Note>
+
+### What Gets Synced
+
+| Content Type | Details |
+|--------------|---------|
+| **Tables** | Table names, columns, data types, primary and foreign keys |
+| **Row data** | Row contents from selected tables, capped per table by the **Max rows** filter |
+
+---
+
+## Configuration Guide
+
+<AccordionGroup>
+
+<Accordion title="Step 1: Set up MariaDB" icon="database">
+
+If you already have a MariaDB server, skip this step.
+
+### Option A: Docker (recommended for testing)
+
+Run a local MariaDB container:
+
+```bash
+docker run --name mariadb-test \
+  -e MARIADB_ROOT_PASSWORD=rootpass \
+  -e MARIADB_DATABASE=test_db \
+  -p 3306:3306 \
+  -d mariadb:latest
+```
+
+This starts MariaDB on `localhost:3306` with:
+- Username: `root`
+- Password: `rootpass`
+- Database: `test_db`
+
+### Option B: Install locally
+
+Install MariaDB from the [official MariaDB downloads page](https://mariadb.org/download/) and follow the installer for your OS. After install, start the server and note your `host`, `port`, `username`, and `password`.
+
+### Verify the connection
+
+```bash
+mysql -h localhost -P 3306 -u root -p
+```
+
+Enter your password when prompted. If you reach the `MariaDB [(none)]>` prompt, the server is ready.
+
+### Create a user for the connector
+
+Create a dedicated read-only user for PipesHub. Run these as `root` (or any user with `CREATE USER` and `GRANT` privileges) against the target database:
+
+```sql
+CREATE USER 'pipeshub_user'@'%' IDENTIFIED BY 'a_strong_password';
+GRANT SELECT ON test_db.* TO 'pipeshub_user'@'%';
+FLUSH PRIVILEGES;
+```
+
+The connector also reads schema metadata from `information_schema`, which is available to any authenticated user by default.
+
+<Info>
+  Replace `pipeshub_user`, `a_strong_password`, and `test_db` with your own values. Use `'pipeshub_user'@'localhost'` instead of `'%'` if PipesHub connects from the same host as the database.
+</Info>
+
+</Accordion>
+
+<Accordion title="Step 2: Configure the connector in PipesHub" icon="plug">
+
+1. In PipesHub, open **Connector Settings**.
+2. In the **Available** tab, find the **MariaDB** card and click **Configure**.
+
+<div className="text-center">
+  <img
+    src="/images/connectors/mariadb/mariadb-connector-card.png"
+    alt="MariaDB connector card in Available connectors"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+3. Fill in the connection details:
+
+| Field | Example |
+|-------|---------|
+| **Host** | `localhost` |
+| **Port** | `3306` |
+| **Database** | `test_db` |
+| **User** | `pipeshub_user` |
+| **Password** | the password you set when creating the user |
+
+<div className="text-center">
+  <img
+    src="/images/connectors/mariadb/mariadb-auth-config.png"
+    alt="MariaDB connector auth configuration"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+</Accordion>
+
+<Accordion title="Step 3: Configure sync filters" icon="filter">
+
+Sync filters control what is pulled from MariaDB. Anything excluded by a filter is never downloaded.
+
+<div className="text-center">
+  <img
+    src="/images/connectors/mariadb/mariadb-sync-filters.png"
+    alt="MariaDB sync filters"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+| Filter | Description | Default |
+|--------|-------------|---------|
+| **Tables** | Pick the tables to sync (e.g. `customers`, `orders`). Leave empty to sync all tables in the database. | All tables |
+| **Max rows per table** | Maximum number of rows to fetch from each table. | 1000 |
+| **Index tables** | When enabled, table content is indexed for AI search. When disabled, only schema metadata is indexed. | Enabled |
+
+<Info>
+  Use **Max rows per table** to keep initial syncs fast on large tables, or to cap the amount of data exposed to your assistant.
+</Info>
+
+</Accordion>
+
+<Accordion title="Step 4: Choose a sync strategy and save" icon="rotate">
+
+1. Pick **Scheduled** or **Manual** sync.
+2. If scheduled, set the **Sync interval** (default: 60 minutes).
+3. Click **Save** to enable the connector.
+
+<div className="text-center">
+  <img
+    src="/images/connectors/mariadb/mariadb-sync-settings.png"
+    alt="MariaDB sync settings"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+The connector verifies the connection, then runs the initial sync. Watch the **Indexing Progress** to track completion.
+
+<div className="text-center">
+  <img
+    src="/images/connectors/mariadb/mariadb-connector-active.png"
+    alt="MariaDB connector active and synced"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+</Accordion>
+
+</AccordionGroup>
+
+---
+
+## FAQ
+
+<AccordionGroup>
+
+<Accordion title="What privileges does the MariaDB user need?">
+
+For read-only sync, `SELECT` on the target database is enough:
+
+```sql
+GRANT SELECT ON test_db.* TO 'pipeshub_user'@'%';
+```
+
+The connector also reads schema metadata from `information_schema`, which is available to any authenticated user by default.
+
+</Accordion>
+
+<Accordion title="Can I connect to a remote MariaDB server?">
+
+Yes. Use the public host and port of your MariaDB server. Make sure the server allows connections from the PipesHub deployment and that the user has the required privileges.
+
+</Accordion>
+
+<Accordion title="How do I keep large tables from blowing up the sync?">
+
+Use **Max rows per table** in sync filters to cap how many rows are fetched per table, and use the **Tables** filter to only sync the tables you actually need.
+
+</Accordion>
+
+<Accordion title="What's the difference between this connector and the MariaDB toolset?">
+
+- **Connector** indexes your table and rows so they can be searched alongside your other knowledge.
+- **Toolset** lets agents run live SQL against MariaDB at query time without indexing.
+
+You can use both together — the connector for fast retrieval and the toolset when an agent needs to run a fresh query.
+
+</Accordion>
+
+</AccordionGroup>

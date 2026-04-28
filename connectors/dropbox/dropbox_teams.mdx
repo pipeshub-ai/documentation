@@ -153,41 +153,121 @@ http://{your_pipeshub_base_url}/connectors/oauth/callback/Dropbox
 
 ### Step 1: Configure Connection
 
-1. Open your PipesHub application and navigate to **Connections Settings**.
+1. Navigate to **Workspace Settings** > Under **Workspace** section in sidebar > **Connectors** in your application.
+<div style={{ textAlign: "center" }}>
+  <img
+    src="/images/connectors/common/go_to_workspace_settings.png"
+    alt="Go to Workspace Settings"
+    style={{ display: 'block', margin: '0 auto' }}
+    width="90%"
+  />
+</div>
 
-2. Select **Dropbox Teams** from the list of available data sources.
+2. Search for the **Dropbox** connector and click on **Setup** to configure a connector instance.
+<div style={{ textAlign: "center" }}>
+  <img
+    src="/images/connectors/dropbox/search_for_dropbox_connector.png"
+    alt="Search for Dropbox connector"
+    style={{ display: 'block', margin: '0 auto' }}
+    width="90%"
+  />
+</div>
 
-3. Paste the **App key** into the "Client ID" field.
+3. In the configuration dialog that opens:
+   - Enter an **Instance Name** for your connector (e.g., "Dropbox Teams")
+   - Enter the **App key** from your Dropbox App Console
+   - Enter the **App secret** from your Dropbox App Console
+   - Click on the **Next** button to save the configuration and move to Authorize page.
 
-4. Paste the **App secret** into the "Client Secret" field.
+   <div style={{ textAlign: "center" }}>
+     <img
+       src="/images/connectors/dropbox/dropbox_configuration.png"
+       alt="Dropbox Configuration"
+       width="90%"
+     />
+   </div>
 
-<img
- src="/images/connectors/dropbox/p1.png"
- alt="Dropbox"
- style={{ display: 'block', margin: '0 auto' }}
- width="90%"
-/>
+### Step 2: Authorize Dropbox 
 
-### Step 2: Set Sync Strategy
+1. In the Authorize page that opens:
 
-Click **Next** here you can setup your sync strategy either **Manual**, **Scheduled** or via **Webhooks** (to be implemented). On scheduled you can setup to run sync every 15 min, 30mins, 1hr, 4hr etc. And also decide batch size (this is an internal connector settings that decide how many items should the connector sync to ArangoDB at once) leave it empty if you want to go with default option 100.
+   - Click on **Authenticate Dropbox to Proceed** button
+   - You will be redirected to Dropbox's consent screen where you need to sign in and grant permission for Dropbox and related document access
+  
 
-<img
- src="/images/connectors/dropbox/p2.png"
- alt="Dropbox"
- style={{ display: 'block', margin: '0 auto' }}
- width="90%"
-/>
-
-### Step 3: Authenticate and Enable
-
-1. Click **Save Configuration**. Now the authenticate button will be active, click on it and you will be taken to dropbox to authorize your app.
-
+   <div style={{ textAlign: "center" }}>
+     <img
+       src="/images/connectors/dropbox/dropbox_consent_screen.png"
+       alt="Dropbox consent screen for Dropbox connector"
+       width="90%"
+     />
+   </div>
 <Warning>
   **Important:** Authorize using the same email address as your PipesHub account. Using a different email will cause permission issues on the PipesHub platform.
 </Warning>
 
-2. After granting access, you will be redirected back to PipesHub, and your Dropbox account will be successfully connected, once you enable the connector your files will start syncing.
+2. After giving consent, you can click on **Continue to configuration** to configure connector settings. More about it in the next section.
+</Accordion>
+
+<Accordion title="Connector Settings" icon="gear">
+
+## Sync Settings
+Sync settings allow you to control how the connector syncs data from Dropbox.
+
+**Sync Strategy:**
+- **Scheduled** - The connector will automatically sync data from Dropbox at the scheduled interval.
+- **Manual** - The connector will sync data from Dropbox only when Admin manually triggers the sync from the connector settings page.
+
+**Sync Interval:**
+How often the connector syncs data (default: 60 minutes).
+
+### Sync Filters
+Sync filters control which files are fetched from OneDrive. Files that don't match are skipped entirely. Folders are always synced regardless of these settings to preserve directory structure.
+
+### Created Date
+
+Filters files by when they were created. Accepts operators like `Last 365 Days`, `Is After`, `Is Before`, or `Is Between` for a specific range. 
+
+For example, set `Last 365 Days` to fetch only files created in the last year.
+
+### Modified Date
+
+Same as Created Date but filters by the file's last modified timestamp. Use `Last 30 Days` or `Is After` to limit sync to recently updated files.
+
+### File Extensions
+
+Extensions filter support 2 options: `In` (only sync listed extensions) or `Not In` (sync everything except listed extensions). After selecting your desired option, you can select your desired extensions from a list of supported extensions.
+
+<Note>
+Unsupported extensions are excluded under `In` and allowed through under `Not In`.
+</Note>
+
+---
+
+## Indexing Filters
+
+Indexing filters control which synced files are made searchable. Unlike sync filters, these don't prevent files from being fetched — files are still recorded in the system but their indexing status is set to **Manual Indexing**. 
+
+They can be manually indexed later from the **All Records** section.
+
+### Manual Indexing
+
+When enabled, files are synced but not automatically indexed. They won't appear in search results until explicitly indexed. 
+
+This can allow you to explicitly control which files and folders are indexed for search, by going to the **All Records** section and indexing the records manually.
+
+### Index Shared Items
+
+When enabled, files shared with others are indexed alongside personal files. Disable this to exclude shared content and index only files originating from a user's own drive.
+
+<div style={{ textAlign: "center" }}>
+     <img
+       src="/images/connectors/dropbox/dropbox_filters_example.png"
+       alt="Dropbox Configuration"
+       width="90%"
+     />
+   </div>
+
 
 </Accordion>
 

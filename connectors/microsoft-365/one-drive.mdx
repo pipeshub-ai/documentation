@@ -32,6 +32,7 @@ icon: "/logo/one-drive.png"
 OneDrive is Microsoft's cloud storage service that lets you store, sync, and share files across all your devices, often bundled with Microsoft 365. 
 
 The OneDrive connector uses OAuth 2.0 via Microsoft Graph API with Application Permissions, allowing background access to organizational files and folders without requiring individual user sign-ins.
+
 ---
 
 ## Configuration Setup
@@ -62,16 +63,7 @@ The OneDrive connector uses OAuth 2.0 via Microsoft Graph API with Application P
 - Enter application details:
   - **Name:** Enter app name (e.g., "PipesHub Connector")
   - **Supported account types:** Select "Accounts in this organizational directory only (Single tenant)"
-  - **Select a platform:** Web
-  - **Redirect URI:** Get the redirect URI from PipesHub configure OneDrive dialog in connector settings
-<div style={{ textAlign: "center" }}>
-  <img
-    src="/images/connectors/microsoft365/onedrive/2.png"
-    alt="OneDrive"
-    style={{ display: 'block', margin: '0 auto' }}
-    width="90%"
-  />
-</div>
+  - Leave Redirect URI blank
 - Click "Register"
 <div style={{ textAlign: "center" }}>
   <img
@@ -175,9 +167,8 @@ Admin consent is required for application permissions. Only Global Administrator
   - **Application (Client) ID:** From Step 2
   - **Client Secret:** From Step 3
   - **Directory (Tenant) ID:** From Step 2
-  - **Redirect URI:** Pre-filled (verify it matches your environment)
 - Check the "Has Admin Consent" checkbox
-- Click "Next" or "Save"
+- Click "Next"
 <div style={{ textAlign: "center" }}>
   <img
     src="/images/connectors/microsoft365/onedrive/8.png"
@@ -187,16 +178,62 @@ Admin consent is required for application permissions. Only Global Administrator
   />
 </div>
 
-### Step 7: Enable the Connector
-
-- After saving the configuration, toggle the connector to "Enable"
-- The connector will verify credentials and begin initial sync
-- Wait for the status to show "Connected" or "Syncing"
-
 <Note>
 Unlike user-facing OAuth flows, there's no login screen because the connector uses application permissions with client credentials.
 </Note>
 
+</Accordion>
+
+<Accordion title="Connector Settings" icon="gear">
+
+## Sync Settings
+Sync settings allow you to control how the connector syncs data from OneDrive.
+
+**Sync Strategy:**
+- **Scheduled** - The connector will automatically sync data from OneDrive at the scheduled interval.
+- **Manual** - The connector will sync data from OneDrive only when Admin manually triggers the sync from the connector settings page.
+
+**Sync Interval:**
+How often the connector syncs data (default: 60 minutes).
+
+### Sync Filters
+Sync filters control which files are fetched from OneDrive. Files that don't match are skipped entirely. Folders are always synced regardless of these settings to preserve directory structure.
+
+### Created Date
+
+Filters files by when they were created. Accepts operators like `Last 365 Days`, `Is After`, `Is Before`, or `Is Between` for a specific range. 
+
+For example, set `Last 365 Days` to fetch only files created in the last year.
+
+### Modified Date
+
+Same as Created Date but filters by the file's last modified timestamp. Use `Last 30 Days` or `Is After` to limit sync to recently updated files.
+
+### File Extensions
+
+Filters files support 2 options: `In` (only sync listed extensions) or `Not In` (sync everything except listed extensions). After selecting your desired option, you can select your desired extensions from a list of supported extensions.
+
+<Note>
+Unsupported extensions are excluded under `In` and allowed through under `Not In`.
+</Note>
+
+---
+
+## Indexing Filters
+
+Indexing filters control which synced files are made searchable. Unlike sync filters, these don't prevent files from being fetched — files are still recorded in the system but their indexing status is set to **Manual Indexing**. 
+
+They can be manually indexed later from the **All Records** section.
+
+### Manual Indexing
+
+When enabled, files are synced but not automatically indexed. They won't appear in search results until explicitly indexed. 
+
+This can allow you to explicitly control which files and folders are indexed for search, by going to the **All Records** section and indexing the records manually.
+
+### Index Shared Items
+
+When enabled, files shared with others are indexed alongside personal files. Disable this to exclude shared content and index only files originating from a user's own drive.
 </Accordion>
 
 </AccordionGroup>
@@ -318,6 +355,37 @@ There are three common causes:
 
 3. **Data not yet indexed** - The connector is still syncing or hasn't completed the initial indexing process.
    - **Fix:** Go to **Settings > Connectors**, check the sync status, and wait for indexing to complete.
+
+</Accordion>
+
+<Accordion title="My client secret has expired. What do I do?">
+
+Azure AD client secrets expire based on the duration set during creation. Once expired, the connector will fail to authenticate and sync will stop.
+
+1. Go to your app registration in the [Azure Portal](https://portal.azure.com)
+2. Navigate to **Certificates & secrets** → **New client secret**
+3. Set a new expiry and copy the secret **Value** immediately (it won't be shown again).
+4. Go to **Settings > Connectors** in PipesHub, open the OneDrive connector, and update the **Client Secret** field with the new value
+
+<Note>
+To avoid disruption, set a calendar reminder before your secret's expiry date. The recommended duration is 24 months.
+</Note>
+
+</Accordion>
+
+<Accordion title="Why is the first sync taking so long?">
+
+The initial sync performs a full scan of all users' drives across your organization. The connector fetches every file, folder, and permission from scratch before it has a delta checkpoint to work from. Depending on the size of your organization and number of files, this can take a significant amount of time.
+
+All subsequent syncs are incremental — only changes since the last run are fetched, making them considerably faster.
+
+</Accordion>
+
+<Accordion title="A file's sharing settings changed in OneDrive. When will that reflect in PipesHub?">
+
+Permission changes are picked up automatically on the next sync cycle. The connector compares current permissions from the Microsoft Graph API against what's stored and updates accordingly. 
+
+If your sync is set to **Scheduled**, the change will reflect within the configured sync interval. If set to **Manual**, trigger a sync from **Settings > Connectors** to pull the latest permissions immediately.
 
 </Accordion>
 

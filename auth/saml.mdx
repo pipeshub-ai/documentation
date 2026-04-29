@@ -1,99 +1,149 @@
 ---
 title: "SAML SSO"
-description: "Configure how users authenticate and access the application through Single Sign On"
+description: "Configure Single Sign-On for your workspace using your organization's Identity Provider"
 icon: "user-lock"
 ---
 
-## Enterprise single sign-on using Security Assertion Markup Language (SAML) protocol.
+SAML SSO lets your users log in to PipesHub using your organization's existing Identity Provider (IdP) — such as Okta, Azure AD, OneLogin, or Google Workspace — without needing a separate password.
 
-    1. User attempts to access your application
-    2. System redirects to the Identity Provider (IdP)
-    3. User authenticates with the IdP and IdP generates a SAML assertion (token).
-    5. User is redirected back to your application with the SAML assertion. System validates the SAML assertion. Upon successful validation, access is granted
+<Warning>
+  SAML configuration requires admin access to both PipesHub and your Identity Provider.
+</Warning>
 
-    ### Configuration To enable SAML SSO:
-    1. Register your application with your
-    Identity Provider: - Upload certificate - Configure SAML attributes and
-    mappings - Note the IdP metadata URL or download metadata XML
-    2. In your application: - Navigate to Authentication Settings - Click on settings button in "SAML SSO".
-    3. You can either upload the IdP metadata or enter manually the entryPoint SSO Url and Email attribute Key
-    4.. Click on **Save** button
+---
 
+## Configuring SAML SSO
 
-    <Info>
-        To enable SAML authentication, you need to configure your Identity Provider (IdP) and specify the attribute name that contains the user's email address in the SAML response.
-        Different IdPs may use different names for this field.
-    </Info>
+### Step 1 — Register PipesHub in Your Identity Provider
 
-    ### Set Up the Recipient URLs and Audience in the IdP Settings
+Before configuring SAML in PipesHub, you need to add PipesHub as an application in your IdP.
 
-    Enter the Required URLs
+1. Log in to your IdP's admin console (e.g. Okta, Azure AD, OneLogin, Google Workspace)
+2. Create a new SAML application (often called "Add Application" or "Create App Integration")
+3. Set the **Single Sign-On URL (ACS URL)** — copy this value from the PipesHub SAML configuration panel
+4. Set the **Audience (Entity ID)** — copy this from the PipesHub configuration panel as well
+5. Configure **attribute mappings** to include the user's email address in the SAML response
+6. Save the application and note the following — you'll need them in Step 3:
+   - **SSO Entry Point URL** (your IdP's login URL)
+   - **X.509 Certificate** (your IdP's signing certificate)
+   - **IdP Metadata XML** (optional — can be uploaded to auto-fill the fields above)
 
-    Recipient URL: This is where the SAML response will be sent after authentication which is (your-frontend-url/api/v1/saml/signin/callback)
+**Example: Setting up in Okta**
 
-    Example: https://f7f0-240.ngrok-free.app/api/v1/saml/signin/callback
+<div style={{ textAlign: "center" }}>
+  <img
+    src="/images/auth/saml/saml_okta_url.png"
+    alt="SAML ACS URL configuration in Okta"
+    width="90%"
+  />
+</div>
 
-    2. Audience (Audience Restriction): This is used to verify the intended recipient of the SAML response.
-    <Info>Keep it as **pageipesHub** </Info>
+**Example: Setting up in OneLogin**
 
-    ### Here is the example for setting in Okta
+<div style={{ textAlign: "center" }}>
+  <img
+    src="/images/auth/saml/saml_onelogin_url.png"
+    alt="SAML ACS URL configuration in OneLogin"
+    width="90%"
+  />
+</div>
 
-     <div style={{ textAlign: "center" }}>
-     <img
-       src="/images/auth/saml/saml_okta_url.png"
-       alt="Saml redirect uri page"
-       width="90%"
-     />
+<div style={{ textAlign: "center" }}>
+  <img
+    src="/images/auth/saml/saml_credentials_onelogin.png"
+    alt="SAML credentials in OneLogin"
+    width="90%"
+  />
+</div>
 
-   </div>
+### Step 2 — Find Your Email Attribute Key
 
-    ### Here is the example for setting in OneLogin
+Your IdP includes the user's email in the SAML response, but different providers use different attribute names for it. You need to enter the correct name in PipesHub so it can identify your users.
 
-    <div style={{ textAlign: "center" }}>
-     <img
-       src="/images/auth/saml/saml_onelogin_url.png"
-       alt="Saml redirect uri page"
-       width="90%"
-     />
+**Option A: Check your IdP settings**
 
-    You can get credentials from here
+1. Log in to your IdP admin console
+2. Open the SAML app you created and go to **Attribute Mapping** or **Claims**
+3. Note the attribute name used for the user's email
 
-      <img
-       src="/images/auth/saml/saml_credentials_onelogin.png"
-       alt="Saml redirect uri page"
-       width="90%"
-     />
+**Option B: Inspect a live SAML response**
 
-   </div>
+1. Install [SAML Tracer](https://chromewebstore.google.com/detail/saml-tracer/mhfbofmcaagbfdolegkilpgimfhjpian) (Chrome/Firefox extension)
+2. Perform a test login and capture the SAML response
+3. Look for the attribute containing the email address
 
-### What is Email Attribute Key
+**Common email attribute names by provider:**
 
-    When a user logs in using SAML, the IdP sends a SAML response containing user details.
-    The email address may be sent under different attribute names, depending on the IdP.
-    You must enter the correct attribute name in our system so we can extract the email and verify the user.
+| Identity Provider | Email Attribute Name    |
+|-------------------|-------------------------|
+| Okta              | `NameID`                |
+| Google Workspace  | `email`                 |
+| OneLogin          | `NameID` / `User.Email` |
+| Custom IdP        | Check your IdP settings |
 
-    ### Where to find the Email Attribute Key
+### Step 3 — Configure SAML SSO in PipesHub
 
-    Method 1 : Through Settings of Identity Provider
-    1. Check Your IdP's SAML Attribute Mapping
-    2. Log in to your IdP Admin Console (e.g., Okta, Azure, Google, etc.).
-    3. Navigate to SAML Attribute Mapping or Claims settings.
-    Look for the attribute that contains the user email address.
+1. Go to **Workspace → Authentication**
 
-    Method 2 : Inspect a SAML Response
-    1. If you're unsure, you can manually inspect the SAML response:
-    2. Use SAML Tracer (a browser extension for Chrome/Firefox).
-    3. Perform a login and capture the SAML response.
-    4. Look for the email field in the response.
+<Info>
+  Only workspace admins can access Authentication Settings.
+</Info>
 
+2. Find the **SAML SSO** row and click the **gear icon** to open the configuration panel
 
-    | Identity Provider | Common Email Attribute Name |
-    | ----------------- | --------------------------- |
-    | Okta              |      `NameID`               |
-    | Google Workspace  |      `email`                |
-    | OneLogin          |      `NameID / User.Email`  |
-    | Custom IdP        | (Check your IdP settings)   |
+<div style={{ textAlign: "center" }}>
+  <img
+    src="/images/auth/saml/saml_config.png"
+    alt="SAML SSO configuration panel"
+    width="90%"
+  />
+</div>
 
-        <Warning>
-          SAML configuration requires technical coordination between your application admin and the Identity Provider admin.
-        </Warning>
+3. Fill in the configuration fields:
+
+| Field                     | Required | Description |
+|---------------------------|----------|-------------|
+| ACS URL                   | —        | Auto-generated. Copy this into your IdP when setting up the application. |
+| IdP Metadata XML          | No       | Upload your IdP's metadata file to auto-fill the fields below. |
+| SSO Entry Point           | Yes      | Your IdP's login URL (copied from Step 1). |
+| X.509 Certificate         | Yes      | Your IdP's signing certificate (copied from Step 1). |
+| Email Attribute Key       | Yes      | The attribute name for the user's email (from Step 2). |
+| Entity ID                 | No       | Your Service Provider entity ID (optional). |
+| Logout URL                | No       | Your IdP's logout URL (optional). |
+| Provider Name             | No       | A label like "Okta" or "Azure AD". If set, the login button shows "Continue with [Provider Name]". |
+| Just-in-Time Provisioning | No       | When enabled (default), users who exist in your IdP but not in PipesHub are automatically created on their first login. |
+
+<Info>
+  The **Save** button stays disabled until all three required fields are filled in.
+</Info>
+
+4. Click **Save**
+
+5. Click **Edit** on the Authentication Settings page, toggle **SAML SSO** on, and click **Save** to activate it
+
+<Warning>
+  Only one authentication method can be active at a time. Turn off any currently active method before enabling SAML SSO.
+</Warning>
+
+---
+
+## Logging In with SAML SSO
+
+Once SAML SSO is enabled, users can log in as follows:
+
+1. Go to the PipesHub login page
+2. Click **Sign in with SSO** (or **Continue with [Provider Name]** if a provider name was configured)
+3. You'll be redirected to your organization's IdP login page
+4. Enter your corporate credentials
+5. You'll be automatically redirected back to PipesHub and logged in
+
+---
+
+## Troubleshooting
+
+| Issue | What to Do |
+|-------|------------|
+| SSO button is not visible on the login page | Check that SAML SSO is enabled in **Workspace → Authentication** |
+| Login fails after entering IdP credentials | Verify the SSO Entry Point URL and X.509 Certificate are correct in the configuration panel |
+| "JIT Disabled" error on first login | Ask your admin to enable Just-in-Time Provisioning, or have your admin create your account in PipesHub manually |
+| Login redirects back to login page with an error | Ensure the Email Attribute Key matches the attribute name your IdP uses for email |

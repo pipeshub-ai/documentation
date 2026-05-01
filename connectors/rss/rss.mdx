@@ -1,0 +1,170 @@
+---
+title: "RSS"
+description: "Subscribe to and sync content from RSS and Atom feeds"
+icon: "/logo/rss.svg"
+---
+
+<div className="max-w-2xl mx-auto mt-12">
+  <div className="p-6 border rounded-lg bg-blue-50">
+    <div className="flex items-center mb-4">
+      <img
+        src="/logo/rss.svg"
+        alt="RSS connector"
+        className="w-8 h-8 mr-3 object-contain flex-shrink-0"
+      />
+      <h2 className="text-2xl font-semibold text-orange-600 m-0">RSS</h2>
+    </div>
+    <p className="text-lg text-gray-700 mb-4">Subscribe to and sync content from RSS and Atom feeds into PipesHub</p>
+    <div className="flex items-center gap-2">
+      <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium">
+        ✅ Ready
+      </span>
+      <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
+        📝 Documentation Available
+      </span>
+    </div>
+  </div>
+</div>
+
+## Overview
+
+The RSS connector ingests items from **public RSS 2.0 and Atom** feeds you configure. It polls each feed URL, normalizes entries, and optionally **fetches full article text** from each item’s link for richer search indexing. No OAuth or credentials are required—only reachable `http://` or `https://` feed URLs.
+
+You can add **multiple feeds** in one connector by listing several URLs (comma- or newline-separated). Duplicate URLs are removed automatically.
+
+---
+
+## Configuration setup
+
+<AccordionGroup>
+
+<Accordion title="Setup guide" icon="gear">
+
+### Step 1: Create an RSS connector
+
+In PipesHub, add an RSS connector instance with either **personal** or **team** scope:
+
+- **Personal** — Go to **Workspace Settings > Your Connectors > RSS > Setup**. Records are visible only to you.
+- **Team** — Go to **Workspace Settings > Connectors > RSS > Setup**. Records are visible to everyone in your organization. Admins only.
+
+<div className="text-center">
+  <img
+    src="/images/connectors/rss/rss-authenticate-instance.png"
+    alt="RSS Configuration drawer on Authenticate Instance tab"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+RSS does not require authentication.
+
+### Step 2: Name the connector
+
+1. Enter an **Instance name** (how it will appear in your workspace).
+2. Click **Next** to move to the **Configure Records** tab.
+
+<div className="text-center">
+  <img
+    src="/images/connectors/rss/rss-instance-name-filled.png"
+    alt="RSS connector instance name filled on Authenticate Instance tab"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+### Step 3: Configure records
+
+On the **Configure Records** tab, set the following fields:
+
+| Field | Description |
+|--------|-------------|
+| **Sync Strategy** | **Scheduled** runs the connector at a fixed interval. **Manual** syncs only when triggered from connector settings. |
+| **Sync Interval** | Frequency for scheduled syncs (default 1 hour). |
+| **Feed URLs** | **Required.** RSS or Atom feed URLs (e.g., `https://blog.example.com/rss.xml`). Separate multiple feeds with commas or newlines. Invalid or non-HTTP(S) entries are skipped; duplicates are removed. |
+| **Max Articles Per Feed** | Maximum recent articles to process per feed on each sync (1–500, default 50). |
+| **Fetch Full Content** | When **enabled** (default), the connector opens each item's link and extracts the full article text. When **disabled**, only the feed-provided summary is indexed — faster but less complete. |
+
+<div className="text-center">
+  <img
+    src="/images/connectors/rss/rss-configure-records.png"
+    alt="RSS Configure Records tab with sync settings and feed URL field"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+<Note>
+Depending on your workspace configuration, you may also see **manual sync filters** and **indexing toggles** to control which records are indexed for search. These can be managed later from the **All Records** section.
+</Note>
+
+### Step 4: Save and start syncing
+
+1. Click **Save Configuration**. A confirmation dialog appears: **Instance is configured and ready to sync**.
+2. Click **Start Syncing Now** to trigger the initial sync, or **I'll do it later** to run it from connector controls later.
+
+<div className="text-center">
+  <img
+    src="/images/connectors/rss/rss-ready-to-sync-dialog.png"
+    alt="RSS ready-to-sync confirmation dialog with Start Syncing Now option"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+</Accordion>
+
+</AccordionGroup>
+
+---
+
+## Connector Workflow
+
+<AccordionGroup>
+
+<Accordion title="How the RSS connector works" icon="rss">
+
+### What the connector does
+
+- **Feed fetch:** Downloads each configured feed URL over HTTP(S) with standard browser-like headers and parses RSS 2.0 or Atom.
+- **Items:** Processes recent entries up to **max articles per feed**, using stable identifiers (for example **link** or **GUID**) to avoid duplicate records across syncs.
+- **Content:** With **Fetch full content** on, opens each article URL and extracts readable text where possible; otherwise uses the feed-provided description or summary.
+- **Permissions:** **Team** scope grants organization-level read access to synced records as configured by PipesHub. **Personal** scope ties ownership-style access to the user who created the connector (with sensible fallbacks if creator metadata is unavailable).
+- **Sync:** Supports **scheduled** and **manual** sync; scheduled runs help keep news and blog feeds fresh without operator action.
+
+### Key limitations
+
+- **Public feeds only:** Feeds that require login, cookies, or non-standard auth are not supported.
+- **Feed and article availability:** Some publishers block automated clients, rate-limit aggressively, or serve incomplete summaries. The connector cannot guarantee access to every article page when **Fetch full content** is enabled.
+- **Not real-time:** Indexing reflects the last successful sync; very high-frequency updates may still appear slightly delayed based on your schedule.
+
+</Accordion>
+
+</AccordionGroup>
+
+---
+
+## FAQ
+
+<AccordionGroup>
+
+<Accordion title="Why are some of my feed URLs ignored?">
+
+Only URLs that start with **`http://`** or **`https://`** are used after splitting on commas and newlines. Empty lines and duplicates are dropped. If every URL is invalid, setup will fail validation—fix the list and save again.
+
+</Accordion>
+
+<Accordion title="Should I enable Fetch full content?">
+
+**Yes** when article pages hold the real content and the feed only shows a short blurb. **No** when you prefer faster syncs, lower bandwidth, or the feed already contains full text in each entry.
+
+</Accordion>
+
+<Accordion title="A feed syncs but article bodies look empty or wrong. Why?">
+
+The article site may block scraping, require JavaScript-only rendering, or return non-article HTML. Try disabling **Fetch full content** to rely on the feed summary, or choose a feed that includes fuller descriptions.
+
+</Accordion>
+
+<Accordion title="How are permissions applied?">
+
+For **team** scope, records are readable at the organization level per your workspace connector model. For **personal** scope, access is aligned with the creating user. Match your PipesHub account email with any auth flows elsewhere in the product to avoid permission surprises on mixed setups.
+
+</Accordion>
+
+</AccordionGroup>

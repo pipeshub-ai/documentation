@@ -1,33 +1,33 @@
 ---
 title: Azure OpenAI
-description: "Configure PipesHub Workplace AI to use Azure OpenAI's embedding models"
+description: "Configure PipesHub to use Azure OpenAI embedding models"
 ---
 
 # Azure OpenAI Embeddings Configuration
 
-![Azure OpenAI Embeddings Configuration Interface](/images/ai-models/AzureOpenAI_EmbeddingConfig.png)
+![Azure OpenAI Embeddings Configuration Interface](/images/ai-models/embedding/AzureOpenAI_EmbeddingConfig.png)
 
-*The Azure OpenAI embeddings configuration screen in PipesHub where you'll enter your endpoint, API Key, and Embedding Model*
+*The Azure OpenAI embeddings configuration screen in PipesHub where you'll enter your Endpoint URL, API Key, Deployment Name, and Model Name*
 
-PipesHub allows you to integrate with Azure OpenAI's powerful embedding models to enable vector search, semantic similarity, and other AI features in your workspace.
+PipesHub allows you to integrate with Azure OpenAI's embedding models to enable vector search, semantic similarity, and document retrieval in your workspace, with enterprise-grade security and Azure compliance.
 
 ## Required Fields
 
-### Endpoint *
+### Endpoint URL *
 
-The Azure OpenAI Endpoint is required to connect to your specific Azure OpenAI resource.
+The Endpoint URL connects PipesHub to your specific Azure OpenAI resource.
 
-**How to obtain your Endpoint:**
+**How to obtain your Endpoint URL:**
 1. Log in to the [Azure Portal](https://portal.azure.com)
 2. Navigate to your Azure OpenAI resource
-3. In the Overview section, find and copy the Endpoint URL
-4. The endpoint typically follows this format: `https://{your-resource-name}.openai.azure.com/`
+3. Go to "Keys and Endpoint" under Resource Management
+4. Copy the Endpoint URL (format: `https://your-resource-name.openai.azure.com/`)
 
-**Note:** The endpoint is specific to your Azure deployment region and resource.
+**Note:** The endpoint is specific to your Azure deployment region and resource name.
 
 ### API Key *
 
-The API Key is required to authenticate your requests to your Azure OpenAI resource.
+The API Key authenticates your requests to your Azure OpenAI resource.
 
 **How to obtain an API Key:**
 1. In the Azure Portal, go to your Azure OpenAI resource
@@ -36,13 +36,23 @@ The API Key is required to authenticate your requests to your Azure OpenAI resou
 
 **Security Note:** Your API key should be kept secure and never shared publicly. PipesHub securely stores your API key and uses it only for authenticating requests to Azure OpenAI.
 
-### Embedding Model *
+### Deployment Name *
 
-The Embedding Model field defines which Azure OpenAI embedding model you want to use with PipesHub.
+The Deployment Name is the name you assigned when you deployed the embedding model inside your Azure OpenAI resource.
+
+**How to find your Deployment Name:**
+1. In the Azure Portal, navigate to your Azure OpenAI resource
+2. Select "Model deployments" from the left navigation
+3. Find the embedding deployment you want to use and copy the "Deployment name"
+
+**Note:** This is the name you gave to the deployment, not the underlying model ID (e.g. you may have named it "my-embeddings" when deploying `text-embedding-3-small`).
+
+### Model Name *
+
+The Model Name field specifies the underlying embedding model that was deployed.
 
 **Available Azure OpenAI embedding models:**
-- `text-embedding-3-small` - Newer model with excellent performance for most use cases
-- `text-embedding-3-large` - Higher dimensional embeddings for tasks requiring maximum accuracy
+- `text-embedding-3-small` - Cost-effective model with excellent performance for most use cases
 
 **Note:** Availability depends on which models you have deployed in your Azure OpenAI resource.
 
@@ -50,48 +60,27 @@ The Embedding Model field defines which Azure OpenAI embedding model you want to
 
 As shown in the image above:
 
-1. Select "Azure OpenAI" as your Provider from the dropdown
-2. Enter your Azure OpenAI Endpoint in the designated field (marked with *)
-3. Enter your Azure OpenAI API Key in the designated field (marked with *)
-4. Specify your desired Embedding Model (marked with *)
-5. Click "Continue" to proceed with setup
+1. Click **Configure** on the Azure OpenAI provider card
+2. Enter your Azure OpenAI Endpoint URL in the designated field (marked with *)
+3. Enter your Azure OpenAI API Key (marked with *)
+4. Specify your Deployment Name from your Azure OpenAI resource (marked with *)
+5. Specify your Model Name (marked with *)
+6. Click **Add Model** to save and validate your credentials
 
-The system configuration interface clearly indicates which fields are required with an asterisk (*). All three fields (Endpoint, API Key, and Embedding Model) are required to successfully configure Azure OpenAI embedding integration.
-
-## Model Deployment
-
-Before you can use a specific embedding model in Azure OpenAI, you must first deploy it:
-
-1. Go to your Azure OpenAI resource in the Azure Portal
-2. Select "Model Deployments" from the left menu
-3. Click "Create New Deployment"
-4. Select your desired embedding model (e.g., `text-embedding-3-small`)
-5. Provide a deployment name
-6. Set your desired capacity
-
-The deployment name is what you'll use as your Embedding Model value in the PipesHub configuration.
-
-## Model Specifications
-
-| Model | Dimensions | Tokens | Performance | Cost |
-|-------|-----------|--------|-------------|------|
-| text-embedding-3-small | 1536 | 8191 | Very High | Medium |
-| text-embedding-3-large | 3072 | 8191 | Highest | Higher |
+> Endpoint URL, API Key, Deployment Name, and Model Name are all required fields to successfully configure Azure OpenAI embedding integration.
 
 ## Usage Considerations
 
 - API usage will count against your Azure OpenAI resource's quota and billing
-- Different models have different pricing - check Azure OpenAI pricing page for details
-- Consider your Azure resource capacity when configuring embedding models
-- Regional availability may vary for different embedding models
-- Azure OpenAI provides additional security, compliance, and data residency options
+- Different models have different pricing — check the Azure OpenAI pricing page for details
+- Azure OpenAI provides additional security, compliance, and data residency options compared to the standard OpenAI API
 
 ## Troubleshooting
 
-- If you encounter authentication errors, verify your API key and endpoint are correct
-- Ensure your embedding model is properly deployed in your Azure OpenAI resource
+- If you encounter authentication errors, verify your API key and endpoint URL are correct
+- Ensure the embedding model is properly deployed in your Azure OpenAI resource
+- Verify the Deployment Name matches exactly as shown in your Azure deployment list
 - Check that your Azure subscription is active and has sufficient quota
-- Verify network connectivity and firewall settings if using private endpoints
-- Ensure the specified model name matches exactly with your deployment name
+- Ensure your IP address is allowed if you have configured network access restrictions
 
 For additional support, refer to the [Azure OpenAI documentation](https://learn.microsoft.com/en-us/azure/ai-services/openai/) or contact PipesHub support.

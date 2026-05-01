@@ -5,42 +5,13 @@ description: "Configure PipesHub Workplace AI to use AWS Bedrock models"
 
 # AWS Bedrock Configuration
 
-![AWS Bedrock Configuration Interface](/images/ai-models/Bedrock_LLMConfig.png)
+![AWS Bedrock Configuration Interface](/images/ai-models/llm/Bedrock_LLMConfig.png)
 
 *The AWS Bedrock configuration screen in PipesHub where you'll enter your AWS credentials, region, model name, and provider settings*
 
 PipesHub allows you to integrate with AWS Bedrock's foundation models to enable AI features in your workspace. AWS Bedrock provides access to high-performing foundation models from leading AI companies including Anthropic (Claude), Amazon (Titan), Meta (Llama), Cohere, AI21 Labs, and more.
 
 ## Required Fields
-
-### AWS Access Key ID *
-
-The AWS Access Key ID is required to authenticate your requests to AWS Bedrock.
-
-**Example format:** `AKIAIOSFODNN7EXAMPLE`
-
-**How to obtain your Access Key ID:**
-1. Log in to the [AWS Management Console](https://aws.amazon.com/console/)
-2. Navigate to IAM (Identity and Access Management)
-3. Go to "Users" and select your user (or create a new one)
-4. Click on "Security credentials" tab
-5. Under "Access keys", click "Create access key"
-6. Copy the Access Key ID
-
-**Note:** Ensure your IAM user has the necessary permissions to access AWS Bedrock services.
-
-### AWS Access Secret Key *
-
-The AWS Access Secret Key is the secret portion of your AWS credentials.
-
-**Example format:** `wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY`
-
-**How to obtain your Secret Key:**
-1. When creating an access key in IAM, the secret key is shown only once
-2. Download or copy the secret key immediately when created
-3. If you've lost your secret key, you'll need to create a new access key pair
-
-**Security Note:** Your secret key should be kept secure and never shared publicly. PipesHub securely stores your credentials and uses them only for authenticating requests to AWS Bedrock.
 
 ### Region *
 
@@ -84,12 +55,13 @@ The Model Name field specifies the model ID or ARN you want to use with PipesHub
 Select the provider of the foundation model you're using. This helps PipesHub properly format requests for the specific model.
 
 **Available providers:**
-- **Anthropic (Claude)** - Claude models including Claude 3.5 Sonnet, Claude 3 Opus, Claude 3 Haiku
+- **Anthropic (Claude)** - Claude models
+- **Mistral** - Mistral and Mixtral models
+- **Qwen** - Alibaba's Qwen models
+- **DeepSeek** - DeepSeek models
+- **Cohere** - Cohere Command models
 - **Amazon (Titan)** - Amazon's Titan models
-- **Meta (Llama)** - Meta's Llama 2 and Llama 3 models
-- **Cohere** - Cohere Command and Embed models
-- **AI21 Labs** - Jurassic models
-- **Mistral AI** - Mistral and Mixtral models
+- **AI21 Labs** - AI21 Labs models
 - **Other** - For any other providers (requires Custom Provider Name)
 
 ### Custom Provider Name
@@ -97,6 +69,37 @@ Select the provider of the foundation model you're using. This helps PipesHub pr
 Only required if you selected "Other" as the provider. Enter the name of the custom provider you're using.
 
 ## Optional Fields
+
+### AWS Access Key ID
+
+The AWS Access Key ID for authenticating requests to AWS Bedrock.
+
+**Example format:** `AKIAIOSFODNN7EXAMPLE`
+
+**How to obtain your Access Key ID:**
+1. Log in to the [AWS Management Console](https://aws.amazon.com/console/)
+2. Navigate to IAM (Identity and Access Management)
+3. Go to "Users" and select your user (or create a new one)
+4. Click on the "Security credentials" tab
+5. Under "Access keys", click "Create access key"
+6. Copy the Access Key ID
+
+**Note:** If PipesHub is running on an EC2 instance with an appropriate IAM role attached, you can leave this field blank.
+
+### AWS Access Secret Key
+
+The secret portion of your AWS credentials.
+
+**Example format:** `wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY`
+
+**How to obtain your Secret Key:**
+1. When creating an access key in IAM, the secret key is shown only once
+2. Download or copy the secret key immediately when created
+3. If you've lost your secret key, you'll need to create a new access key pair
+
+**Security Note:** Your secret key should be kept secure and never shared publicly. PipesHub securely stores your credentials.
+
+**Note:** Leave blank if using EC2 IAM role authentication.
 
 ### Context Length
 
@@ -120,20 +123,19 @@ Enable this option if your model supports advanced reasoning capabilities. This 
 
 As shown in the image above:
 
-1. Select "AWS Bedrock" as your Provider Type from the dropdown
-2. Enter your AWS Access Key ID (marked with *)
-3. Enter your AWS Access Secret Key (marked with *)
-4. Specify your AWS Region (marked with *)
-5. Enter the Model Name (model ID or ARN) (marked with *)
-6. Select the appropriate Provider from the dropdown (marked with *)
-7. If you selected "Other" as provider, enter the Custom Provider Name
-8. Optionally, set the Context Length for your model
-9. Enable Multimodal if your model supports text + image inputs
-10. Enable Reasoning if your model supports advanced reasoning
-11. Click "Add Model" to complete the setup
+1. Click **Configure** on the Amazon Bedrock provider card
+2. Specify your AWS Region (marked with *)
+3. Enter the Model Name (model ID or ARN) (marked with *)
+4. Select the appropriate Provider from the dropdown (marked with *)
+5. If you selected "Other" as provider, enter the Custom Provider Name
+6. (Optional) Enter your AWS Access Key ID — leave blank if using an EC2 IAM role
+7. (Optional) Enter your AWS Access Secret Key — leave blank if using an EC2 IAM role
+8. (Optional) Set the Context Length for your model
+9. (Optional) Enable Multimodal if your model supports text + image inputs
+10. (Optional) Enable Reasoning if your model supports advanced reasoning
+11. Click **Add Model** to save and validate your credentials
 
-> AWS Access Key ID, AWS Access Secret Key, Region, Model Name, and Provider 
-> are required fields. You must complete these fields to proceed with the setup.
+> Region, Model Name, and Provider are required fields. AWS Access Key ID and Secret Key are optional when running PipesHub on EC2 with an appropriate IAM role.
 
 ## IAM Permissions
 

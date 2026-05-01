@@ -1,100 +1,54 @@
 ---
-title: Sentence Transformer
-description: "Configure PipesHub Workplace AI to use Sentence Transformer embedding models"
+title: Sentence Transformers
+description: "Configure PipesHub to use Sentence Transformer embedding models"
 ---
 
-# Sentence Transformer Embeddings Configuration
+# Sentence Transformers Embeddings Configuration
 
-![Sentence Transformer Embeddings Configuration Interface](/images/ai-models/SentenceTransformer_EmbeddingConfig.png)
+![Sentence Transformer Embeddings Configuration Interface](/images/ai-models/embedding/SentenceTransformer_EmbeddingConfig.png)
 
-*The Sentence Transformer embeddings configuration screen in PipesHub where you'll enter your Embedding Model*
+*The Sentence Transformers configuration screen in PipesHub where you'll enter your Model Name*
 
-PipesHub allows you to integrate with state-of-the-art Sentence Transformer embedding models to enable semantic search, document retrieval, and other AI features in your workspace.
-
-## About Sentence Transformers
-
-Sentence Transformers is a Python framework for state-of-the-art sentence, text, and image embeddings. These models are designed to map sentences and paragraphs to a dense vector space where semantically similar texts are close to each other, making them ideal for:
-
-- Semantic search
-- Document retrieval
-- Text clustering
-- Text classification
-- Question answering
-- Multilingual applications
+PipesHub allows you to use Sentence Transformer embedding models to enable semantic search and document retrieval in your workspace. These models run locally inside PipesHub — no external API, no API key, and no usage costs.
 
 ## Required Fields
 
-### Embedding Model *
+### Model Name *
 
-The Embedding Model field is the only required parameter for Sentence Transformer configuration. It defines which model you want to use with PipesHub.
+The Model Name is the only required field. It defines which Sentence Transformer model you want to use.
 
 **Popular Sentence Transformer models include:**
-
-- `all-MiniLM-L6-v2` - Lightweight general-purpose model (384 dimensions)
-- `all-mpnet-base-v2` - High-performance general model (768 dimensions)
-- `multi-qa-mpnet-base-dot-v1` - Optimized for question answering
-- `paraphrase-multilingual-mpnet-base-v2` - Supports 50+ languages
-- `all-distilroberta-v1` - Balanced performance and efficiency
+- `all-MiniLM-L6-v2` - Lightweight general-purpose model, good balance of speed and quality
+- `all-mpnet-base-v2` - Higher accuracy general-purpose model
+- `paraphrase-multilingual-mpnet-base-v2` - Supports 50+ languages for multilingual applications
 
 **How to choose a model:**
-- For general purpose use, select `all-MiniLM-L6-v2` or `all-mpnet-base-v2`
-- For multilingual applications, select `paraphrase-multilingual-mpnet-base-v2`
-- For specific tasks like question answering, select domain-specific models
-- Check the [Sentence Transformers documentation](https://www.sbert.net/docs/pretrained_models.html) for the most up-to-date options
+- For general purpose use, select `all-MiniLM-L6-v2`
+- For higher accuracy when speed is less critical, select `all-mpnet-base-v2`
+- For multilingual content, select `paraphrase-multilingual-mpnet-base-v2`
+- Check the [Sentence Transformers documentation](https://www.sbert.net/docs/pretrained_models.html) for the full list of available models
 
 ## Configuration Steps
 
 As shown in the image above:
 
-1. Select "Sentence Transformer" as your Provider from the dropdown
-2. Specify your desired Embedding Model in the designated field (marked with *)
-3. Click "Continue" to proceed with setup
+1. Click **Configure** on the Sentence Transformers provider card
+2. Specify your desired Model Name (marked with *)
+3. Click **Add Model** to save and validate
 
-The system configuration interface clearly indicates which fields are required with an asterisk (*). The Embedding Model field is the only required field to successfully configure Sentence Transformer integration.
-
-## Model Specifications
-
-| Model | Dimensions | Performance | Size | Languages | Best For |
-|-------|-----------|-------------|------|-----------|----------|
-| all-MiniLM-L6-v2 | 384 | High | 80MB | English | General purpose, efficient |
-| all-mpnet-base-v2 | 768 | Very High | 420MB | English | High accuracy |
-| multi-qa-mpnet-base-dot-v1 | 768 | Very High | 420MB | English | Question answering |
-| paraphrase-multilingual-mpnet-base-v2 | 768 | High | 420MB | 50+ languages | Multilingual applications |
-| all-distilroberta-v1 | 768 | High | 290MB | English | Balanced efficiency |
-
-## Advanced Usage
-
-Sentence Transformer models offer several advantages over other embedding models:
-
-- **Self-contained** - No external API required
-- **Cost-effective** - No usage costs once deployed
-- **Privacy** - Data never leaves your infrastructure
-- **Customizable** - Models can be fine-tuned for specific domains
-- **Multilingual** - Support for many languages with specialized models
-
-## Technical Details
-
-The Sentence Transformer architecture consists of:
-
-1. A transformer network (like BERT, RoBERTa, or MPNet) that generates embeddings for each token
-2. A pooling layer that combines token embeddings into a fixed-size sentence embedding
-3. Optional normalization to ensure consistent vector magnitudes
-
-The models map text to a dense vector space where semantic similarity corresponds to vector similarity, typically measured using cosine similarity.
+> Model Name is the only required field. No API key or external service is needed — the model runs locally inside PipesHub.
 
 ## Usage Considerations
 
-- Larger models generally provide better performance but require more memory
-- Models with higher dimensions may provide more nuanced embeddings but require more storage
-- Consider your specific use case when selecting a model (general purpose vs. domain-specific)
-- Most models have a maximum sequence length of 128-512 tokens
-- First-time model loading may take a few seconds
+- No external API calls are made — all embedding happens locally inside PipesHub
+- No API key or billing setup required
+- Larger models provide better quality but require more memory and are slower to load
+- Most models support a maximum sequence length of 128–512 tokens per document chunk
 
 ## Troubleshooting
 
-- If you encounter errors, verify your model name is spelled correctly
-- For memory issues, consider using a smaller model like `all-MiniLM-L6-v2`
-- For slow performance, ensure you have adequate computational resources
-- For multilingual applications, ensure you're using a model that supports your target languages
+- If you encounter errors, verify the model name is spelled correctly
+- For memory issues, consider switching to a smaller model such as `all-MiniLM-L6-v2`
+- For multilingual applications, ensure you are using a model that supports your target languages
 
 For additional support, refer to the [Sentence Transformers documentation](https://www.sbert.net/) or contact PipesHub support.

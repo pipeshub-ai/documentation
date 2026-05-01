@@ -1,0 +1,76 @@
+---
+title: OpenAI Compatible
+description: "Configure PipesHub to use any OpenAI-compatible embedding API"
+---
+
+# OpenAI Compatible Embeddings Configuration
+
+![OpenAI Compatible Embeddings Configuration Interface](/images/ai-models/embedding/OpenAICompatible_EmbeddingConfig.png)
+
+*The OpenAI Compatible embeddings configuration screen in PipesHub where you'll enter your Endpoint URL, API Key, and Model Name*
+
+PipesHub allows you to integrate with any embedding provider that implements the OpenAI embeddings API format. Use this option for providers not listed separately, or for self-hosted solutions that expose an OpenAI-compatible endpoint.
+
+## Required Fields
+
+### Endpoint URL *
+
+The base API endpoint for your OpenAI-compatible embedding service.
+
+**Format:** The URL should point to the base API (typically ending in `/v1/`).
+
+**Example endpoints:**
+- OpenAI API: `https://api.openai.com/v1`
+- Custom proxy: `https://your-proxy.example.com/v1/`
+
+**Note:** PipesHub will append the necessary path for embedding requests. Ensure the endpoint is accessible from your PipesHub instance.
+
+### API Key *
+
+The API Key is required to authenticate your requests to the embedding service.
+
+**How to obtain an API Key:**
+1. Sign up or log in to your chosen provider's platform
+2. Navigate to the API Keys or Settings section
+3. Create a new API key
+4. Copy the key immediately (most providers only show it once)
+
+**Security Note:** Your API key should be kept secure and never shared publicly. PipesHub securely stores your API key and uses it only for authenticating requests to your chosen provider.
+
+### Model Name *
+
+The Model Name field specifies which embedding model to use from your provider.
+
+**Example model names:**
+- `text-embedding-3-small` — when using a proxy that forwards to OpenAI
+
+**How to choose a model:**
+- Use the exact model identifier as listed by your provider
+- Check your provider's documentation for valid model IDs
+
+## Configuration Steps
+
+As shown in the image above:
+
+1. Click **Configure** on the OpenAI Compatible provider card
+2. Enter the Endpoint URL for your embedding service (marked with *)
+3. Enter your API Key (marked with *)
+4. Specify the Model Name as listed by your provider (marked with *)
+5. Click **Add Model** to save and validate your credentials
+
+> Endpoint URL, API Key, and Model Name are all required fields. Use this provider for any service that speaks the OpenAI embeddings API format.
+
+## Usage Considerations
+
+- API usage will count against your provider's quota and billing
+- Ensure the endpoint supports the OpenAI embeddings API format (`POST /v1/embeddings`)
+- Response times vary by provider and model size
+
+## Troubleshooting
+
+- Verify the endpoint URL is correct and includes the proper base path (usually `/v1/`)
+- Ensure your API key is correct and has the necessary permissions
+- Confirm the model name exactly matches your provider's naming convention
+- Check that your provider's endpoint responds to OpenAI-format embedding requests
+
+For additional support, refer to your provider's documentation or contact PipesHub support.

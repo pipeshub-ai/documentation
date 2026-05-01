@@ -1,0 +1,52 @@
+---
+title: HuggingFace
+description: "Configure PipesHub to use HuggingFace embedding models locally"
+---
+
+# HuggingFace Embeddings Configuration
+
+![HuggingFace Embeddings Configuration Interface](/images/ai-models/embedding/HuggingFace_EmbeddingConfig.png)
+
+*The HuggingFace embeddings configuration screen in PipesHub where you'll enter your Model Name*
+
+PipesHub allows you to use HuggingFace embedding models that run locally inside your PipesHub instance. No external API, no API key, and no usage costs are required. Simply provide the full HuggingFace model repository slug and PipesHub will load and run the model locally.
+
+## Required Fields
+
+### Model Name *
+
+The Model Name field is the only required field. Enter the full HuggingFace model repository slug in the format `owner/model-name`.
+
+**Popular HuggingFace embedding models include:**
+- `sentence-transformers/all-MiniLM-L6-v2` - Lightweight, fast general-purpose model (384 dimensions)
+
+**How to choose a model:**
+- For general-purpose retrieval with low resource usage, select `sentence-transformers/all-MiniLM-L6-v2`
+- Browse the [HuggingFace model hub](https://huggingface.co/models?pipeline_tag=sentence-similarity) for the full list of embedding models
+- Use the exact repository slug shown on the model's HuggingFace page
+
+## Configuration Steps
+
+As shown in the image above:
+
+1. Click **Configure** on the HuggingFace provider card
+2. Enter the full HuggingFace model repository slug in the Model Name field (marked with *) — e.g. `sentence-transformers/all-MiniLM-L6-v2`
+3. Click **Add Model** to save and validate
+
+> Model Name is the only required field. No API key or external service is needed — the model runs locally inside PipesHub.
+
+## Usage Considerations
+
+- All embedding happens locally inside PipesHub — data never leaves your infrastructure
+- No API key or billing setup required
+- The model is downloaded from HuggingFace on first use; ensure your PipesHub instance has outbound internet access on first load
+- Larger models provide better quality but require more memory and take longer to load
+
+## Troubleshooting
+
+- If the model fails to load, verify the repository slug is correct (e.g. `sentence-transformers/all-MiniLM-L6-v2`, not just `all-MiniLM-L6-v2`)
+- Ensure your PipesHub instance can reach `huggingface.co` to download the model on first use
+- For memory issues, switch to a smaller model
+- Check that the model supports the sentence embedding task (pipeline tag: `sentence-similarity` or `feature-extraction`)
+
+For additional support, refer to the [HuggingFace documentation](https://huggingface.co/docs) or contact PipesHub support.

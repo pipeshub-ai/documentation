@@ -5,7 +5,7 @@ description: "Configure PipesHub Workplace AI to use different Ollama models"
 
 # Ollama Configuration
 
-![Ollama Configuration Interface](/images/ai-models/Ollama_LLMConfig.png)
+![Ollama Configuration Interface](/images/ai-models/llm/Ollama_LLMConfig.png)
 
 *The Ollama configuration screen in PipesHub where you'll configure your local Ollama instance connection*
 
@@ -18,25 +18,26 @@ PipesHub allows you to integrate with Ollama to run open-source language models 
 The Model Name field defines which Ollama model you want to use with PipesHub.
 
 **Popular Ollama models include:**
-- `qwen3-vl:8b` - Multimodal model supporting both text and images
+- `gemma4:latest` - Google's Gemma 4 model
+- `hf.co/unsloth/gpt-oss-20b-GGUF:F16` - A Hugging Face-hosted GGUF model
 
 **How to choose a model:**
-- For multimodal capabilities (text + images), select models with vision support like `qwen3-vl:8b`
+- For multimodal capabilities (text + images), select models with vision support
 - Check Ollama's [model library](https://ollama.com/library) for the complete list of available models
 
-### Endpoint URL *
+## Optional Fields
 
-The Endpoint URL specifies where your Ollama instance is running.
+### Endpoint URL
+
+The Endpoint URL specifies where your Ollama instance is running. Defaults to `http://host.docker.internal:11434` if left blank.
 
 **Common configurations:**
-- `http://host.docker.internal:11434` - For accessing Ollama from within a Docker container
+- `http://host.docker.internal:11434` - For accessing Ollama from within a Docker container (default)
 - `https://your-server-domain` - For remote Ollama instances
 
 **Default port:** Ollama runs on port `11434` by default.
 
 **Note:** Ensure your Ollama instance is running and accessible at the specified endpoint before configuring PipesHub.
-
-## Optional Fields
 
 ### API Key
 
@@ -75,15 +76,15 @@ Enable the Reasoning checkbox if your selected model has enhanced reasoning capa
 
 As shown in the image above:
 
-1. Select "Ollama" as your Provider Type from the dropdown
-2. Enter your Model Name (marked with *) - e.g., `qwen3-vl:8b`, `mistral:latest`
-3. Specify your Endpoint URL (marked with *) - e.g., `http://host.docker.internal:11434`
+1. Click **Configure** on the Ollama provider card
+2. Enter your Model Name (marked with *) — e.g., `gemma4:latest` or `hf.co/unsloth/gpt-oss-20b-GGUF:F16`
+3. (Optional) Specify your Endpoint URL — defaults to `http://host.docker.internal:11434`
 4. (Optional) Enter an API Key if your Ollama instance requires authentication
-5. Check "Multimodal" if your model supports text + image processing
-6. Check "Reasoning" if your model has enhanced reasoning capabilities
-7. Click "Add Model" to complete the setup
+5. (Optional) Check "Multimodal" if your model supports text + image processing
+6. (Optional) Check "Reasoning" if your model has enhanced reasoning capabilities
+7. Click **Add Model** to save and validate your credentials
 
-**Both the Model Name and Endpoint URL are required fields to successfully configure Ollama integration. You must complete these fields to proceed with the setup.**
+> Model Name is the only required field. The endpoint defaults to `http://host.docker.internal:11434` if left blank. No API key is required for a standard local Ollama installation.
 
 ## Prerequisites
 

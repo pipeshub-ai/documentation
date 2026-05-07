@@ -100,50 +100,85 @@ Keep the following information ready for the next step:
 
 </Accordion>
 
-<Accordion title="Connect to PipesHub" icon="plug">
+<Accordion title="Connect Nextcloud to PipesHub" icon="plug">
 
-### Step 1: Configure Connection
+Nextcloud is a **personal** connector — each user connects their own Nextcloud account.
 
-1. Open your PipesHub application and navigate to **Connection Settings**.
-2. Select **Nextcloud**.
-3. Enter your credentials:
-   - **Base URL:** Your Nextcloud instance URL (e.g., `https://cloud.example.com`)
-   - **Username:** Your Nextcloud username
-   - **App Password:** The app password you generated in the previous step
+### Step 1: Open the Connector Catalog
 
-<img src="/images/connectors/nextcloud/nc1.png" alt="Nextcloud Connector Config" style={{ display: 'block', margin: '0 auto' }} width="90%" />
+1. In PipesHub, navigate to **Workspace Settings** > **Connectors** > **Personal**.
+2. Find the **Nextcloud** card and click **Setup**.
 
-### Step 2: Configure Filters (Optional)
+### Step 2: Authenticate
 
-You can optionally configure filters to control which files are synced:
+On the **Authenticate** tab, enter:
 
-* **Modified Date Filter:** Only sync files modified within a specific date range
-* **Created Date Filter:** Filter files by creation date
-* **File Extension Filter:** Include or exclude specific file types (e.g., `.pdf`, `.docx`)
+- **Instance Name:** A label for this Nextcloud connection (e.g., "My Nextcloud").
+- **Base URL:** Your Nextcloud instance URL, without a trailing slash (e.g., `https://cloud.example.com`).
+- **Username:** Your Nextcloud username.
+- **App Password / Token:** The App Password generated in the previous accordion.
 
-<img src="/images/connectors/nextcloud/nc2.png" alt="Nextcloud Filters Menu" style={{ display: 'block', margin: '0 auto' }} width="90%" />
-
-### Step 3: Set Sync Strategy
-
-Click **Next**. You can configure your sync strategy:
-
-* **Sync Type:** Choose between **Manual** or **Scheduled**
-* **Batch Size:** Number of files processed in one transaction (default: 100)
-* **Schedule Interval:** For scheduled syncs, set the interval (e.g., every 60 minutes)
-
-<img src="/images/connectors/nextcloud/nc3.png" alt="Nextcloud Sync Strategy" style={{ display: 'block', margin: '0 auto' }} width="90%" />
-
-
-### Step 4: Save and Sync
+<img
+  src="/images/connectors/nextcloud/nc1.png"
+  alt="Nextcloud connector Authenticate tab with Base URL, Username, and App Password fields"
+  style={{ display: 'block', margin: '0 auto' }}
+  width="90%"
+/>
 
 <Warning>
-  **Important:** Use the App Password from a Nextcloud account that has the same email address as your PipesHub account. Using a different email will cause permission issues on the PipesHub platform.
+  **Email must match.** Use a Nextcloud account whose email matches the email on your PipesHub account. A mismatch breaks permission resolution and you will not see your synced records in search.
 </Warning>
 
-1. Click **Save Configuration**.
-2. The connection will be tested automatically to verify your credentials.
-3. Once verified, click **Start Sync** to begin the initial synchronization.
-4. The first sync will be a full sync, fetching all files and folders from your Nextcloud account.
+Click **Save** to store the credentials. PipesHub validates the connection against Nextcloud before persisting.
+
+</Accordion>
+
+<Accordion title="Configure Settings" icon="gear">
+
+After authenticating, open the **Configure** tab on the connector instance.
+
+## Sync Settings
+
+Sync settings control how the connector pulls data from Nextcloud.
+
+**Sync Strategy:**
+- **Scheduled** — The connector automatically syncs on a fixed interval.
+- **Manual** — The connector only syncs when you trigger it from the connector page.
+
+**Sync Interval:** For scheduled syncs, the cadence in minutes (default: 60).
+
+**Batch Size:** Number of items processed per batch when committing to PipesHub (default: 100). Lower this if you hit memory pressure on very large libraries.
+
+<img
+  src="/images/connectors/nextcloud/nc3.png"
+  alt="Nextcloud connector Configure tab showing overall sync settings: strategy, interval, and batch size"
+  style={{ display: 'block', margin: '0 auto' }}
+  width="90%"
+/>
+
+## Filters
+
+Filters split into two categories:
+
+- **Sync filters** — applied during fetch. Items that fail a sync filter are never pulled from Nextcloud.
+- **Indexing filters** — applied after fetch. They control what is passed to the indexing pipeline and made searchable.
+
+### Sync Filters
+
+| Filter | Default | What it does |
+|---|---|---|
+| **Modified Date** | No restriction | Filter files and folders by last-modified date. Use a preset (Last 7/14/30/90/180/365 days) or a custom range (`is_after`, `is_before`, `is_between`). |
+| **Created Date** | No restriction | Filter files and folders by creation date. Same operators as Modified Date. |
+| **File Extensions** | All extensions | Include or exclude specific file types (e.g., `pdf`, `docx`). Folders are always traversed regardless of this filter so the hierarchy stays intact. |
+
+<img
+  src="/images/connectors/nextcloud/nc2.png"
+  alt="Nextcloud connector sync filters: modified date, created date, and file extensions"
+  style={{ display: 'block', margin: '0 auto' }}
+  width="90%"
+/>
+
+Once your settings are configured, click **Save Configuration**. PipesHub confirms the instance is ready with a final dialog — *"Instance is configured and ready to sync"* — offering two choices: **I'll do it later** or **Start syncing now**.
 
 </Accordion>
 

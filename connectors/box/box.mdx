@@ -197,60 +197,90 @@ This guide will walk you through the process of creating a Box application and c
 
 <Accordion title="Connect Box to PipesHub" icon="plug">
 
-### Step 1: Configure Connection
+Box is a **team** connector — only an organization admin can configure it, and the resulting instance is shared across the workspace.
 
-1. Open your PipesHub application and navigate to **Connection Settings**.
+### Step 1: Open the Connector Catalog
 
-2. Select **Box** from the list of available data sources.
+1. In PipesHub, navigate to **Workspace Settings** > **Connectors** > **Team**.
+2. Find the **Box** card and click **Setup**.
 
-3. Enter the required credentials:
-   - **Client ID:** Paste the Application (Client) ID from Box Developer Console
-   - **Client Secret:** Paste the Client Secret from Box Developer Console
-   - **Enterprise ID:** Paste your Box Enterprise ID
+### Step 2: Authenticate
 
-<img
-    src="/images/connectors/box/t1.png"
-    alt="Box PipesHub Connection Configuration"
-    style={{ display: 'block', margin: '0 auto' }}
-    width="90%"
-  />
+On the **Authenticate** tab, enter:
 
-### Step 2: Set Sync Strategy
-
-Click **Next** to configure your sync strategy:
-
-- **Manual:** Trigger syncs manually when needed
-- **Scheduled:** Automatically run syncs at regular intervals (15 min, 30 min, 1 hr, 4 hr, etc.)
-
-You can also configure the **Batch Size** (how many items to sync at once). The default is 100 items per batch.
+- **Instance Name:** A label for this Box connection (e.g., "Box Production").
+- **Application (Client) ID:** From the Box Developer Console (Step 3 above).
+- **Client Secret:** From the Box Developer Console (Step 3 above).
+- **Box Enterprise ID:** From the Box Admin Console (Step 3 above).
 
 <img
-    src="/images/connectors/box/t2.png"
-    alt="Box Sync Strategy Configuration"
-    style={{ display: 'block', margin: '0 auto' }}
-    width="90%"
-  />
+  src="/images/connectors/box/t1.png"
+  alt="Box connector Authenticate tab with Client ID, Client Secret, and Enterprise ID fields"
+  style={{ display: 'block', margin: '0 auto' }}
+  width="90%"
+/>
 
-### Step 3: Configure Filters (Optional)
+<Warning>
+  **Email must match.** The Box admin who authorized the app should use the same email address as the PipesHub admin configuring this connector. A mismatch breaks permission resolution and users will not see their synced records in search.
+</Warning>
 
-Set up file filters to control what content gets synced:
+Click **Save**. PipesHub fetches an access token using Client Credentials Grant to verify the credentials before persisting.
 
-- **File Extensions:** Limit sync to specific file types (e.g., `.pdf`, `.docx`, `.xlsx`)
+</Accordion>
+
+<Accordion title="Configure Settings" icon="gear">
+
+After authenticating, open the **Configure** tab on the connector instance.
+
+## Sync Settings
+
+Sync settings control how the connector pulls data from Box.
+
+**Sync Strategy:**
+- **Scheduled** — The connector automatically syncs on a fixed interval.
+- **Manual** — The connector only syncs when an admin triggers it from the connector page.
+
+**Sync Interval:** For scheduled syncs, the cadence in minutes (default: 60).
+
+**Batch Size:** Number of items processed per batch when committing to PipesHub (default: 100).
 
 <img
-    src="/images/connectors/box/t3.png"
-    alt="Box File Extension Filters"
-    style={{ display: 'block', margin: '0 auto' }}
-    width="90%"
-  />
+  src="/images/connectors/box/t2.png"
+  alt="Box connector Configure tab with sync strategy, sync interval, and batch size settings"
+  style={{ display: 'block', margin: '0 auto' }}
+  width="90%"
+/>
 
-### Step 4: Enable Connection
+## Filters
 
-1. Click **Save Configuration**.
+Filters split into two categories:
 
-2. Click **Enable** to activate the connector.
+- **Sync filters** — applied during fetch. Items that fail a sync filter are never pulled from Box, saving API quota and time.
+- **Indexing filters** — applied after fetch. They control what is passed to the indexing pipeline and made searchable.
 
-3. Your Box enterprise content will start syncing based on your configured strategy.
+### Sync Filters
+
+| Filter | Default | What it does |
+|---|---|---|
+| **Modified Date** | No restriction | Filter files and folders by last-modified date. Use a preset (Last 7/14/30/90/180/365 days) or a custom range (`is_after`, `is_before`, `is_between`). |
+| **Created Date** | No restriction | Filter files and folders by creation date. Same operators as Modified Date. |
+| **File Extensions** | All extensions | Include or exclude specific file types (e.g., `pdf`, `docx`, `xlsx`). Folders are always traversed regardless of this filter so the hierarchy stays intact. |
+
+### Indexing Filters
+
+| Filter | Default | What it does |
+|---|---|---|
+| **Index Items Shared by Me** | Enabled | When disabled, items the authenticated users have shared (via link or collaboration) are fetched but not indexed. |
+| **Index Items Shared With Me** | Enabled | When disabled, items shared with the authenticated users via collaboration are fetched but not indexed. |
+
+<img
+  src="/images/connectors/box/t3.png"
+  alt="Box connector sync and indexing filters: modified date, created date, file extensions, shared by me, shared with me"
+  style={{ display: 'block', margin: '0 auto' }}
+  width="90%"
+/>
+
+Once your settings are configured, click **Save Configuration**. PipesHub confirms the instance is ready with a final dialog — *"Instance is configured and ready to sync"* — offering two choices: **I'll do it later** or **Start syncing now**.
 
 </Accordion>
 

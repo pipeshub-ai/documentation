@@ -1,0 +1,82 @@
+---
+title: Azure AI
+description: "Configure PipesHub to use Azure AI Foundry embedding models"
+---
+
+# Azure AI Embeddings Configuration
+
+![Azure AI Embeddings Configuration Interface](/images/ai-models/embedding/AzureAI_EmbeddingConfig.png)
+
+*The Azure AI embeddings configuration screen in PipesHub where you'll enter your Endpoint URL, API Key, and Model Name*
+
+PipesHub allows you to integrate with Azure AI Foundry's embedding models to enable vector search, semantic similarity, and document retrieval in your workspace. Azure AI Foundry provides access to embedding models from multiple providers through a unified Azure endpoint.
+
+## Required Fields
+
+### Endpoint URL *
+
+The Endpoint URL connects PipesHub to your Azure AI Foundry resource.
+
+**Endpoint format:**
+```
+https://<your-resource-name>.services.ai.azure.com/openai/v1/
+```
+
+**How to obtain your Endpoint URL:**
+1. Log in to the [Azure Portal](https://portal.azure.com)
+2. Navigate to your Azure AI Foundry resource
+3. Go to the model deployments section
+4. Select your deployed embedding model and copy the endpoint URL
+
+**Note:** Ensure you use the correct endpoint for your resource region.
+
+### API Key *
+
+The API Key authenticates your requests to your Azure AI service.
+
+**How to obtain an API Key:**
+1. In the Azure Portal, navigate to your Azure AI resource
+2. Go to "Keys and Endpoint" under Resource Management
+3. Copy either Key 1 or Key 2 (both will work)
+
+**Security Note:** Your API key should be kept secure and never shared publicly. PipesHub securely stores your API key and uses it only for authenticating requests to Azure AI.
+
+### Model Name *
+
+The Model Name field specifies which embedding model you want to use.
+
+**Available Azure AI embedding models:**
+- `text-embedding-ada-002` - OpenAI's Ada embedding model, widely used and reliable
+- `embed-v-4-0` - A high-performance embedding model for retrieval tasks
+
+**How to choose a model:**
+- For broad compatibility and reliability, select `text-embedding-ada-002`
+- For higher retrieval performance, select `embed-v-4-0`
+- Browse the [Azure AI Foundry model catalog](https://ai.azure.com/explore/models) for the full list
+
+## Configuration Steps
+
+As shown in the image above:
+
+1. Click **Configure** on the Azure AI provider card
+2. Enter your Endpoint URL in the designated field (marked with *)
+3. Enter your Azure AI API Key (marked with *)
+4. Specify your Model Name (marked with *)
+5. Click **Add Model** to save and validate your credentials
+
+> Endpoint URL, API Key, and Model Name are all required fields to successfully configure Azure AI embedding integration.
+
+## Usage Considerations
+
+- API usage will count against your Azure AI resource's quota and billing
+- Different models have different pricing — check the Azure AI pricing page for details
+- Azure AI Foundry provides access to embedding models from multiple providers with unified billing and enterprise compliance
+
+## Troubleshooting
+
+- If you encounter authentication errors, verify your API key and endpoint URL are correct
+- Ensure the endpoint URL uses the correct format: `https://<resource>.services.ai.azure.com/openai/v1/`
+- Verify your Azure subscription is active and has sufficient quota for the selected model
+- Check that the model name matches the exact name from your Azure AI deployment
+
+For additional support, refer to the [Azure AI Foundry documentation](https://learn.microsoft.com/en-us/azure/ai-studio/) or contact PipesHub support.

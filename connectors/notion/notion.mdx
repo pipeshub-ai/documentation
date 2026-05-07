@@ -3,37 +3,324 @@ title: "Notion"
 description: "All-in-one workspace and knowledge management connector"
 icon: "/logo/notion.png"
 ---
-<div className="flex flex-col items-center justify-center text-center pt-10">
-  <h1 className="text-4xl font-bold">✅ Notion Connector Ready</h1>
-  <h3 className="text-xl mt-2">
-    Connector is live and ready to use. Documentation in process!
-  </h3>
-</div>
+
 <div className="max-w-2xl mx-auto mt-12">
-  <div className="p-6 border rounded-lg bg-gray-50">
+  <div className="p-6 border border-gray-200 dark:border-gray-700 rounded-lg bg-blue-50 dark:bg-gray-800">
     <div className="flex items-center mb-4">
       <img 
         src="/logo/notion.png" 
         alt="Notion Logo" 
         className="w-8 h-8 mr-3 object-contain flex-shrink-0"
       />
-      <h2 className="text-2xl font-semibold m-0"> Notion</h2>
+      <h2 className="text-2xl font-semibold m-0">Notion</h2>
     </div>
-    <p className="text-lg text-gray-700 mb-4">All-in-one workspace and knowledge management</p>
+    <p className="text-lg text-gray-700 dark:text-gray-300 mb-4">All-in-one workspace and knowledge management</p>
     <div className="flex items-center gap-2">
-      <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium">
+      <span className="px-3 py-1 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 rounded-full text-sm font-medium">
         ✅ Ready
       </span>
-      <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
-        📝 Documentation in process
+      <span className="px-3 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-full text-sm font-medium">
+        📖 Documentation Available
       </span>
     </div>
   </div>
 </div>
-<div className="text-center mt-12 p-6 bg-gray-50 rounded-lg max-w-2xl mx-auto">
-  <h3 className="text-lg font-semibold mb-2">Need Help Getting Started?</h3>
-  <p className="text-gray-600">
-    The Notion connector is fully operational and ready for use. While we're finalizing the documentation, 
-    feel free to reach out to our support team for setup assistance.
+
+## Overview
+
+The Notion connector syncs **pages**, **databases**, and **users** from your Notion workspace into PipesHub using **OAuth 2.0** and a **public connection** you register in Notion’s developer experience.
+
+### What gets synced
+
+| Entity | Description |
+|--------|-------------|
+| **Pages** | Notion pages you grant during install (and their content) |
+| **Databases** | Database properties and rows in scope |
+| **Users** | Workspace users (when the integration requests email-capable user info) |
+| **Comments** | Comments on shared pages, when enabled on the connection |
+
+### Authentication
+
+In PipesHub the flow has three tabs: **Authenticate Instance** (Redirect URL + OAuth client credentials), **Authorize** (sign in to Notion and pick what to share), then **Configure Records** (sync strategy and indexing).
+
+<Note>
+  This connector matches people by **email**. Use the **same email** in PipesHub as in Notion so permissions and visible records line up.
+</Note>
+
+---
+
+## Configuration Guide
+
+You will create a **public connection** in Notion, copy the **Redirect URL** from PipesHub into that connection, then finish setup in PipesHub and run **Authorize**.
+
+### How to configure and enable the Notion connector
+
+#### Step 1: Open Connectors in PipesHub
+
+1. Open your **user profile** menu (bottom of the left sidebar) → **Workspace Settings**.
+2. Under **Workspace**, select **Connectors**.
+3. Find **Notion** and click **+ Setup**.
+
+<div className="text-center">
+  <img
+    src="/images/connectors/outlook/enterprise/outlook-connector-home-nav.png"
+    alt="User profile menu with Workspace Settings"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+<div className="text-center">
+  <img
+    src="/images/connectors/notion/notion-connector-page.png"
+    alt="Workspace Connectors page with Notion and + Setup"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+#### Step 2: Copy the Redirect URL
+
+On **Authenticate Instance**, set **Instance name**, then copy the **Redirect URL** exactly. You will paste it into Notion in Step 4.
+
+<div className="text-center">
+  <img
+    src="/images/connectors/notion/notion-connector-redirect.png"
+    alt="Notion Configuration — Redirect URL to register in Notion"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+#### Step 3: Open Notion developer connections
+
+In Notion: **Settings & members** → **Features** → **Connections** → **Develop or manage connections**. In the developer area, open **Build** → **Public connections**.
+
+<div className="text-center">
+  <img
+    src="/images/connectors/notion/notion-connector-connections.png"
+    alt="Notion Settings — Connections and Develop or manage connections"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+<div className="text-center">
+  <img
+    src="/images/connectors/notion/notion-connector-public-connections.png"
+    alt="Notion developer — Public connections and Create a new connection"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+#### Step 4: Create the public connection
+
+1. Click **Create a new connection**.
+2. Fill **Connection name**, optional icon, **Development workspace**, and **Redirect URIs** — paste the **exact** Redirect URL from Step 2.
+3. Choose **Installable in** (often **Any workspace** for internal rollout).
+4. Click **Create**. When the success dialog appears, continue to **Configure connection settings**.
+
+<div className="text-center">
+  <img
+    src="/images/connectors/notion/notion-connector-new-connection.png"
+    alt="Notion — New connection form with Redirect URIs"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+<div className="text-center">
+  <img
+    src="/images/connectors/notion/notion-connector-connection-created.png"
+    alt="Notion — Connection successfully created"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+#### Step 5: Capabilities and OAuth secrets
+
+1. Under **Capabilities**, enable at least **Read content** and **Read comments**, and choose **Read user information including email addresses** so PipesHub can map users.
+2. Open the **Authorization (OAuth)** section. Copy **OAuth Client ID** and **OAuth Client Secret** and confirm **Redirect URIs** still match PipesHub.
+
+<div className="text-center">
+  <img
+    src="/images/connectors/notion/notion-connector-scopes.png"
+    alt="Notion connection — Capabilities and user email scope"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+<div className="text-center">
+  <img
+    src="/images/connectors/notion/notion-connector-creds.png"
+    alt="Notion connection — OAuth Client ID, Secret, and Redirect URIs"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+#### Step 6: Finish Authenticate Instance in PipesHub
+
+Return to **Notion Configuration** → **Authenticate Instance** if you navigated away. Paste **Client ID** and **Client Secret** from Step 5, confirm the Redirect URL, then click **Next →**.
+
+<div className="text-center">
+  <img
+    src="/images/connectors/notion/notion-connector-new.png"
+    alt="PipesHub Notion Configuration — OAuth credentials on Authenticate Instance"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+#### Step 7: Authorize with Notion
+
+1. On **Authorize**, click **Authenticate Notion to Proceed** and complete the browser flow.
+2. Review permissions, choose **Select pages**, pick teamspaces/pages to share, then **Allow access**.
+
+<div className="text-center">
+  <img
+    src="/images/connectors/notion/notion-connector-authenticate.png"
+    alt="PipesHub Notion Configuration — Authorize tab before signing in"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+<div className="text-center">
+  <img
+    src="/images/connectors/notion/notion-connector-oauth.png"
+    alt="Notion — Connect and select pages for the integration"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+<div className="text-center">
+  <img
+    src="/images/connectors/notion/notion-connector-auth-filters.png"
+    alt="Notion — Choose pages and Allow access"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+On this Notion screen you **choose exactly which content the connector may access**: use **Search pages**, expand **Teamspaces** or **Private**, check only the pages and databases you want synced, or use **Deselect all** and select a smaller set. Whatever you include here is the scope Notion grants the integration **Configure Records** in PipesHub refines sync and indexing further, but it cannot access pages you never selected. When you are done, click **Allow access**.
+
+When you see **Connected – you can continue to Configure records**, click **Continue to configuration →**.
+
+<div className="text-center">
+  <img
+    src="/images/connectors/notion/notion-connector-auth-done.png"
+    alt="PipesHub Notion Configuration — Authorization success"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+<Warning>
+  **Authorize with the same email you use in PipesHub.** A different account can cause missing pages or permission issues.
+</Warning>
+
+#### Step 8: Configure Records and save
+
+Set **Sync strategy** and **Sync interval**, optional **Manual indexing**, and indexing toggles (for example **Index Pages**, **Index Databases**). Add sync filters only if you need to narrow scope. Click **Save Configuration**.
+
+<div className="text-center">
+  <img
+    src="/images/connectors/notion/notion-connector-filters.png"
+    alt="PipesHub Notion Configuration — Configure Records"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+#### Step 9: Start sync
+
+When prompted, choose **Start Syncing Now** or **I'll do it later**. Use **Sync Enabled** and the sync actions on the instance card as needed.
+
+<div className="text-center">
+  <img
+    src="/images/connectors/notion/notion-connector-start-sync.png"
+    alt="Notion instance ready to sync confirmation"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+Open the instance **Overview** to watch totals, queues, and record types.
+
+<div className="text-center">
+  <img
+    src="/images/connectors/notion/notion-connector-stats.png"
+    alt="Notion connector instance Overview and record stats"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+Use **Re-authenticate with provider** on **Authorize** if tokens are rotated or access was revoked.
+
+## Useful Links
+
+- **Notion for developers:** [https://developers.notion.com/](https://developers.notion.com/)  
+- **Public OAuth connections:** see Notion docs for **connections** and **OAuth** under your product version  
+- **PipesHub:** **Workspace Settings** → **Connectors** → **Notion** for the live Redirect URL  
+
+---
+
+## Troubleshooting
+
+<AccordionGroup>
+
+<Accordion title="Troubleshooting" icon="circle-exclamation">
+
+### Common issues
+
+**Redirect URI mismatch**
+
+- The value in Notion must **exactly** match the Redirect URL shown in PipesHub (scheme, host, path, no stray spaces).
+
+**Invalid client / secret**
+
+- Regenerate the secret in Notion if needed and paste the new value into **Authenticate Instance**.
+
+**Missing pages after sync**
+
+- Re-run **Authorize** and expand page/teamspace selection; the connector only sees content you explicitly share.
+
+**Email / visibility**
+
+- Confirm the **Capabilities** user scope includes **email** and that users sign in to PipesHub with the same address as in Notion.
+
+</Accordion>
+
+</AccordionGroup>
+
+## Data sync behavior
+
+<AccordionGroup>
+
+<Accordion title="Synchronization process" icon="sync">
+
+### Initial sync
+
+- Imports pages and databases in the granted scope; duration depends on workspace size.
+
+### Incremental sync
+
+- Runs on your **Sync interval** when using a scheduled strategy, fetching changes since the last successful run.
+
+</Accordion>
+
+</AccordionGroup>
+
+---
+
+## FAQ
+
+<AccordionGroup>
+
+<Accordion title="Queries not returning results. What could be wrong?">
+
+1. **Email mismatch** — Use the same email in PipesHub as in Notion.  
+2. **Scope** — Confirm the right pages were selected during **Authorize** and that indexing toggles match what you expect.  
+3. **Still indexing** — Open **Workspace Settings** → **Connectors** → **Notion** and check **Overview** until queues complete.
+
+</Accordion>
+
+</AccordionGroup>
+
+---
+
+<div className="text-center mt-12 p-6 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg max-w-2xl mx-auto">
+  <h3 className="text-lg font-semibold mb-2">Ready to get started?</h3>
+  <p className="text-gray-600 dark:text-gray-400">
+    Connect Notion to PipesHub for unified search. Follow the steps above, or contact support if you need help.
   </p>
 </div>

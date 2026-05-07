@@ -1,0 +1,314 @@
+---
+title: "SharePoint Toolset"
+description: "Sites, files, pages, and OneNote integration for AI agents"
+icon: "/logo/sharepoint.png"
+---
+
+<div className="max-w-2xl mx-auto mt-12">
+  <div className="p-6 border border-gray-200 dark:border-gray-700 rounded-lg bg-blue-50 dark:bg-gray-800">
+    <div className="flex items-center mb-4">
+      <img 
+        src="/logo/sharepoint.png" 
+        alt="SharePoint Logo" 
+        className="w-8 h-8 mr-3 object-contain flex-shrink-0"
+      />
+      <h2 className="text-2xl font-semibold m-0">SharePoint Toolset</h2>
+    </div>
+    <p className="text-lg text-gray-700 dark:text-gray-300 mb-4">SharePoint sites, files, pages, and OneNote</p>
+    <div className="flex items-center gap-2">
+      <span className="px-3 py-1 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 rounded-full text-sm font-medium">
+        Ready
+      </span>
+      <span className="px-3 py-1 bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200 rounded-full text-sm font-medium">
+        Microsoft 365
+      </span>
+    </div>
+  </div>
+</div>
+
+## Overview
+
+The SharePoint toolset enables AI agents to interact with your SharePoint Online content via the Microsoft Graph API. Agents can browse sites, read and update pages, search and manage files across drives, and create or read OneNote notebooks.
+
+### Key Capabilities
+
+- **Sites** — list and inspect SharePoint sites the user has access to
+- **Pages** — read, search, create, and update SharePoint site pages
+- **Files & drives** — list drives and files, search across content, read file metadata and content, create folders and Word documents, move items
+- **OneNote** — find notebooks, list pages, read content, and create new notebooks
+
+---
+
+## Available Tools
+
+### Sites
+
+| Tool | Description |
+|------|-------------|
+| `get_sites` | List SharePoint sites the user has access to |
+| `get_site` | Get details of a specific SharePoint site by ID or path |
+
+### Pages
+
+| Tool | Description |
+|------|-------------|
+| `get_pages` | List pages on a SharePoint site |
+| `get_page` | Get the content of a specific page |
+| `search_pages` | Search pages by keyword across a site |
+| `create_page` | Create a new SharePoint page with title and content |
+| `update_page` | Update an existing page's title or content |
+
+### Files & Drives
+
+| Tool | Description |
+|------|-------------|
+| `list_drives` | List document libraries (drives) on a site |
+| `list_files` | List files and folders in a drive or folder |
+| `search_files` | Search files by keyword across drives |
+| `get_file_metadata` | Get metadata for a specific file (name, size, timestamps, owner) |
+| `get_file_content` | Read the content of a file |
+| `create_folder` | Create a new folder in a drive |
+| `create_word_document` | Create a new `.docx` Word document with provided content |
+| `move_item` | Move a file or folder to a different location |
+
+### OneNote
+
+| Tool | Description |
+|------|-------------|
+| `find_notebook` | Find a OneNote notebook by name |
+| `list_notebook_pages` | List pages within a OneNote notebook |
+| `get_notebook_page_content` | Get the content of a specific OneNote page |
+| `create_onenote_notebook` | Create a new OneNote notebook |
+
+---
+
+## Configuration Guide
+
+<AccordionGroup>
+
+<Accordion title="Setup" icon="gear">
+
+### Step 1: Open App registrations from the Azure portal home
+
+1. Go to [portal.azure.com](https://portal.azure.com) and sign in.
+2. On the home page, find **Azure services** and click **App registrations** (grid icon). You can also search the top bar for **App registrations** or open **Microsoft Entra ID** and choose **App registrations** from there.
+
+<div style={{ textAlign: "center" }}>
+  <img
+    src="/images/toolsets/sharepoint/home_page.png"
+    alt="Azure portal home with App registrations"
+    style={{ display: 'block', margin: '0 auto' }}
+    width="90%"
+  />
+</div>
+
+### Step 2: Start a new registration
+
+On the **App registrations** page, click **+ New registration**.
+
+<div style={{ textAlign: "center" }}>
+  <img
+    src="/images/toolsets/sharepoint/app_reg.png"
+    alt="App registrations list with New registration"
+    style={{ display: 'block', margin: '0 auto' }}
+    width="90%"
+  />
+</div>
+
+### Step 3: Register the application
+
+1. **Name**: Enter a display name (for example, `PipesHub SharePoint Toolset`).
+2. **Supported account types**: Choose who can sign in — for example **Accounts in any organizational directory and personal Microsoft accounts** for the broadest support, or a single-tenant option if you only use your organization.
+3. **Redirect URI**: Get the Redirect URI from the PipesHub **Configure SharePoint** dialog in **Workspace Settings → Actions** (where SharePoint is set up — for example **+ Setup** / **Configure**). Set the platform to **Web** and paste the value.
+
+<div style={{ textAlign: "center" }}>
+  <img
+    src="/images/toolsets/sharepoint/sharepoint_reg_page.png"
+    alt="PipesHub Configure SharePoint dialog showing Redirect URI"
+    style={{ display: 'block', margin: '0 auto' }}
+    width="90%"
+  />
+</div>
+
+4. Click **Register**.
+
+### Step 4: Copy Application (client) ID and Directory (tenant) ID
+
+On the **Overview** page for your app, copy:
+
+- **Application (client) ID** — used as **Client ID** in PipesHub.
+- **Directory (tenant) ID** — used as **Tenant ID** in PipesHub.
+
+<div style={{ textAlign: "center" }}>
+  <img
+    src="/images/toolsets/sharepoint/app_overview.png"
+    alt="App registration Overview with client and tenant IDs"
+    style={{ display: 'block', margin: '0 auto' }}
+    width="90%"
+  />
+</div>
+
+<Warning>
+  Use the **Application (client) ID**, not the **Object ID**. They are different values.
+</Warning>
+
+### Step 5: Create a client secret
+
+1. In the left sidebar under **Manage**, open **Certificates & secrets**.
+2. On the **Client secrets** tab, click **+ New client secret**.
+3. Add a description, choose an expiration, then click **Add**.
+4. **Copy the secret value immediately** — it is shown only once.
+
+<div style={{ textAlign: "center" }}>
+  <img
+    src="/images/toolsets/sharepoint/client_id_secret.png"
+    alt="Certificates and secrets with new client secret"
+    style={{ display: 'block', margin: '0 auto' }}
+    width="90%"
+  />
+</div>
+
+<Warning>
+  If you leave this page without copying the secret, you cannot read it again — create a new client secret instead.
+</Warning>
+
+### Step 6: Add Microsoft Graph API permissions
+
+1. In the left sidebar, open **API permissions**.
+2. Click **+ Add a permission** → **Microsoft Graph** → **Delegated permissions**.
+3. Add the following permissions:
+
+| Permission | Description |
+|-----------|-------------|
+| `Sites.ReadWrite.All` | Read and write items in all site collections |
+| `Files.ReadWrite.All` | Have full access to all files user can access |
+| `Notes.ReadWrite.All` | Read and write all OneNote notebooks user can access |
+| `User.Read` | Sign in and read user profile |
+| `offline_access` | Refresh tokens for ongoing access |
+
+<div style={{ textAlign: "center" }}>
+  <img
+    src="/images/toolsets/sharepoint/permissions.png"
+    alt="Add Microsoft Graph delegated permissions for SharePoint"
+    style={{ display: 'block', margin: '0 auto' }}
+    width="90%"
+  />
+</div>
+
+<Info>
+  The SharePoint toolset uses **Delegated** permissions so actions run as the signed-in user, not as the app alone.
+</Info>
+
+### Step 7: Grant admin consent
+
+The `*.All` scopes (e.g., `Sites.ReadWrite.All`) require **admin consent** at the tenant level even for delegated flows. Click **Grant admin consent for** your organization (the button includes your tenant name) and confirm. All permissions should show a green check after consent is granted.
+
+<div style={{ textAlign: "center" }}>
+  <img
+    src="/images/toolsets/sharepoint/grant_admin_consent.png"
+    alt="API permissions with Grant admin consent"
+    style={{ display: 'block', margin: '0 auto' }}
+    width="90%"
+  />
+</div>
+
+### Step 8: Configure the SharePoint toolset in PipesHub
+
+1. In PipesHub, go to **Workspace Settings** → **Actions**.
+2. Find **SharePoint** and open setup / configuration (**+ Setup** or **Configure**).
+3. Confirm the **Redirect URI** in the dialog matches the **Web** redirect URI you registered in Azure in **Step 3**.
+4. Enter **Client ID**, **Client Secret**, and **Tenant ID**, then create or save the instance.
+
+<div style={{ textAlign: "center" }}>
+  <img
+    src="/images/toolsets/sharepoint/sharepoint_toolset_page.png"
+    alt="Workspace Actions SharePoint toolset configuration"
+    style={{ display: 'block', margin: '0 auto' }}
+    width="90%"
+  />
+</div>
+
+### Step 9: Authenticate the SharePoint toolset
+
+Authentication uses the same OAuth flow in either location:
+
+- **Admins** can authenticate the shared instance directly under **Workspace Settings → Actions**.
+- **Users** can authenticate their own personal instance under **Your actions** (in the **Personal** section of the sidebar).
+
+1. On the SharePoint tile (in **Actions** or **Your actions**), click **Authenticate with OAuth**.
+2. A popup opens to Microsoft's sign-in page — sign in and accept the permissions.
+3. The popup closes and the SharePoint tile shows **Authenticated** status.
+
+<div style={{ textAlign: "center" }}>
+  <img
+    src="/images/toolsets/sharepoint/oauth_consent.png"
+    alt="Microsoft OAuth consent popup — sign in and accept permissions"
+    style={{ display: 'block', margin: '0 auto' }}
+    width="90%"
+  />
+</div>
+
+### Step 10: Add SharePoint to an agent
+
+1. Go to the **Home** page.
+2. Next to **Agents**, click **+** to create a new agent.
+3. Give the agent a name, drag the **SharePoint** toolset onto the canvas, connect it to the **Agent Core** node with your model and chat input/output, then create the agent.
+
+<div style={{ textAlign: "center" }}>
+  <img
+    src="/images/toolsets/sharepoint/create_agent.png"
+    alt="Agent builder with SharePoint toolset connected"
+    style={{ display: 'block', margin: '0 auto' }}
+    width="90%"
+  />
+</div>
+
+</Accordion>
+
+</AccordionGroup>
+
+---
+
+## FAQ
+
+<AccordionGroup>
+
+<Accordion title="What's the difference between SharePoint Connector and SharePoint Toolset?">
+
+| Aspect | SharePoint Connector | SharePoint Toolset |
+|--------|---------------------|-------------------|
+| **Purpose** | Sync and index sites, files, and pages for search | Enable agents to perform actions in SharePoint |
+| **Auth Type** | Application permissions (admin-consent, runs as the app) | Delegated permissions (acts as the signed-in user) |
+| **Data Flow** | One-way (import data into PipesHub) | Two-way (read and write via API) |
+| **When to Use** | Query/search past site content and documents | Create pages, upload files, manage OneNote |
+
+**Example:** Use the **SharePoint Connector** to search across all your indexed SharePoint content. Use the **SharePoint Toolset** to let agents create pages, upload files, or manage OneNote notebooks on behalf of the signed-in user.
+
+</Accordion>
+
+<Accordion title="Why does it need admin consent if it's user-level?">
+
+The `*.All` Microsoft Graph scopes (e.g., `Sites.ReadWrite.All`, `Files.ReadWrite.All`, `Notes.ReadWrite.All`) require **admin consent** at the tenant level even for delegated flows because they grant access to data beyond the user's own resources. After an admin grants consent once, individual users can sign in without seeing the consent prompt for those scopes.
+
+</Accordion>
+
+</AccordionGroup>
+
+---
+
+## Usage Tips
+
+**List the SharePoint sites I can access**  
+Ask your agent to "list my SharePoint sites" or "what SharePoint sites am I a member of?"
+
+**Search for a file across drives**  
+Ask to "search SharePoint for the Q4 budget spreadsheet" — the agent searches across drives the user has access to.
+
+**Create a new page**  
+Ask to "create a new SharePoint page in the Engineering site titled 'Release Notes' with content X". The agent creates the page and returns its URL.
+
+**Read or update a page**  
+Ask to "show me the content of the Onboarding page in the HR site" or "update the Release Notes page to add today's deploy summary".
+
+**Create a OneNote notebook**  
+Ask to "create a new OneNote notebook called Sprint Planning in my OneNote" — the agent creates it and returns the notebook ID.

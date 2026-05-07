@@ -1,6 +1,6 @@
 ---
 title: "Local FS"
-description: "Index a folder on the connector host for search in PipesHub"
+description: "Index a folder on your computer for search in PipesHub"
 icon: "/logo/local-fs.svg"
 ---
 
@@ -31,7 +31,7 @@ icon: "/logo/local-fs.svg"
       <h2 className="text-2xl font-semibold m-0">Local FS</h2>
     </div>
     <p className="text-lg text-gray-700 dark:text-gray-300 mb-4">
-      Index files from a folder on the machine where the connector service runs
+      Index files from a folder on your computer
     </p>
     <div className="flex items-center gap-2">
       <span className="px-3 py-1 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 rounded-full text-sm font-medium">
@@ -46,50 +46,43 @@ icon: "/logo/local-fs.svg"
 
 ## What is this?
 
-**Local FS** brings files from a **folder on disk** into PipesHub so you can **search them from chat and the knowledge base**.
+**Local FS** lets you point PipesHub at a **folder on your computer** so you can **search the files in it from PipesHub chat and the knowledge base** — just like any other connector.
 
-PipesHub only **reads** those files. It does not move, rename, or delete anything on your disk.
+Three things to know up front:
 
-This connector is **personal**: you set it up under **Personal → Your Connectors** in the sidebar, not from org-wide team connector admin.
+- PipesHub only **reads** the folder. It doesn't move, rename, copy, or delete anything.
+- There's **no login**. No password, no API key, no cloud account. You just give it a folder path.
+- It's a **personal** connector — you set it up under **Personal → Your Connectors**, and the files you index are searchable by **you** inside PipesHub. It is not shared with the rest of your team.
 
-### Where does the folder live?
+### Words you'll see
 
-The path you set must be readable by the **same environment that runs the Python connector** (the `connectors` / `connectors_main` process). That is not always the same as the laptop where you use the browser.
+| Word | Means |
+|------|-------|
+| **Folder** | A regular folder on your machine (or on the machine running PipesHub). |
+| **Instance** | One Local FS setup pointing at one folder. You can have several — one per folder. |
+| **Sync** | The moment PipesHub reads the folder and updates what it knows about your files. |
 
-```mermaid
-flowchart LR
-  subgraph browser [Browser]
-    WebUI[Web app UI]
-  end
-  subgraph electron [Electron app]
-    Desktop[Desktop runtime]
-  end
-  subgraph host [Connector host]
-    Python[Python connector]
-  end
-  WebUI -->|saves path in config| Python
-  Desktop -->|optional local watcher| Python
-```
+### One thing to check first — *which* computer?
 
-| Situation | What to do |
-|-----------|------------|
-| **Connector on your machine** | Use the real absolute path (for example `/Users/you/Documents/project`). |
-| **Docker or Kubernetes** | **Mount** the host folder into the container, then set the **path inside the container** (for example host `/data` mounted as `/data` in the container → use `/data`). |
-| **PipesHub desktop (Electron)** | The app can run a **local watcher** that lines up with your folder settings; behaviour matches the sync options you save in the UI. |
+The folder needs to be readable by the **machine running the PipesHub connector**, which isn't always the same as the laptop in front of you.
 
-To verify a container sees your path:
+| How you run PipesHub | What "the folder" means |
+|------|---------|
+| **PipesHub on your own laptop** | A normal folder path on your laptop, e.g. `/Users/you/Documents/notes`. |
+| **PipesHub Desktop app** | Same — a folder on your laptop. |
+| **PipesHub in Docker / Kubernetes** | A folder that has been **mounted into the container**, e.g. host `/data` mounted as `/data` → use `/data`. |
 
-```bash
-docker compose exec <connectors-service> ls -la /path/you/configured
-```
+If you're using Docker or a server deployment and you're not sure, ask whoever set PipesHub up. If it's just on your laptop, you're fine — pick any folder.
 
-If that fails with “No such file” or “Permission denied”, sync will not index files until the mount and permissions are fixed.
+<Info>
+  Quick check for Docker users: `docker compose exec <connectors-service> ls /path/you/will/use`. If that lists your files, you're good. If it says "No such file" or "Permission denied", the folder isn't mounted yet.
+</Info>
 
 ### What you need before you start
 
-1. A PipesHub account where you can open **Personal → Your Connectors** in the sidebar.
-2. A folder you are allowed to read, on (or mounted into) the **connector host**.
-3. Patience for the first sync if the folder is large — or use **filters** to limit file types and dates.
+1. A PipesHub account where the left sidebar shows **Personal → Your Connectors**.
+2. A folder you want to make searchable.
+3. About 2 minutes. There's no cloud setup at all.
 
 ---
 
@@ -101,12 +94,12 @@ If that fails with “No such file” or “Permission denied”, sync will not 
 
 <div className="mt-4">
 
-### Step 1 — Open Local FS from Your Connectors
+### Step 1 — Open Local FS in PipesHub
 
-1. In PipesHub, open the left sidebar.
+1. In PipesHub, look at the left sidebar.
 2. Under **Personal**, click **Your Connectors**.
-3. Use the **All**, **Active**, or **Inactive** filters at the top if needed (optional).
-4. Find the **Local FS** card and click **+ Setup**.
+3. Find the **Local FS** card.
+4. Click **+ Setup** on the card.
 
 <div className="text-center">
   <img
@@ -116,112 +109,154 @@ If that fails with “No such file” or “Permission denied”, sync will not 
   />
 </div>
 
-A **Local FS Configuration** panel opens (slide-out or modal, depending on your layout).
+A panel slides in from the right with two tabs: **Authenticate Instance** and **Configure Records**. You'll fill them in order.
 
 <Info>
-  If your deployment requires saving sync settings while the instance is **inactive**, turn sync off first, change **Local folder** and options, then save — as described in the in-product connector help.
+  Local FS lives under **Personal → Your Connectors**, *not* Workspace → Connectors. If you don't see it, scroll the connectors list or use the **All / Active / Inactive** filters at the top.
 </Info>
 
 ---
 
-### Step 2 — Name the instance (Authenticate tab)
+### Step 2 — Name the instance (Authenticate Instance tab)
 
-The first tab is **Authenticate Instance**. Local FS uses **no cloud login** — you should see a banner such as **No authentication required for this connector.**
+The first tab is **Authenticate Instance**. Local FS has no login, so you'll see a banner that says **No authentication required for this connector.** That's normal — there's nothing to paste.
 
 <div className="text-center">
   <img
     src="/images/connectors/local-fs/authenticate_tab.png"
-    alt="Local FS Configuration on Authenticate Instance tab with No authentication required banner"
+    alt="Authenticate Instance tab — no credentials needed"
     className="block mx-auto w-11/12"
   />
 </div>
 
-1. Enter an **Instance name** you will recognise later (for example `My Computer` or `Work laptop notes`).
-2. Click **Next →** at the bottom to continue.
+1. In **Instance name**, type a short name you'll recognise later (for example `My laptop` or `Work notes`).
+2. Click **Next →** at the bottom.
+
+<Info>
+  The instance name is just a label for you. Pick something descriptive — when you add a second folder later, this is how you'll tell them apart.
+</Info>
 
 ---
 
-### Step 3 — Choose folder, sync strategy, and options
+### Step 3 — Pick the folder and how often to sync (Configure Records tab)
 
-Open the **Configure Records** tab.
+The panel moves you to the **Configure Records** tab. This is the only tab where you actually have to make choices.
 
 <div className="text-center">
   <img
     src="/images/connectors/local-fs/configure_tab.png"
-    alt="Configure Records tab with sync settings and local folder"
+    alt="Configure Records tab with Sync settings and the Local folder field"
     className="block mx-auto w-11/12"
   />
 </div>
 
-Under **Sync settings**:
+Under **Sync settings** there are two choices:
 
-- **Manual** — PipesHub only rescans when you press **Sync** / **Full sync** (or run an equivalent flow).
-- **Scheduled** — set **Sync interval** (for example every hour) so the folder is rescanned automatically.
+- **Sync Strategy**
+  - **Scheduled** — PipesHub rescans the folder on its own. (Recommended.)
+  - **Manual** — only rescans when you press **Sync** / **Full sync** yourself.
+- **Sync Interval** — how often a scheduled sync runs. **1 Hour** is a good starting point.
 
-Under **Additional settings** (names may match your build):
+Under **Additional settings**:
 
-- **Local folder** — use **Choose folder** (or the path field) so the configured path is the one the **connector process** can read.
-- **Include subfolders** — on by default; turn off to index only the top level of the folder.
-- **Batch size** — optional tuning for how many items are processed per batch.
+- **Local folder** — the **path to the folder** you want to index. Use **Choose folder** if a picker is shown, or type the path directly. Make sure it's a path the **PipesHub connector** can see (see "Which computer?" above).
+- **Include subfolders** — leave this on to index everything inside the folder. Turn it off to index only the files at the top level.
+- **Batch size** — leave it as the default unless someone has told you otherwise.
+
+<Info>
+  Not sure what to pick? **Scheduled**, **1 Hour**, **Include subfolders ON**, batch size as-is — that's the right answer for most people.
+</Info>
 
 <Warning>
-  **Turning sync “on” does not crawl by itself.** You still need a **manual sync** or a **schedule** so files are actually walked and sent for indexing.
+  Just turning the connector "on" later won't read your files by itself. PipesHub still needs either a **manual sync** or a **schedule** to actually walk the folder. Step 6 covers running a sync.
 </Warning>
 
 ---
 
-### Step 4 — (Optional) Filters and indexing toggles
+### Step 4 — (Optional) Narrow down what gets synced
 
-Scroll to **Indexing & sync filters** (sometimes split into **Sync filters**, **Indexing filters**, and optional **Enable manual indexing**). Use **+ Add filter** to limit by **file extensions**, **modified date**, **created date**, and related fields offered for Local FS.
+If your folder has lots of files you don't care about (build outputs, photos, downloads), you can tell PipesHub to skip them.
+
+Scroll to **Indexing & sync filters** and click **+ Add filter**.
 
 <div className="text-center">
   <img
     src="/images/connectors/local-fs/filters_section.png"
-    alt="Indexing and sync filters for Local FS"
+    alt="Indexing & sync filters with + Add filter"
     className="block mx-auto w-11/12"
   />
 </div>
 
-Indexing toggles (when shown) control whether **files**, **documents**, **images**, **videos**, or **attachment-like** types are indexed — mirror how you use other file connectors.
+Common filters:
 
-When finished, click **Save Configuration**.
+| Filter | What it does | When to use it |
+|---|---|---|
+| **File Extensions** | Only sync certain file types. Comma-separated, e.g. `pdf, docx, txt`. | You only want documents — not images, videos, archives. |
+| **Modified Date** | Only sync files changed after / before / between certain dates. | You want to skip very old files. |
+| **Created Date** | Same idea as Modified Date but for the original creation time. | Same idea, different timestamp. |
+
+Each filter has an operator — usually **In** ("only these") or **Not In** ("everything except these").
+
+Quick examples:
+
+- **PDFs only** — *File Extensions* · *In* · `pdf`
+- **Skip images and archives** — *File Extensions* · *Not In* · `jpg, png, gif, zip`
+- **Last year only** — *Modified Date* · *After* · pick a date
+
+When you're done, click **Save Configuration** at the bottom of the panel.
+
+<Info>
+  No filters? That's fine for small folders. PipesHub will just sync everything it can read.
+</Info>
 
 ---
 
-### Step 5 — Enable sync on your instance
+### Step 5 — Turn sync on
 
-Go to **Personal → Your Connectors**, open **Local FS** so you see the breadcrumb **Connectors → Local FS** and your instance card (for example *My Computer*).
+After you save, you'll land on the **Local FS** instance page with one row — your new instance.
 
 <div className="text-center">
   <img
     src="/images/connectors/local-fs/instance_row.png"
-    alt="Local FS connector page with instance card and Sync enabled toggle"
+    alt="Local FS instance row with Sync Enabled toggle"
     className="block mx-auto w-11/12"
   />
 </div>
 
-1. Find **Sync enabled** on the instance (**SYNC ENABLED** in uppercase on some layouts).
-2. Turn it **on** when you are ready for PipesHub to run syncs according to your strategy.
+Right now the row shows **Sync Paused** — nothing is happening yet.
+
+1. Find the **Sync Enabled** toggle on the right of the row.
+2. Click it on.
+
+The status flips to **Sync Enabled** and PipesHub is ready to scan your folder.
 
 ---
 
-### Step 6 — Run a sync and check progress
+### Step 6 — Run the first sync and watch progress
 
-For **Manual** strategy, open the instance and use **Sync** or **Full sync** so the first crawl runs.
-
-Click the row to open the **Overview** panel.
+Click anywhere on the instance row to open the **Overview** panel on the right.
 
 <div className="text-center">
   <img
     src="/images/connectors/local-fs/instance_overview.png"
-    alt="Local FS overview panel with record stats and sync actions"
+    alt="Overview panel with record stats and sync actions"
     className="block mx-auto w-11/12"
   />
 </div>
 
-Here you can see record metrics such as **Total**, **Completed**, **Processing**, **Failed**, and **Queued**, plus **Sync now**, **Manage Configuration**, and (on the connector page behind the panel) **Sync** / **Full sync**.
+If you picked **Manual** sync strategy in Step 3, click **Sync** or **Full sync** here to kick off the first crawl. If you picked **Scheduled**, the next sync will run at the interval you set (or click **Sync** if you don't want to wait).
 
-That's it — your folder’s files can appear in PipesHub search as indexing completes.
+In the panel you can see:
+
+- **Total** — how many files PipesHub has found.
+- **Completed** — files that are fully indexed and searchable.
+- **Processing** — files being read right now.
+- **Queued** / **Not Started** — files waiting their turn.
+- **Failed** — files PipesHub couldn't read (usually a permission issue, or a corrupt/protected file).
+- **Sync** / **Full sync** — re-run a sync any time. **Full sync** rescans everything; **Sync** picks up only what's changed.
+- **Manage Configuration** — re-opens the two tabs from Steps 2–4 if you want to change the folder or filters later.
+
+That's it! 🎉 Once **Processing** and **Queued** drop to zero, your folder is fully searchable in PipesHub.
 
 </div>
 
@@ -231,21 +266,41 @@ That's it — your folder’s files can appear in PipesHub search as indexing co
 
 <div className="mt-4">
 
-### First sync
+### First sync (full scan)
 
-The first successful sync walks the folder (respecting **Include subfolders** and filters) and registers files. Very large trees take longer; narrowing **file extensions** or **date ranges** speeds things up.
+The first time, PipesHub walks **every file** in the folder you chose (and every subfolder, if you left that option on). Bigger folders take longer:
 
-### Later syncs
+| Number of files | Roughly how long |
+|-----------------|------------------|
+| Under 1,000 | A few minutes |
+| 1,000 – 10,000 | 10 – 30 minutes |
+| 10,000 – 100,000 | 30 minutes – 2 hours |
+| Over 100,000 | Several hours |
 
-Later runs pick up **new**, **changed**, and **removed** files so search stays in sync with disk.
+Tip: filtering by file extension (e.g. PDFs only) makes the first sync dramatically faster.
 
-### Who can see the content?
+### Later syncs (just what changed)
 
-Local FS is **personal** — only your PipesHub user searches this data inside the product. It does not change file permissions on disk.
+After the first sync, PipesHub only looks at **what's different** since last time:
 
-### Optional CLI
+- New files — added to search.
+- Edited files — re-indexed.
+- Deleted files — removed from search.
 
-Advanced users can use the **Pipeshub CLI** (`pipeshub login`, `pipeshub setup`, `pipeshub run` / `pipeshub sync`) to point a personal Local FS instance at a path and trigger resyncs. The CLI does not replace the requirement that the **Python connector** can read that path on the host. See the CLI package README under the repository’s Node apps.
+These are usually quick.
+
+### Who can see the synced files?
+
+Local FS is registered as a **personal** connector. Only **your** PipesHub user can search the files indexed by your instance. It does not change permissions on disk in any way.
+
+### Scheduled vs Manual
+
+**Scheduled** runs on its own at the interval you picked. Set it once and forget about it.
+
+**Manual** only runs when you click **Sync** or **Full sync**. Useful when:
+
+- You just dropped a batch of files into the folder and want them searchable now.
+- You're testing filter changes.
 
 </div>
 
@@ -255,22 +310,24 @@ Advanced users can use the **Pipeshub CLI** (`pipeshub login`, `pipeshub setup`,
 
 <div className="mt-4">
 
-### Indexed for search
+### Fully searchable (text inside the file)
 
-Text-heavy formats are parsed so you can search **inside** the file:
+These get parsed so you can search the actual contents:
 
 - Documents — **PDF**, **DOCX**, **PPTX**, **XLSX**, **ODT**, **RTF**
 - Plain text — **TXT**, **MD**, **CSV**, **JSON**, **XML**, **HTML**
-- Code — **.py**, **.js**, **.ts**, **.java**, and similar
+- Code — **.py**, **.js**, **.ts**, **.java**, and most others
 
-### Synced but limited text search
+### Stored but not searched inside
 
-Binary types may appear as records (by name and metadata) even when full-text extraction is limited:
+These show up by **filename and metadata**, but their contents aren't indexed:
 
-- Images, video, audio
-- Archives and other binaries
+- Images (JPG, PNG, GIF, …)
+- Video and audio
+- Archives (ZIP, RAR, …)
+- Other binary files
 
-Exact behaviour follows your **indexing** toggles and the indexing pipeline version deployed in your environment.
+Password-protected PDFs and Office files can't be indexed unless they're unlocked.
 
 </div>
 
@@ -284,41 +341,47 @@ Exact behaviour follows your **indexing** toggles and the indexing pipeline vers
 
 <AccordionGroup type="single" collapsible>
 
-<Accordion title="The connector cannot see my folder">
+<Accordion title="The connector says it can't find my folder">
 
-- Confirm the path is valid **inside the connector container or host**, not only on your workstation.
-- For Docker: fix **volume mounts** and use the **in-container** path.
-- Check **POSIX / Windows** path style matches the OS of the connector process.
+This almost always means the path is on **your laptop** but PipesHub is running **somewhere else** (Docker, a server, Kubernetes).
+
+- If you're using Docker: the folder must be **mounted** into the container. Test with `docker compose exec <connectors-service> ls /your/path`.
+- Check Windows vs Mac/Linux path style matches the OS the connector is running on (e.g. don't paste `C:\Users\...` into a Linux container).
+- Make sure the user the connector runs as has **read permission** on the folder.
 
 </Accordion>
 
 <Accordion title="Sync runs but I see 0 files">
 
-- The folder might be empty, or filters might exclude everything (extensions, dates).
-- **Include subfolders** might be off while all files live in subdirectories.
-- Verify with `ls` (or Explorer) on the connector host that files exist where you think they do.
+- The folder might genuinely be empty, or all the files might live in subfolders while **Include subfolders** is off.
+- Your filters might be excluding everything — open **Manage Configuration** and double-check.
+- Confirm the files exist where you think they do (`ls` on Mac/Linux, File Explorer on Windows) on the **machine running the connector**.
 
 </Accordion>
 
-<Accordion title="Files never show up in search">
+<Accordion title="Some files synced but they don't appear in search">
 
-- Allow time for the **indexing** workers to process `newRecord` events after sync.
-- Confirm the file type is one that supports text extraction (see **What PipesHub can read**).
-- Password-protected PDFs or Office files may not index until unlocked.
+- Allow a minute or two for indexing to finish — large files take longer.
+- Check the file type is one PipesHub can read inside (see **What PipesHub can read**).
+- Password-protected PDFs and Office files won't be indexed.
+- Files showing in **Failed** on the Overview panel will tell you why — usually a permissions problem.
 
 </Accordion>
 
 <Accordion title="Scheduled sync never seems to run">
 
-- Confirm **Scheduled** is selected and **Sync interval** is set as expected.
-- Check that **Sync enabled** (**SYNC ENABLED**) is on and the connector process is healthy (logs, uptime).
+- Make sure **Sync Strategy** is set to **Scheduled** and **Sync Interval** has a value.
+- Confirm **Sync Enabled** on the instance card is on (not paused).
+- Check the connector process is running and healthy.
 
 </Accordion>
 
-<Accordion title="It worked locally but broke after deploy">
+<Accordion title="It worked locally but broke after a deploy">
 
-- Re-check mounts and paths in the new environment.
-- If the connector moved to another node without the same volume, update **Local folder** to the new mount path and save.
+If you moved PipesHub to a new server or container, the old folder path probably doesn't exist there.
+
+- Re-mount your folder in the new environment (or copy the files).
+- Open the instance, click **Manage Configuration**, update **Local folder** to the new path, and save.
 
 </Accordion>
 
@@ -331,23 +394,23 @@ Exact behaviour follows your **indexing** toggles and the indexing pipeline vers
 <AccordionGroup type="single" collapsible>
 
 <Accordion title="Does PipesHub modify or delete my files?">
-  No. The connector **reads** files to build search records. It does not write back to your folder for normal indexing.
+  No. The connector only **reads** files to build search records. It never writes back to your folder.
 </Accordion>
 
-<Accordion title="Can I use Local FS for my whole team?">
-  The connector is registered as **personal**. Each user who needs local indexing should use their own instance and folder scope inside PipesHub.
+<Accordion title="Can I share the indexed files with my team?">
+  Local FS is registered as a **personal** connector — only your PipesHub user can search files indexed by your instance. For team-wide file sharing, use a cloud connector (S3, GCS, Azure Blob, Google Drive, OneDrive, etc.).
 </Accordion>
 
 <Accordion title="What happens if I delete a file on disk?">
-  On a later sync, PipesHub can detect it is gone and remove it from search results, subject to connector and indexing behaviour in your release.
+  On the next sync, PipesHub notices it's gone and removes it from search.
 </Accordion>
 
 <Accordion title="Can I connect more than one folder?">
-  Add **another instance** of Local FS from **Personal → Your Connectors** (open Local FS → **+ Add Another Instance**) and point each instance at a different path (name them clearly).
+  Yes. On the Local FS instance page click **+ Add Another Instance**, give it a different name, and point it at a different path. Each instance has its own filters and its own on/off toggle.
 </Accordion>
 
-<Accordion title="Do I need the CLI?">
-  No. The web (and desktop) flows are enough for most users. The CLI is optional for automation and developer workflows.
+<Accordion title="Is the folder path stored anywhere sensitive?">
+  The path is saved in your PipesHub configuration. There are no credentials to leak — only the path string itself.
 </Accordion>
 
 </AccordionGroup>
@@ -356,4 +419,4 @@ Exact behaviour follows your **indexing** toggles and the indexing pipeline vers
 
 ## Useful links
 
-- **Connectors overview** — [https://docs.pipeshub.com/connectors/overview](https://docs.pipeshub.com/connectors/overview)
+- **Connectors overview** — [Connectors overview](/connectors/overview)

@@ -1,0 +1,93 @@
+---
+title: "Gemini CLI"
+description: "Connect Gemini CLI to the PipesHub MCP server"
+icon: "/logo/gemini.svg"
+---
+
+Gemini CLI supports remote MCP servers with OAuth via `dynamic_discovery` (the default), which auto-discovers authorization and token endpoints from PipesHub's `/.well-known/oauth-protected-resource/mcp`.
+
+<Note>
+  Before you start, create an OAuth app in PipesHub and note your **Client ID** and **Client Secret**. See [MCP Server Overview](/mcp/overview#step-1-create-an-oauth-app).
+</Note>
+
+## Option A: Settings File
+
+Edit `~/.gemini/settings.json`:
+
+```json
+{
+  "mcpServers": {
+    "pipeshub": {
+      "url": "PIPESHUB_INSTANCE_URL/mcp",
+      "oauth": {
+        "clientId": "YOUR_CLIENT_ID",
+        "clientSecret": "YOUR_CLIENT_SECRET",
+        "scopes": [
+          "openid", "profile", "email", "offline_access",
+          "semantic:write",
+          "conversation:write", "conversation:chat",
+          "kb:read", "team:read", "user:read", "config:read"
+        ]
+      }
+    }
+  }
+}
+```
+
+<Note>
+  Adjust the `scopes` list to match what your OAuth app was granted. If you only need a subset of tools, you can limit the scopes accordingly.
+</Note>
+
+## Option B: CLI Command
+
+```bash
+gemini mcp add --transport http pipeshub PIPESHUB_INSTANCE_URL/mcp
+```
+
+Then edit `~/.gemini/settings.json` to add the `oauth` block as shown above.
+
+## Authenticate
+
+Inside Gemini CLI, use the `/mcp auth` commands:
+
+```bash
+# List servers and their auth status
+/mcp auth
+
+# Authenticate with PipesHub (opens browser for login)
+/mcp auth pipeshub
+
+# Re-authenticate if tokens expire
+/mcp auth pipeshub
+```
+
+On first connection, Gemini will automatically detect the 401 response, discover the OAuth endpoints, and open a browser for login. Tokens are stored securely in `~/.gemini/mcp-oauth-tokens.json` and refreshed automatically.
+
+## Manage Servers
+
+```bash
+# List all configured servers
+gemini mcp list
+
+# Remove the server
+gemini mcp remove pipeshub
+
+# Temporarily disable/enable
+gemini mcp disable pipeshub
+gemini mcp enable pipeshub
+```
+
+## OAuth Configuration Properties
+
+| Property | Required | Description |
+|---|---|---|
+| `clientId` | Yes | OAuth 2.0 Client ID from PipesHub |
+| `clientSecret` | No | OAuth 2.0 Client Secret (for confidential clients) |
+| `scopes` | No | OAuth scopes to request |
+| `authorizationUrl` | No | Override authorization endpoint (auto-discovered by default) |
+| `tokenUrl` | No | Override token endpoint (auto-discovered by default) |
+| `redirectUri` | No | Override redirect URI (defaults to `http://localhost:7777/oauth/callback`) |
+
+<Warning>
+  OAuth requires a local browser. It will not work in headless environments, remote SSH without X11 forwarding, or containers without browser access.
+</Warning>

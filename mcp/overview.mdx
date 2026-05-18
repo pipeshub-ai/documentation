@@ -1,0 +1,174 @@
+---
+title: "MCP Server Overview"
+description: "Connect MCP clients to the PipesHub MCP server using OAuth"
+icon: "/logo/mcp.svg"
+---
+
+## What is the PipesHub MCP Server?
+
+PipesHub exposes a **remote MCP endpoint** over **Streamable HTTP** at `/mcp`. MCP clients connect to this endpoint directly — no local npm packages or stdio processes needed.
+
+This lets AI clients such as **Cursor**, **Claude Code**, **Gemini CLI**, **Claude.ai (Web)**, and **LibreChat** search and chat over your organization's indexed documents, look up people and groups, and download files.
+
+<Note>
+  Looking for the tool reference? See [Tools Reference](/mcp/tools) for descriptions, arguments, and a decision guide for each tool the MCP server exposes.
+</Note>
+
+## Prerequisites
+
+- A running PipesHub instance (self-hosted or cloud)
+- An OAuth app created in PipesHub (see [Step 1](#step-1-create-an-oauth-app) below)
+
+## Step 1: Create an OAuth App
+
+<Steps>
+  <Step title="Open Developer Settings">
+    Log in to your PipesHub instance as an admin and navigate to **Settings > Developer Settings > OAuth Apps**.
+  </Step>
+  <Step title="Create the app">
+    Click **Create OAuth App** and fill in the app details:
+    - **Name**: e.g., `MCP Integration`
+    - **Redirect URIs**: Add the redirect URIs for the clients you plan to use (see the table below).
+  </Step>
+  <Step title="Save and copy credentials">
+    Save the app and copy the **Client ID** and **Client Secret**.
+  </Step>
+</Steps>
+
+### Redirect URIs
+
+Add all the redirect URIs for the clients you plan to use:
+
+| Client | Redirect URI |
+|---|---|
+| **Cursor** | `cursor://anysphere.cursor-mcp/oauth/callback` |
+| **Claude Code** | `http://localhost:<PORT>/callback` (e.g., `http://localhost:8080/callback`) |
+| **Claude.ai (Web)** | `https://claude.ai/api/mcp/auth_callback` |
+| **Gemini CLI** | `http://localhost:7777/oauth/callback` |
+| **LibreChat** | `http://localhost:3080/api/mcp/<server-identifier>/oauth/callback` |
+
+<Warning>
+  The scopes in [`MCP_SCOPES`](https://github.com/pipeshub-ai/pipeshub-ai/blob/main/backend/env.template#L57) must match the scopes granted to your OAuth app — a mismatch will result in an authorization error.
+</Warning>
+
+### Customizing Default Scopes
+
+By default, PipesHub exposes some default scopes in its `/.well-known/oauth-protected-resource/mcp` discovery endpoint. You can customize which scopes are exposed by setting the [`MCP_SCOPES`](https://github.com/pipeshub-ai/pipeshub-ai/blob/main/backend/env.template#L57) environment variable on your PipesHub instance. This is useful for clients like Claude Code that automatically request all exposed scopes.
+
+The recommended `MCP_SCOPES` value covers the common chat, search, and directory workflows:
+
+```bash
+MCP_SCOPES=openid,profile,email,offline_access,semantic:write,conversation:write,conversation:chat,kb:read,team:read,user:read,config:read
+```
+
+## Placeholders
+
+Replace these placeholders in all client configurations:
+
+| Placeholder | Description | Example |
+|---|---|---|
+| `PIPESHUB_INSTANCE_URL` | Your PipesHub instance URL | `https://app.pipeshub.com` |
+| `YOUR_CLIENT_ID` | OAuth app client ID | `clid_abc123...` |
+| `YOUR_CLIENT_SECRET` | OAuth app client secret | `clsec_xyz789...` |
+| `YOUR_BEARER_TOKEN` | JWT Bearer token (local stdio only) | `eyJhbGci...` |
+
+The remote MCP endpoint URL is: `PIPESHUB_INSTANCE_URL/mcp`
+
+## Client Setup Guides
+
+Pick your client to connect it to the PipesHub MCP server:
+
+<CardGroup cols={2}>
+  <Card title="Cursor" icon="/logo/cursor.svg" href="/mcp/cursor">
+    Remote MCP via the `auth` object in `mcp.json`.
+  </Card>
+  <Card title="Claude Code" icon="/logo/claude.svg" href="/mcp/claude-code">
+    Remote HTTP MCP with static OAuth credentials.
+  </Card>
+  <Card title="Gemini CLI" icon="/logo/gemini.svg" href="/mcp/gemini-cli">
+    Remote MCP with OAuth dynamic discovery.
+  </Card>
+  <Card title="Claude.ai (Web)" icon="/logo/claude.svg" href="/mcp/claude-ai">
+    Custom connectors in the Claude.ai web interface.
+  </Card>
+  <Card title="LibreChat" icon="/logo/librechat.svg" href="/mcp/librechat">
+    Remote MCP via the custom connectors UI.
+  </Card>
+  <Card title="Local Server (Stdio)" icon="laptop-code" href="/mcp/local-server">
+    Run the MCP server locally as a stdio process.
+  </Card>
+</CardGroup>
+
+## How It Works
+
+### Architecture
+
+```
+AI Client (Cursor / Claude Code / Gemini CLI / Claude.ai / LibreChat)
+        │
+        │  HTTP POST (JSON-RPC)
+        │  Authorization: Bearer <token>
+        ▼
+  PIPESHUB_INSTANCE_URL/mcp
+        │
+        │  StreamableHTTP Transport
+        │  (stateless, per-request MCP server)
+        ▼
+  PipesHub API (curated tool set — see Tools Reference)
+```
+
+### OAuth Protected Resource Discovery
+
+PipesHub exposes OAuth protected resource discovery at:
+
+```
+PIPESHUB_INSTANCE_URL/.well-known/oauth-protected-resource/mcp
+```
+
+This returns all OAuth endpoints automatically:
+
+- Authorization: `PIPESHUB_INSTANCE_URL/api/v1/oauth2/authorize`
+- Token: `PIPESHUB_INSTANCE_URL/api/v1/oauth2/token`
+- Revocation: `PIPESHUB_INSTANCE_URL/api/v1/oauth2/revoke`
+- JWKS: `PIPESHUB_INSTANCE_URL/.well-known/jwks.json`
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Incompatible auth server: does not support dynamic client registration">
+    This means the client is trying dynamic registration instead of using your pre-configured credentials. Make sure you passed `--client-id` and `--client-secret` (Claude Code) or the `auth` object (Cursor) correctly.
+  </Accordion>
+  <Accordion title="Authentication fails / redirect error">
+    Ensure the **Redirect URI** in your OAuth app matches exactly what the client uses:
+    - **Cursor**: `cursor://anysphere.cursor-mcp/oauth/callback`
+    - **Claude Code**: `http://localhost:<callbackPort>/callback`
+    - **Claude.ai**: `https://claude.ai/api/mcp/auth_callback`
+    - **Gemini CLI**: `http://localhost:7777/oauth/callback`
+    - **LibreChat**: `http://localhost:3080/api/mcp/<server-identifier>/oauth/callback`
+
+    Also make sure the OAuth app is **active** (not suspended) in PipesHub.
+  </Accordion>
+  <Accordion title="Cannot reach MCP endpoint">
+    - Verify the endpoint is accessible: `curl -X POST PIPESHUB_INSTANCE_URL/mcp` (should return 401, not a connection error).
+  </Accordion>
+  <Accordion title="Debugging with MCP Inspector">
+    ```bash
+    npx @modelcontextprotocol/inspector
+    ```
+    Then connect to `PIPESHUB_INSTANCE_URL/mcp` with a Bearer token to test the endpoint directly.
+  </Accordion>
+</AccordionGroup>
+
+## FAQ
+
+<AccordionGroup>
+  <Accordion title="How do I update the scopes for my MCP integration?">
+    1. **Update the [`MCP_SCOPES`](https://github.com/pipeshub-ai/pipeshub-ai/blob/main/backend/env.template#L57) environment variable** on your PipesHub instance to include the new scopes you want exposed via the discovery endpoint.
+    2. **Update the OAuth app scopes** in PipesHub: go to **Settings > Developer Settings > OAuth Apps**, select your OAuth app, and add or remove scopes as needed.
+    3. **Re-authenticate the client** — existing tokens carry the old scopes, so you need to re-authenticate to get a new token with the updated scopes:
+       - **Cursor**: Remove and re-add the MCP server, or clear the cached OAuth token and reconnect.
+       - **Claude Code**: Run `/mcp` and complete the browser login flow again.
+       - **Gemini CLI**: Run `/mcp auth pipeshub` to re-authenticate.
+       - **Claude.ai**: Disconnect and reconnect the connector in **Settings > Connectors**.
+  </Accordion>
+</AccordionGroup>

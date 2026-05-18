@@ -1,0 +1,103 @@
+---
+title: "Claude Code"
+description: "Connect Claude Code to the PipesHub MCP server"
+icon: "/logo/claude.svg"
+---
+
+Claude Code supports remote HTTP MCP servers with static OAuth credentials via `--client-id`, `--client-secret`, and `--callback-port`.
+
+PipesHub exposes discovery at `/.well-known/oauth-protected-resource/mcp`, so Claude Code auto-discovers the authorization and token endpoints.
+
+<Note>
+  Before you start, create an OAuth app in PipesHub and note your **Client ID** and **Client Secret**. See [MCP Server Overview](/mcp/overview#step-1-create-an-oauth-app).
+</Note>
+
+<Warning>
+  Claude Code does **not** support configuring specific scopes. It fetches `/.well-known/oauth-protected-resource/mcp`, reads the `scopes_supported` list, and requests **all** of them. Your OAuth app in PipesHub **must have access to all scopes** listed in the discovery endpoint, otherwise the authorization request will fail. To limit the exposed scopes, see [Customizing Default Scopes](/mcp/overview#customizing-default-scopes).
+</Warning>
+
+## Add with CLI
+
+```bash
+claude mcp add --transport http \
+  --client-id YOUR_CLIENT_ID \
+  --client-secret \
+  --callback-port 8080 \
+  pipeshub PIPESHUB_INSTANCE_URL/mcp
+```
+
+<Note>
+  `--client-secret` without a value prompts for masked input. To skip the prompt, set the `MCP_CLIENT_SECRET` environment variable:
+
+  ```bash
+  MCP_CLIENT_SECRET=YOUR_CLIENT_SECRET claude mcp add --transport http \
+    --client-id YOUR_CLIENT_ID \
+    --client-secret \
+    --callback-port 8080 \
+    pipeshub PIPESHUB_INSTANCE_URL/mcp
+  ```
+</Note>
+
+To make it available across all projects:
+
+```bash
+claude mcp add --transport http --scope user \
+  --client-id YOUR_CLIENT_ID \
+  --client-secret \
+  --callback-port 8080 \
+  pipeshub PIPESHUB_INSTANCE_URL/mcp
+```
+
+## Add with JSON
+
+```bash
+claude mcp add-json pipeshub '{
+  "type": "http",
+  "url": "PIPESHUB_INSTANCE_URL/mcp",
+  "oauth": {
+    "clientId": "YOUR_CLIENT_ID",
+    "callbackPort": 8080
+  }
+}' --client-secret
+```
+
+## Project-Scoped (`.mcp.json`)
+
+Create a `.mcp.json` file in your project root. This can be committed to version control (secrets stay out via env vars):
+
+```json
+{
+  "mcpServers": {
+    "pipeshub": {
+      "type": "http",
+      "url": "${PIPESHUB_INSTANCE_URL}/mcp",
+      "oauth": {
+        "clientId": "${PIPESHUB_CLIENT_ID}",
+        "callbackPort": 8080
+      }
+    }
+  }
+}
+```
+
+Set environment variables before launching Claude Code:
+
+```bash
+export PIPESHUB_INSTANCE_URL="https://app.pipeshub.com"
+export PIPESHUB_CLIENT_ID="your-client-id"
+```
+
+<Note>
+  The client secret is stored in the system keychain, not in config files. You'll be prompted to enter it when you first authenticate via `/mcp`.
+</Note>
+
+## Authenticate
+
+After adding the server, run `/mcp` inside Claude Code and follow the browser login flow. Tokens are stored securely and refreshed automatically.
+
+## Verify
+
+```bash
+claude mcp list
+claude mcp get pipeshub
+```

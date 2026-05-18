@@ -1,0 +1,79 @@
+---
+title: "Cursor"
+description: "Connect Cursor to the PipesHub MCP server"
+icon: "/logo/cursor.svg"
+---
+
+Cursor supports static OAuth for remote MCP servers via the `auth` object in `mcp.json`.
+
+<Note>
+  Before you start, create an OAuth app in PipesHub and note your **Client ID** and **Client Secret**. See [MCP Server Overview](/mcp/overview#step-1-create-an-oauth-app).
+</Note>
+
+## Configuration
+
+Open **Cursor Settings > Tools and Integrations > New MCP Server**, or edit your project's `.cursor/mcp.json`:
+
+```json
+{
+  "mcpServers": {
+    "pipeshub": {
+      "url": "PIPESHUB_INSTANCE_URL/mcp",
+      "auth": {
+        "CLIENT_ID": "YOUR_CLIENT_ID",
+        "CLIENT_SECRET": "YOUR_CLIENT_SECRET",
+        "scopes": [
+          "openid", "profile", "email", "offline_access",
+          "semantic:write",
+          "conversation:write", "conversation:chat",
+          "kb:read", "team:read", "user:read", "config:read"
+        ]
+      }
+    }
+  }
+}
+```
+
+Cursor will auto-discover the authorization and token endpoints via PipesHub's `/.well-known/oauth-protected-resource/mcp` metadata.
+
+<Note>
+  If the `scopes` field is omitted, Cursor fetches `/.well-known/oauth-protected-resource/mcp` and requests **all** `scopes_supported` listed there. To limit access, explicitly list only the scopes you need. You can also control which scopes are exposed server-side — see [Customizing Default Scopes](/mcp/overview#customizing-default-scopes).
+</Note>
+
+## Using Environment Variables
+
+Use Cursor's `${env:VAR}` interpolation to keep secrets out of config files:
+
+```json
+{
+  "mcpServers": {
+    "pipeshub": {
+      "url": "${env:PIPESHUB_INSTANCE_URL}/mcp",
+      "auth": {
+        "CLIENT_ID": "${env:PIPESHUB_CLIENT_ID}",
+        "CLIENT_SECRET": "${env:PIPESHUB_CLIENT_SECRET}",
+        "scopes": [
+          "openid", "profile", "email", "offline_access",
+          "semantic:write",
+          "conversation:write", "conversation:chat",
+          "kb:read", "team:read", "user:read", "config:read"
+        ]
+      }
+    }
+  }
+}
+```
+
+## Redirect URI
+
+Cursor uses a fixed redirect URI for all MCP servers:
+
+```
+cursor://anysphere.cursor-mcp/oauth/callback
+```
+
+Register this as the allowed redirect URI when creating the OAuth app in PipesHub.
+
+## OAuth Login Troubleshooting
+
+If Cursor's internal browser fails to load the OAuth login page, copy the authorization URL from the internal browser and paste it into your normal browser to complete the login flow.

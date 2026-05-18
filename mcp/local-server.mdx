@@ -1,0 +1,242 @@
+---
+title: "Local Server (Stdio)"
+description: "Run the PipesHub MCP server locally as a stdio process"
+icon: "laptop-code"
+---
+
+Instead of connecting to PipesHub's remote MCP endpoint, you can run the MCP server locally as a stdio process using the `@pipeshub-ai/mcp` npm package. This is useful when you prefer a local setup or need to work in environments where direct HTTP connections to the remote MCP endpoint aren't practical.
+
+## Prerequisites
+
+- Node.js 18+ installed
+- A PipesHub instance URL
+- Authentication credentials: either a **Bearer token** (JWT) or **OAuth Client ID + Secret**
+
+## Placeholders
+
+Replace these in all configurations below:
+
+| Placeholder | Description | Example |
+|---|---|---|
+| `PIPESHUB_INSTANCE_URL` | Your PipesHub instance URL | `https://app.pipeshub.com` |
+| `YOUR_BEARER_TOKEN` | JWT Bearer token for authentication | `eyJhbGci...` |
+| `YOUR_CLIENT_ID` | OAuth app client ID | `clid_abc123...` |
+| `YOUR_CLIENT_SECRET` | OAuth app client secret | `clsec_xyz789...` |
+
+## Claude Desktop
+
+Configure in Claude Desktop settings (`claude_desktop_config.json`):
+
+<CodeGroup>
+```json Bearer token
+{
+  "mcpServers": {
+    "pipeshub": {
+      "command": "npx",
+      "args": [
+        "@pipeshub-ai/mcp",
+        "start",
+        "--server-url",
+        "PIPESHUB_INSTANCE_URL",
+        "--bearer-auth",
+        "YOUR_BEARER_TOKEN"
+      ]
+    }
+  }
+}
+```
+
+```json OAuth credentials
+{
+  "mcpServers": {
+    "pipeshub": {
+      "command": "npx",
+      "args": [
+        "@pipeshub-ai/mcp",
+        "start",
+        "--server-url",
+        "PIPESHUB_INSTANCE_URL",
+        "--client-id",
+        "YOUR_CLIENT_ID",
+        "--client-secret",
+        "YOUR_CLIENT_SECRET",
+        "--token-url",
+        "/api/v1/oauth2/token"
+      ]
+    }
+  }
+}
+```
+</CodeGroup>
+
+## Cursor
+
+Open **Cursor Settings > Tools and Integrations > New MCP Server**, or edit your project's `.cursor/mcp.json`:
+
+<CodeGroup>
+```json Bearer token
+{
+  "mcpServers": {
+    "pipeshub": {
+      "command": "npx",
+      "args": [
+        "@pipeshub-ai/mcp",
+        "start",
+        "--server-url",
+        "PIPESHUB_INSTANCE_URL",
+        "--bearer-auth",
+        "YOUR_BEARER_TOKEN"
+      ]
+    }
+  }
+}
+```
+
+```json OAuth credentials
+{
+  "mcpServers": {
+    "pipeshub": {
+      "command": "npx",
+      "args": [
+        "@pipeshub-ai/mcp",
+        "start",
+        "--server-url",
+        "PIPESHUB_INSTANCE_URL",
+        "--client-id",
+        "YOUR_CLIENT_ID",
+        "--client-secret",
+        "YOUR_CLIENT_SECRET",
+        "--token-url",
+        "/api/v1/oauth2/token"
+      ]
+    }
+  }
+}
+```
+</CodeGroup>
+
+## Claude Code CLI
+
+<CodeGroup>
+```bash Bearer token
+claude mcp add pipeshub -- npx -y @pipeshub-ai/mcp start \
+  --server-url PIPESHUB_INSTANCE_URL \
+  --bearer-auth YOUR_BEARER_TOKEN
+```
+
+```bash OAuth credentials
+claude mcp add pipeshub -- npx -y @pipeshub-ai/mcp start \
+  --server-url PIPESHUB_INSTANCE_URL \
+  --client-id YOUR_CLIENT_ID \
+  --client-secret YOUR_CLIENT_SECRET \
+  --token-url /api/v1/oauth2/token
+```
+</CodeGroup>
+
+## Gemini CLI
+
+<CodeGroup>
+```bash Bearer token
+gemini mcp add pipeshub -- npx -y @pipeshub-ai/mcp start \
+  --server-url PIPESHUB_INSTANCE_URL \
+  --bearer-auth YOUR_BEARER_TOKEN
+```
+
+```bash OAuth credentials
+gemini mcp add pipeshub -- npx -y @pipeshub-ai/mcp start \
+  --server-url PIPESHUB_INSTANCE_URL \
+  --client-id YOUR_CLIENT_ID \
+  --client-secret YOUR_CLIENT_SECRET \
+  --token-url /api/v1/oauth2/token
+```
+</CodeGroup>
+
+## VS Code
+
+Open **Command Palette > `MCP: Open User Configuration`**, then add:
+
+```json
+{
+  "mcpServers": {
+    "pipeshub": {
+      "command": "npx",
+      "args": [
+        "@pipeshub-ai/mcp",
+        "start",
+        "--server-url",
+        "PIPESHUB_INSTANCE_URL",
+        "--bearer-auth",
+        "YOUR_BEARER_TOKEN"
+      ]
+    }
+  }
+}
+```
+
+## Windsurf
+
+Open **Windsurf Settings > Cascade > Manage MCPs > View raw config**, then add:
+
+```json
+{
+  "mcpServers": {
+    "pipeshub": {
+      "command": "npx",
+      "args": [
+        "@pipeshub-ai/mcp",
+        "start",
+        "--server-url",
+        "PIPESHUB_INSTANCE_URL",
+        "--bearer-auth",
+        "YOUR_BEARER_TOKEN"
+      ]
+    }
+  }
+}
+```
+
+## Running from Source (Development)
+
+To run the local MCP server from a cloned repository instead of the npm package:
+
+```bash
+git clone https://github.com/pipeshub-ai/pipeshub-ai.git
+cd pipeshub-ai
+npm install
+npm run build
+node ./bin/mcp-server.js start --server-url PIPESHUB_INSTANCE_URL --bearer-auth YOUR_BEARER_TOKEN
+```
+
+For MCP client configuration, replace `npx @pipeshub-ai/mcp` with `node ./bin/mcp-server.js`:
+
+```json
+{
+  "mcpServers": {
+    "pipeshub": {
+      "command": "node",
+      "args": [
+        "./bin/mcp-server.js",
+        "start",
+        "--server-url",
+        "PIPESHUB_INSTANCE_URL",
+        "--bearer-auth",
+        "YOUR_BEARER_TOKEN"
+      ]
+    }
+  }
+}
+```
+
+To debug with MCP Inspector:
+
+```bash
+npx @modelcontextprotocol/inspector node ./bin/mcp-server.js start --server-url PIPESHUB_INSTANCE_URL --bearer-auth YOUR_BEARER_TOKEN
+```
+
+## CLI Help
+
+For a full list of server arguments:
+
+```bash
+npx @pipeshub-ai/mcp --help
+```

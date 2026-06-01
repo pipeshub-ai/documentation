@@ -1,0 +1,93 @@
+---
+title: "Claude.ai (Web)"
+description: "Connect Claude.ai to the PipesHub MCP server as a custom connector"
+icon: "/logo/claude.svg"
+---
+
+Claude.ai supports custom connectors via remote MCP servers. This lets you use PipesHub tools directly in the Claude.ai web interface without any local setup.
+
+<Note>
+  This feature is currently in beta. Free plan users are limited to one custom connector.
+</Note>
+
+<Note>
+  Before you start, create an OAuth app in PipesHub and note your **Client ID** and **Client Secret**. See [MCP Server Overview](/mcp/overview#step-1-create-an-oauth-app).
+</Note>
+
+<Frame caption="Claude.ai Connectors settings">
+  <img src="/images/mcp-server/claude-1.png" alt="Claude.ai Connectors Settings" />
+</Frame>
+
+<Frame caption="Add custom connector dialog">
+  <img src="/images/mcp-server/claude-2.png" alt="Claude.ai Add Custom Connector Dialog" />
+</Frame>
+
+## For Individual Users (Pro / Max Plans)
+
+<Steps>
+  <Step title="Open Connectors settings">
+    Go to [claude.ai](https://claude.ai) and navigate to **Settings > Connectors**.
+  </Step>
+  <Step title="Add a custom connector">
+    Click **Add custom connector** at the bottom of the Connectors section.
+  </Step>
+  <Step title="Enter the MCP server URL">
+    ```
+    PIPESHUB_INSTANCE_URL/mcp
+    ```
+  </Step>
+  <Step title="Enter OAuth credentials">
+    Click **Advanced settings** and enter your OAuth credentials:
+    - **OAuth Client ID**: `YOUR_CLIENT_ID`
+    - **OAuth Client Secret**: `YOUR_CLIENT_SECRET`
+  </Step>
+  <Step title="Add and authenticate">
+    Click **Add**. You'll be redirected to PipesHub's login page to authenticate and grant permissions. After authenticating, the connector becomes active and PipesHub tools are available in your Claude.ai conversations.
+  </Step>
+</Steps>
+
+## For Team / Enterprise Plans
+
+**Organization Owners** must first add the connector:
+
+<Steps>
+  <Step title="Open organization Connectors settings">
+    Navigate to **Organization settings > Connectors**.
+  </Step>
+  <Step title="Add a custom connector">
+    Click **Add custom connector** and enter the MCP server URL: `PIPESHUB_INSTANCE_URL/mcp`.
+  </Step>
+  <Step title="Enter OAuth credentials">
+    Click **Advanced settings** and enter the OAuth Client ID and Client Secret, then click **Add**.
+  </Step>
+</Steps>
+
+**Team members** can then connect:
+
+<Steps>
+  <Step title="Open Connectors settings">
+    Go to **Settings > Connectors**.
+  </Step>
+  <Step title="Find the PipesHub connector">
+    Find the PipesHub connector (marked with a "Custom" label).
+  </Step>
+  <Step title="Connect">
+    Click **Connect** to authenticate via PipesHub's OAuth login.
+  </Step>
+</Steps>
+
+## Redirect URI
+
+Claude.ai uses the following redirect URI for OAuth:
+
+```
+https://claude.ai/api/mcp/auth_callback
+```
+
+Register this as an allowed redirect URI in your PipesHub OAuth app.
+
+## Security Notes
+
+- Only connect to trusted MCP servers.
+- Review the permissions requested during the OAuth authentication flow.
+- Claude.ai interacts with PipesHub on your behalf using the granted OAuth token — your password is never shared.

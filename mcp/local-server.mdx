@@ -8,7 +8,7 @@ Instead of connecting to PipesHub's remote MCP endpoint, you can run the MCP ser
 
 ## Prerequisites
 
-- Node.js 18+ installed
+- Node.js 20+ installed
 - A PipesHub instance URL
 - Authentication credentials: either a **Bearer token** (JWT) or **OAuth Client ID + Secret**
 
@@ -25,51 +25,7 @@ Replace these in all configurations below:
 
 ## Claude Desktop
 
-Configure in Claude Desktop settings (`claude_desktop_config.json`):
-
-<CodeGroup>
-```json Bearer token
-{
-  "mcpServers": {
-    "pipeshub": {
-      "command": "npx",
-      "args": [
-        "-y",
-        "@pipeshub-ai/mcp",
-        "start",
-        "--server-url",
-        "PIPESHUB_INSTANCE_URL",
-        "--bearer-auth",
-        "YOUR_BEARER_TOKEN"
-      ]
-    }
-  }
-}
-```
-
-```json OAuth credentials
-{
-  "mcpServers": {
-    "pipeshub": {
-      "command": "npx",
-      "args": [
-        "-y",
-        "@pipeshub-ai/mcp",
-        "start",
-        "--server-url",
-        "PIPESHUB_INSTANCE_URL",
-        "--client-id",
-        "YOUR_CLIENT_ID",
-        "--client-secret",
-        "YOUR_CLIENT_SECRET",
-        "--token-url",
-        "/api/v1/oauth2/token"
-      ]
-    }
-  }
-}
-```
-</CodeGroup>
+Claude Desktop has its own dedicated guide, since it can't connect to a local HTTP MCP endpoint and needs either a custom connector (hosted) or this stdio bridge. See [Claude Desktop](/mcp/claude-desktop) for the full setup.
 
 ## Cursor
 

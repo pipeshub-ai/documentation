@@ -1,0 +1,155 @@
+---
+title: "Claude Desktop"
+description: "Connect Claude Desktop to the PipesHub MCP server via a custom connector or a local stdio bridge"
+icon: "/logo/claude.svg"
+---
+
+Claude Desktop can talk to the PipesHub MCP server, but there's one important catch to understand before you start.
+
+<Warning>
+  **Claude Desktop does not support local HTTP MCP transport.** Unlike a server-side tool, it won't connect to a plain `http://localhost:.../mcp` endpoint. To connect PipesHub you have two options, and which one you pick depends on how PipesHub is hosted:
+
+  1. **Add it as a custom connector** — works only when PipesHub is reachable over **public HTTPS** (a real domain with a valid SSL certificate), exactly like [Claude.ai (Web)](/mcp/claude-ai).
+  2. **Run a local stdio bridge** — works for **localhost / self-hosted** instances with no public domain, using the `@pipeshub-ai/mcp` npm package.
+</Warning>
+
+## Which option should I use?
+
+| Your situation | Use this |
+|---|---|
+| PipesHub is hosted on a public domain with valid SSL (e.g. `https://app.pipeshub.com`) | [Custom connector](#option-1-custom-connector-hosted-pipeshub) |
+| PipesHub runs locally or on an internal host without a public HTTPS domain (e.g. `http://localhost:3000`) | [Local stdio bridge](#option-2-local-stdio-bridge) |
+
+---
+
+## Option 1: Custom connector (hosted PipesHub)
+
+If your PipesHub instance is served over HTTPS on a valid domain, Claude Desktop can connect to the remote MCP endpoint directly — no local setup, no npm packages. This is the same flow as [Claude.ai (Web)](/mcp/claude-ai).
+
+<Note>
+  Before you start, create an OAuth app in PipesHub and note your **Client ID** and **Client Secret**. See [MCP Server Overview](/mcp/overview#step-1-create-an-oauth-app).
+</Note>
+
+<Steps>
+  <Step title="Open Connectors settings">
+    In Claude Desktop, go to **Settings > Connectors**.
+  </Step>
+  <Step title="Add a custom connector">
+    Click **Add custom connector** at the bottom of the Connectors section.
+
+    <Frame caption="Claude Desktop Connectors settings">
+      <img src="/images/mcp-server/claude-desktop-1.png" alt="Claude Desktop Connectors settings" />
+    </Frame>
+  </Step>
+  <Step title="Enter the MCP server URL">
+    Use your public HTTPS instance URL with the `/mcp` path:
+    ```
+    PIPESHUB_INSTANCE_URL/mcp
+    ```
+    For example: `https://app.pipeshub.com/mcp`.
+  </Step>
+  <Step title="Enter OAuth credentials">
+    Click **Advanced settings** and enter your OAuth credentials:
+    - **OAuth Client ID**: `YOUR_CLIENT_ID`
+    - **OAuth Client Secret**: `YOUR_CLIENT_SECRET`
+
+    <Frame caption="Add custom connector dialog with Advanced settings">
+      <img src="/images/mcp-server/claude-desktop-2.png" alt="Claude Desktop add custom connector dialog" />
+    </Frame>
+  </Step>
+  <Step title="Add and authenticate">
+    Click **Add**. Claude Desktop opens your browser to PipesHub's login page so you can authenticate and grant permissions. Once that's done, the connector goes active and PipesHub becomes visible in your list of connectors.
+
+    <Frame caption="PipesHub connector active in Claude Desktop">
+      <img src="/images/mcp-server/claude-desktop-3.png" alt="PipesHub connector active in Claude Desktop" />
+    </Frame>
+  </Step>
+</Steps>
+
+### Redirect URI
+
+Claude Desktop uses the same OAuth callback as the Claude web app:
+
+```
+https://claude.ai/api/mcp/auth_callback
+```
+
+Register this as an allowed redirect URI in your PipesHub OAuth app.
+
+<Note>
+  A custom connector needs PipesHub to be reachable from the public internet over HTTPS. If you only have a `localhost` instance, the connector flow won't work — use [Option 2](#option-2-local-stdio-bridge) instead.
+</Note>
+
+---
+
+## Option 2: Local stdio bridge
+
+When PipesHub runs on `localhost` or an internal host without a public HTTPS domain, run the MCP server locally as a **stdio process**. Claude Desktop launches the `@pipeshub-ai/mcp` bridge, which then talks to your PipesHub instance over HTTP on your behalf.
+
+### Prerequisites
+
+- Node.js 20+ installed
+- Your PipesHub instance URL (e.g. `http://localhost:3000/api/v1`)
+- An OAuth app configured for the **Client Credentials** grant (see below)
+
+<Warning>
+  For this route, your OAuth app **must have the Client Credentials grant enabled**. When you [create the OAuth app](/mcp/overview#step-1-create-an-oauth-app), choose **Client Credentials** as the grant type so the bridge can exchange your Client ID and Secret for a token directly — no browser redirect is involved. (The redirect URI used by the connector flow does **not** apply here.)
+</Warning>
+
+### Configuration
+
+Open Claude Desktop's config file (`claude_desktop_config.json`) and add the PipesHub server. You can find it via **Settings > Developer > Edit Config**, or at:
+
+- **macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
+- **Windows**: `%APPDATA%\Claude\claude_desktop_config.json`
+
+```json
+{
+  "mcpServers": {
+    "pipeshub": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@pipeshub-ai/mcp",
+        "start",
+        "--server-url",
+        "http://localhost:3000/api/v1",
+        "--client-id",
+        "YOUR_CLIENT_ID",
+        "--client-secret",
+        "YOUR_CLIENT_SECRET",
+        "--token-url",
+        "/api/v1/oauth2/token"
+      ]
+    }
+  }
+}
+```
+
+Replace `http://localhost:3000` with your actual instance host, and `YOUR_CLIENT_ID` / `YOUR_CLIENT_SECRET` with the credentials from your OAuth app.
+
+### Apply the changes
+
+Save the file and **fully quit and reopen Claude Desktop** (a window reload isn't enough). Once it restarts, the PipesHub tools appear under the tools menu in your conversations.
+
+<Frame caption="PipesHub MCP server showing under Local MCP servers">
+  <img src="/images/mcp-server/claude-desktop-4.png" alt="PipesHub MCP server showing under Local MCP servers" />
+</Frame>
+
+---
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="The custom connector won't connect / shows an error">
+    Custom connectors require a **public HTTPS** endpoint with a valid SSL certificate. Claude Desktop can't reach `http://localhost`, self-signed certificates, or private hostnames through the connector flow. Either put PipesHub behind a real domain with valid SSL, or switch to the [local stdio bridge](#option-2-local-stdio-bridge).
+  </Accordion>
+  <Accordion title="The stdio server doesn't start">
+    - Make sure Node.js 20+ is installed and `npx` is on your `PATH`.
+    - Confirm your instance is reachable: `curl http://localhost:3000/api/v1` should respond (not a connection refused error).
+    - After editing `claude_desktop_config.json`, fully quit and relaunch Claude Desktop.
+  </Accordion>
+  <Accordion title="Authentication fails on the stdio bridge">
+    Verify the OAuth app has the **Client Credentials** grant enabled, and that the `--token-url` points to your instance's token endpoint (`PIPESHUB_INSTANCE_URL/api/v1/oauth2/token`). Double-check the Client ID and Secret are correct and the app is active.
+  </Accordion>
+</AccordionGroup>

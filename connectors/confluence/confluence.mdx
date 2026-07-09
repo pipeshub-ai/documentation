@@ -127,6 +127,7 @@ This prerequisite applies to **both** authentication methods (OAuth and API Toke
 2. Select **OAuth 2.0 integration** from the dropdown.
 3. Fill in the application details:
    - **Name:** Enter a meaningful name (e.g., `PipesHub Confluence Connector`).
+   - **Access type:** Select **Resource-level**.
    - Check the box to agree to Atlassian's developer terms.
 4. Click **Create**.
 
@@ -137,6 +138,10 @@ This prerequisite applies to **both** authentication methods (OAuth and API Toke
     className="block mx-auto w-11/12"
   />
 </div>
+
+<Warning>
+  **You must select "Resource-level" access type.** PipesHub does not ask for a site URL — the connector uses the exact site you authorize during the OAuth step. If you choose **Account-level**, authentication will not work.
+</Warning>
 
 <Info>
   OAuth 2.0 (3LO) integrations use rotating refresh tokens by default, which improves security by limiting token validity and enabling automatic detection of refresh-token reuse.
@@ -244,7 +249,7 @@ First, the **Classic scopes** tab:
 | Scope | Description |
 |-------|-------------|
 | `read:confluence-content.all` | Read all Confluence content |
-| `read:confluence-content.summary` | Read Confluence content summaries |
+| `read:confluence-content.permission` | Read content permissions in Confluence |
 | `read:confluence-props` | Read Confluence content properties |
 | `read:confluence-space.summary` | Read Confluence space summaries |
 | `read:confluence-user` | Read Confluence user information |
@@ -323,19 +328,19 @@ The connector drawer in PipesHub has three tabs: **Authenticate Instance**, **Au
 3. Enter:
    - **Client ID** — from Step 6
    - **Client Secret** — from Step 6
-   - **Atlassian Site URL** — your Confluence site URL (e.g., `https://your-domain.atlassian.net`; no trailing slash)
+   - **Grant Jira user access** — select **Yes** or **No** (see note below).
 4. Click **Next** to move to the **Authorize** tab.
 
 <div className="text-center">
   <img
     src="/images/connectors/confluence/connector_add_creds.png"
-    alt="Authenticate Instance tab — enter Client ID, Client Secret, and Atlassian Site URL"
+    alt="Authenticate Instance tab — enter Client ID, Client Secret, and Grant Jira user access"
     className="block mx-auto w-11/12"
   />
 </div>
 
 <Info>
-  The **Atlassian Site URL** targets the specific Confluence Cloud site this connector instance will sync. Use the full site URL including `https://` (e.g., `https://acme.atlassian.net`).
+  **Grant Jira user access.** Choose **Yes** only if your Atlassian OAuth app includes Jira and you've added the `read:jira-user` scope. PipesHub will request that scope during authorization and may use Jira to resolve user emails when Confluence profiles hide them. Choose **No** if you don't use Jira on this site or haven't added that scope.
 </Info>
 
 #### Step 8: Authorize tab — complete the OAuth flow
@@ -624,7 +629,7 @@ The Confluence connector syncs the following data from your Confluence Cloud wor
 - Verify the **Email** field matches the Atlassian account that created the token
 - Verify the **Base URL** matches your Confluence site (must include `https://`, no trailing slash, match `*.atlassian.net`)
 
-**Site URL format issues (OAuth: Atlassian Site URL / API Token: Base URL):**
+**Base URL format issues (API Token):**
 - Must include the protocol: `https://`
 - Must **not** include a trailing slash — use `https://acme.atlassian.net`, not `https://acme.atlassian.net/`
 - Must match the actual Confluence Cloud site (usually `*.atlassian.net`)

@@ -92,8 +92,9 @@ The Confluence toolset supports **two authentication methods**. In both, an admi
 
 1. Click **Create** in the top-right corner.
 2. Select **OAuth 2.0 integration**.
-3. Enter a name (e.g., `PipesHub Confluence Toolset`) and accept the developer terms.
-4. Click **Create**.
+3. Enter a name (e.g., `PipesHub Confluence Toolset`).
+4. For **Access type**, select **Resource-level**.
+5. Accept the developer terms and click **Create**.
 
 <div className="text-center">
   <img
@@ -102,6 +103,10 @@ The Confluence toolset supports **two authentication methods**. In both, an admi
     className="block mx-auto w-11/12"
   />
 </div>
+
+<Warning>
+  **You must select "Resource-level" access type.** PipesHub does not ask for a site URL — the toolset uses the exact site each user authorizes during the OAuth step. If you choose **Account-level**, authentication will not work.
+</Warning>
 
 #### Step 3: Get the Redirect URI from PipesHub
 
@@ -237,19 +242,18 @@ Before configuring the Callback URL in Atlassian, copy the Redirect URI from Pip
    - **Instance Name** (e.g., `Confluence Production`)
    - **Client ID** — from Step 6
    - **Client Secret** — from Step 6
-   - **Atlassian Site URL** — your Confluence site URL (e.g., `https://your-domain.atlassian.net`; no trailing slash)
 4. Click **Create**.
 
 <div className="text-center">
   <img
     src="/images/toolsets/confluence/enter-credentials.png"
-    alt="Enter Client ID, Client Secret, and Atlassian Site URL in PipesHub"
+    alt="Enter Client ID and Client Secret in PipesHub"
     className="block mx-auto w-11/12"
   />
 </div>
 
 <Info>
-  **Atlassian Site URL** is an org-level field — it points to the specific Confluence Cloud site this toolset instance will act on. Client ID and Client Secret are the org's OAuth app credentials. Per-user tokens are issued by Atlassian when each user authenticates in the next step.
+  Client ID and Client Secret are the org's OAuth app credentials. Atlassian issues per-user tokens when each user authenticates in the next step.
 </Info>
 
 #### Step 8: Authenticate the toolset
@@ -407,7 +411,7 @@ The Confluence tile in **Your actions** now shows **Authenticated**. The toolset
 | | OAuth 2.0 | API Token |
 |---|-----------|-----------|
 | **Best for** | Multi-user / org-wide rollouts | Cases where OAuth app registration is blocked |
-| **Org-level setup** | Client ID, Client Secret, Atlassian Site URL | Atlassian Site URL only |
+| **Org-level setup** | Client ID, Client Secret | Atlassian Site URL only |
 | **Per-user setup** | OAuth popup (one click) | Each user pastes Email + API Token |
 | **Prerequisites** | Atlassian Developer Console admin access | Any Atlassian account |
 

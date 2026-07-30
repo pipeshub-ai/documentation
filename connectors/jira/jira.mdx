@@ -140,6 +140,7 @@ This prerequisite applies to **both** authentication methods (OAuth and API Toke
 2. Select **OAuth 2.0 integration** from the dropdown.
 3. Fill in the application details:
    - **Name:** Enter a meaningful name (e.g., `PipesHub Jira Connector`).
+   - **Access type:** Select **Resource-level**.
    - Check the box to agree to Atlassian's developer terms.
 4. Click **Create**.
 
@@ -150,6 +151,10 @@ This prerequisite applies to **both** authentication methods (OAuth and API Toke
     className="block mx-auto w-11/12"
   />
 </div>
+
+<Warning>
+  **You must select "Resource-level" access type.** PipesHub does not ask for a site URL — the connector uses the exact site you authorize during the OAuth step. If you choose **Account-level**, authentication will not work.
+</Warning>
 
 <Info>
   OAuth 2.0 (3LO) integrations use rotating refresh tokens by default, which improves security by limiting token validity and enabling automatic detection of refresh-token reuse.
@@ -325,20 +330,15 @@ The connector drawer in PipesHub has three tabs: **Authenticate Instance**, **Au
 3. Enter:
    - **Application (Client) ID** — from Step 6
    - **Client Secret** — from Step 6
-   - **Atlassian Site URL** — your Jira site URL (e.g., `https://your-domain.atlassian.net`; no trailing slash)
 4. Click **Next** to move to the **Authorize** tab.
 
 <div className="text-center">
   <img
     src="/images/connectors/jira/connector_add_creds.png"
-    alt="Authenticate Instance tab — enter Client ID, Client Secret, and Atlassian Site URL"
+    alt="Authenticate Instance tab — enter Client ID and Client Secret"
     className="block mx-auto w-11/12"
   />
 </div>
-
-<Info>
-  The **Atlassian Site URL** targets the specific Jira Cloud site this connector instance will sync. Use the full site URL including `https://` (e.g., `https://acme.atlassian.net`).
-</Info>
 
 #### Step 8: Authorize tab — complete the OAuth flow
 
@@ -616,7 +616,7 @@ The Jira connector syncs the following data from your Jira Cloud workspace:
 - Verify the **Email** field matches the Atlassian account that created the token
 - Verify the **Base URL** matches your Jira site (must include `https://`, no trailing slash, match `*.atlassian.net`)
 
-**Site URL format issues (OAuth: Atlassian Site URL / API Token: Base URL):**
+**Base URL format issues (API Token):**
 - Must include the protocol: `https://`
 - Must **not** include a trailing slash — use `https://acme.atlassian.net`, not `https://acme.atlassian.net/`
 - Must match the actual Jira Cloud site (usually `*.atlassian.net`)

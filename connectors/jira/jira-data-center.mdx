@@ -1,0 +1,536 @@
+---
+title: "Jira Data Center"
+description: "Project management and issue tracking connector for self-hosted Jira"
+icon: "/logo/jira.png"
+---
+
+<div className="max-w-2xl mx-auto mt-12">
+  <div className="p-6 border border-gray-200 dark:border-gray-700 rounded-lg bg-blue-50 dark:bg-gray-800">
+    <div className="flex items-center mb-4">
+      <img 
+        src="/logo/jira.png" 
+        alt="Jira Logo" 
+        className="w-8 h-8 mr-3 object-contain flex-shrink-0"
+      />
+      <h2 className="text-2xl font-semibold m-0">Jira Data Center</h2>
+    </div>
+    <p className="text-lg text-gray-700 dark:text-gray-300 mb-4">Self-hosted project management and issue tracking</p>
+    <div className="flex items-center gap-2">
+      <span className="px-3 py-1 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 rounded-full text-sm font-medium">
+        ✅ Ready
+      </span>
+      <span className="px-3 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-full text-sm font-medium">
+        📖 Documentation Available
+      </span>
+    </div>
+  </div>
+</div>
+
+## Overview
+
+Jira Data Center (and Jira Server) is the version of Jira that you install and run on your own servers. Atlassian does not host it for you.
+
+The Jira Data Center connector syncs projects, issues, comments, and attachments from your instance. It keeps Jira's permissions, so each user in PipesHub only sees what they can already see in Jira.
+
+<Info>
+  If Atlassian hosts your Jira for you, that is Jira Cloud. Use the [Jira Cloud connector](/connectors/jira/jira) instead. The two connectors are not interchangeable.
+</Info>
+
+### Jira Data Structure
+
+The connector understands Jira's hierarchical data model:
+
+**Projects → Issues → Comments/Attachments**
+
+| Entity | Description |
+|--------|-------------|
+| **Projects** | Top-level containers for organizing work (e.g., Engineering, Marketing) |
+| **Issues** | Work items including bugs, tasks, stories, epics, and custom types |
+| **Comments** | Discussion threads attached to issues |
+| **Attachments** | Files, images, and documents attached to issues |
+| **Users & Groups** | Team members and their group memberships |
+| **Project Roles** | Role-based access control for project permissions |
+| **Application Roles** | Licensed application groups used in permission schemes |
+
+### What Gets Synced
+
+The connector indexes the following content for AI-powered search:
+
+- **Issue Content**: Summary, description, status, priority, labels
+- **Issue Metadata**: Reporter, assignee, created/updated dates, issue type, parent, custom fields
+- **Issue Links**: Links between issues, including Epic Link and parent link
+- **Comments**: Full comment threads with author information
+- **Attachments**: All file types attached to issues (PDFs, images, documents)
+- **Permissions**: Project permission schemes, project roles, and issue-level security
+
+---
+
+## Configuration Guide
+
+The Jira Data Center connector supports **two ways to sign in**: Personal Access Token (PAT) and Basic Authentication. Both sync the same data.
+
+<Warning>
+  **This connector supports Personal Access Token and Basic Authentication only.** OAuth apps you create in the Atlassian Developer Console are for Jira Cloud and will not work here.
+</Warning>
+
+### Prerequisites
+
+Check these before you start:
+
+| Requirement | Detail |
+|-------------|--------|
+| **Deployment** | Jira Data Center or Jira Server that PipesHub can reach over HTTPS |
+| **Base URL** | The root URL of your instance, such as `https://jira.company.com`. Not a page URL like `/browse/PROJ-1` |
+| **PAT support** | Personal Access Tokens need Jira Core 8.14 or later. On older versions, use Basic Authentication |
+| **Service account** | Use a dedicated account for the integration rather than someone's personal account |
+| **Admin rights** | Recommended. See [Required privileges](#required-privileges) below |
+
+### Required privileges
+
+The connector reads a few admin-only APIs to work out who is allowed to see what. If the account cannot reach them, the sync still runs, but some permissions will be missing.
+
+| Endpoint | Needs | What happens if access is denied |
+|----------|-------|----------------------------------|
+| `GET /rest/api/2/applicationrole` | Jira administrator | The connector cannot expand application roles into their groups. Projects that grant access that way fall back to giving access only to the person who set up the connector. |
+| `GET /rest/api/2/project/{key}/permissionscheme` and its grants | Project or Jira administrator | The connector cannot read who has access to that project. The same fallback applies. |
+| `GET /rest/auditing/1.0/events` | Jira administrator | The connector cannot tell which issues were deleted, so deleted issues may stay in the index until a full resync. |
+
+<Warning>
+  A non-admin account can still sync issues, but **some permissions will be missing**. Content may end up visible only to the person who set up the connector. Use a Jira administrator account for production.
+</Warning>
+
+### Prerequisite: Email visibility
+
+PipesHub matches Jira users to PipesHub accounts by email address.
+
+<Info>
+  If a user hides their email in Jira, PipesHub can still find them, as long as that user already exists in PipesHub or in another connected app. Making emails public is not required here. It only makes the first sync faster, because the connector does not have to look up each user one by one.
+</Info>
+
+This is different from Jira Cloud, where a hidden email stops PipesHub from matching the user at all.
+
+<Note>
+  On Jira Data Center, email visibility is a **global setting that an administrator controls**. Users cannot change it for themselves, unlike Jira Cloud where each person sets their own.
+</Note>
+
+To make the first sync faster, a Jira administrator can make email addresses visible:
+
+1. Go to **Administration** (the gear icon) → **System**.
+2. Open **General Configuration** and click **Edit Settings**.
+3. Set **User email visibility** to **Public**.
+4. Save.
+
+<div className="text-center">
+  <img
+    src="/images/connectors/jira-data-center/admin_email_visibility_setting.png"
+    alt="User email visibility setting in Jira Data Center General Configuration"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+### Choose how to sign in
+
+| Method | Best for |
+|--------|----------|
+| **Personal Access Token (PAT)** | Recommended. Needs Jira Core 8.14 or later. You can revoke it at any time, and it does not expose a password. |
+| **Basic Authentication** | Older instances that do not support tokens, or where an admin has turned token creation off. Sends a username and password with every request. |
+
+<Tabs>
+
+<Tab title="Personal Access Token">
+
+#### Step 1: Create a Personal Access Token in Jira
+
+1. Sign in to your Jira with the account you want the connector to use.
+2. Click your **profile picture** in the top right, then select **Profile**.
+3. Open the **Personal Access Tokens** tab.
+
+<div className="text-center">
+  <img
+    src="/images/connectors/jira-data-center/pat_profile_menu.png"
+    alt="Jira Data Center profile menu — Personal Access Tokens"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+4. Click **Create token**.
+5. Give it a name you will recognise, such as `PipesHub Jira Connector`.
+6. Set an expiry, or turn off **Automatic expiry** if your policy allows tokens that do not expire.
+7. Click **Create**.
+
+<div className="text-center">
+  <img
+    src="/images/connectors/jira-data-center/pat_create_token.png"
+    alt="Create a Personal Access Token in Jira Data Center"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+8. Jira shows the token **once**. Copy it and store it somewhere safe.
+
+<div className="text-center">
+  <img
+    src="/images/connectors/jira-data-center/pat_copy_token.png"
+    alt="Copy the Personal Access Token — shown once"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+<Warning>
+  The token is shown only once. If you close the dialog before copying it, revoke it and create a new one.
+</Warning>
+
+<Info>
+  A token has the same access as the account that created it. Create it from the Jira admin or service account you want the connector to run as. See [Required privileges](#required-privileges).
+</Info>
+
+#### Step 2: Authenticate Instance tab — enter your credentials
+
+1. In PipesHub, go to **Workspace Settings** → **Connectors**, find **Jira Data Center**, and click **+ Setup**.
+2. The connector panel opens as a drawer on the right.
+3. On the **Authenticate Instance** tab, select **Personal Access Token** in the **Authentication method** dropdown.
+4. Enter:
+   - **Base URL** — the root URL of your Jira, such as `https://jira.company.com`, with no trailing slash
+   - **Personal Access Token** — the token you copied in Step 1
+5. Click **Next**. PipesHub checks the credentials and moves you to the **Configure Records** tab.
+
+<div className="text-center">
+  <img
+    src="/images/connectors/jira-data-center/connector_pat_form.png"
+    alt="Authenticate Instance tab with Personal Access Token method — Base URL and token fields"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+#### Step 3: Configure Records tab
+
+See [Configure Records](#configure-records) below. The options are the same for both sign-in methods.
+
+</Tab>
+
+<Tab title="Basic Authentication">
+
+Use this on instances that do not support Personal Access Tokens, or where an admin has turned off token creation.
+
+#### Step 1: Prepare the account
+
+1. Pick or create the Jira account the connector will use. A dedicated service account such as `svc-jira-sync` works best.
+2. Check that the account can sign in to Jira with a username and password.
+
+#### Step 2: Authenticate Instance tab — enter your credentials
+
+1. In PipesHub, go to **Workspace Settings** → **Connectors**, find **Jira Data Center**, and click **+ Setup**.
+2. On the **Authenticate Instance** tab, select **Basic Authentication** in the **Authentication method** dropdown.
+3. Enter:
+   - **Base URL** — the root URL of your Jira, such as `https://jira.company.com`, with no trailing slash
+   - **Username** — the Jira username of the service account, such as `svc-jira-sync`
+   - **Password** — the account password
+4. Click **Next**. PipesHub checks the credentials and moves you to the **Configure Records** tab.
+
+<div className="text-center">
+  <img
+    src="/images/connectors/jira-data-center/connector_basic_auth_form.png"
+    alt="Authenticate Instance tab with Basic Authentication — Base URL, Username, Password fields"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+<Warning>
+  Enter the Jira **username**, not the email address. On many instances these are different.
+</Warning>
+
+#### Step 3: Configure Records tab
+
+See [Configure Records](#configure-records) below. The options are the same for both sign-in methods.
+
+</Tab>
+
+</Tabs>
+
+### Configure Records
+
+On the **Configure Records** tab, you choose how often the connector syncs and what it syncs.
+
+**Sync settings** — set these first:
+
+1. **Sync Strategy** — `Scheduled` or `Manual`.
+2. **Sync Interval** — how often to sync (default: 60 minutes).
+
+<div className="text-center">
+  <img
+    src="/images/connectors/jira-data-center/connector_configure_sync_strategy.png"
+    alt="Configure Sync Strategy"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+<Note>
+  **Scheduled sync** runs on its own at the interval you set. **Manual sync** runs only when you start it. Real-time sync is not available for Jira Data Center.
+</Note>
+
+**Sync filters** — these decide what gets downloaded from Jira. Anything a sync filter excludes is never downloaded.
+
+<div className="text-center">
+  <img
+    src="/images/connectors/jira-data-center/jira_dc_filters.png"
+    alt="Jira Data Center filters configuration"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+Available sync filters:
+
+1. **Project keys** — pick which projects to sync.
+   - Operator: `In` to include only those projects, or `Not In` to exclude them
+   - Selection: a searchable dropdown of the projects your account can see
+2. **Modified Date** — filter by last change date. Operators: `Is After`, `Is Before`, `Is Between`.
+3. **Created Date** — filter by creation date. Same operators.
+
+<Info>
+  Leave **Project keys** empty to sync every project your account can see. The list is loaded from your instance, so you can type to search it.
+</Info>
+
+**Indexing filters** — these decide what gets prepared for AI search. Everything is synced, but only what you enable here is indexed.
+
+- **Index issues** (default: on) — include issue descriptions and comments in search
+- **Index issue and comment attachments** (default: on) — include attachments in search
+
+<Info>
+  Comments are stored as part of the issue, not as separate records. When **Index issues** is on, descriptions and comments are indexed together.
+</Info>
+
+**Examples:**
+
+- *Sync only the Engineering project:* Project keys → `In` → select "Engineering"
+- *Skip archived projects:* Project keys → `Not In` → select the archived ones
+- *Recent issues only:* Modified Date → `Is After` → `2024-06-01`
+- *Issues but not attachments:* turn off **Index issue and comment attachments**
+
+Click **Save**. PipesHub shows a dialog saying **"Instance is configured and ready to sync"**, with two choices: **I'll do it later** or **Start syncing now**.
+
+<div className="text-center">
+  <img
+    src="/images/connectors/jira-data-center/enable_connector.png"
+    alt="Instance is configured and ready to sync"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+Pick **Start syncing now** to start straight away, or **I'll do it later** to turn the connector on without syncing yet. Watch **Indexing Progress** to see how the sync is going.
+
+## Supported Features
+
+The Jira Data Center connector syncs:
+
+- **Projects** — every project your account can see, with their permission schemes
+- **Issues** — summary, description, status, priority, and custom fields
+- **Issue links** — links between issues, including Epic Link and parent link
+- **Comments** — all comments, with author information
+- **Attachments** — files attached to issues and comments
+- **Users** — user profiles and account information
+- **Groups** — user groups and memberships
+- **Project roles** — role assignments used for project access
+- **Application roles** — licensed application groups used in permission schemes
+- **Permissions** — project permission schemes and issue-level security
+
+<Info>
+  **Want agents to act in Jira?** This connector only syncs data into PipesHub. To let agents create and update issues, set up the [Jira Data Center toolset](/toolsets/jira/jira-data-center) as well.
+</Info>
+
+## Useful Links
+
+- **Personal access tokens (Jira Server/DC):** [developer.atlassian.com/server/jira/platform/personal-access-token](https://developer.atlassian.com/server/jira/platform/personal-access-token)
+- **Basic authentication (Jira Server/DC REST):** [developer.atlassian.com/server/jira/platform/basic-authentication/](https://developer.atlassian.com/server/jira/platform/basic-authentication/)
+- **Jira Server/DC REST API v2:** [docs.atlassian.com/software/jira/docs/api/REST/latest/](https://docs.atlassian.com/software/jira/docs/api/REST/latest/)
+
+---
+
+## Troubleshooting
+
+<AccordionGroup>
+
+<Accordion title="Troubleshooting" icon="circle-exclamation">
+
+### Common issues
+
+**The connector will not start, or you see "authType is required":**
+- No sign-in method was selected. Reopen the connector, choose **Personal Access Token** or **Basic Authentication**, and save again.
+
+**Base URL problems:**
+- Start with `https://`
+- No trailing slash. Use `https://jira.company.com`, not `https://jira.company.com/`
+- No page paths like `/browse/PROJ-1` or `/secure/Dashboard.jspa`
+- If Jira runs under a path, include it: `https://company.com/jira`
+
+**The Personal Access Token does not work:**
+- Check for extra spaces at the start or end of the token
+- The token may have expired or been revoked. Create a new one from **Profile → Personal Access Tokens**
+- Your Jira version may be older than 8.14 and not support tokens. Use Basic Authentication instead
+
+**Basic Authentication does not work:**
+- Use the Jira **username**, not the email address
+- The account may be CAPTCHA-locked after failed sign-ins. Sign in once in a browser to clear it
+
+**Connection times out, or you see a certificate error:**
+- Check that PipesHub can reach the base URL through your firewall, VPN, or allowlist
+- If your instance uses a self-signed or internal certificate, PipesHub needs to trust that certificate
+
+**Nothing is syncing:**
+- Check that the connector shows **Active**
+- Check that the account has **Browse Projects** permission on the projects you expect
+- Check that the projects are not archived
+- Read the sync logs for the exact error
+
+**Some issues are only visible to the person who set up the connector:**
+- This happens when the account cannot read permission schemes or application roles. Set the connector up again with a Jira administrator account. See [Required privileges](#required-privileges).
+
+**Some users are missing from permissions:**
+- On Jira 10 and later, the bulk user list can be restricted, and the fallback search may not return everyone
+- Give the account Browse Users permission, or ask a Jira administrator to set **User email visibility** to **Public** in General Configuration
+
+**Deleted issues still show up in search:**
+- Deleted issues are found through the audit log, which needs Jira administrator access
+- Check that the account is a Jira administrator and that auditing is turned on
+
+<Warning>
+  If you change the Personal Access Token or the account password, update it on the **Authenticate Instance** tab. Data Center credentials are not refreshed automatically.
+</Warning>
+
+</Accordion>
+
+</AccordionGroup>
+
+## Connector Workflow
+
+<AccordionGroup>
+
+<Accordion title="Synchronization Process" icon="sync">
+
+### Sync order
+
+Each sync runs these steps in order:
+
+| Step | Data Synced | Purpose |
+|------|-------------|---------|
+| 1 | Users | Sync Jira users with their profiles and email addresses |
+| 2 | Groups | Sync groups and who belongs to them |
+| 3 | Application roles | Map licensed application roles to their groups |
+| 4 | Projects | Fetch projects, filtered if you set filters, plus their permission schemes |
+| 5 | Project roles | Sync project role assignments |
+| 6 | Project lead roles | Give project leads their permissions |
+| 7 | Issues | Sync issues, comments, and attachments for each project |
+| 8 | Deletions | Find and remove deleted issues using the audit log |
+
+### Full sync and incremental sync
+
+A **full sync** runs when:
+- It is the first sync
+- You changed the sync filters
+- You start a full sync by hand
+
+An **incremental sync** runs the rest of the time. It uses a JQL query with `updated >= "last_sync_time"` so it only fetches what changed.
+
+### How Data Center differs from Jira Cloud
+
+This connector talks to the **REST v2** API on your own server. It never goes through Atlassian's cloud gateway.
+
+| Area | Jira Cloud | Jira Data Center |
+|---------|-----------|------------------|
+| Project list | `GET /rest/api/3/project/search`, paginated | `GET /rest/api/2/project`, one JSON array with no paging |
+| Issue search | `POST /rest/api/3/search` | `POST /rest/api/2/search` with `startAt` paging |
+| Users | Identified by `accountId` | `GET /rest/api/2/user/list`, falling back to `/user/search`. Identified by user key and username |
+| Groups | Cloud group APIs | `GET /rest/api/2/groups/picker` and `GET /rest/api/2/group/member` |
+| Issue description | Atlassian Document Format (ADF) | Wiki markup or plain text, rendered with `?expand=renderedFields` |
+| Deleted issues | Cloud audit log, `ISSUE_DELETE` | `GET /rest/auditing/1.0/events`, actions `Issue deleted` and `Sub-task deleted` |
+
+### How issues are synced
+
+For each project, the connector:
+
+1. **Builds a JQL query** from the project and any date filters
+2. **Fetches issues in batches**
+3. **Reads the content** — the description, the rendered HTML, and metadata such as status, priority, labels, issue type, parent, and issue links
+4. **Builds the structure** — the description sits at the top, each comment thread sits under it, and each comment is stored inside its thread
+5. **Places attachments** — each attachment is attached to the description or to the comment that references it
+6. **Applies permissions** — permission scheme grants (`BROWSE_PROJECTS`), project roles, and issue security levels
+
+<Note>
+  Comments are stored inside the issue, not as separate records. This keeps threads together, and comments are removed automatically when the issue is deleted.
+</Note>
+
+### Checkpoints
+
+After each successful sync, the connector saves the latest issue update time as a checkpoint and saves the filter settings so it can tell when they change. It also keeps a checkpoint per project, so a failed sync can pick up where it stopped instead of starting over. Deleted-issue tracking uses its own separate checkpoint.
+
+</Accordion>
+
+</AccordionGroup>
+
+---
+
+## FAQ
+
+<AccordionGroup>
+
+<Accordion title="Can I use OAuth with this connector?">
+
+No. This connector supports **Personal Access Token** and **Basic Authentication** only. OAuth apps created in the Atlassian Developer Console are for Jira Cloud and will not work here.
+
+</Accordion>
+
+<Accordion title="Should I use a Personal Access Token or Basic Authentication?">
+
+| | Personal Access Token | Basic Authentication |
+|---|---|---|
+| **Best for** | Jira Core 8.14 or later | Older instances, or where tokens are turned off |
+| **What you store** | A token you can revoke, with an optional expiry | A username and password |
+
+Use a **Personal Access Token** unless your instance cannot create them. Both sync the same data.
+
+</Accordion>
+
+<Accordion title="What is the difference between the Jira Cloud and Jira Data Center connectors?">
+
+| Aspect | Jira Cloud | Jira Data Center |
+|--------|------------|------------------|
+| **Where it runs** | Atlassian hosts it | You host it on your own servers |
+| **Sign-in** | OAuth 2.0 or API Token | Personal Access Token or Basic Authentication |
+| **API** | REST v3 | REST v2 |
+
+Pick the one that matches your setup. They cannot be swapped.
+
+</Accordion>
+
+<Accordion title="Does the connector need a Jira administrator account?">
+
+It is strongly recommended. Without admin access the connector cannot read application roles, permission schemes, the full user list, or the audit log. Issues still sync, but some permissions will be missing and deleted issues may not be removed. See [Required privileges](#required-privileges).
+
+</Accordion>
+
+<Accordion title="Can I sync only certain Jira projects?">
+
+Yes. On the **Configure Records** tab, use the **Project keys** filter with the `In` operator and pick the projects you want. Use `Not In` to leave projects out instead.
+
+</Accordion>
+
+<Accordion title="My searches return nothing. What should I check?">
+
+Check these in order:
+
+1. **The sync has not finished.** Go to **Settings → Connectors** and check the sync status, then look in **All Records** for the issues you expect.
+2. **Permissions are incomplete.** If a non-admin account set up the connector, some projects may only be visible to that person. Set it up again with a Jira administrator account.
+3. **Your filters are too narrow.** Check the **Project keys** and date filters on the **Configure Records** tab.
+4. **Indexing is off.** Check that **Index issues** is turned on.
+
+</Accordion>
+
+</AccordionGroup>
+
+---
+
+<div className="text-center mt-12 p-6 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg max-w-2xl mx-auto">
+  <h3 className="text-lg font-semibold mb-2">Ready to Get Started?</h3>
+  <p className="text-gray-600 dark:text-gray-400">
+    Connect your self-hosted Jira Data Center instance to PipesHub in a few minutes. Follow the steps above to search every project and issue across your Jira content.
+  </p>
+</div>

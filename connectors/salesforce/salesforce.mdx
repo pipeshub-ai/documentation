@@ -1,0 +1,329 @@
+---
+title: "Salesforce"
+description: "CRM records, accounts, opportunities, cases, and files connector"
+icon: "/logo/salesforce.png"
+---
+
+<div className="max-w-2xl mx-auto mt-12">
+  <div className="p-6 border border-gray-200 dark:border-gray-700 rounded-lg bg-blue-50 dark:bg-gray-800">
+    <div className="flex items-center mb-4">
+      <img 
+        src="/logo/salesforce.png" 
+        alt="Salesforce Logo" 
+        className="w-8 h-8 mr-3 object-contain flex-shrink-0"
+      />
+      <h2 className="text-2xl font-semibold m-0">Salesforce</h2>
+    </div>
+    <p className="text-lg text-gray-700 dark:text-gray-300 mb-4">CRM records, deals, cases, and attached files</p>
+    <div className="flex items-center gap-2">
+      <span className="px-3 py-1 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 rounded-full text-sm font-medium">
+        ✅ Ready
+      </span>
+      <span className="px-3 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-full text-sm font-medium">
+        📖 Documentation Available
+      </span>
+    </div>
+  </div>
+</div>
+
+## Overview
+
+The Salesforce connector syncs your CRM data — accounts, contacts, leads, opportunities, cases, tasks, and attached files — from your Salesforce org into PipesHub using **OAuth 2.0** and an **External Client App** you create in Salesforce Setup.
+
+### What Gets Synced
+
+| Entity | Description |
+|--------|-------------|
+| **Users** | Active Salesforce users with name, email, phone, and title |
+| **Roles** | Role hierarchy and role-based permissions |
+| **Groups & Queues** | Public groups and queues used for record access |
+| **Accounts** | Account name, website, industry, owner, type, and rating |
+| **Contacts** | Contacts and their related account |
+| **Leads** | Leads with status and source details |
+| **Products** | Products and opportunity line items |
+| **Opportunities** | Deals with stage, amount, close date, and related child records |
+| **Cases** | Support cases with status, priority, and case comments |
+| **Tasks** | Activities and tasks linked to CRM records |
+| **Files** | Files attached to records (ContentDocument / ContentVersion) |
+| **Chatter** | Chatter feed posts and comments on synced records |
+
+### Authentication
+
+In PipesHub the flow has three tabs: **Authenticate Instance** (Redirect/Callback URL, Salesforce Instance URL, and OAuth client credentials), **Authorize** (sign in to Salesforce), then **Configure Records** (sync strategy and indexing).
+
+<Note>
+  This connector matches people by **email**. Use the **same email** in PipesHub as in Salesforce so permissions and visible records line up.
+</Note>
+
+---
+
+## Configuration Guide
+
+You will copy the **Redirect/Callback URL** from PipesHub, create an **External Client App** in Salesforce with that callback URL, then paste the app's **Consumer Key** and **Consumer Secret** back into PipesHub and run **Authorize**.
+
+### How to configure and enable the Salesforce connector
+
+#### Step 1: Copy the Redirect/Callback URL from PipesHub
+
+1. Open your **user profile** menu (bottom of the left sidebar) → **Workspace Settings**.
+2. Under **Workspace**, select **Connectors**.
+3. Find **Salesforce** and click **+ Setup**.
+4. On **Authenticate Instance**, set **Instance name**, then copy the **Redirect/Callback URL** exactly. You will paste it into Salesforce in Step 5.
+
+<div className="text-center">
+  <img
+    src="/images/connectors/salesforce/salesforce-5-callback-url.png"
+    alt="PipesHub Salesforce Configuration — Redirect/Callback URL and OAuth credentials"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+#### Step 2: Open Salesforce Setup
+
+Sign in to Salesforce with an administrator account, click the **gear icon** in the top-right corner, then choose **Setup**.
+
+<div className="text-center">
+  <img
+    src="/images/connectors/salesforce/salesforce-1-home.png"
+    alt="Salesforce home page"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+<div className="text-center">
+  <img
+    src="/images/connectors/salesforce/salesforce-2-setup.png"
+    alt="Salesforce Setup menu"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+#### Step 3: Create a New External Client App
+
+In the Setup **Quick Find** box, search for **App Manager** and open it. Click **New External Client App** in the top-right corner.
+
+<div className="text-center">
+  <img
+    src="/images/connectors/salesforce/salesforce-3-new_app.png"
+    alt="Salesforce Lightning Experience App Manager — New External Client App"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+#### Step 4: Fill in Basic Information
+
+Enter an **External Client App Name** (for example `salesforce-app`), confirm the **API Name**, and provide a **Contact Email**. Leave **Distribution State** as **Local** for an internal app.
+
+<div className="text-center">
+  <img
+    src="/images/connectors/salesforce/salesforce-4-basic-info.png"
+    alt="External Client App — Basic Information form"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+#### Step 5: Enable OAuth and add the Callback URL and scopes
+
+1. Expand the **API (Enable OAuth Settings)** section and turn on **Enable OAuth**.
+2. Paste the **Callback URL** you copied in Step 1 — it must match **exactly**.
+3. Move these scopes into **Selected OAuth Scopes**:
+   - Access the identity URL service (`id`, `profile`, `email`, `address`, `phone`)
+   - Manage user data via APIs (`api`)
+   - Manage user data via Web browsers (`web`)
+   - Perform requests at any time (`refresh_token`, `offline_access`)
+
+<div className="text-center">
+  <img
+    src="/images/connectors/salesforce/salesforce-6-permission.png"
+    alt="External Client App — Callback URL and selected OAuth scopes"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+#### Step 6: Configure Security settings
+
+Under **Security**, enable **Require secret for Web Server Flow** and **Require secret for Refresh Token Flow**. Leave **Issue JSON Web Token (JWT)-based access tokens for named users** unchecked. Click **Create** to save the app.
+
+<div className="text-center">
+  <img
+    src="/images/connectors/salesforce/salesforce-7-security.png"
+    alt="External Client App — Security settings"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+#### Step 7: Copy the Consumer Key and Consumer Secret
+
+Open the saved app → **Settings** → **OAuth Settings**, then click **Consumer Key and Secret**. Salesforce may ask you to verify your identity.
+
+<div className="text-center">
+  <img
+    src="/images/connectors/salesforce/salesforce-8-oauthsettings.png"
+    alt="External Client App — OAuth Settings with Consumer Key and Secret button"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+Copy the **Consumer Key** and **Consumer Secret** — these are your **Client ID** and **Client Secret** in PipesHub.
+
+<div className="text-center">
+  <img
+    src="/images/connectors/salesforce/salesforce-9-salesforce-cred.png"
+    alt="External Client App — Consumer Key and Consumer Secret"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+<Note>
+  New External Client Apps can take a few minutes before they accept OAuth requests. If authorization fails right after creation, wait and retry.
+</Note>
+
+#### Step 8: Find your Salesforce Instance URL
+
+Your **Instance URL** is the base domain shown in your browser's address bar when you are in Salesforce — for example `https://yourcompany.my.salesforce.com`.
+
+<div className="text-center">
+  <img
+    src="/images/connectors/salesforce/instance_url.png"
+    alt="Browser address bar highlighting the Salesforce instance URL"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+#### Step 9: Finish Authenticate Instance in PipesHub
+
+Return to **Salesforce Configuration** → **Authenticate Instance** and fill in:
+
+| Field | Value |
+|-------|-------|
+| **OAuth app name** | A name for the saved OAuth registration, for example `Salesforce` — it appears when users pick a saved app for other instances |
+| **Salesforce Instance URL** | Your org's base domain from Step 8, for example `https://yourcompany.my.salesforce.com` |
+| **Client ID** | The **Consumer Key** from Step 7 |
+| **Client Secret** | The **Consumer Secret** from Step 7 |
+
+Confirm the Redirect/Callback URL still matches, then click **Next →**.
+
+<div className="text-center">
+  <img
+    src="/images/connectors/salesforce/salesforce-cred-in-pipeshub.png"
+    alt="PipesHub Salesforce Configuration — OAuth app name, instance URL, and client credentials"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+#### Step 10: Authorize with Salesforce
+
+On **Authorize**, click **Authenticate Salesforce to Proceed**, sign in to Salesforce, and click **Allow** on the permission screen. When **Authorization status** shows **Connected — you can continue to Configure records**, click **Continue to configuration →**.
+
+<div className="text-center">
+  <img
+    src="/images/connectors/salesforce/salesforce-10-authenticated.png"
+    alt="PipesHub Salesforce Configuration — Authorize tab showing Connected status"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+<Warning>
+  **Authorize with an administrator account using the same email you use in PipesHub.** A different account can cause missing records or permission issues.
+</Warning>
+
+#### Step 11: Configure Records and save
+
+On **Configure Records**, set **Sync Strategy** (Scheduled or Manual) and **Sync Interval**, toggle **Enable Manual Indexing** if you want to disable automatic indexing, and use **+ Add filter** under **Sync filters** to filter content by **creation date** or **modification date**. Click **Save Configuration**.
+
+#### Step 12: Start sync
+
+When the **Start sync process?** dialog appears, click **Confirm** to begin syncing, or **Cancel** to start later. Use **Sync Enabled** and the sync actions on the instance card as needed, and open the instance page to watch **Last Synced** and record stats.
+
+<div className="text-center">
+  <img
+    src="/images/connectors/salesforce/salesforce-11-start-sync.png"
+    alt="PipesHub Salesforce Configure Records panel with Start sync process confirmation"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+Use **Re-authenticate with provider** on **Authorize** if tokens are rotated or access was revoked.
+
+## Useful Links
+
+- **Salesforce OAuth Web Server Flow:** [https://help.salesforce.com/s/articleView?id=sf.remoteaccess_oauth_web_server_flow.htm](https://help.salesforce.com/s/articleView?id=sf.remoteaccess_oauth_web_server_flow.htm)
+- **External Client Apps:** [https://help.salesforce.com/s/articleView?id=sf.create_external_client_apps.htm](https://help.salesforce.com/s/articleView?id=sf.create_external_client_apps.htm)
+- **PipesHub:** **Workspace Settings** → **Connectors** → **Salesforce** for the live Redirect/Callback URL
+
+---
+
+## Troubleshooting
+
+<AccordionGroup>
+
+<Accordion title="Troubleshooting" icon="circle-exclamation">
+
+### Common issues
+
+**redirect_uri_mismatch**
+
+- The **Callback URL** in Salesforce must **exactly** match the Redirect/Callback URL shown in PipesHub (scheme, host, path, no stray spaces).
+
+**invalid_client_id / invalid_client**
+
+- Re-copy the **Consumer Key** and **Consumer Secret** from **OAuth Settings**. If the app was just created, wait a few minutes and retry.
+
+**Wrong instance URL**
+
+- Use the base domain from your browser's address bar (for example `https://yourcompany.my.salesforce.com`) — not `https://login.salesforce.com`. For a sandbox, use that sandbox's own My Domain URL.
+
+**Missing records after sync**
+
+- The connector only sees what the authorizing user can see. Confirm that user's profile, role, and sharing rules grant access to the objects you expect.
+
+**Session expired / invalid**
+
+- Run **Re-authenticate with provider** on the **Authorize** tab.
+
+</Accordion>
+
+</AccordionGroup>
+
+## Data sync behavior
+
+<AccordionGroup>
+
+<Accordion title="Synchronization process" icon="sync">
+
+### Initial sync
+
+- Imports users, roles, groups, and CRM records along with attached files; duration depends on org size.
+
+### Incremental sync
+
+- Runs on your **Sync interval** when using a scheduled strategy, fetching records changed since the last successful run.
+
+</Accordion>
+
+</AccordionGroup>
+
+---
+
+## FAQ
+
+<AccordionGroup>
+
+<Accordion title="Queries not returning results. What could be wrong?">
+
+1. **Email mismatch** — Use the same email in PipesHub as in Salesforce.
+2. **Scope** — Confirm the OAuth scopes from Step 5 are selected and the authorizing user has access to the objects.
+3. **Still indexing** — Open **Workspace Settings** → **Connectors** → **Salesforce** and check **Overview** until queues complete.
+
+</Accordion>
+
+</AccordionGroup>
+
+---
+
+<div className="text-center mt-12 p-6 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg max-w-2xl mx-auto">
+  <h3 className="text-lg font-semibold mb-2">Ready to get started?</h3>
+  <p className="text-gray-600 dark:text-gray-400">
+    Connect Salesforce to PipesHub for unified search. Follow the steps above, or contact support if you need help.
+  </p>
+</div>

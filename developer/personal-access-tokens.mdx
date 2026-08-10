@@ -66,6 +66,8 @@ PIPESHUB_MCP_TOKEN=phpat_eyJhbGciOiJIUzI1NiIs...
   The `phpat_` prefix is intentional and display-only — it makes personal access tokens easy to recognize in logs, config files, and secret-scanning tools, unlike a bare JWT. It's stripped automatically before the token is verified, so nothing else about how you use the token changes.
 </Tip>
 
+`PIPESHUB_MCP_TOKEN` is the same value you'll pass as `--bearer-auth` or in an `Authorization: Bearer` header below — the paste block just saves you from copying it twice.
+
 ---
 
 ## Using a Personal Access Token
@@ -125,8 +127,8 @@ curl -X DELETE https://your-pipeshub-instance.com/api/v1/personal-access-tokens/
 
 Both endpoints require organization-admin privileges and return `400` for non-admins. The list is paginated (`page`, `limit`, up to 100 per page) and includes each token's owner — including tokens whose owner has since been removed from the org, which still appear so they can be cleaned up.
 
-<Warning>
-  The admin list response shape is **not** the same as your own token list. It's wrapped in `data`/`pagination`, and each item carries owner fields the self-service list doesn't:
+<Note>
+  **Response shape:** the admin list is **not** the same shape as your own token list. It's wrapped in `data`/`pagination`, and each item carries owner fields the self-service list doesn't:
 
   ```json
   {
@@ -149,7 +151,7 @@ Both endpoints require organization-admin privileges and return `400` for non-ad
   ```
 
   Your own `GET /api/v1/personal-access-tokens` returns `{ "tokens": [...] }` instead — a flat array with no `userId`/owner fields, since it's implicitly scoped to you. `ownerDeleted: true` means the token's owner has been removed from the org; `ownerEmail`/`ownerFullName` still reflect their last-known values in that case, for auditing.
-</Warning>
+</Note>
 
 <Note>
   A deleted user's own personal access tokens stop authenticating automatically — this admin flow is for auditing and proactive cleanup, not something you need to remember to do on every offboarding.

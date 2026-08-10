@@ -51,10 +51,11 @@ Click **New token** and fill in:
 
 ### Step 3: Copy the Token
 
-PipesHub generates the token and shows it to you **exactly once**:
+PipesHub generates the token and shows it to you **exactly once**, along with a ready-to-paste block for connecting an MCP client:
 
 ```
-phpat_eyJhbGciOiJIUzI1NiIs...
+PIPESHUB_MCP_URL=https://your-pipeshub-instance.com/mcp
+PIPESHUB_MCP_TOKEN=phpat_eyJhbGciOiJIUzI1NiIs...
 ```
 
 <Warning>
@@ -124,6 +125,32 @@ curl -X DELETE https://your-pipeshub-instance.com/api/v1/personal-access-tokens/
 
 Both endpoints require organization-admin privileges and return `400` for non-admins. The list is paginated (`page`, `limit`, up to 100 per page) and includes each token's owner — including tokens whose owner has since been removed from the org, which still appear so they can be cleaned up.
 
+<Warning>
+  The admin list response shape is **not** the same as your own token list. It's wrapped in `data`/`pagination`, and each item carries owner fields the self-service list doesn't:
+
+  ```json
+  {
+    "data": [
+      {
+        "id": "665f1a2b3c4d5e6f7a8b9c0d",
+        "name": "Claude Desktop",
+        "scopes": ["kb:read", "semantic:write"],
+        "createdAt": "2026-05-01T12:00:00.000Z",
+        "expiresAt": "2026-05-31T12:00:00.000Z",
+        "lastUsedAt": "2026-06-10T08:15:00.000Z",
+        "userId": "665f0a1b2c3d4e5f6a7b8c9d",
+        "ownerEmail": "jane@example.com",
+        "ownerFullName": "Jane Doe",
+        "ownerDeleted": false
+      }
+    ],
+    "pagination": { "page": 1, "limit": 100, "total": 1, "totalPages": 1 }
+  }
+  ```
+
+  Your own `GET /api/v1/personal-access-tokens` returns `{ "tokens": [...] }` instead — a flat array with no `userId`/owner fields, since it's implicitly scoped to you. `ownerDeleted: true` means the token's owner has been removed from the org; `ownerEmail`/`ownerFullName` still reflect their last-known values in that case, for auditing.
+</Warning>
+
 <Note>
   A deleted user's own personal access tokens stop authenticating automatically — this admin flow is for auditing and proactive cleanup, not something you need to remember to do on every offboarding.
 </Note>
@@ -140,6 +167,34 @@ Both endpoints require organization-admin privileges and return `400` for non-ad
 | `/api/v1/personal-access-tokens/scopes` | `GET` | List the scopes available to grant, grouped by category |
 | `/api/v1/personal-access-tokens/admin` | `GET` | **Admin only.** List every active token in the org, paginated |
 | `/api/v1/personal-access-tokens/admin/{tokenId}` | `DELETE` | **Admin only.** Revoke any user's token by id |
+
+### Request Bodies
+
+**`POST /api/v1/personal-access-tokens`**
+
+```json
+{
+  "name": "Claude Desktop",
+  "scopes": ["kb:read", "semantic:write"],
+  "expiryDays": 30
+}
+```
+
+| Field | Required | Description |
+|-------|----------|--------------|
+| `name` | Yes | 1–100 characters |
+| `scopes` | No | Defaults to your instance's full configured `MCP_SCOPES` set if omitted |
+| `expiryDays` | No | `30`, `90`, `365`, or `"never"`. Defaults to `30` if omitted |
+
+**`DELETE /api/v1/personal-access-tokens/{tokenId}`** and **`DELETE .../admin/{tokenId}`**
+
+Both accept an optional body:
+
+```json
+{ "reason": "rotated" }
+```
+
+`reason` is stored alongside the revocation for auditing — it's not required.
 
 ---
 

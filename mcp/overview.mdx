@@ -1,6 +1,6 @@
 ---
 title: "MCP Server Overview"
-description: "Connect MCP clients to the PipesHub MCP server using OAuth"
+description: "Connect MCP clients to the PipesHub MCP server using OAuth or a personal access token"
 icon: "/logo/mcp.svg"
 ---
 
@@ -20,7 +20,7 @@ This lets AI clients such as **Cursor**, **Claude Code**, **Gemini CLI**, **Clau
 - Either an OAuth app (see [Step 1](#step-1-create-an-oauth-app) below), **or** a [Personal Access Token](/developer/personal-access-tokens) — see the note below for which one to use
 
 <Note>
-  If you're connecting your own tooling and want it to act as you, the fastest path is a **[Personal Access Token](/developer/personal-access-tokens)**: create one under **Developer Settings > Personal Access Tokens**, then use it as `YOUR_BEARER_TOKEN` in any client config on this page or in [Local Server (Stdio)](/mcp/local-server) — no OAuth app or redirect URI setup required. Use an OAuth app instead when the integration is shared across users, or needs to run as an app rather than as a specific person.
+  The **client setup guides below** (Cursor, Claude Code, Gemini CLI, Claude.ai, LibreChat) connect over OAuth — you'll need an OAuth app for those. If you don't need one of those specific remote integrations and just want to connect *your own* tooling as *you*, skip OAuth entirely: create a **[Personal Access Token](/developer/personal-access-tokens)** under **Developer Settings > Personal Access Tokens** and use it as a `Bearer` token — either directly against `/mcp`, or as `--bearer-auth` with the [Local Server (Stdio)](/mcp/local-server) package, or with any MCP client you configure yourself with a custom `Authorization` header.
 </Note>
 
 ## Step 1: Create an OAuth App

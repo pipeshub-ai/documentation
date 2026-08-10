@@ -17,7 +17,11 @@ This lets AI clients such as **Cursor**, **Claude Code**, **Gemini CLI**, **Clau
 ## Prerequisites
 
 - A running PipesHub instance (self-hosted or cloud)
-- An OAuth app created in PipesHub (see [Step 1](#step-1-create-an-oauth-app) below)
+- Either an OAuth app (see [Step 1](#step-1-create-an-oauth-app) below), **or** a [Personal Access Token](/developer/personal-access-tokens) — see the note below for which one to use
+
+<Note>
+  If you're connecting your own tooling and want it to act as you, the fastest path is a **[Personal Access Token](/developer/personal-access-tokens)**: create one under **Developer Settings > Personal Access Tokens**, then use it as `YOUR_BEARER_TOKEN` in any client config on this page or in [Local Server (Stdio)](/mcp/local-server) — no OAuth app or redirect URI setup required. Use an OAuth app instead when the integration is shared across users, or needs to run as an app rather than as a specific person.
+</Note>
 
 ## Step 1: Create an OAuth App
 
@@ -71,7 +75,7 @@ Replace these placeholders in all client configurations:
 | `PIPESHUB_INSTANCE_URL` | Your PipesHub instance URL | `https://app.pipeshub.com` |
 | `YOUR_CLIENT_ID` | OAuth app client ID | `clid_abc123...` |
 | `YOUR_CLIENT_SECRET` | OAuth app client secret | `clsec_xyz789...` |
-| `YOUR_BEARER_TOKEN` | JWT Bearer token (local stdio only) | `eyJhbGci...` |
+| `YOUR_BEARER_TOKEN` | [Personal access token](/developer/personal-access-tokens) (local stdio only) | `phpat_eyJhbGci...` |
 
 The remote MCP endpoint URL is: `PIPESHUB_INSTANCE_URL/mcp`
 

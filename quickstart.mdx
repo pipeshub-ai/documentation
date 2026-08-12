@@ -7,11 +7,11 @@ icon: "play"
 ## Requirements
 
 - Git
-- Docker with Compose
+- Docker with Compose v2
 
 ## Setup
 
-### Production Deployment
+### Quickstart (Recommended)
 
 **Note**: If you are deploying PipesHub on a cloud server, make sure you are using an HTTPS endpoint. PipesHub enforces stricter security checks, and browsers will block certain requests when the application is served over HTTP.
 
@@ -27,24 +27,45 @@ If you see a white screen after deploying PipesHub while accessing it over HTTP,
 
     # Navigate to the deployment folder
     cd pipeshub-ai/deployment/docker-compose
-
-    # Copy and update the environment file
-    cp env.template .env
-
-    # 👉 Edit the .env file to set secrets, passwords, and the public URLs
-    # of the Frontend and Connector services (required for webhook notifications and real-time updates)
-
-    # Start the production deployment
-    docker compose -f docker-compose.prod.yml -p pipeshub-ai up -d
-
-
-
     ```
-    </Step>
+  </Step>
 
-    <Step title="Onboarding Setup">
+  <Step title="⚡ Run the interactive installer">
+    ```bash
+    ./install.sh
+    ```
 
-1. After docker build is up and running, **open the UI** via localhost:3000 (if running on same system) or Frontend Public Url or Port that you entered in your .env.
+    The installer will:
+    - Check Docker, RAM, and disk prerequisites
+    - Ask whether you want a **slim** or **full** deployment
+    - Let you optionally customize the graph DB, message broker, and KV store
+    - Generate randomized secrets and write a `.env` file
+    - Pull images and start the stack
+    - Wait for PipesHub to pass its health check and print the URL
+
+    When prompted for a **Public HTTPS URL**, enter the URL you'll use to access PipesHub (e.g. `https://pipeshub.yourdomain.com`). This is written to `.env` as `FRONTEND_PUBLIC_URL` and is required for OAuth callbacks, email invites, and to avoid the HTTP white-screen issue described above. Leave it blank only for local, `localhost`-only access. You can update it later by editing `.env` and running `./install.sh --reconfigure`, or by setting `PIPESHUB_PUBLIC_URL` for a non-interactive install.
+
+    Open [http://localhost:3000](http://localhost:3000) once the installer completes.
+
+    #### Installer options
+
+    | Flag | Description |
+    |------|-------------|
+    | `-y` / `--yes` | Accept all defaults; skip interactive prompts (CI-friendly) |
+    | `--version TAG` | Pin a specific image tag, e.g. `--version 0.7.0` |
+    | `--reconfigure` | Re-run the wizard and overwrite an existing `.env` |
+    | `--print-env-only` | Write `.env` and print the compose command without starting containers |
+    | `--upgrade` | Pull/rebuild images and recreate containers using the existing `.env` |
+    | `--stop` | Stop the running stack (data preserved) |
+    | `--uninstall` | Stop the stack and remove all data volumes |
+    | `--build` | Build the image locally instead of pulling from Docker Hub |
+
+    Advanced options such as CI environment variables, slim vs. full deployment types, manual Compose profile usage, and local source builds are covered in [Advanced Deployment Options](https://github.com/pipeshub-ai/pipeshub-ai/blob/main/deployment/docker-compose/ADVANCED_DEPLOYMENT.md).
+  </Step>
+
+  <Step title="Onboarding Setup">
+
+1. After the installer reports PipesHub is healthy, **open the UI** via localhost:3000 (if running on the same system) or the Frontend Public URL / port you configured.
 2. If you're an individual, select the **"Individual"** account type. For businesses, choose **"Enterprise"** and complete your account setup by filling in the basic details.
 3. You will then be redirected to the **onboarding** page. Please fill in all the required information carefully. You can always update these details later under the "Profile" tab in the Settings page.
 
@@ -54,9 +75,8 @@ For more information, refer to our [Onboarding Guide](/onboarding).
 
 <Step title="🛑 To stop the services">
 ```bash
-docker compose -f docker-compose.prod.yml -p pipeshub-ai down
-````
+./install.sh --stop
+```
 
 </Step>
 </Steps>
-````

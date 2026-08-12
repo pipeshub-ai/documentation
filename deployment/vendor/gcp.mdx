@@ -13,10 +13,10 @@ This guide will walk you through deploying PipesHub on Google Cloud Platform (GC
 PipesHub uses a modern, distributed database architecture:
 
 - **MongoDB**: Primary document store for user data, configurations, and metadata
-- **ArangoDB**: Multi-model database for graph relationships and complex queries
+- **Neo4j**: Graph database for relationships and complex queries
 - **Qdrant**: High-performance vector database for semantic search and AI embeddings
-- **Redis**: In-memory cache for session management and real-time data
-- **etcd**: Distributed key-value store for service discovery and configuration management
+- **Redis**: In-memory cache for session management and real-time data, and the default message broker / KV store
+- **Kafka** (optional): Used instead of Redis as the message broker, if selected during installation ("full" deployment)
 
 ## Minimum Requirements
 
@@ -25,7 +25,7 @@ Before you begin, ensure your VM meets these specifications:
 - **CPU**: 4 cores (minimum)
 - **RAM**: 16 GB (minimum)
 - **Storage**: 100 GB SSD or higher (recommended)
-  - PipesHub uses multiple databases (MongoDB, ArangoDB, Qdrant, Redis, etcd)
+  - PipesHub uses multiple databases (MongoDB, Neo4j, Qdrant, Redis, and optionally Kafka)
   - Storage requirements grow with indexed documents and vector embeddings
 - **OS**: Ubuntu 22.04 LTS or 24.04 LTS (recommended)
 
@@ -178,70 +178,61 @@ cd pipeshub-ai/deployment/docker-compose
 
   </Step>
 
-  <Step title="Configure Environment Variables">
+  <Step title="Run the Installer">
     
-Copy the environment template and configure your settings:
+PipesHub ships with an interactive installer (`install.sh`) that checks prerequisites, lets you choose a deployment type, generates secrets, writes a `.env` file, and starts the stack for you.
 
 ```bash
-cp env.template .env
+sudo ./install.sh
 ```
 
-Edit the `.env` file to set your configuration:
-
-```bash
-nano .env
-```
-
-**Important settings to update:**
-- `SECRET_KEY`: Generate a secure random key
-- `FRONTEND_PUBLIC_URL`: Set to your domain or VM's external IP
-- Any other service-specific passwords or keys
+When prompted for the **Public HTTPS URL**, enter your domain (e.g. `https://your-domain.com`) so OAuth callbacks, webhooks, and browser security checks work correctly.
 
 <Warning>
-Never commit the `.env` file to version control. Keep your secrets secure!
+Never commit the generated `.env` file to version control. Keep your secrets secure!
 </Warning>
 
-  </Step>
-
-  <Step title="Start PipesHub">
-    
-Start the PipesHub application using Docker Compose:
+For unattended / scripted installs (CI, automation), skip the prompts and pass the public URL directly:
 
 ```bash
-sudo docker compose -f docker-compose.prod.yml -p pipeshub-ai up -d
+sudo PIPESHUB_PUBLIC_URL="https://your-domain.com" ./install.sh --yes
 ```
 
-This command will:
+The installer will:
 - Download all required Docker images
 - Create and start all containers
-- Run the application in detached mode
+- Wait for PipesHub to pass its health check and print the URL
 
 Check the status of your containers:
 
 ```bash
-sudo docker compose -f docker-compose.prod.yml -p pipeshub-ai ps
+sudo docker compose -p pipeshub-ai ps
 ```
 
 View logs:
 
 ```bash
-sudo docker compose -f docker-compose.prod.yml -p pipeshub-ai logs -f
+sudo docker compose -p pipeshub-ai logs -f
 ```
+
+<Note>
+See [Advanced Deployment Options](https://github.com/pipeshub-ai/pipeshub-ai/blob/main/deployment/docker-compose/ADVANCED_DEPLOYMENT.md) for CI environment variables, slim vs. full deployment types, and manual Compose profile usage if you'd rather configure `.env` by hand instead of using the installer.
+</Note>
 
   </Step>
 
   <Step title="Stop PipesHub (When Needed)">
     
-To stop the services:
+To stop the services (data preserved):
 
 ```bash
-sudo docker compose -f docker-compose.prod.yml -p pipeshub-ai down
+sudo ./install.sh --stop
 ```
 
-To stop and remove all data (⚠️ use with caution):
+To stop and remove all data (⚠️ use with caution, irreversible):
 
 ```bash
-sudo docker compose -f docker-compose.prod.yml -p pipeshub-ai down -v
+sudo ./install.sh --uninstall
 ```
 
   </Step>
@@ -329,7 +320,7 @@ Once deployed, access PipesHub at:
 - **HTTPS** (production): `https://your-domain.com`
 
 <Note>
-The first startup may take a few minutes as Docker pulls images and initializes the databases (MongoDB, ArangoDB, Qdrant, Redis, and etcd).
+The first startup may take a few minutes as Docker pulls images and initializes the databases (MongoDB, the graph DB, Qdrant, Redis, and any optional components you selected).
 </Note>
 
 ## Post-Deployment Configuration
@@ -358,7 +349,7 @@ For detailed onboarding instructions, see the [Onboarding Guide](/onboarding).
 **Solution**: 
 ```bash
 # Check if containers are running
-sudo docker compose -f docker-compose.prod.yml -p pipeshub-ai ps
+sudo docker compose -p pipeshub-ai ps
 
 # Verify port is listening
 sudo netstat -tulpn | grep 3000
@@ -384,24 +375,27 @@ newgrp docker
 
 ### View Logs
 
+`pipeshub-ai` is a single all-in-one container running the frontend and every backend service, so application logs are all in one place. Database logs are on their own containers.
+
 ```bash
 # All services
-sudo docker compose -f docker-compose.prod.yml -p pipeshub-ai logs -f
+sudo docker compose -p pipeshub-ai logs -f
 
-# View logs for specific services
-sudo docker compose -f docker-compose.prod.yml -p pipeshub-ai logs -f frontend
-sudo docker compose -f docker-compose.prod.yml -p pipeshub-ai logs -f backend
-sudo docker compose -f docker-compose.prod.yml -p pipeshub-ai logs -f mongodb
-sudo docker compose -f docker-compose.prod.yml -p pipeshub-ai logs -f arangodb
-sudo docker compose -f docker-compose.prod.yml -p pipeshub-ai logs -f qdrant
-sudo docker compose -f docker-compose.prod.yml -p pipeshub-ai logs -f redis
+# The application container (frontend + backend services)
+sudo docker compose -p pipeshub-ai logs -f pipeshub-ai
+
+# Databases
+sudo docker compose -p pipeshub-ai logs -f mongodb
+sudo docker compose -p pipeshub-ai logs -f neo4j
+sudo docker compose -p pipeshub-ai logs -f qdrant
+sudo docker compose -p pipeshub-ai logs -f redis
 ```
 
 ### Check Service Health
 
 ```bash
 # Check running containers
-sudo docker compose -f docker-compose.prod.yml -p pipeshub-ai ps
+sudo docker compose -p pipeshub-ai ps
 
 # Check resource usage
 sudo docker stats
@@ -412,13 +406,16 @@ sudo docker system df -v
 
 ### Update PipesHub
 
+The simplest way to upgrade is to let the installer pull the latest images and recreate containers using your existing `.env`:
+
 ```bash
 cd pipeshub-ai
 git pull origin main
 cd deployment/docker-compose
-sudo docker compose -f docker-compose.prod.yml -p pipeshub-ai pull
-sudo docker compose -f docker-compose.prod.yml -p pipeshub-ai up -d
+sudo ./install.sh --upgrade
 ```
+
+To pin a specific version instead of the rolling `latest`/`slim` tag, pass `--version` (or set `PIPESHUB_VERSION`) before upgrading — see the installer options in the [Quickstart Guide](/quickstart).
 
 ### Backup Data
 
@@ -427,6 +424,10 @@ sudo docker compose -f docker-compose.prod.yml -p pipeshub-ai up -d
 </Warning>
 
 PipesHub uses multiple databases and storage systems. Choose one of the following backup strategies:
+
+<Note>
+Container names below (`mongodb`, `neo4j`, `qdrant`, `redis`) match the fixed `container_name` values in the unified `docker-compose.yml` — they are **not** prefixed with the project name and have no `-1` suffix. The `kafka-1` container only exists if you selected Kafka as the message broker during installation; if you're on the default (Redis broker), skip that command.
+</Note>
 
 <AccordionGroup>
 
@@ -440,44 +441,41 @@ mkdir -p ~/pipeshub-backups
 BACKUP_DATE=$(date +%Y%m%d-%H%M%S)
 
 # Backup MongoDB using mongodump
-sudo docker exec pipeshub-ai-mongodb-1 mongodump \
+sudo docker exec mongodb mongodump \
   --out=/tmp/mongodb-backup \
-  --authenticationDatabase=admin
-sudo docker cp pipeshub-ai-mongodb-1:/tmp/mongodb-backup \
+  --authenticationDatabase=admin \
+  --username="${MONGO_USERNAME}" --password="${MONGO_PASSWORD}"
+sudo docker cp mongodb:/tmp/mongodb-backup \
   ~/pipeshub-backups/mongodb-backup-${BACKUP_DATE}
-sudo docker exec pipeshub-ai-mongodb-1 rm -rf /tmp/mongodb-backup
+sudo docker exec mongodb rm -rf /tmp/mongodb-backup
 
-# Backup ArangoDB using arangodump
-sudo docker exec pipeshub-ai-arangodb-1 arangodump \
-  --output-directory /tmp/arango-backup \
-  --overwrite true \
-  --server.password="${ARANGO_ROOT_PASSWORD}"
-sudo docker cp pipeshub-ai-arangodb-1:/tmp/arango-backup \
-  ~/pipeshub-backups/arango-backup-${BACKUP_DATE}
-sudo docker exec pipeshub-ai-arangodb-1 rm -rf /tmp/arango-backup
+# Backup Neo4j using neo4j-admin
+# `neo4j-admin database dump` requires an OFFLINE database (Community Edition),
+# so stop the container and dump directly from its volume via a throwaway container.
+sudo docker stop neo4j
+mkdir -p ~/pipeshub-backups/neo4j-backup-${BACKUP_DATE}
+sudo docker run --rm \
+  -v pipeshub-ai_neo4j_data:/data \
+  -v ~/pipeshub-backups/neo4j-backup-${BACKUP_DATE}:/backup \
+  neo4j:5.26.0 \
+  neo4j-admin database dump neo4j --to-path=/backup
+sudo docker start neo4j
 
-# Backup Qdrant using snapshot API
-sudo docker exec pipeshub-ai-qdrant-1 \
-  curl -X POST 'http://localhost:6333/snapshots' \
-  -H 'Content-Type: application/json'
-# Copy the snapshot file (check Qdrant logs for snapshot path)
-sudo docker cp pipeshub-ai-qdrant-1:/qdrant/storage/snapshots \
-  ~/pipeshub-backups/qdrant-backup-${BACKUP_DATE}
+# Backup Qdrant using the full-storage snapshot API.
+# The API only creates the snapshot server-side — it does not return the file itself,
+# so capture the generated filename from the response and copy that exact file out
+# (default snapshot path in the official image is /qdrant/snapshots).
+QDRANT_SNAPSHOT_RESPONSE=$(sudo docker exec qdrant curl -s -X POST 'http://localhost:6333/snapshots')
+QDRANT_SNAPSHOT_NAME=$(echo "$QDRANT_SNAPSHOT_RESPONSE" | grep -oP '"name"\s*:\s*"\K[^"]+')
+sudo docker cp "qdrant:/qdrant/snapshots/${QDRANT_SNAPSHOT_NAME}" \
+  ~/pipeshub-backups/qdrant-backup-${BACKUP_DATE}.snapshot
 
 # Backup Redis using BGSAVE
-sudo docker exec pipeshub-ai-redis-1 redis-cli BGSAVE
+sudo docker exec redis redis-cli -a "${REDIS_PASSWORD}" --no-auth-warning BGSAVE
 # Wait for BGSAVE to complete
 sleep 5
-sudo docker cp pipeshub-ai-redis-1:/data/dump.rdb \
+sudo docker cp redis:/data/dump.rdb \
   ~/pipeshub-backups/redis-backup-${BACKUP_DATE}.rdb
-
-# Backup etcd using snapshot
-sudo docker exec pipeshub-ai-etcd-1 \
-  etcdctl snapshot save /tmp/etcd-backup.db \
-  --endpoints=http://localhost:2379
-sudo docker cp pipeshub-ai-etcd-1:/tmp/etcd-backup.db \
-  ~/pipeshub-backups/etcd-backup-${BACKUP_DATE}.db
-sudo docker exec pipeshub-ai-etcd-1 rm /tmp/etcd-backup.db
 
 # Backup application data (safe to use tar for non-database files)
 sudo docker run --rm \
@@ -488,14 +486,13 @@ sudo docker run --rm \
 # Backup .env file
 cp .env ~/pipeshub-backups/.env.backup-${BACKUP_DATE}
 
-# Create compressed archive of all backups
+# Create compressed archive of all backups (adjust file list to match your selected components)
 tar czf ~/pipeshub-backups/pipeshub-full-backup-${BACKUP_DATE}.tar.gz \
   -C ~/pipeshub-backups \
   mongodb-backup-${BACKUP_DATE} \
-  arango-backup-${BACKUP_DATE} \
-  qdrant-backup-${BACKUP_DATE} \
+  neo4j-backup-${BACKUP_DATE} \
+  qdrant-backup-${BACKUP_DATE}.snapshot \
   redis-backup-${BACKUP_DATE}.rdb \
-  etcd-backup-${BACKUP_DATE}.db \
   pipeshub-data-backup-${BACKUP_DATE}.tar.gz \
   .env.backup-${BACKUP_DATE}
 
@@ -503,7 +500,7 @@ echo "Backup completed: pipeshub-full-backup-${BACKUP_DATE}.tar.gz"
 ```
 
 **Advantages:**
-- No downtime required
+- Minimal downtime (MongoDB, Qdrant, and Redis are backed up live; only Neo4j is briefly stopped for its offline dump)
 - Consistent database snapshots
 - Safe for production environments
 - Uses native tools designed for each database
@@ -520,15 +517,14 @@ mkdir -p ~/pipeshub-backups
 BACKUP_DATE=$(date +%Y%m%d-%H%M%S)
 
 # Stop PipesHub (ensures no data is being written)
-sudo docker compose -f docker-compose.prod.yml -p pipeshub-ai down
+sudo ./install.sh --stop
 
 # Now it's safe to backup volumes using tar
 sudo docker run --rm \
   -v pipeshub-ai_mongodb_data:/data/mongodb \
-  -v pipeshub-ai_arango_data:/data/arango \
+  -v pipeshub-ai_neo4j_data:/data/neo4j \
   -v pipeshub-ai_qdrant_storage:/data/qdrant \
   -v pipeshub-ai_redis_data:/data/redis \
-  -v pipeshub-ai_etcd_data:/data/etcd \
   -v pipeshub-ai_pipeshub_data:/data/pipeshub \
   -v ~/pipeshub-backups:/backup \
   ubuntu tar czf /backup/pipeshub-volumes-backup-${BACKUP_DATE}.tar.gz /data
@@ -537,7 +533,7 @@ sudo docker run --rm \
 cp .env ~/pipeshub-backups/.env.backup-${BACKUP_DATE}
 
 # Restart PipesHub
-sudo docker compose -f docker-compose.prod.yml -p pipeshub-ai up -d
+sudo ./install.sh
 
 echo "Backup completed: pipeshub-volumes-backup-${BACKUP_DATE}.tar.gz"
 ```
@@ -567,21 +563,20 @@ RETENTION_DAYS=30
 mkdir -p "$BACKUP_DIR"
 
 # Stop services
-sudo docker compose -f ~/pipeshub-ai/deployment/docker-compose/docker-compose.prod.yml -p pipeshub-ai down
+sudo ~/pipeshub-ai/deployment/docker-compose/install.sh --stop
 
 # Backup all volumes
 sudo docker run --rm \
   -v pipeshub-ai_mongodb_data:/data/mongodb \
-  -v pipeshub-ai_arango_data:/data/arango \
+  -v pipeshub-ai_neo4j_data:/data/neo4j \
   -v pipeshub-ai_qdrant_storage:/data/qdrant \
   -v pipeshub-ai_redis_data:/data/redis \
-  -v pipeshub-ai_etcd_data:/data/etcd \
   -v pipeshub-ai_pipeshub_data:/data/pipeshub \
   -v "$BACKUP_DIR":/backup \
   ubuntu tar czf /backup/pipeshub-backup-${BACKUP_DATE}.tar.gz /data
 
 # Restart services
-sudo docker compose -f ~/pipeshub-ai/deployment/docker-compose/docker-compose.prod.yml -p pipeshub-ai up -d
+sudo ~/pipeshub-ai/deployment/docker-compose/install.sh
 
 # Delete old backups
 find "$BACKUP_DIR" -name "pipeshub-backup-*.tar.gz" -mtime +$RETENTION_DAYS -delete
@@ -631,48 +626,58 @@ Use this method if you created backups using Option 1 (native database tools):
 BACKUP_DATE="YYYYMMDD-HHMMSS"  # Replace with your backup date
 
 # Stop PipesHub
-sudo docker compose -f docker-compose.prod.yml -p pipeshub-ai down
+sudo ./install.sh --stop
 
 # Extract full backup if using compressed archive
 cd ~/pipeshub-backups
 tar xzf pipeshub-full-backup-${BACKUP_DATE}.tar.gz
 
-# Start only the database containers
-sudo docker compose -f docker-compose.prod.yml -p pipeshub-ai up -d mongodb arangodb qdrant redis etcd
+# Start only MongoDB and Redis for now — leave Neo4j and Qdrant stopped since both
+# `neo4j-admin database load` and Qdrant's full-storage snapshot recovery require
+# an OFFLINE database
+sudo docker compose -p pipeshub-ai up -d mongodb redis
 
 # Wait for databases to be ready
 sleep 10
 
 # Restore MongoDB
 sudo docker cp ~/pipeshub-backups/mongodb-backup-${BACKUP_DATE} \
-  pipeshub-ai-mongodb-1:/tmp/mongodb-backup
-sudo docker exec pipeshub-ai-mongodb-1 mongorestore \
+  mongodb:/tmp/mongodb-backup
+sudo docker exec mongodb mongorestore \
   /tmp/mongodb-backup \
   --drop \
-  --authenticationDatabase=admin
-sudo docker exec pipeshub-ai-mongodb-1 rm -rf /tmp/mongodb-backup
+  --authenticationDatabase=admin \
+  --username="${MONGO_USERNAME}" --password="${MONGO_PASSWORD}"
+sudo docker exec mongodb rm -rf /tmp/mongodb-backup
 
-# Restore ArangoDB
-sudo docker cp ~/pipeshub-backups/arango-backup-${BACKUP_DATE} \
-  pipeshub-ai-arangodb-1:/tmp/arango-backup
-sudo docker exec pipeshub-ai-arangodb-1 arangorestore \
-  --input-directory /tmp/arango-backup \
-  --server.password="${ARANGO_ROOT_PASSWORD}" \
-  --overwrite true
-sudo docker exec pipeshub-ai-arangodb-1 rm -rf /tmp/arango-backup
+# Restore Neo4j — load directly into its (stopped) volume via a throwaway container
+sudo docker run --rm \
+  -v pipeshub-ai_neo4j_data:/data \
+  -v ~/pipeshub-backups/neo4j-backup-${BACKUP_DATE}:/backup \
+  neo4j:5.26.0 \
+  neo4j-admin database load neo4j --from-path=/backup --overwrite-destination=true
 
-# Restore Qdrant
-sudo docker cp ~/pipeshub-backups/qdrant-backup-${BACKUP_DATE}/. \
-  pipeshub-ai-qdrant-1:/qdrant/storage/snapshots/
+# Now start Neo4j
+sudo docker compose -p pipeshub-ai up -d neo4j
+
+# Restore Qdrant — full-storage snapshots can only be restored via the Qdrant CLI
+# at startup (there is no REST API for this), so load it into the volume with a
+# throwaway container before bringing the "qdrant" service back up.
+sudo docker compose -p pipeshub-ai rm -sf qdrant
+sudo docker run -d --name qdrant-restore \
+  -v pipeshub-ai_qdrant_storage:/qdrant/storage \
+  -v ~/pipeshub-backups:/snapshots \
+  qdrant/qdrant:v1.15 \
+  ./qdrant --storage-snapshot "/snapshots/qdrant-backup-${BACKUP_DATE}.snapshot"
+# Wait for the snapshot to finish loading — check `docker logs qdrant-restore`
+# if it needs longer, then remove the throwaway container
+sleep 20
+sudo docker rm -f qdrant-restore
+sudo docker compose -p pipeshub-ai up -d qdrant
 
 # Restore Redis
 sudo docker cp ~/pipeshub-backups/redis-backup-${BACKUP_DATE}.rdb \
-  pipeshub-ai-redis-1:/data/dump.rdb
-
-# Restore etcd
-sudo docker cp ~/pipeshub-backups/etcd-backup-${BACKUP_DATE}.db \
-  pipeshub-ai-etcd-1:/tmp/etcd-backup.db
-sudo docker exec pipeshub-ai-etcd-1 etcdctl snapshot restore /tmp/etcd-backup.db
+  redis:/data/dump.rdb
 
 # Restore application data
 sudo docker run --rm \
@@ -681,7 +686,7 @@ sudo docker run --rm \
   ubuntu tar xzf /backup/pipeshub-data-backup-${BACKUP_DATE}.tar.gz -C /
 
 # Restart all services
-sudo docker compose -f docker-compose.prod.yml -p pipeshub-ai restart
+sudo docker compose -p pipeshub-ai restart
 
 echo "Restore completed successfully"
 ```
@@ -696,23 +701,21 @@ Use this method if you used Option 2 (stopped application backup):
 BACKUP_DATE="YYYYMMDD-HHMMSS"  # Replace with your backup date
 
 # Stop PipesHub
-sudo docker compose -f docker-compose.prod.yml -p pipeshub-ai down
+sudo ./install.sh --stop
 
 # Remove old volumes
 sudo docker volume rm pipeshub-ai_mongodb_data
-sudo docker volume rm pipeshub-ai_arango_data
+sudo docker volume rm pipeshub-ai_neo4j_data
 sudo docker volume rm pipeshub-ai_qdrant_storage
 sudo docker volume rm pipeshub-ai_redis_data
-sudo docker volume rm pipeshub-ai_etcd_data
 sudo docker volume rm pipeshub-ai_pipeshub_data
 
 # Restore all volumes
 sudo docker run --rm \
   -v pipeshub-ai_mongodb_data:/data/mongodb \
-  -v pipeshub-ai_arango_data:/data/arango \
+  -v pipeshub-ai_neo4j_data:/data/neo4j \
   -v pipeshub-ai_qdrant_storage:/data/qdrant \
   -v pipeshub-ai_redis_data:/data/redis \
-  -v pipeshub-ai_etcd_data:/data/etcd \
   -v pipeshub-ai_pipeshub_data:/data/pipeshub \
   -v ~/pipeshub-backups:/backup \
   ubuntu tar xzf /backup/pipeshub-volumes-backup-${BACKUP_DATE}.tar.gz -C /
@@ -721,7 +724,7 @@ sudo docker run --rm \
 cp ~/pipeshub-backups/.env.backup-${BACKUP_DATE} .env
 
 # Restart PipesHub
-sudo docker compose -f docker-compose.prod.yml -p pipeshub-ai up -d
+sudo ./install.sh
 
 echo "Restore completed successfully"
 ```
@@ -736,14 +739,13 @@ If you used the automated backup script:
 BACKUP_DATE="YYYYMMDD-HHMMSS"  # Replace with your backup date
 
 # Stop PipesHub
-sudo docker compose -f docker-compose.prod.yml -p pipeshub-ai down
+sudo ./install.sh --stop
 
 # Remove old volumes
 sudo docker volume rm pipeshub-ai_mongodb_data
-sudo docker volume rm pipeshub-ai_arango_data
+sudo docker volume rm pipeshub-ai_neo4j_data
 sudo docker volume rm pipeshub-ai_qdrant_storage
 sudo docker volume rm pipeshub-ai_redis_data
-sudo docker volume rm pipeshub-ai_etcd_data
 sudo docker volume rm pipeshub-ai_pipeshub_data
 
 # Download from GCS if needed
@@ -752,16 +754,15 @@ sudo docker volume rm pipeshub-ai_pipeshub_data
 # Restore all volumes
 sudo docker run --rm \
   -v pipeshub-ai_mongodb_data:/data/mongodb \
-  -v pipeshub-ai_arango_data:/data/arango \
+  -v pipeshub-ai_neo4j_data:/data/neo4j \
   -v pipeshub-ai_qdrant_storage:/data/qdrant \
   -v pipeshub-ai_redis_data:/data/redis \
-  -v pipeshub-ai_etcd_data:/data/etcd \
   -v pipeshub-ai_pipeshub_data:/data/pipeshub \
   -v ~/pipeshub-backups:/backup \
   ubuntu tar xzf /backup/pipeshub-backup-${BACKUP_DATE}.tar.gz -C /
 
 # Restart PipesHub
-sudo docker compose -f docker-compose.prod.yml -p pipeshub-ai up -d
+sudo ./install.sh
 
 echo "Restore completed successfully"
 ```
@@ -774,17 +775,16 @@ After restoring, verify that all services are running correctly:
 
 ```bash
 # Check container status
-sudo docker compose -f docker-compose.prod.yml -p pipeshub-ai ps
+sudo docker compose -p pipeshub-ai ps
 
 # Check logs for errors
-sudo docker compose -f docker-compose.prod.yml -p pipeshub-ai logs --tail=50
+sudo docker compose -p pipeshub-ai logs --tail=50
 
 # Test database connections
-sudo docker exec pipeshub-ai-mongodb-1 mongosh --eval "db.adminCommand('ping')"
-sudo docker exec pipeshub-ai-arangodb-1 curl -s http://localhost:8529/_api/version
-sudo docker exec pipeshub-ai-qdrant-1 curl -s http://localhost:6333/health
-sudo docker exec pipeshub-ai-redis-1 redis-cli ping
-sudo docker exec pipeshub-ai-etcd-1 etcdctl endpoint health
+sudo docker exec mongodb mongosh --eval "db.adminCommand('ping')"
+sudo docker exec neo4j wget -qO- http://localhost:7474
+sudo docker exec qdrant curl -s http://localhost:6333/health
+sudo docker exec redis redis-cli ping
 
 # Access the application
 echo "Access PipesHub at https://your-domain.com"

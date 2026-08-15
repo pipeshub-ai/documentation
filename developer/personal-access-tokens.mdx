@@ -1,0 +1,259 @@
+---
+title: "Personal Access Tokens"
+description: "Create long-lived, scoped, revocable credentials that act as you — the recommended way to connect external agents and scripts to PipesHub"
+icon: "id-badge"
+---
+
+A **Personal Access Token (PAT)** is a long-lived, scoped, revocable credential that you create for yourself. Unlike a session token, it doesn't expire after a day. Unlike an [OAuth 2.0 Application](/developer/oauth2), it authenticates as **you** — every request made with it respects your own per-user permissions, not an app's.
+
+Use a PAT when you want to connect something to PipesHub programmatically — most commonly, an MCP client (see [MCP Server Overview](/mcp/overview)) — without setting up an OAuth app or scraping a short-lived session token.
+
+<Note>
+  PATs are self-service: **any org member** can create their own, no administrator involvement required.
+</Note>
+
+---
+
+## Personal Access Tokens vs. OAuth Applications
+
+| | Personal Access Token | OAuth 2.0 Application |
+|---|---|---|
+| **Acts as** | You, the creator | The app itself. `client_credentials` has **no user identity** — don't use it where per-person permissions matter |
+| **Who can create one** | Any org member | Administrators only |
+| **Setup** | One click, no redirect URIs | Register an app, configure redirect URIs and grant types |
+| **Best for** | Personal scripts, MCP clients, quick integrations | Third-party apps, multi-user integrations, machine-to-machine services |
+
+If you're connecting your own tooling and want it to see exactly what you can see, use a PAT. If you're building something other people in the org will authorize separately, use an [OAuth Application](/developer/oauth2).
+
+---
+
+## Creating a Personal Access Token
+
+### Step 1: Open Personal Access Tokens
+
+1. Sign in to your PipesHub account
+2. Navigate to **Workspace-settings**
+3. Select **Personal Access Tokens** under the **Developer Settings** section
+
+### Step 2: Create a New Token
+
+Click **New token** and fill in:
+
+| Field | Required | Description |
+|-------|----------|-------------|
+| **Name** | Yes | A label to help you recognize the token later (e.g. `Claude Desktop`, `CI script`), 1–100 characters. |
+| **Expiry** | No | `30`, `90`, or `365` days, or `Never`. Defaults to **30 days** if not set — a token minted without a second thought shouldn't default to the longest lifetime. |
+| **Scopes** | No | Which permissions the token carries. Defaults to your instance's full configured MCP scope set if none are selected. Use **Select All** / **Clear all** to toggle every scope at once. |
+
+<Warning>
+  A token with `Never` expiry has no automatic cutoff. Prefer a bounded expiry unless you have a specific, ongoing reason not to — you can always create a new token later.
+</Warning>
+
+### Step 3: Copy the Token
+
+PipesHub generates the token and shows it to you **exactly once**, along with a ready-to-paste block for connecting an MCP client:
+
+```
+PIPESHUB_MCP_URL=https://your-pipeshub-instance.com/mcp
+PIPESHUB_MCP_TOKEN=phpat_eyJhbGciOiJIUzI1NiIs...
+```
+
+<Warning>
+  Copy and store the token immediately. Only its hash is stored server-side — if you lose it, you'll need to revoke it and create a new one.
+</Warning>
+
+<Tip>
+  The `phpat_` prefix is intentional and display-only — it makes personal access tokens easy to recognize in logs, config files, and secret-scanning tools, unlike a bare JWT. It's stripped automatically before the token is verified, so nothing else about how you use the token changes.
+
+  If a `phpat_` token returns 401, your instance predates the prefix-stripping fix — upgrade PipesHub. Until you can, store the token without the `phpat_` prefix and add it back afterwards.
+</Tip>
+
+`PIPESHUB_MCP_TOKEN` is the same value you'll pass as `--bearer-auth` or in an `Authorization: Bearer` header below — the paste block just saves you from copying it twice.
+
+<Note>
+  This block is for MCP clients and the [local stdio server](/mcp/local-server). **QM expects different names**: the bare token as `PIPESHUB_TOKEN`, and the origin with no `/mcp` path as `PIPESHUB_BASE_URL`, on two personal keychain entries. Pasting this block into QM's keychain fails in a way that looks like a missing environment variable rather than a wrong one.
+</Note>
+
+---
+
+## Using a Personal Access Token
+
+Send it as a standard bearer token on any authenticated PipesHub API request, including the [MCP endpoint](/mcp/overview):
+
+```bash
+curl -X POST https://your-pipeshub-instance.com/mcp \
+  -H "Authorization: Bearer phpat_YOUR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}'
+```
+
+For the local stdio MCP server, or any MCP client that takes a bearer token (see [Local Server (Stdio)](/mcp/local-server)), pass the PAT as `YOUR_BEARER_TOKEN`:
+
+```bash
+npx -y @pipeshub-ai/mcp start \
+  --server-url PIPESHUB_INSTANCE_URL \
+  --bearer-auth phpat_YOUR_TOKEN
+```
+
+A PAT reaches the same endpoints as a session token, and is verified the same way — just with a longer lifetime and no OAuth flow to obtain it.
+
+It is **not** equivalent to being logged in. Session tokens skip scope checks entirely; PATs are enforced against the scopes you granted. A PAT can only do what you selected when you created it, which is why granting fewer scopes is worth the extra moment.
+
+---
+
+## Managing Your Tokens
+
+The **Personal Access Tokens** page lists every active token you've created, with its name, scopes, creation date, expiry (`Never` shown as-is, not a literal date), and last-used time.
+
+### Revoking a Token
+
+Click the revoke icon next to a token and confirm. Revocation takes effect **immediately** — any request using that token (including one already in flight) is rejected on its next verification.
+
+<Warning>
+  Revocation is irreversible. Anything using the revoked token will need a new one.
+</Warning>
+
+---
+
+## Admin Visibility and Revocation
+
+Because a PAT can live for months or years, an org admin needs a way to see and revoke tokens they didn't create themselves — for example, when someone leaves the org or a laptop is compromised. This is available today via the API (no dedicated admin UI page yet):
+
+<CodeGroup>
+```bash List every active PAT in the org
+curl -X GET "https://your-pipeshub-instance.com/api/v1/personal-access-tokens/admin?page=1&limit=100" \
+  -H "Authorization: Bearer YOUR_SESSION_TOKEN"
+```
+
+```bash Revoke any user's token by id
+curl -X DELETE https://your-pipeshub-instance.com/api/v1/personal-access-tokens/admin/TOKEN_ID \
+  -H "Authorization: Bearer YOUR_SESSION_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"reason": "departed employee"}'
+```
+</CodeGroup>
+
+Both endpoints require organization-admin privileges and return `400` for non-admins. The list is paginated (`page`, `limit`, up to 100 per page) and includes each token's owner — including tokens whose owner has since been removed from the org, which still appear so they can be cleaned up.
+
+<Note>
+  **Response shape:** the admin list is **not** the same shape as your own token list. It's wrapped in `data`/`pagination`, and each item carries owner fields the self-service list doesn't:
+
+  ```json
+  {
+    "data": [
+      {
+        "id": "665f1a2b3c4d5e6f7a8b9c0d",
+        "name": "Claude Desktop",
+        "scopes": ["kb:read", "semantic:write"],
+        "createdAt": "2026-05-01T12:00:00.000Z",
+        "expiresAt": "2026-05-31T12:00:00.000Z",
+        "lastUsedAt": "2026-06-10T08:15:00.000Z",
+        "userId": "665f0a1b2c3d4e5f6a7b8c9d",
+        "ownerEmail": "jane@example.com",
+        "ownerFullName": "Jane Doe",
+        "ownerDeleted": false
+      }
+    ],
+    "pagination": { "page": 1, "limit": 100, "total": 1, "totalPages": 1 }
+  }
+  ```
+
+  Your own `GET /api/v1/personal-access-tokens` returns `{ "tokens": [...] }` instead — a flat array with no `userId`/owner fields, since it's implicitly scoped to you. `ownerDeleted: true` means the token's owner has been removed from the org; `ownerEmail`/`ownerFullName` still reflect their last-known values in that case, for auditing.
+</Note>
+
+<Note>
+  A deleted user's own personal access tokens stop authenticating automatically — this admin flow is for auditing and proactive cleanup, not something you need to remember to do on every offboarding.
+</Note>
+
+---
+
+## API Endpoints Reference
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/v1/personal-access-tokens` | `POST` | Create a new personal access token |
+| `/api/v1/personal-access-tokens` | `GET` | List your own active tokens |
+| `/api/v1/personal-access-tokens/{tokenId}` | `DELETE` | Revoke one of your own tokens |
+| `/api/v1/personal-access-tokens/scopes` | `GET` | List the scopes available to grant, grouped by category |
+| `/api/v1/personal-access-tokens/admin` | `GET` | **Admin only.** List every active token in the org, paginated |
+| `/api/v1/personal-access-tokens/admin/{tokenId}` | `DELETE` | **Admin only.** Revoke any user's token by id |
+
+### Request Bodies
+
+**`POST /api/v1/personal-access-tokens`**
+
+```json
+{
+  "name": "Claude Desktop",
+  "scopes": ["kb:read", "semantic:write"],
+  "expiryDays": 30
+}
+```
+
+| Field | Required | Description |
+|-------|----------|--------------|
+| `name` | Yes | 1–100 characters |
+| `scopes` | No | Defaults to your instance's full configured `MCP_SCOPES` set if omitted |
+| `expiryDays` | No | `30`, `90`, `365`, or `"never"`. Defaults to `30` if omitted |
+
+**`DELETE /api/v1/personal-access-tokens/{tokenId}`** and **`DELETE .../admin/{tokenId}`**
+
+Both accept an optional body:
+
+```json
+{ "reason": "rotated" }
+```
+
+`reason` is stored alongside the revocation for auditing — it's not required.
+
+---
+
+## Security Notes
+
+<CardGroup cols={2}>
+
+<Card title="One-time display" icon="eye-slash">
+  The raw token is shown only at creation time. Only its hash is stored — PipesHub can't show it to you again if you lose it.
+</Card>
+
+<Card title="Scanner-friendly prefix" icon="magnifying-glass">
+  The `phpat_` prefix makes tokens easy to grep for in logs and files, and to catch with secret-scanning tools before they're committed somewhere they shouldn't be.
+</Card>
+
+<Card title="Short default expiry" icon="clock">
+  New tokens default to 30 days. Choose `Never` deliberately, not by default.
+</Card>
+
+<Card title="Immediate revocation" icon="ban">
+  Revoking a token — by you or an admin — takes effect on the token's next use, not after some delay.
+</Card>
+
+</CardGroup>
+
+---
+
+## FAQ
+
+<AccordionGroup>
+
+<Accordion title="What scopes can a personal access token have?">
+By default, a PAT gets your instance's full configured `MCP_SCOPES` set — the same scopes exposed to MCP clients (see [Customizing Default Scopes](/mcp/overview#customizing-default-scopes)). You can select a narrower set at creation time via the scope picker.
+</Accordion>
+
+<Accordion title="How is this different from a session token?">
+A session token is issued when you log in and expires after a short, fixed window (24 hours) — it's meant for browser sessions, not long-running integrations. A PAT is created deliberately, can live far longer, and can be revoked independently without logging you out everywhere else.
+</Accordion>
+
+<Accordion title="Can I see other users' personal access tokens?">
+No, unless you're an org admin. Regular users can only see and revoke tokens they created themselves. Admins can list and revoke any user's token via the [admin API](#admin-visibility-and-revocation) for incident response.
+</Accordion>
+
+<Accordion title="What happens to my tokens if I'm removed from the org?">
+They stop authenticating immediately — PipesHub rejects a personal access token whose owning user has been deleted, the same way it would reject an expired one.
+</Accordion>
+
+<Accordion title="Is there a limit on how many tokens I can create?">
+There's no fixed limit on creation, but the list view shows up to 100 of your most recent active tokens.
+</Accordion>
+
+</AccordionGroup>

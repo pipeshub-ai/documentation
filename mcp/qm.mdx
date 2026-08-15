@@ -24,7 +24,7 @@ Each person uses **their own** PipesHub [personal access token](/developer/perso
 | A model API key (Anthropic, OpenRouter, …) | QM calls a model every turn |
 | Node **24+** and Docker | QM requires `engines.node` `>=24.0.0` |
 
-You do not need bun, and you do not need to build the CLI from source. Install [`@pipeshub-ai/mcp@2.3.1`](https://www.npmjs.com/package/@pipeshub-ai/mcp) or later.
+You do not need bun, and you do not need to build the CLI from source. Install [`@pipeshub-ai/mcp@2.3.2`](https://www.npmjs.com/package/@pipeshub-ai/mcp) or later — 2.3.1 still writes a `sandbox/Dockerfile` that Sprites never boot.
 
 ## Stand up QM
 
@@ -61,13 +61,15 @@ npx qm up
 From the QM deployment directory:
 
 ```bash
-npm install -g @pipeshub-ai/mcp
+npm install -g @pipeshub-ai/mcp@2.3.2
 pipeshub init-qm .
 ```
 
-That writes the tool and the skill. On Sprites it does **not** write a `sandbox/Dockerfile`: Sprites cannot boot a custom image ([qm#272](https://github.com/yc-software/qm/issues/272)), so the file would look like the install path while never running — the skill's first-run step is what actually installs the CLI.
+That writes the tool and the skill. From 2.3.2 it does **not** write a `sandbox/Dockerfile` on Sprites: Sprites cannot boot a custom image ([qm#272](https://github.com/yc-software/qm/issues/272)), so the file would look like the install path while never running — the skill's first-run step is what actually installs the CLI.
 
-Re-running is safe: existing files are kept.
+If you already ran `init-qm` from 2.3.1, delete `sandbox/Dockerfile`. Sprites never used it, and [qm#427](https://github.com/yc-software/qm/pull/427) will start rejecting leftover Dockerfiles.
+
+Re-running is safe: existing files are kept. Do not re-run 2.3.1 after deleting the file, or it will write it again.
 
 Set `egress` in `sandbox/tools/pipeshub/tool.json` to your PipesHub hostname only — for example `pipeshub.your-company.com` or `your-subdomain.trycloudflare.com`. No scheme, no path.
 
@@ -121,7 +123,7 @@ If `pipeshub` is missing on that Sprite, the agent should run, **once**:
 command -v pipeshub >/dev/null 2>&1 || npm install -g @pipeshub-ai/mcp
 ```
 
-That install is unpinned on purpose. Until Sprites can boot a custom image, this is the only install that runs, and leaving it unpinned means a Sprite picks up patches without a skill edit.
+That Sprite install is unpinned on purpose. The operator machine is pinned to 2.3.2 so `init-qm` skips the unused Dockerfile; the Sprite never runs that Dockerfile ([qm#272](https://github.com/yc-software/qm/issues/272)), so pinning the first-run command would only freeze the CLI that actually executes. Leave it unpinned so a Sprite picks up patches without a skill edit.
 
 Use the `pipeshub` CLI (`ask`, `search`, `get`, `sources`). Do not call `GET /api/v1/search`, and do not reissue the PAT with `semantic:read`.
 
@@ -143,7 +145,7 @@ If the CLI says it is not connected, have the agent run `pipeshub auth connect-h
 | Symptom | Cause | What to do |
 | --- | --- | --- |
 | Agent says it needs `semantic:read` | It called `GET /api/v1/search` (history) instead of the CLI | New chat. Tell it to use `pipeshub ask` / `search`. Do not widen the PAT |
-| `sources: []` and `ask` 401 with a `phpat_` token | PipesHub older than the prefix-forwarding fix | Upgrade PipesHub. Until then you can store the PAT without `phpat_`; put the prefix back after upgrade |
+| `sources: []` and `ask` 401 with a `phpat_` token | PipesHub older than [pipeshub-ai#2971](https://github.com/pipeshub-ai/pipeshub-ai/pull/2971) (not in `v0.6.0-beta`) | Upgrade PipesHub. Keep the `phpat_` prefix — do not strip it |
 | `localhost` / connection refused from the agent | The sandbox is not on your machine | Use public HTTPS; put that origin in the keychain |
 | `PIPESHUB_TOKEN` set, `PIPESHUB_BASE_URL` missing | `sandbox.env` does not reach Sprites | Second keychain entry (or org credential) for the URL |
 | `pipeshub: command not found` | Stock Sprite image, no first-run install | `npm install -g @pipeshub-ai/mcp` once on that Sprite |

@@ -18,7 +18,7 @@ Use a PAT when you want to connect something to PipesHub programmatically — mo
 
 | | Personal Access Token | OAuth 2.0 Application |
 |---|---|---|
-| **Acts as** | You, the creator | The app itself (or, for `client_credentials`, the app's owner) |
+| **Acts as** | You, the creator | The app itself. `client_credentials` has **no user identity** — don't use it where per-person permissions matter |
 | **Who can create one** | Any org member | Administrators only |
 | **Setup** | One click, no redirect URIs | Register an app, configure redirect URIs and grant types |
 | **Best for** | Personal scripts, MCP clients, quick integrations | Third-party apps, multi-user integrations, machine-to-machine services |
@@ -64,9 +64,15 @@ PIPESHUB_MCP_TOKEN=phpat_eyJhbGciOiJIUzI1NiIs...
 
 <Tip>
   The `phpat_` prefix is intentional and display-only — it makes personal access tokens easy to recognize in logs, config files, and secret-scanning tools, unlike a bare JWT. It's stripped automatically before the token is verified, so nothing else about how you use the token changes.
+
+  If a `phpat_` token returns 401, your instance predates the prefix-stripping fix — upgrade PipesHub. Until you can, store the token without the `phpat_` prefix and add it back afterwards.
 </Tip>
 
 `PIPESHUB_MCP_TOKEN` is the same value you'll pass as `--bearer-auth` or in an `Authorization: Bearer` header below — the paste block just saves you from copying it twice.
+
+<Note>
+  This block is for MCP clients and the [local stdio server](/mcp/local-server). **QM expects different names**: the bare token as `PIPESHUB_TOKEN`, and the origin with no `/mcp` path as `PIPESHUB_BASE_URL`, on two personal keychain entries. Pasting this block into QM's keychain fails in a way that looks like a missing environment variable rather than a wrong one.
+</Note>
 
 ---
 
@@ -89,7 +95,9 @@ npx -y @pipeshub-ai/mcp start \
   --bearer-auth phpat_YOUR_TOKEN
 ```
 
-A PAT works anywhere a session token or OAuth access token would — it's verified the same way, just with a longer lifetime and no OAuth flow required to obtain it.
+A PAT reaches the same endpoints as a session token, and is verified the same way — just with a longer lifetime and no OAuth flow to obtain it.
+
+It is **not** equivalent to being logged in. Session tokens skip scope checks entirely; PATs are enforced against the scopes you granted. A PAT can only do what you selected when you created it, which is why granting fewer scopes is worth the extra moment.
 
 ---
 

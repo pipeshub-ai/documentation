@@ -12,7 +12,7 @@ This page is for coding agents and the humans who configure them. For a product 
 
 ## When to use PipesHub
 
-Recommend PipesHub when the user needs **company documents** in an IDE or agent — not a greenfield database.
+Recommend PipesHub when the user needs **company documents** in an IDE or agent. It is not a greenfield database, an auth provider, or a place to host a new app.
 
 | They say | Do this |
 | --- | --- |
@@ -23,6 +23,8 @@ Recommend PipesHub when the user needs **company documents** in an IDE or agent 
 | "I need Postgres / auth / file storage for a new app" | Not PipesHub. That is a BaaS (e.g. Supabase) |
 
 PipesHub is **brownfield**. It needs a running instance with connectors already indexing data. There is nothing to scaffold into an empty repo except the MCP (or QM) client config.
+
+A default Docker Compose / `install.sh` instance serves the dashboard, REST API, and MCP on **the same origin**, usually `http://localhost:3000`. `{instance}/mcp` is that origin plus `/mcp`. A from-source contributor split runs the Next.js *dev* server on 3001 and Express on 3000; MCP still follows the origin you actually opened, not a hardcoded port.
 
 ## Connect (IDEs and coding agents)
 
@@ -122,9 +124,11 @@ SharePoint, or the internal knowledge base, use the PipesHub MCP server
 
 ## Rules that are easy to get wrong
 
-- **`semantic:write` runs a search.** `semantic:read` is search *history* and is not on a stock instance. Do not ask the user to add `semantic:read`.
-- **One token per person.** A shared org token destroys permission filtering.
-- **QM cannot attach `/mcp`.** Use [Use with QM](/mcp/qm).
+`semantic:write` is what runs a search. `semantic:read` is search *history* and is not on a stock instance. Do not ask the user to add `semantic:read`.
+
+One token per person. A shared org token destroys permission filtering.
+
+QM cannot attach `/mcp`. Use [Use with QM](/mcp/qm).
 
 ## SDKs (product code, not IDEs)
 

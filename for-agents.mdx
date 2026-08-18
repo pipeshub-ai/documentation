@@ -26,8 +26,10 @@ PipesHub is **brownfield**. It needs a running instance with connectors already 
 
 The native shape is **remote MCP** over Streamable HTTP. No npm process is required.
 
-1. A running PipesHub, reachable at `PIPESHUB_INSTANCE_URL`.
-2. Auth: a [personal access token](/developer/personal-access-tokens) **or** an [OAuth app](/mcp/overview#step-1-create-an-oauth-app). Do **not** use `client_credentials` — that grant has no user identity, so permission filters collapse.
+1. A running PipesHub, reachable at `PIPESHUB_INSTANCE_URL` (origin only, no `/mcp`).
+2. Auth as the **user**, not the app. Do **not** use `client_credentials` — that grant has no user identity, so permission filters collapse.
+   - The **IDE guides below use OAuth.** Create an [OAuth app](/mcp/overview#step-1-create-an-oauth-app), then follow the client page.
+   - A [personal access token](/developer/personal-access-tokens) is `Authorization: Bearer`. Use it only with a client that accepts a custom header, or with the [stdio bridge](/mcp/local-server). Cursor's `auth` object and Claude Code's `claude mcp add --client-id` are OAuth, not PAT.
 3. Client config — pick one:
 
 | Client | Guide |
@@ -41,7 +43,7 @@ The native shape is **remote MCP** over Streamable HTTP. No npm process is requi
 | Local stdio bridge | [Local server](/mcp/local-server) |
 | QM | [Use with QM](/mcp/qm) — CLI in the sandbox, not MCP |
 
-Cursor / Claude Code example (remote):
+**Cursor** (`.cursor/mcp.json` or Settings → MCP):
 
 ```json
 {
@@ -57,7 +59,19 @@ Cursor / Claude Code example (remote):
 }
 ```
 
-Replace `PIPESHUB_INSTANCE_URL` with the origin only (no `/mcp`). Tools: `pipeshub_chat`, `pipeshub_search`, `pipeshub_get_record_content`, `pipeshub_download_record`, `pipeshub_directory`, `pipeshub_sources`. See [Tools](/mcp/tools).
+**Claude Code** (`claude mcp add` — not Cursor's `auth` JSON):
+
+```bash
+claude mcp add --transport http \
+  --client-id YOUR_CLIENT_ID \
+  --client-secret \
+  --callback-port 8080 \
+  pipeshub PIPESHUB_INSTANCE_URL/mcp
+```
+
+Project-scoped `.mcp.json` uses `type: "http"` and an `oauth` object. See [Connect Claude Code](/mcp/claude-code).
+
+Tools: `pipeshub_chat`, `pipeshub_search`, `pipeshub_get_record_content`, `pipeshub_download_record`, `pipeshub_directory`, `pipeshub_sources`. See [Tools](/mcp/tools).
 
 <Warning>
   **Do not invent a REST client** when MCP is available. The Python / TypeScript / Go SDKs are for product integrations, not for Cursor or Claude Code.

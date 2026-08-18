@@ -54,10 +54,12 @@ Three operations on records, selected by `mode`.
 | `mode` | enum | no | `content` (default), `navigate`, or `lookup`. |
 | `recordId` | string | conditional | Required when `mode` is `content`. Get it from a chat citation, a search hit, or a `lookup`. |
 | `nodeId` | string | no | `navigate` only. Omit for a flat listing of everything reachable. |
+| `page` / `limit` | number | no | `navigate` only. 1-based page, 50–200 children per page (default 50). |
+| `depth` | number (1–3) | no | `navigate` only. `2` or `3` flattens descendants into one call instead of one call per level. Default 1. |
 | `identifiers` | string or string[] | conditional | Required when `mode` is `lookup`. A URL, issue key, or external ID — or up to 10 of them. |
 
 - **`mode: "content"`** — the only way to see a document's full text. Use it to summarize, extract, or quote a named document. Prefer it over `pipeshub_download_record` when you need what the record *says* rather than the file bytes.
-- **`mode: "navigate"`** — browse the hierarchy (project / space / folder → records → children). Use it for structure and for every "how many" / "all" / "every" question. Returns no document text.
+- **`mode: "navigate"`** — browse the hierarchy (project / space / folder → records → children). Use it for structure and for every "how many" / "all" / "every" question. Pass `depth: 2` or `3` to see several levels in one call. Returns no document text.
 - **`mode: "lookup"`** — resolve a Jira key, URL, or external ID to a `recordId` plus metadata.
 
 ## `pipeshub_download_record`
@@ -77,6 +79,9 @@ Look up people, groups, and teams. One tool with five `action`s.
 |---|---|---|---|
 | `action` | enum | yes | One of `whoami`, `list_users`, `get_user`, `list_groups`, `list_my_teams`. |
 | `userId` | string | conditional | Required when `action` is `get_user`. |
+| `page` | number | no | 1-based page number for `list_*` actions. |
+| `limit` | number (1–100) | no | Items per page for `list_*` actions. |
+| `search` | string | no | Substring match against name / email. Used by `list_users` (including find-by-email). |
 
 ## `pipeshub_sources`
 

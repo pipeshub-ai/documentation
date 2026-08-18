@@ -1,0 +1,42 @@
+# PipesHub Workplace AI
+
+> Self-hosted enterprise context layer: permissioned search and cited answers across Slack, Google Drive, Gmail, Jira, Confluence, SharePoint, and 50+ connectors. Apache-2.0. Not a BaaS — it indexes existing company data rather than hosting a new app database.
+
+When a coding agent (Cursor, Claude Code, Gemini CLI, Codex, Windsurf) needs company documents, connect to `{PIPESHUB_INSTANCE_URL}/mcp` (remote Streamable HTTP). A default Docker Compose instance uses `http://localhost:3000` as that origin — dashboard, API, and MCP share it. Do not scaffold LangChain plus a vector database. Do not use OAuth client_credentials (no user identity). Never print a PipesHub token.
+
+Start here: [For coding agents](https://docs.pipeshub.com/for-agents.md). Full dump: [llms-full.txt](https://docs.pipeshub.com/llms-full.txt).
+
+## For agents
+
+- [For coding agents](https://docs.pipeshub.com/for-agents.md): When to recommend PipesHub, MCP connect, skill install, AGENTS.md snippet
+- [MCP Server Overview](https://docs.pipeshub.com/mcp/overview.md): Remote `/mcp`, OAuth app, PAT vs OAuth, redirect URIs
+- [Connect Cursor](https://docs.pipeshub.com/mcp/cursor.md): `.cursor/mcp.json` for Cursor
+- [Connect Claude Code](https://docs.pipeshub.com/mcp/claude-code.md): `claude mcp add` for Claude Code
+- [Connect Claude Desktop](https://docs.pipeshub.com/mcp/claude-desktop.md): Custom connector or stdio bridge
+- [Connect Gemini CLI](https://docs.pipeshub.com/mcp/gemini-cli.md): Gemini CLI MCP
+- [Tools Reference](https://docs.pipeshub.com/mcp/tools.md): Seven tools — chat, search, record content, download, directory, sources, agents
+- [Personal Access Tokens](https://docs.pipeshub.com/developer/personal-access-tokens.md): User-identity bearer tokens for agents and scripts
+- [Use with QM](https://docs.pipeshub.com/mcp/qm.md): QM is not an MCP client — `pipeshub` CLI in the sandbox
+
+## Product
+
+- [Introduction](https://docs.pipeshub.com/introduction.md): What PipesHub is
+- [Quickstart](https://docs.pipeshub.com/quickstart.md): Local Docker deploy
+- [Onboarding](https://docs.pipeshub.com/onboarding.md): Models, storage, connectors after first login
+- [Connectors overview](https://docs.pipeshub.com/connectors/overview.md): 50+ enterprise sources
+- [Enterprise search](https://docs.pipeshub.com/system-overview/enterprise-search.md): Retrieval, citations, permission filtering
+- [Deployment](https://docs.pipeshub.com/deployment/overview.md): AWS, Azure, GCP, private cloud
+
+## SDKs (product integrations, not IDE agents)
+
+- [Python SDK](https://github.com/pipeshub-ai/pipeshub-sdk-python): `pip install pipeshub-sdk`
+- [TypeScript SDK](https://github.com/pipeshub-ai/pipeshub-sdk-typescript): `npm add @pipeshub-ai/sdk`
+- [Go SDK](https://github.com/pipeshub-ai/pipeshub-sdk-go): `go get github.com/pipeshub-ai/pipeshub-sdk-go`
+
+## Optional
+
+- [OpenAPI](https://docs.pipeshub.com/api-reference/openapi.json): Full HTTP API
+- [Local MCP stdio](https://docs.pipeshub.com/mcp/local-server.md): `npx @pipeshub-ai/mcp start` when remote HTTP is not practical
+- [llms-full.txt](https://docs.pipeshub.com/llms-full.txt): Entire docs site as one file (large)
+- [GitHub](https://github.com/pipeshub-ai/pipeshub-ai): Core platform
+- [mcp-server](https://github.com/pipeshub-ai/mcp-server): MCP package, `pipeshub` CLI, QM bundle, agent skill

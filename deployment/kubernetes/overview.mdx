@@ -1,0 +1,70 @@
+---
+title: "Kubernetes Overview"
+description: "What gets deployed and what you need before installing PipesHub on Kubernetes"
+---
+
+## Overview
+
+PipesHub can be deployed on Kubernetes using a single Helm chart. The chart deploys the PipesHub application plus its required data services.
+
+## What gets deployed
+
+At a high level, the chart deploys:
+
+- **PipesHub app**: One Kubernetes `Deployment` exposing several in-cluster endpoints (web UI, connector API, query, indexing, and related traffic).
+- **MongoDB**: Primary document store (via Bitnami dependency chart).
+- **Redis**: Cache and session store (via Bitnami dependency chart).
+- **ArangoDB**: Graph + multi-model database for relationships.
+- **Qdrant**: Vector database for embeddings and semantic search.
+- **etcd**: Key-value store used by PipesHub internal services.
+- **Kafka + ZooKeeper**: Eventing / async processing infrastructure.
+- **Neo4j (optional)**: Alternative graph database (disabled by default).
+
+<Note>
+Most of these services are stateful and require Persistent Volumes. Plan for storage early (StorageClass, PVC sizing, backups).
+</Note>
+
+## Prerequisites
+
+- **Kubernetes cluster**: Any conformant cluster where you can create namespaces, services, and PVCs.
+- **Helm**: Helm v3 installed on your machine/CI runner.
+- **StorageClass**: A default StorageClass, or provide explicit `storageClass` values for the PVCs.
+- **Ingress controller (optional)**: Only required if you plan to expose PipesHub via Ingress.
+
+Before you install, it helps to confirm your `kubectl` context is pointing at the right cluster:
+
+```bash
+kubectl cluster-info
+kubectl get nodes
+```
+
+And confirm you have a StorageClass available:
+
+```bash
+kubectl get storageclass
+```
+
+## Sizing baseline
+
+The chart defaults are aimed at a reasonably-sized cluster:
+
+- **PipesHub app container**: requests \(4 CPU / 4Gi\), limits \(8 CPU / 8Gi\)
+
+For local clusters like `kind` or small nodes, you’ll likely need to lower requests so the pod can schedule:
+
+```bash
+git clone https://github.com/pipeshub-ai/pipeshub-ai.git
+cd pipeshub-ai/deployment/helm/pipeshub-ai
+
+helm dependency update .
+helm install pipeshub . -n pipeshub \
+  --set resources.requests.cpu=500m \
+  --set resources.requests.memory=1Gi
+```
+
+## Next steps
+
+- Follow the Helm install guide in [`deployment/kubernetes/helm`](./helm).
+- Configure values (secrets, persistence, URLs) in [`deployment/kubernetes/configuration`](./configuration).
+- If you want HTTPS + hostnames, see [`deployment/kubernetes/ingress`](./ingress).
+

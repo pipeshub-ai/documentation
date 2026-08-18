@@ -4,34 +4,36 @@ description: "Tools exposed by the PipesHub MCP server"
 icon: "wrench"
 ---
 
-Reference for the tools exposed by the PipesHub MCP server. These tools let an AI client (Cursor, Claude Code, Gemini CLI, Claude.ai, LibreChat, etc.) talk to PipesHub — search and chat over the org's indexed documents, look up people and groups, and download files.
+Reference for the tools exposed by the PipesHub MCP server. These tools let an AI client (Cursor, Claude Code, Gemini CLI, Claude.ai, LibreChat, etc.) talk to PipesHub — search and chat over the org's indexed documents, look up people and groups, download files, and talk to configured PipesHub agents.
 
-The server exposes five hand-written tools that cover the common PipesHub workflows. Each one wraps several lower-level API calls so the LLM gets a single, well-shaped response.
+The server exposes **seven** tools. Each one wraps several lower-level API calls so the LLM gets a single, well-shaped response. This page matches the package's [TOOLS.md](https://github.com/pipeshub-ai/mcp-server/blob/main/TOOLS.md).
 
 ## `pipeshub_chat`
 
-**Default tool for anything PipesHub-related.** Ask a question and get a grounded answer with citations from the org's indexed sources (Drive, Box, Confluence, Slack, Gmail, Jira, the org's KB, etc.).
+Ask a question and get an answer grounded in the org's indexed sources, with citations. It reads a **few retrieved passages** — never a whole document, never a complete list.
 
 | Argument | Type | Required | Description |
 |---|---|---|---|
 | `query` | string | yes | The user's question or message for this turn. |
-| `conversationId` | string | no | Existing conversation id to continue. Omit on the first turn; pass it back on every subsequent turn so the server-side history is preserved. |
+| `conversationId` | string | no | Existing conversation id to continue. Omit on the first turn; pass it back on every subsequent turn. |
 | `filters` | object | no | Source scoping — `{ apps: string[] }` of connector instance UUIDs and/or `knowledgeBase_<orgId>`. Get ids from `pipeshub_sources`. Only meaningful on the first turn. |
-| `modelKey` | string | no | Model id from `pipeshub_sources` `models[*].modelKey`. Defaults to the org's default LLM. |
-| `chatMode` | enum | no | `quick` (low-retrieval, fast) or `balanced` (full RAG). Default `quick`. |
+| `modelKey` | string | no | Model id from `pipeshub_sources` `llmModels[*].modelKey`. Defaults to the org's default LLM. |
+| `agentId` | string | no | PipesHub agent to converse with (`agentId` from `pipeshub_agents`). Omit for plain chat. |
+| `chatMode` | enum | no | Without `agentId`: `internal_search` (default) or `web_search`. With `agentId`, the tool sends `quick` automatically — omit `chatMode`. |
 
-**When to pick it over the others:**
+**Three questions this tool gets wrong — check them first:**
 
-- "What does *document* say about X?" → `pipeshub_chat` (NOT search — search only locates files).
-- "Summarize *topic / doc*." → `pipeshub_chat`.
-- "What's our policy on Y?" → `pipeshub_chat`.
-- "Find / locate the file named X" → `pipeshub_search` (then `pipeshub_download_record` if the user wants the bytes).
+- **Structure** — "what's under this epic?", "which pages are in this space?", "what's in this folder?" → `pipeshub_get_record_content` `mode:"navigate"`.
+- **Exhaustive** — "how many X?", "list all the Y", "every Z" → `mode:"navigate"`. Chat undercounts and will not say so.
+- **One named document** — summarize it, extract from it, what does it say about X → `pipeshub_search` for the `recordId`, then `mode:"content"`.
 
-**Response:** the AI's `answer`, `citations[]` (each with `recordId`), `followUpQuestions`, plus the `conversationId` to use for follow-ups.
+Everything else about the org's knowledge belongs here: policies, processes, "what do we know about X", questions spanning several documents.
+
+**Response:** the AI's `answer`, `citations[]` (each with `recordId`), `followUpQuestions`, plus the `conversationId` to use for follow-ups. If `citations` is empty, relay the answer as **unsourced and not confirmed**; do not restate its claims as fact.
 
 ## `pipeshub_search`
 
-Vector / semantic search across the org's indexed documents. Use this **only when the user wants to locate a document** — by name, topic, or a phrase to grep for.
+Vector / semantic search across the org's indexed documents. Use it to **locate a document** — by name, topic, or a phrase — and to resolve it to a `recordId`. It is also **step 1 of reading a specific document**: search, take the top hit's `recordId`, then call `pipeshub_get_record_content`.
 
 | Argument | Type | Required | Description |
 |---|---|---|---|
@@ -41,9 +43,22 @@ Vector / semantic search across the org's indexed documents. Use this **only whe
 
 **Response:** `hits[]` (`recordId`, `recordName`, `score`, `snippet`, `mimeType`, `webUrl`) sorted by score, plus `uniqueRecords[]` for deduped record-level info.
 
-<Note>
-  For "what does the doc say?" use `pipeshub_chat` instead — it does the retrieval internally and returns a grounded answer with citations.
-</Note>
+Hits are a ranked sample, never a complete list. Never count them to answer "how many" / "all" / "every"; use `mode:"navigate"` instead.
+
+## `pipeshub_get_record_content`
+
+Three operations on records, selected by `mode`.
+
+| Argument | Type | Required | Description |
+|---|---|---|---|
+| `mode` | enum | no | `content` (default), `navigate`, or `lookup`. |
+| `recordId` | string | conditional | Required when `mode` is `content`. Get it from a chat citation, a search hit, or a `lookup`. |
+| `nodeId` | string | no | `navigate` only. Omit for a flat listing of everything reachable. |
+| `identifiers` | string or string[] | conditional | Required when `mode` is `lookup`. A URL, issue key, or external ID — or up to 10 of them. |
+
+- **`mode: "content"`** — the only way to see a document's full text. Use it to summarize, extract, or quote a named document. Prefer it over `pipeshub_download_record` when you need what the record *says* rather than the file bytes.
+- **`mode: "navigate"`** — browse the hierarchy (project / space / folder → records → children). Use it for structure and for every "how many" / "all" / "every" question. Returns no document text.
+- **`mode: "lookup"`** — resolve a Jira key, URL, or external ID to a `recordId` plus metadata.
 
 ## `pipeshub_download_record`
 
@@ -51,54 +66,45 @@ Stream the binary content of a single record. Use it when the user wants the act
 
 | Argument | Type | Required | Description |
 |---|---|---|---|
-| `recordId` | string | yes | Record identifier — UUID for connector-sourced records or 24-char ObjectId for uploaded ones. Get it from a chat citation or `pipeshub_search` hit. |
-| `convertTo` | string | no | Optional server-side format conversion target (e.g. `pdf`). Omit for the original bytes. |
-
-**Response:** the file content. `Content-Type` is forwarded from the upstream service. Binary content is base64-encoded; text is inline.
+| `recordId` | string | yes | From a chat citation or `pipeshub_search` hit. |
+| `convertTo` | string | no | Optional server-side format conversion (e.g. `pdf`). Omit for the original bytes. |
 
 ## `pipeshub_directory`
 
-Look up people, groups, and teams in PipesHub. One tool with five `action`s.
+Look up people, groups, and teams. One tool with five `action`s.
 
 | Argument | Type | Required | Description |
 |---|---|---|---|
 | `action` | enum | yes | One of `whoami`, `list_users`, `get_user`, `list_groups`, `list_my_teams`. |
-| `userId` | string | conditional | Required when `action` is `get_user`. 24-char ObjectId. |
-| `page` | number | no | 1-based page number for `list_*` actions. |
-| `limit` | number (1–100) | no | Items per page for `list_*` actions. |
-| `search` | string | no | Substring match against name / email. Used by `list_users`. |
-
-**Actions:**
-
-- `whoami` — return the authenticated user's identity (decoded from the bearer JWT). No other args.
-- `list_users` — paginated list of org users.
-- `get_user` — full profile for one user (requires `userId`).
-- `list_groups` — paginated list of user groups, with `userCount`.
-- `list_my_teams` — teams the caller belongs to, with `canEdit` / `canDelete` / `canManageMembers` flags.
+| `userId` | string | conditional | Required when `action` is `get_user`. |
 
 ## `pipeshub_sources`
 
-Discover available chat sources and AI models in one call. Call this once at the start of a session and cache the result — sources and models change infrequently.
+Discover available chat sources and AI models in one call. Call this once at the start of a session and cache the result.
 
 | Argument | Type | Required | Description |
 |---|---|---|---|
-| `include` | enum[] | no | Which sections to fetch. Default: `["sources", "llmModels"]`. Add `"embeddingModels"` if configuring re-embedding. |
+| `include` | enum[] | no | Default: `["sources", "llmModels"]`. Add `"embeddingModels"` if configuring re-embedding. |
 
-**Response:** up to three sections.
+Each source `id` is the value to put in `pipeshub_chat`'s or `pipeshub_search`'s `apps` filter.
 
-- `sources` — every connector instance plus the synthetic `knowledgeBase_<orgId>` entry. Each `id` is the value to put in `pipeshub_chat`'s or `pipeshub_search`'s `apps` filter.
-- `llmModels` — chat / generation models. Each `modelKey` is the value to pass as `modelKey` to chat/search. Pick `isDefault: true` unless the user asks for a specific model.
-- `embeddingModels` — vector embedding models (only when explicitly requested).
+## `pipeshub_agents`
+
+List the PipesHub **agents** configured for this org. To converse with one, take its `agentId` and pass it to `pipeshub_chat`.
+
+**Route on `toolsets` / `knowledge`, not the name.** Match the request to the agent whose tools can actually perform it. The list may be empty — for plain Q&A, use `pipeshub_chat` without `agentId`.
 
 ## Quick Decision Guide
 
 | User says... | Use this tool |
 |---|---|
-| "What does the Q4 report say about ARR?" | `pipeshub_chat` |
-| "Summarize the onboarding doc" | `pipeshub_chat` |
-| "What's our PTO policy?" | `pipeshub_chat` |
+| "What does the Q4 report say about ARR?" | `pipeshub_search` → top hit → `pipeshub_get_record_content` |
+| "Summarize the onboarding doc" | `pipeshub_search` → top hit → `pipeshub_get_record_content` |
+| "What do we know about X?" (spans many docs) | `pipeshub_chat` |
+| "What's our PTO policy?" (no single named file) | `pipeshub_chat` |
+| "How many / list all / every X" | `pipeshub_get_record_content` `mode:"navigate"` — not chat |
 | "Find the file called *security-review.pdf*" | `pipeshub_search` |
-| "Download that file" (after a search or chat citation) | `pipeshub_download_record` |
-| "Who am I?" / "What's my user id?" | `pipeshub_directory` (`whoami`) |
-| "List everyone on the data team" | `pipeshub_directory` (`list_users` / `list_my_teams`) |
-| First call of a session, before chat or search | `pipeshub_sources` (cache the result) |
+| "Download that file" | `pipeshub_download_record` |
+| "Who am I?" | `pipeshub_directory` (`whoami`) |
+| First call of a session | `pipeshub_sources` (cache the result) |
+| "Create a Jira ticket" / talk to a configured agent | `pipeshub_agents` → `pipeshub_chat` with that `agentId` |

@@ -38,19 +38,30 @@ Do both. Do not put them in PipesHub's own repos — those `AGENTS.md` files are
 npx skills add pipeshub-ai/mcp-server
 ```
 
-That copies [`skills/pipeshub`](https://github.com/pipeshub-ai/mcp-server/tree/main/skills/pipeshub) into `.agents/skills/pipeshub/` (Cursor, Claude Code, Codex, and Gemini CLI all load that path).
+That copies [`skills/pipeshub`](https://github.com/pipeshub-ai/mcp-server/tree/main/skills/pipeshub) into the directory **that agent** loads. Prefer the CLI: it picks the path. Do not assume `.agents/skills/` — Claude Code reads [`.claude/skills/`](https://code.claude.com/docs/en/skills), not `.agents/skills/`.
 
-Or copy by hand:
+If you copy by hand:
+
+| Agent | Path |
+| --- | --- |
+| Cursor, Codex, Gemini CLI | `.agents/skills/pipeshub/SKILL.md` |
+| Claude Code | `.claude/skills/pipeshub/SKILL.md` |
 
 ```bash
+# Cursor, Codex, Gemini CLI
 mkdir -p .agents/skills/pipeshub
 curl -fsSL https://raw.githubusercontent.com/pipeshub-ai/mcp-server/main/skills/pipeshub/SKILL.md \
   -o .agents/skills/pipeshub/SKILL.md
+
+# Claude Code
+mkdir -p .claude/skills/pipeshub
+curl -fsSL https://raw.githubusercontent.com/pipeshub-ai/mcp-server/main/skills/pipeshub/SKILL.md \
+  -o .claude/skills/pipeshub/SKILL.md
 ```
 
 ### `AGENTS.md`
 
-If the repo already has an `AGENTS.md`, append this:
+If the repo already has an `AGENTS.md`, append this. Claude Code loads `CLAUDE.md` natively, not `AGENTS.md` — if you use Claude Code, put `@AGENTS.md` at the top of a root `CLAUDE.md` so the same block is read.
 
 ```markdown
 ## Company knowledge
@@ -134,9 +145,9 @@ These are how a stranger's agent finds PipesHub without this page already in con
 | --- | --- |
 | [Official MCP Registry](https://registry.modelcontextprotocol.io) | Listed as `io.github.pipeshub-ai/mcp`. Remote URL template is `https://{instance_host}/mcp`. |
 | [Cursor Directory](https://cursor.directory/mcp) | Community list. Submit at [cursor.directory/mcp/new](https://cursor.directory/mcp/new) with install instructions pointing here. Independent of the official registry. |
-| [Claude Connectors Directory](https://claude.com/docs/connectors/directory) | Independent of the official registry. Needs a Claude Team or Enterprise org, a **public HTTPS** instance for reviewers (not localhost), and per-tenant URL support. There is no single `pipeshub.com/mcp`. |
+| [Claude Connectors Directory](https://claude.com/docs/connectors/directory) | Independent of the official registry. Submit from a Claude Team or Enterprise org (Owners, or a role with directory-management access). Per-tenant instance URLs are a supported mode (`custom_connection`) — there does not need to be a single `pipeshub.com/mcp`. The gate is a **public HTTPS** instance plus a populated test account reviewers can use end to end (not localhost). Directory connectors authenticate with OAuth 2.0, not a PAT. |
 
-Auth stays the signed-in user (OAuth app or a PAT from the settings panel). Never paste a token into chat. Never `client_credentials`.
+Auth for an IDE or stdio client is the signed-in user (OAuth app or a PAT from the settings panel). Never paste a token into chat. Never `client_credentials`. A Claude Directory listing is OAuth 2.0 only.
 
 ## Rules that are easy to get wrong
 

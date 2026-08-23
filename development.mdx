@@ -1,51 +1,48 @@
 ---
 title: "Development"
-description: "Preview changes locally to update your docs"
+description: "Build PipesHub from source for local development"
 icon: "code"
 ---
 
 ## Requirements
 
 - Git
-- Docker with Compose
+- Docker with Compose v2
 
 ## Setup
 
 ### 📦 Developer Build
 
+Use this path when you want to run images built from your checkout instead of pulling prebuilt images from Docker Hub.
+
 <Steps>
   <Step title="🔁 Clone the repository">
     ```bash
     git clone https://github.com/pipeshub-ai/pipeshub-ai.git
+    cd pipeshub-ai
     ```
   </Step>
 
-  <Step title="📁 Navigate to the deployment folder">
+  <Step title="🚀 Build and start">
     ```bash
-    cd pipeshub-ai/deployment/docker-compose
-    ```
-  </Step>
-  
-  <Step title="🛠️ Copy and update the environment file">
-    ```bash
-    cp env.template .env
+    ./install.sh --build
     ```
 
-    👉 Edit the `.env` file to set secrets, passwords, and the public URLs of the Frontend and Connector services.
+    The installer writes a `.env`, builds the local image, starts Compose, and waits until the app is reachable. Open **http://localhost:3000** once it finishes.
 
     <Info>
-      These are required for webhook notifications and real-time updates.
-    </Info>
+      Equivalent Compose command if you prefer to drive the build file yourself:
 
+      ```bash
+      cd deployment/docker-compose
+      docker compose -f docker-compose.build.neo4j.yml -p pipeshub-ai up --build -d
+      ```
+    </Info>
   </Step>
-  <Step title="🚀 Start the development deployment with build">
-    ```bash
-    docker compose -f docker-compose.build.neo4j.yml -p pipeshub-ai up --build -d
-    ```
-  </Step>
+
   <Step title="Onboarding Setup">
 
-    1. After docker build is up and running, **open the UI** via localhost:3000 (if running on same system) or Frontend Public Url or Port that you entered in your .env.
+    1. After the installer reports PipesHub is healthy, **open the UI** via localhost:3000 (if running on the same system) or the Frontend Public URL / port you configured.
     2. If you're an individual, select the **"Individual"** account type. For businesses, choose **"Enterprise"** and complete your account setup by filling in the basic details.
     3. You will then be redirected to the **onboarding** page. Please fill in all the required information carefully. You can always update these details later under the "Profile" tab in the Settings page.
 
@@ -55,7 +52,9 @@ icon: "code"
 
   <Step title="🛑 To stop the services">
     ```bash
-    docker compose -f docker-compose.build.neo4j.yml -p pipeshub-ai down
+    ./install.sh --stop
     ```
   </Step>
 </Steps>
+
+For the no-clone prebuilt install, see [Quickstart](/quickstart).

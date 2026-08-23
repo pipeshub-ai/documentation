@@ -31,10 +31,13 @@ Use this path when you want to run images built from your checkout instead of pu
     The installer writes a `.env`, builds the local image, starts Compose, and waits until the app is reachable. Open **http://localhost:3000** once it finishes.
 
     <Info>
-      Equivalent Compose command if you prefer to drive the build file yourself:
+      `docker-compose.build.neo4j.yml` is a **legacy standalone build file**, not what `./install.sh --build` drives. It hardcodes Neo4j + Kafka (no Arango/etcd profiles), builds `pipeshub-ai:latest`, and pins port 3000. Do not run it against a stack the installer already started — that builds a second image into the same Compose project.
+
+      It does not generate `.env`. Copy and edit one first, or Mongo/Neo4j start with empty passwords:
 
       ```bash
       cd deployment/docker-compose
+      cp env.template .env   # then set secrets, passwords, and public URLs
       docker compose -f docker-compose.build.neo4j.yml -p pipeshub-ai up --build -d
       ```
     </Info>

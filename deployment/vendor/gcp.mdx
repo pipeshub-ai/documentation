@@ -162,7 +162,7 @@ newgrp docker
 Install required network utilities:
 
 ```bash
-sudo apt install -y net-tools nginx
+sudo apt install -y net-tools nginx git
 ```
 
   </Step>
@@ -424,7 +424,7 @@ To pin a specific version instead of the rolling `latest`/`slim` tag, pass `--ve
 PipesHub uses multiple databases and storage systems. Choose one of the following backup strategies:
 
 <Note>
-Run backup and restore commands from the install directory (`~/pipeshub`). Compose names containers `{project}-{service}-1` (default project `pipeshub-ai`), so use `docker compose -p pipeshub-ai exec <service>` rather than `docker exec mongodb`. The `kafka-1` service only exists if you selected Kafka as the message broker during installation; if you're on the default (Redis broker), skip that command.
+Backup and restore copy-paste blocks `cd ~/pipeshub` themselves so Compose finds `docker-compose.yml` and loads `COMPOSE_PROFILES` from `.env`. Compose names containers `{project}-{service}-1` (default project `pipeshub-ai`), so use `docker compose -p pipeshub-ai exec <service>` rather than `docker exec mongodb`. The `kafka-1` service only exists if you selected Kafka as the message broker during installation; if you're on the default (Redis broker), skip that command.
 </Note>
 
 <AccordionGroup>
@@ -434,7 +434,11 @@ Run backup and restore commands from the install directory (`~/pipeshub`). Compo
 Use database-specific backup tools that create consistent snapshots without downtime:
 
 ```bash
-# Create backup directory
+cd ~/pipeshub
+set -a
+. ./.env
+set +a
+
 mkdir -p ~/pipeshub-backups
 BACKUP_DATE=$(date +%Y%m%d-%H%M%S)
 
@@ -450,6 +454,7 @@ sudo docker compose -p pipeshub-ai exec -T mongodb rm -rf /tmp/mongodb-backup
 # Backup Neo4j using neo4j-admin
 # `neo4j-admin database dump` requires an OFFLINE database (Community Edition),
 # so stop the container and dump directly from its volume via a throwaway container.
+# neo4j is profile-gated — COMPOSE_PROFILES must be loaded from ~/pipeshub/.env.
 sudo docker compose -p pipeshub-ai stop neo4j
 mkdir -p ~/pipeshub-backups/neo4j-backup-${BACKUP_DATE}
 sudo docker run --rm \
@@ -468,10 +473,14 @@ QDRANT_SNAPSHOT_NAME=$(echo "$QDRANT_SNAPSHOT_RESPONSE" | grep -oP '"name"\s*:\s
 sudo docker compose -p pipeshub-ai cp "qdrant:/qdrant/snapshots/${QDRANT_SNAPSHOT_NAME}" \
   ~/pipeshub-backups/qdrant-backup-${BACKUP_DATE}.snapshot
 
-# Backup Redis using BGSAVE
+# Backup Redis using BGSAVE (asynchronous — wait until it finishes)
 sudo docker compose -p pipeshub-ai exec -T redis redis-cli -a "${REDIS_PASSWORD}" --no-auth-warning BGSAVE
-# Wait for BGSAVE to complete
-sleep 5
+while sudo docker compose -p pipeshub-ai exec -T redis redis-cli -a "${REDIS_PASSWORD}" --no-auth-warning INFO persistence \
+  | grep -q '^rdb_bgsave_in_progress:1'; do
+  sleep 1
+done
+sudo docker compose -p pipeshub-ai exec -T redis redis-cli -a "${REDIS_PASSWORD}" --no-auth-warning INFO persistence \
+  | grep -q '^rdb_last_bgsave_status:ok' || { echo "Redis BGSAVE failed"; exit 1; }
 sudo docker compose -p pipeshub-ai cp redis:/data/dump.rdb \
   ~/pipeshub-backups/redis-backup-${BACKUP_DATE}.rdb
 
@@ -630,6 +639,12 @@ cd ~/pipeshub && ./install.sh --stop
 cd ~/pipeshub-backups
 tar xzf pipeshub-full-backup-${BACKUP_DATE}.tar.gz
 
+# Compose needs the project directory (and .env / COMPOSE_PROFILES) — not the backup folder
+cd ~/pipeshub
+set -a
+. ./.env
+set +a
+
 # Start only MongoDB and Redis for now — leave Neo4j and Qdrant stopped since both
 # `neo4j-admin database load` and Qdrant's full-storage snapshot recovery require
 # an OFFLINE database
@@ -772,6 +787,11 @@ echo "Restore completed successfully"
 After restoring, verify that all services are running correctly:
 
 ```bash
+cd ~/pipeshub
+set -a
+. ./.env
+set +a
+
 # Check container status
 sudo docker compose -p pipeshub-ai ps
 
@@ -782,7 +802,11 @@ sudo docker compose -p pipeshub-ai logs --tail=50
 sudo docker compose -p pipeshub-ai exec -T mongodb mongosh --eval "db.adminCommand('ping')"
 sudo docker compose -p pipeshub-ai exec -T neo4j wget -qO- http://localhost:7474
 sudo docker compose -p pipeshub-ai exec -T qdrant curl -s http://localhost:6333/health
-sudo docker compose -p pipeshub-ai exec -T redis redis-cli ping
+if [ -n "${REDIS_PASSWORD:-}" ]; then
+  sudo docker compose -p pipeshub-ai exec -T redis redis-cli -a "${REDIS_PASSWORD}" --no-auth-warning ping
+else
+  sudo docker compose -p pipeshub-ai exec -T redis redis-cli ping
+fi
 
 # Access the application
 echo "Access PipesHub at https://your-domain.com"

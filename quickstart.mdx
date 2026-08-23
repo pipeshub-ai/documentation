@@ -24,9 +24,9 @@ If you see a white screen after deploying PipesHub while accessing it over HTTP,
     curl -fsSL https://get.pipeshub.com/install | bash
     ```
 
-    This downloads the deployment files for the latest release into `./pipeshub` and launches the interactive installer. Open **http://localhost:3000** once it finishes.
+    This downloads the deployment files for the latest GitHub **release** into `./pipeshub` (falling back to `main` if the unauthenticated GitHub API lookup fails — 60 requests/hour per IP) and launches the interactive installer. Open **http://localhost:3000** once it finishes.
 
-    `get.pipeshub.com/install` is a 302 to the root [`install.sh`](https://github.com/pipeshub-ai/pipeshub-ai/blob/main/install.sh) on GitHub (`https://raw.githubusercontent.com/pipeshub-ai/pipeshub-ai/main/install.sh`). The wrapper then fetches `docker-compose.yml` and the in-tree installer for the latest release.
+    `get.pipeshub.com/install` is a 302 to the root [`install.sh`](https://github.com/pipeshub-ai/pipeshub-ai/blob/main/install.sh) on GitHub (`https://raw.githubusercontent.com/pipeshub-ai/pipeshub-ai/main/install.sh`). The wrapper then fetches `docker-compose.yml` and the in-tree installer for that resolved ref.
 
     <Info>
       Prefer to read before running?
@@ -53,7 +53,7 @@ If you see a white screen after deploying PipesHub while accessing it over HTTP,
     | Flag | Description |
     |------|-------------|
     | `-y` / `--yes` | Accept all defaults; skip interactive prompts (CI-friendly) |
-    | `--version TAG` | Pin a specific image tag, e.g. `--version 0.7.0` |
+    | `--version TAG` | Pin the **Docker image** tag only, e.g. `--version 0.7.0`. Does not pin compose/installer files — use `PIPESHUB_REF` for that |
     | `--no-pull` | Keep the locally cached images (do not refresh) |
     | `--reconfigure` | Re-run the wizard and overwrite an existing `.env` |
     | `--print-env-only` | Write `.env` and print the compose command without starting containers |
@@ -63,6 +63,13 @@ If you see a white screen after deploying PipesHub while accessing it over HTTP,
     | `--build` | Build the image locally instead of pulling from Docker Hub (clone only) |
 
     Standalone `curl | bash` uses prebuilt Hub images only. `--build` needs a git clone — see [From a cloned repository](#from-a-cloned-repository-developers).
+
+    Standalone-only environment overrides (set them on the `bash` side of the pipe):
+
+    | Variable | Description |
+    |----------|-------------|
+    | `PIPESHUB_REF` | Branch, tag, or commit SHA for `docker-compose.yml` and the in-tree installer. Default: latest GitHub release, else `main` |
+    | `PIPESHUB_DIR` | Directory to download deployment files into. Default: `./pipeshub` |
 
     Advanced options such as CI environment variables, slim vs. full deployment types, a second instance on the same host, and manual Compose profile usage are covered in [Advanced Deployment Options](https://github.com/pipeshub-ai/pipeshub-ai/blob/main/deployment/docker-compose/ADVANCED_DEPLOYMENT.md).
   </Step>

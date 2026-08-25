@@ -1,39 +1,78 @@
 ---
 title: "Google Docs"
-description: "Document creation and editing connector"
+description: "Sync documents through the Google Drive connector"
 icon: "/logo/gdocs.png"
 ---
-<div className="flex flex-col items-center justify-center text-center pt-10">
-  <h1 className="text-4xl font-bold">✅ Google Docs Connector Ready</h1>
-  <h3 className="text-xl mt-2">
-    Connector is live and ready to use. Documentation in process!
-  </h3>
-</div>
+
 <div className="max-w-2xl mx-auto mt-12">
-  <div className="p-6 border rounded-lg bg-blue-50">
+  <div className="p-6 border border-gray-200 dark:border-gray-700 rounded-lg bg-blue-50 dark:bg-gray-800">
     <div className="flex items-center mb-4">
-      <img 
-        src="/logo/gdocs.png" 
-        alt="Google Docs Logo" 
+      <img
+        src="/logo/gdocs.png"
+        alt="Google Docs Logo"
         className="w-8 h-8 mr-3 object-contain flex-shrink-0"
       />
-      <h2 className="text-2xl font-semibold m-0"> Google Docs</h2>
+      <h2 className="text-2xl font-semibold m-0 text-gray-900 dark:text-gray-100">Google Docs</h2>
     </div>
-    <p className="text-lg text-gray-700 mb-4">Document creation and editing</p>
+    <p className="text-lg text-gray-700 dark:text-gray-300 mb-4">
+      Sync documents through the Google Drive connector
+    </p>
     <div className="flex items-center gap-2">
-      <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium">
-        ✅ Ready
+      <span className="px-3 py-1 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 rounded-full text-sm font-medium">
+        Synced via Drive
       </span>
-      <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
-        📝 Documentation in process
+      <span className="px-3 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-full text-sm font-medium">
+        📖 Documentation Available
       </span>
     </div>
   </div>
 </div>
-<div className="text-center mt-12 p-6 bg-gray-50 rounded-lg max-w-2xl mx-auto">
-  <h3 className="text-lg font-semibold mb-2">Need Help Getting Started?</h3>
-  <p className="text-gray-600">
-    The Google Docs connector is fully operational and ready for use. While we're finalizing the documentation, 
-    feel free to reach out to our support team for setup assistance.
-  </p>
+
+<Note>
+  Google Docs is not a standalone connector currently. Documents in Google Docs stored in Drive are synced through the [Google Drive](/connectors/google-workspace/drive/drive) connector. Use the **File Extensions** sync filter on the Drive "Configure Records" page to sync only documents.
+</Note>
+
+## How to sync Google Docs
+
+1. You can set up the Google Drive connector by following this [guide](/connectors/google-workspace/drive/drive) (Enterprise or Individual).
+2. Once the drive connector instance is authenticated go to its **Configure Records** page.
+3. Under **Sync Filters**, add **File Extensions**.
+<div style={{ textAlign: "center" }}>
+  <img
+    src="/images/connectors/googleWorkspace/common/sheet1.png"
+    alt="Add File extension filter"
+    style={{ display: 'block', margin: '0 auto' }}
+    width="90%"
+  />
 </div>
+4. Set the operator to **In**.
+5. Select the following document types:
+   - `Google Docs`
+   - `docx`
+   - `doc`
+   - `odt`
+   - `rtf`
+
+<div style={{ textAlign: "center" }}>
+  <img
+    src="/images/connectors/googleWorkspace/common/docs2.png"
+    alt="Add File extension filter"
+    style={{ display: 'block', margin: '0 auto' }}
+    width="90%"
+  />
+</div>
+
+<Info>
+  The "In" operator syncs only the extensions you select. If you leave **File Extensions** unset, Drive will sync every file type, including documents.
+</Info>
+
+## Supported document types
+
+| Type | Filter value |
+|------|----------------|
+| Native Google Docs | `Google Docs` |
+| Word | `docx`, `doc` |
+
+## More about the Drive connector
+
+For authentication, APIs, and the full settings list, see the [Google Drive connector](/connectors/google-workspace/drive/drive) and its [Connector Settings](/connectors/google-workspace/drive/drive#connector-settings).

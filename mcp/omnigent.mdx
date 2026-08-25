@@ -9,7 +9,9 @@ icon: "robot"
 Each person uses **their own** PipesHub [personal access token](/developer/personal-access-tokens), so results respect their own permissions. Never share one token across a team.
 
 <Note>
-  Unlike Cursor or Claude Code, **use a personal access token here, not an OAuth app.** Omnigent's remote-MCP OAuth path expects dynamic client registration, which PipesHub does not support. A PAT is simpler and it preserves per-user permissions, which a `client_credentials` app would not.
+  **Attach with a bearer token, not an OAuth app.** Cursor and Claude Code use a registered OAuth app with a static client ID and secret. Omnigent's MCP attach takes an `Authorization` header, and its browser-OAuth path relies on dynamic client registration, which PipesHub does not support — so a PAT is the working credential here.
+
+  To be clear about identity: an OAuth app using the **authorization code** flow *does* run as the signed-in user, exactly like a PAT. It is only `client_credentials` that has no user identity — see [Unattended runs](#unattended-runs).
 </Note>
 
 ## What you need
@@ -61,7 +63,7 @@ headers:
 Then run it:
 
 ```bash
-export PIPESHUB_MCP_URL=PIPESHUB_INSTANCE_URL/mcp
+export PIPESHUB_MCP_URL=https://your-pipeshub-instance.com/mcp
 export PIPESHUB_MCP_TOKEN=phpat_…
 
 omnigent run path/to/your-agent/
@@ -105,14 +107,14 @@ That last distinction matters. "Summarize the Q3 review" needs the whole documen
 
 **A `phpat_`-prefixed token returns `401` on an older PipesHub.** Instances predating the prefix strip the token differently — upgrade PipesHub, or store the token without the `phpat_` prefix until you do.
 
-**The agent answers but never cites anything.** It probably isn't calling the tools. Check the MCP startup band in the session; a server that failed to start is named there.
+**The agent answers but never cites anything.** It probably isn't calling the tools — and on current Omnigent releases a failed MCP connection is not surfaced in the session, so the agent will answer from general knowledge in the same confident tone. Verify the endpoint with the `curl` below, and add instruction 4 above so the agent reports tool failures instead of silently continuing.
 
 **Tools appear but return nothing.** Check the token's scopes — a token only does what you granted it at creation.
 
 **Verify the endpoint independently of Omnigent:**
 
 ```bash
-curl -X POST PIPESHUB_INSTANCE_URL/mcp \
+curl -X POST https://your-pipeshub-instance.com/mcp \
   -H "Authorization: Bearer phpat_…" \
   -H "Content-Type: application/json" \
   -H "Accept: application/json, text/event-stream" \

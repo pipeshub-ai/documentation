@@ -27,30 +27,47 @@ icon: "/logo/github.png"
 </div>
 ## Overview
 
-GitHub is the world's most widely used platform for hosting, versioning, and collaborating on software development projects. It is trusted by individual developers, engineering teams, and enterprises to manage code repositories, automate CI/CD workflows, perform peer code reviews, and track project progress through integrated issue and project management tools.
+GitHub is a platform for hosting code, tracking work, and reviewing changes. The connector brings
+your repositories, issues, pull requests, and source code into PipesHub so you can search across
+all of them in one place.
 
 ### GitHub Data Structure
 
-The connector understands various entities of GitHub.
+PipesHub mirrors how GitHub organizes your content:
 
-**Repositories → Issues & Pull Requests → Comments/Attachments**
+```
+Organization
+└─ Repository
+   ├─ Issues             → comments, attachments
+   ├─ Pull requests      → commits, diffs, review comments
+   └─ Code repository    → folders and files
+```
 
 | Entity | Description |
 |--------|-------------|
-| **Repositories** | Top-level containers for code |
-| **Issues** | Work items such as bugs, tasks, and feature requests |
+| **Organization** | Owns the repositories beneath it |
+| **Repository** | The main container, split into the three sections below |
+| **Issues** | Bugs, tasks, and feature requests |
 | **Pull Requests** | Proposed code changes with reviews and merge history |
-| **Comments** | Discussion on issues, pull requests, and review feedback |
-| **Attachments** | Files and images uploaded to or embedded in issues, pull requests, and comments |
+| **Code Repository** | Source files and folders on the default branch |
+| **Comments** | Discussion on issues and pull requests |
+| **Attachments** | Files and images added to issues, pull requests, and comments |
+
+Splitting each repository into three sections lets permissions and search results apply to the
+right part of a repo rather than all of it at once.
 
 ### What Gets Synced
 
 The connector indexes the following content for AI-powered search:
 
-- **Issues**: Title, description (Markdown with embedded images), status, labels; assignee, created/updated timestamps
-- **Pull requests**: Same body, comment, and attachment coverage as issues, plus **commit SHAs**, **changed files with patches (diffs)**, **per-file review comments** on the diff, and **PR review submissions** (approve / request changes / comment); assignee and created/updated timestamps
-- **Comments**: Full threads on issues and on pull requests (including the PR conversation), with author context where available
-- **Attachments**: Files and images attached to or embedded in issue/PR bodies and comments
+- **Repositories**: All repositories you have access to, and the organizations that own them
+- **Code Files**: Source files and folders on each repository's default branch
+- **Issues**: Title, description, status, labels, and assignee
+- **Pull Requests**: Description, commits, changed files with diffs, and review comments
+- **Comments**: Full comment threads on issues and pull requests with author information
+- **Attachments**: Files and images attached to issues, pull requests, and comments
+- **Users**: Organization members and outside collaborators
+- **Permissions**: Repository access controls are preserved
 
 ---
 
@@ -68,6 +85,82 @@ The GitHub connector uses **OAuth Apps** for secure authentication.
 <Info>
   An OAuth App is used as it provides secure, token-based access without requiring users to share their passwords.
 </Info>
+
+### Prerequisite: Email Visibility
+
+<Warning>
+  **PipesHub matches GitHub users to PipesHub accounts by email address.** A user whose email
+  cannot be read receives no permissions and will not see any synced records.
+</Warning>
+
+GitHub lets people keep their email address private, so you must make emails readable one of two
+ways. Pick whichever fits your organization — you only need one.
+
+| Option | Who does it | Best for |
+|--------|-------------|----------|
+| **Verify your organization's domain** | An org owner, once | Most organizations — covers every member at once, with no action from individual users |
+| **Set a public profile email** | Each user, individually | Small teams, or when you cannot verify a domain |
+
+<Tabs>
+
+<Tab title="Verify your domain (recommended)">
+
+Verifying your domain lets PipesHub read every member's company email address, even when their
+profile email is private. An organization owner does this once:
+
+1. Open your organization on GitHub and go to **Settings**.
+2. In the sidebar, select **Verified and approved domains**.
+3. Click **Add a domain** and enter your company domain (for example `acme.com`).
+4. GitHub shows a **TXT record**. Add it to your domain's DNS through your DNS provider.
+5. Come back to GitHub and click **Verify**.
+
+DNS changes usually apply within minutes but can take up to 72 hours. Once the domain shows as
+**Verified** you are done — the next sync resolves every member with an email on that domain, and
+individual users do not need to change anything.
+
+**Official documentation:** [Verifying or approving a domain for your organization](https://docs.github.com/en/organizations/managing-organization-settings/verifying-or-approving-a-domain-for-your-organization)
+
+</Tab>
+
+<Tab title="Set a public profile email">
+
+If you cannot verify a domain, each user makes their email public on their own GitHub account.
+This takes two steps — the address must be verified and non-private before it can be selected.
+
+#### Step 1: Add and verify your email
+
+1. Go to [github.com/settings/emails](https://github.com/settings/emails).
+2. Under **Add email address**, enter the address that matches your PipesHub account and click
+   **Add**. If it is already listed with a green **Verified** badge, skip to step 4.
+3. Open the verification link GitHub emails you. The address must show **Verified** before it can
+   be used.
+4. Scroll down to **Keep my email addresses private** and switch it **Off**.
+
+While that setting is on, GitHub hides your profile email behind a `@users.noreply.github.com`
+placeholder that PipesHub cannot use, and the **Public email** dropdown in Step 2 stays empty.
+
+#### Step 2: Set it as your public profile email
+
+1. Go to [github.com/settings/profile](https://github.com/settings/profile).
+2. Scroll to the **Public email** dropdown.
+3. Select the address you verified in Step 1.
+4. Click **Update profile**.
+
+This is a per-user setting — administrators cannot change it for someone else, so share both steps
+with your team during rollout.
+
+</Tab>
+
+</Tabs>
+
+<Warning>
+  The email must **match the user's PipesHub account email**, and must not be a
+  `@users.noreply.github.com` address — that is GitHub's privacy placeholder, not a real
+  deliverable address. A mismatched or placeholder email means the user sees no records.
+</Warning>
+
+Nothing breaks for a user whose email cannot be read — they simply receive no permissions. As soon
+as their email becomes readable, the next sync grants their access automatically.
 
 ### Generating Client ID and Secret
 
@@ -174,8 +267,20 @@ The GitHub connector uses **OAuth Apps** for secure authentication.
 
 | Scope | Description |
 |-------|-------------|
-| `user` | View user details |
-| `repo` | Grants full access to public and private repositories including read and write access |
+| `read:org` | Read organization membership and teams — required to enumerate repositories and resolve who has access to them |
+| `repo` | Read repository contents, issues, and pull requests, including private repositories |
+| `user:email` | Read email addresses, used to match GitHub members to PipesHub accounts |
+
+<Note>
+  Authorize with an account that is an **organization owner**. A member-level account can only see
+  the repositories it collaborates on, and cannot read the verified-domain emails used to resolve
+  the rest of the organization.
+</Note>
+
+<Info>
+  `repo` is GitHub's narrowest scope that covers private repository contents — it is not
+  separable into read-only. PipesHub only ever reads; it never writes to your repositories.
+</Info>
 
 5. You'll be redirected back to PipesHub with a success message
 6. The connector status will update to show **"Connected — you can continue to Configure records"**
@@ -212,6 +317,49 @@ Configure your synchronization preferences:
   **Scheduled sync** runs automatically at the specified intervals, keeping your data up-to-date without manual intervention. **Manual sync** requires you to trigger synchronization on-demand.
 </Note>
 
+#### Sync Filters
+
+Sync filters control **what the connector fetches from GitHub**. Anything excluded here is never
+retrieved, so narrowing scope also shortens sync time.
+
+| Filter | Type | What it does |
+|--------|------|--------------|
+| **Github Organizations** | Multi-select | Limit the sync to these organizations. Uses the org login, e.g. `my-org` |
+| **Repositories** | Multi-select | Limit the sync to specific repositories. Uses the full name, e.g. `my-org/my-repo` |
+
+<div className="text-center">
+  <img
+    src="/images/connectors/github/ph-github-sync-filters.png"
+    alt="GitHub connector sync filters in PipesHub"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+Both are live pickers — start typing and PipesHub searches GitHub for matches. Each supports an
+**In** operator (sync only these) or **Not In** (sync everything except these).
+
+#### Indexing Filters
+
+Indexing filters control **what gets indexed for search** from the content that was fetched.
+
+| Filter | Default | What it does |
+|--------|---------|--------------|
+| **Index Issues** | On | Index issues with their comments and attachments |
+| **Index Pull Requests** | On | Index pull requests with their diffs, review comments, and commits |
+| **Index Code Files** | On | Index the source files on each repository's default branch |
+| **Enable Manual Indexing** | Off | Records are synced but held unindexed until you trigger indexing yourself |
+
+<div className="text-center">
+  <img
+    src="/images/connectors/github/ph-github-indexing-filters.png"
+    alt="GitHub connector indexing filters in PipesHub"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+Turning **Index Code Files** off is the usual choice for large monorepos where you only want issue
+and pull-request context. Existing code records stay in place; they simply stop being refreshed.
+
 #### Save and Activate
 
 1. Click **"Save Configuration"** to save your configuration.
@@ -219,15 +367,24 @@ Configure your synchronization preferences:
 3. The connector will verify credentials and begin initial synchronization
 4. Monitor the **Indexing Progress** to track sync completion
 
+</div>
+</Accordion>
+
+</AccordionGroup>
+
 ## Supported Features
 
 The GitHub connector syncs the following data from your GitHub repositories:
 
-- **Repositories**: All accessible repositories
+- **Organizations & Repositories**: All accessible organizations and repositories
+- **Code repository**: Every file and folder on each repository's default branch, with language
+  detection and full-text indexing of file contents
 - **Issues**: Full issue content including description, status, comments
 - **Pull Requests**: Full pull request content including description, merge status, commit history, review comments, comments and file changes
 - **Comments**: All comments on issues and pull requests with author information
 - **Attachments**: Files attached to issues, pull requests (images, documents, etc.)
+- **Users & memberships**: Organization members and outside collaborators with their repository
+  roles, used to apply permissions
 
 ## Useful Links
 
@@ -235,10 +392,7 @@ The GitHub connector syncs the following data from your GitHub repositories:
 - **OAuth App Documentation**: [oauth-apps/building-oauth-apps/creating-an-oauth-app](https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/creating-an-oauth-app)
 - **GitHub REST API Documentation**: [github/rest](https://docs.github.com/en/rest)
 
-</div>
-</Accordion>
-
-</AccordionGroup>
+---
 
 ## Troubleshooting
 
@@ -271,6 +425,32 @@ The GitHub connector syncs the following data from your GitHub repositories:
 - Disable and re-enable the connector to re-authenticate
 - Check if the OAuth app is still active in GitHub Developer Settings
 
+**No code files synced:**
+- Confirm **Index Code Files** is enabled under Indexing Filters
+- Only the **default branch** is synced; content on other branches is expected to be absent
+- Files above 5 MB appear as records but their contents are not indexed
+
+**A user sees no records even though they have GitHub access:**
+- Their email could not be read. Either verify your organization's domain in GitHub, or ask them
+  to set a public profile email — see *Prerequisite: Email Visibility* above
+- A `@users.noreply.github.com` address does not count as a usable email
+- Their GitHub email must match their PipesHub account email
+
+**Organization repositories are missing:**
+- Authorize with an **organization owner** account. A member-level account only sees repositories
+  it collaborates on
+- If your organization enforces OAuth app approval, an owner must approve the app for the org
+- Check the **Github Organizations** sync filter is not excluding them
+
+**Sync stops partway on a large organization:**
+- GitHub's authenticated API budget is 5,000 requests/hour. When it is exhausted the sync stops
+  with its checkpoint withheld and resumes on the next scheduled run — no data is lost
+- Narrow the **Repositories** or **Github Organizations** filters to reduce per-run cost
+
+**The repository picker returns few or no results:**
+- GitHub's search API allows 30 requests/minute and will not page past the first 1,000 results.
+  Type a more specific query rather than scrolling
+
 <Warning>
   If you modify OAuth application settings in GitHub Developer Settings (Client ID, Secret, callback URL), you must update the configuration in PipesHub and re-authorize the connection.
 </Warning>
@@ -290,12 +470,18 @@ The GitHub connector follows a structured synchronization process to ensure all 
 
 ### Sync Overview
 
-The `run_sync` method executes a complete synchronization cycle in a specific order:
+Every sync run executes the same ordered cycle:
 
-| Step | Function | Data Synced | Purpose |
-|------|----------|-------------|---------|
-| 1 | `_fetch_users()` | Users | Sync GitHub user |
-| 2 | `_sync_all_repo_issue()` | Issues and Pull requests | Fetch issues and pull requests of repositories |
+| Step | Stage | What happens |
+|------|-------|--------------|
+| 1 | **User sync** | Resolve organization members and outside collaborators and match them to PipesHub accounts by email |
+| 2 | **Repository sync** | Discover repositories, create the organization → repository → container hierarchy, and apply collaborator and visibility permissions |
+| 3 | **Content sync** | For each repository, sync issues, pull requests, and the code repository |
+| 4 | **Timestamp backfill** | A background pass fills in authoritative commit timestamps for code files after the main sync completes |
+
+Outside collaborators are discovered separately from organization members. GitHub excludes them
+from the organization member list even though they hold real repository permissions, so
+enumerating only members would leave them permanently unresolvable.
 
 ### Full Sync vs Incremental Sync
 
@@ -303,11 +489,60 @@ The connector automatically determines whether to perform a full or incremental 
 
 **Full Sync** occurs when:
 - First-time synchronization (no sync checkpoint exists)
+- The previous incremental attempt failed or produced a delta that cannot be trusted
 - Manual full sync is triggered
 
 **Incremental Sync** occurs when:
 - A valid sync checkpoint exists
 - Uses the saved sync checkpoint to fetch or filter for records updated since the last sync time
+
+### Repository Synchronization
+
+1. **Repository fetch**: Retrieves repositories in scope, honoring the Organization and Repository
+   filters
+2. **Container creation**: Each repository becomes a record group with three children — *Issues*,
+   *Pull requests*, and *Code repository*. Owning organizations are created above them
+3. **Permission assignment**: Collaborator roles and repository visibility are translated into
+   permissions (see *Permission handling* below)
+
+Containers are keyed on the repository's **numeric GitHub ID**, not `owner/repo`. Renaming a
+repository or transferring it to another owner therefore does not orphan its records or reset its
+sync checkpoint.
+
+### Code Repository Synchronization
+
+Code sync tracks the repository's **default branch** and is checkpointed on the branch's current
+commit SHA.
+
+**Full sync** (first run, or when the delta cannot be trusted):
+
+1. Walks the entire repository tree in a single recursive call
+2. Creates a folder record for each directory and a code file record for each file, with the
+   file's language detected from its path
+3. Prunes records for files that no longer exist in the tree
+
+For very large repositories, GitHub truncates the recursive tree response. The connector detects
+this and falls back to walking directories one at a time, so coverage stays complete.
+
+**Incremental sync** (a checkpoint SHA exists):
+
+1. Compares the checkpointed commit against the current branch head
+2. Classifies each changed path as added, modified, deleted, or renamed — a delete-and-add pair
+   for the same content is reconciled back into a **rename**, so the record keeps its identity and
+   history rather than being recreated
+3. Applies deletions, renames, and upserts, then removes folders left empty
+
+Every file on the default branch gets a record. Files above the 5 MB indexing ceiling still appear
+and remain name-searchable; only their contents go unindexed, with the reason recorded.
+
+<Warning>
+  **Untrusted deltas are never applied.** A force-push, a branch reset, or a comparison that hits
+  GitHub's 300-file / 250-commit reporting caps produces a delta that cannot be relied on — the
+  connector re-baselines with a full sync instead. For the same reason, it refuses any pass that
+  would delete more than half of a repository's code records, since a truncated tree response can
+  look like a mass deletion.
+</Warning>
+
 ### Issue and Pull Requests Synchronization
 
 <Note>
@@ -346,10 +581,46 @@ For each **issue and pull request**, the connector:
   Comments are stored as **BlockGroups** within the parent issue or pull request **BlocksContainer** (not as separate top-level records). That keeps threads organized and ensures comments are removed when the parent record is deleted.
 </Note>
 
+### Permission handling
+
+Each repository's collaborator list is read from GitHub and translated into permissions. That list
+already includes team members, outside collaborators, default-organization-permission members, and
+owners, so no separate team grant is needed.
+
+| GitHub role | PipesHub permission |
+|-------------|---------------------|
+| **Admin** | Owner |
+| **Maintain** | Write |
+| **Write (push)** | Write |
+| **Triage** | Read |
+| **Read (pull)** | Read |
+
+Every role grants access to all three containers — GitHub's `pull` role already conveys read
+access to code alongside issues and pull requests.
+
+**Repository visibility adds further access**, matching what GitHub itself exposes:
+
+| Visibility | Who gets read access in PipesHub |
+|------------|----------------------------------|
+| **Public** | Everyone in your PipesHub organization |
+| **Internal** | Each resolved organization member individually |
+| **Private** | Collaborators only |
+
+A GitHub user is matched to a PipesHub account **by email address** — see *Prerequisite: Email
+Visibility* in the Configuration Guide.
+
 ### Checkpoint Management
 
-After each successful sync:
-- Stores the latest issue update timestamp as checkpoint for each repository
+Checkpoints are stored **per repository**, and each content type carries its own:
+
+- **Issues / pull requests** — the latest update timestamp seen, so the next run only asks GitHub
+  for items changed since then
+- **Code repository** — the default branch's commit SHA at the end of the last successful walk,
+  used as the base of the next comparison
+
+A checkpoint is only written after its stage succeeds. If a sync fails partway, the affected stage
+is simply repeated on the next run. All writes are idempotent, so retrying never produces
+duplicates.
 
 </Accordion>
 
@@ -374,18 +645,49 @@ Common causes:
 </Accordion>
 
 <Accordion title="How long does the initial sync take?">
-  The initial sync duration depends on the size of your GitHub repositories:
-  
-  | Approx Issue & PR count | Estimated Time |
-  |----------------|----------------|
-  | Small (< 1,000) | 1-5 minutes |
-  | Medium (1,000 - 10,000 ) | 5-15 minutes |
-  | Large (10,000 - 50,000 ) | 15-45 minutes |
+  The initial sync duration depends on how much content your GitHub repositories hold. A record is
+  a single item — an issue, a pull request, a code file, or an attachment.
+
+  | Approx record count | Estimated time |
+  |---------------------|----------------|
+  | Up to 10,000 | Under 10 minutes |
+  | 10,000 to 50,000 | 10 to 30 minutes |
+  | 50,000 to 100,000 | 30 to 60 minutes |
+  | Over 100,000 | Roughly 1 hour per 100,000 records |
+
+  As a rule of thumb, the connector syncs about **100,000 records per hour**.
 
 </Accordion>
 
 <Accordion title="Why do I see no issues after authenticating?">
   The most common causes are missing scopes or selecting the wrong GitHub account. Re-run authentication, ensure the PipesHub email and GitHub account email matches.
+</Accordion>
+
+<Accordion title="Can I sync only specific organizations or repositories?">
+
+Yes. On the **Configure Records** tab:
+
+- Use the **Github Organizations** filter with the `In` operator to restrict the sync to selected
+  organizations, or `Not In` to exclude them
+- Use the **Repositories** filter the same way to target individual repositories
+
+Narrowing scope here also speeds up sync and conserves your GitHub API budget, because excluded
+repositories are never fetched at all. Both fields are live pickers that search GitHub as you type.
+
+</Accordion>
+
+<Accordion title="Is source code synced, and from which branch?">
+
+Yes. Every file and folder on each repository's **default branch** is synced as a searchable
+record, with the language detected from the file path. Subsequent syncs only fetch what changed
+between commits, and renames are preserved rather than being recreated as new files.
+
+Non-default branches are not synced. Pull request diffs still capture the changes proposed from
+other branches, so review discussion remains searchable.
+
+You can turn code sync off entirely with the **Index Code Files** indexing filter — a common
+choice for large monorepos where only issue and pull-request context is wanted.
+
 </Accordion>
 
 </AccordionGroup>

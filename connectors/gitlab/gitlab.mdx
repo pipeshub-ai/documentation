@@ -28,31 +28,47 @@ icon: "/logo/gitlab.png"
 
 ## Overview
 
-GitLab is an all-in-one DevOps platform that provides a unified application for the entire software development lifecycle. Trusted by engineering and operations teams to streamline the transition from code planning to production, it integrates source code management, continuous integration and continuous deployment (CI/CD), security testing, and project management tools into a single, cohesive ecosystem.
+GitLab is a DevOps platform for hosting code, tracking work, and reviewing changes. The connector
+brings your projects, work items, merge requests, and source code into PipesHub so you can search
+across all of them in one place.
 
-## GitLab Data Structure
+### GitLab Data Structure
 
-The connector understands various entities of GitLab.
+PipesHub mirrors how GitLab organizes your content:
 
-**Projects → Code → Work items & Merge Requests → Comments/Attachments**
+```
+Group
+└─ Project
+   ├─ Work items         → comments, attachments
+   ├─ Merge requests     → commits, diffs, review comments
+   └─ Code repository    → folders and files
+```
 
 | Entity | Description |
 |--------|-------------|
-| **Projects** | Top-level containers for code |
-| **Work Items** | Work items such as issues, tasks, and incidents |
+| **Group** | Groups and subgroups that own the projects beneath them |
+| **Project** | The main container, split into the three sections below |
+| **Work Items** | Issues, tasks, and incidents |
 | **Merge Requests** | Proposed code changes with reviews and merge history |
-| **Comments** | Discussion on work items, merge requests, and review feedback |
-| **Attachments** | Files and images uploaded to or embedded in work items, merge requests, and comments |
+| **Code Repository** | Source files and folders on the default branch |
+| **Comments** | Discussion on work items and merge requests |
+| **Attachments** | Files and images added to work items, merge requests, and comments |
+
+Splitting each project into three sections lets permissions apply to the right part of a project.
+A Guest can reach a project's work items, for example, without gaining access to its source code.
 
 ### What Gets Synced
 
 The connector indexes the following content for AI-powered search:
 
-- **Projects**: All accessible projects and their code on the default branch
-- **Work Items**: All work items and their comments and attachments
-- **Merge Requests**: Same body, comment, and attachment coverage as work items, plus **commit SHAs**, **changed files with patches (diffs)**, **per-file review comments** on the diff, and **MR review submissions** (approve / request changes / comment); assignee and created/updated timestamps
-- **Comments**: All comments on work items, merge requests, and review feedback
-- **Attachments**: All attachments on work items, merge requests, and comments
+- **Projects**: All projects you have access to, and the groups and subgroups that contain them
+- **Code Files**: Source files and folders on each project's default branch
+- **Work Items**: Issues, tasks, and incidents with title, description, status, and labels
+- **Merge Requests**: Description, commits, changed files with diffs, and review comments
+- **Comments**: Full comment threads on work items and merge requests with author information
+- **Attachments**: Files and images attached to work items, merge requests, and comments
+- **Users**: GitLab users in the groups and projects being synced
+- **Permissions**: Project access controls are preserved
 
 ## Configuration Guide
 
@@ -69,7 +85,7 @@ The GitLab connector uses **OAuth 2.0** for secure authentication.
   OAuth 2.0 is used as it provides secure, token-based access without requiring users to share their passwords.
 </Info>
 
-### ⚠️ Critical User Configuration Requirement
+### Prerequisite: Email Visibility
 
 <Warning>
   <div className="text-lg font-semibold">
@@ -77,16 +93,12 @@ The GitLab connector uses **OAuth 2.0** for secure authentication.
   </div>
 </Warning>
 
-### Why Email Visibility Matters
-
-PipesHub uses email addresses to match GitLab users with their permissions. If a user's email is hidden:
+**Why email visibility matters.** PipesHub uses email addresses to match GitLab users with their permissions. If a user's email is hidden:
 - PipesHub cannot identify the user when syncing permissions
 - Records will appear invisible to that user even if they have proper access in GitLab
 - The user won't be able to see any content they should have access to
 
-### How to Configure Email Visibility
-
-Every user must complete these steps in their GitLab account:
+**How to configure email visibility.** Every user must complete these steps in their GitLab account:
 
 1. Sign in to your GitLab account.
 2. Click on your **Profile picture** in the top right → Select **"Edit profile"**
@@ -112,12 +124,13 @@ Every user must complete these steps in their GitLab account:
 </div>
 5. Click **Update profile settings** to save updated details
 <Warning>
-  **DO NOT select "Do not show on profile"** - this will prevent PipesHub from accessing your email address and matching you to permissions, making all records invisible to you.
+  **Do not select "Do not show on profile"**, and make sure the address you pick **matches your
+  PipesHub account email**. Either mistake prevents PipesHub from matching you to permissions,
+  making all records invisible to you.
 </Warning>
 
-<Info>
-  This is a **per-user setting** that must be configured by each individual user in your organization. Administrators cannot change this setting for other users. We recommend communicating this requirement to your team during the GitLab connector rollout.
-</Info>
+This is a per-user setting — administrators cannot change it for other users, so communicate the
+requirement to your team during the GitLab connector rollout.
 
 ### Generating Client ID and Secret
 
@@ -187,6 +200,9 @@ Every user must complete these steps in their GitLab account:
 4. Enter your OAuth 2.0 credentials:
    - **Application (Client) ID**: From previous step
    - **Client Secret**: From previous step
+   - **GitLab Instance URL** *(optional)*: Leave blank or set to `https://gitlab.com` for
+     GitLab.com. For a **self-managed or GitLab EE** deployment, enter your host — for example
+     `https://gitlab.mycompany.com`
 <div className="text-center">
   <img
     src="/images/connectors/gitlab/ph-gitlab-oauth-creds.png"
@@ -194,6 +210,13 @@ Every user must complete these steps in their GitLab account:
     className="block mx-auto w-11/12"
   />
 </div>
+
+<Info>
+  **Self-managed GitLab.** When you set an instance URL, create the OAuth application on *that*
+  instance (`https://your-host/-/user_settings/applications`), not on gitlab.com. The redirect URI
+  and scopes are otherwise identical.
+</Info>
+
 5. Click **"Next"** to move forward
 
 ### Step 5: Authorize the Connection
@@ -253,6 +276,55 @@ Configure your synchronization preferences:
   **Scheduled sync** runs automatically at the specified intervals, keeping your data up-to-date without manual intervention. **Manual sync** requires you to trigger synchronization on-demand.
 </Note>
 
+#### Sync Filters
+
+Sync filters control **what the connector fetches from GitLab**. Anything excluded here is never
+retrieved, so narrowing scope also shortens sync time.
+
+| Filter | Type | What it does |
+|--------|------|--------------|
+| **GitLab Groups** | Multi-select | Limit the sync to projects inside these groups or subgroups. Uses the namespace path, e.g. `my-org/engineering`. Subgroups of a selected group are included |
+| **Repositories** | Multi-select | Limit the sync to specific projects. Uses `path_with_namespace`, e.g. `my-org/my-repo` |
+| **Modified Date** | Date range | Only sync work items and merge requests last modified in this window |
+| **Created Date** | Date range | Only sync work items and merge requests created in this window |
+
+<div className="text-center">
+  <img
+    src="/images/connectors/gitlab/ph-gitlab-sync-filters.png"
+    alt="GitLab connector sync filters in PipesHub"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+**Groups** and **Repositories** are live pickers — start typing and PipesHub queries your GitLab
+instance for matches. Each supports an **In** operator (sync only these) or **Not In** (sync
+everything except these).
+
+The date filters apply to **work items and merge requests only**. Code files are always synced from
+the current state of the default branch, so a date filter does not narrow them.
+
+#### Indexing Filters
+
+Indexing filters control **what gets indexed for search** from the content that was fetched.
+
+| Filter | Default | What it does |
+|--------|---------|--------------|
+| **Index Issues** | On | Index work items (issues, tasks, incidents) with their comments and attachments |
+| **Index Merge Requests** | On | Index merge requests with their diffs, review comments, and commits |
+| **Index Code Files** | On | Index the source files on each project's default branch |
+| **Enable Manual Indexing** | Off | Records are synced but held unindexed until you trigger indexing yourself |
+
+<div className="text-center">
+  <img
+    src="/images/connectors/gitlab/ph-gitlab-indexing-filters.png"
+    alt="GitLab connector indexing filters in PipesHub"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+Turning **Index Code Files** off is the usual choice for large monorepos where you only want issue
+and merge-request context. Existing code records stay in place; they simply stop being refreshed.
+
 #### Save and Activate
 
 1. Click **"Save Configuration"** to save your configuration.
@@ -260,25 +332,31 @@ Configure your synchronization preferences:
 3. The connector will verify credentials and begin initial synchronization
 4. Monitor the **Indexing Progress** to track sync completion
 
+</div>
+</Accordion>
+
+</AccordionGroup>
+
 ## Supported Features
 
 The GitLab connector syncs the following data from your GitLab projects:
 
-- **Projects**: All accessible projects and their code on the default branch
+- **Groups & Projects**: All accessible groups, subgroups, and projects
+- **Code repository**: Every file and folder on each project's default branch, with language
+  detection and full-text indexing of file contents
 - **Work Items**: All work items (issues, tasks, and incidents) content including description, status, comments
 - **Merge Requests**: Full merge request content including description, merge status, commit history, review comments, comments and file changes
 - **Comments**: All comments on work items, merge requests with author information
 - **Attachments**: Files attached to work items, merge requests (images, documents, etc.)
+- **Users & memberships**: GitLab users and their project access levels, used to apply permissions
 
 ## Useful Links
 
 - **GitLab Applications**: [user_settings/applications](https://gitlab.com/-/user_settings/applications)
 - **OAuth 2.0 Documentation**: [api/oauth2](https://docs.gitlab.com/api/oauth2/)
 - **GitLab REST API Documentation**: [gitlab/rest](https://docs.gitlab.com/api/rest/)
-</div>
-</Accordion>
 
-</AccordionGroup>
+---
 
 ## Troubleshooting
 
@@ -311,6 +389,29 @@ The GitLab connector syncs the following data from your GitLab projects:
 - Disable and re-enable the connector to re-authenticate
 - Check if the OAuth app is still active in GitLab applications
 
+**No code files synced:**
+- Confirm **Index Code Files** is enabled under Indexing Filters
+- Verify the OAuth application includes the `read_repository` scope — without it the connector
+  can read issues and merge requests but not repository contents
+- Only the **default branch** is synced; content on other branches is expected to be absent
+- Very large files still appear as records but their contents are not indexed
+
+**A user sees no records even though they have GitLab access:**
+- Their GitLab **public email** is probably not set. Ask them to set it (see the email visibility
+  prerequisite above) — the next sync will grant their permissions automatically
+- Their GitLab email must match their PipesHub account email
+- Guests (access level 10) can reach work items only, by design — not merge requests or code
+
+**Nothing syncs on a self-managed instance:**
+- Verify the **GitLab Instance URL** is the base host with no trailing slash and no path
+- Confirm the OAuth application was created on that instance, not on gitlab.com
+- Check that the instance is reachable from the PipesHub deployment
+
+**An admin or auditor account returns no projects:**
+- EE auditor accounts hit a documented GitLab limitation where listing endpoints return nothing.
+  The connector retries with a membership-scoped query, which narrows coverage. Use an instance
+  administrator account for full coverage
+
 <Warning>
   If you modify OAuth application settings in GitLab applications (Client ID, Secret, callback URL), you must update the configuration in PipesHub and re-authorize the connection.
 </Warning>
@@ -329,12 +430,14 @@ The GitLab connector follows a structured synchronization process to ensure all 
 
 ### Sync Overview
 
-The `run_sync` method executes a complete synchronization cycle in a specific order:
+Every sync run executes the same ordered cycle:
 
-| Step | Function | Data Synced | Purpose |
-|------|----------|-------------|---------|
-| 1 | `_sync_users()` | Users | Sync GitLab users of groups and projects |
-| 2 | `_sync_all_project()` | Project code, work-items and merge-requests | Sync project code, work-items and merge-requests of projects |
+| Step | Stage | What happens |
+|------|-------|--------------|
+| 1 | **User sync** | Resolve GitLab users of the in-scope groups and projects and match them to PipesHub accounts by email |
+| 2 | **Project sync** | Discover projects, create the group → project → container hierarchy, and apply per-member permissions |
+| 3 | **Content sync** | For each project, sync work items, merge requests, and the code repository |
+| 4 | **Timestamp backfill** | A background pass fills in authoritative commit timestamps for code files after the main sync completes |
 
 ### Full Sync vs Incremental Sync
 
@@ -342,6 +445,7 @@ The connector automatically determines whether to perform a full or incremental 
 
 **Full Sync** occurs when:
 - First-time synchronization (no sync checkpoint exists)
+- The previous incremental attempt failed and had to re-baseline
 - Manual full sync is triggered
 
 **Incremental Sync** occurs when:
@@ -350,15 +454,71 @@ The connector automatically determines whether to perform a full or incremental 
 
 ### User Synchronization
 
-1. **User Fetch**: Retrieves all users from GitLab groups and projects with their account IDs and emails 
+1. **Scope resolution**: If Group or Repository sync filters are set, only members of those
+   entities are walked — without this a connector targeting a few groups on a large instance
+   would scan every group the account can see
+2. **Member fetch**: Retrieves group and project members with their access levels
+3. **Email enrichment**: Fetches each member's full profile to read their **public email**, then
+   matches it to a PipesHub account
 
 ### Project Synchronization
 
-1. **Project Fetch**: Retrieves all projects from GitLab with their code, work-items and merge-requests
-2. **Role Assignment**: Syncs project-specific roles (Guest, Planner, Developer, etc.)
+1. **Project fetch**: Retrieves projects in scope, honoring the Group and Repository filters
+2. **Container creation**: Each project becomes a record group with three children — *Work items*,
+   *Merge requests*, and *Code repository*. Parent GitLab groups are created above them
+3. **Permission assignment**: Member access levels are translated into per-container permissions
+   (see *Permission handling* below)
+
+Containers are keyed on the project's **numeric GitLab ID**, not its path. Renaming or moving a
+project between groups therefore does not orphan its records or reset its sync checkpoint.
 
 ### Code Repository Synchronization
-1. **Code Repository Fetch**: Retrieves the code repository of the project on the default branch
+
+Code sync tracks the project's **default branch** and is checkpointed on the branch's current
+commit SHA.
+
+**Full sync** (first run, or when the delta cannot be trusted):
+
+1. Walks the entire repository tree, paginating through it
+2. Creates a folder record for each directory and a code file record for each file, with the
+   file's language detected from its path
+3. Prunes records for files that no longer exist in the tree
+
+**Incremental sync** (a checkpoint SHA exists):
+
+1. Compares the checkpointed commit against the current branch head
+2. Classifies each changed path as added, modified, deleted, or renamed — a delete-and-add pair
+   for the same content is reconciled back into a **rename**, so the record keeps its identity and
+   history rather than being recreated
+3. Applies deletions, renames, and upserts, then removes folders left empty
+
+#### What is excluded from code sync
+
+Not every file on the default branch becomes a record. The connector skips content that adds noise
+without adding meaning:
+
+| Excluded | Examples |
+|----------|----------|
+| Dependency directories | `node_modules`, `vendor`, `third_party`, `site-packages`, `venv` |
+| Build output and caches | `dist`, `build`, `target`, `out`, `.next`, `__pycache__`, `.pytest_cache`, `coverage` |
+| Lock files | `package-lock.json`, `yarn.lock`, `poetry.lock`, `Cargo.lock`, `Gemfile.lock` |
+| Minified and derived files | `*.min.js`, `*.min.css`, `*.map`, `*.snap` |
+| Generated code | Protobuf output (`*.pb.go`, `*_pb2.py`), `*.generated.*`, files under `generated/` |
+| Dot-files | Any file whose name begins with `.` |
+| Editor and VCS metadata | `.git`, `.idea`, `.vscode`, `.gradle` |
+
+This keeps search results focused on code your team actually wrote. It also means the file count in
+PipesHub will be lower than the file count in the repository — that is expected.
+
+<Warning>
+  **Deletion safety valve.** If a single tree walk returns a truncated or incomplete file list,
+  applying it would delete a large fraction of the project's code records. The connector refuses
+  any pass that would remove more than half of a project's files, leaving them for the next
+  complete walk instead.
+</Warning>
+
+Because the checkpoint is only advanced after a successful pass, a failed sync is simply redone on
+the next run. All writes are idempotent, so retrying never produces duplicates.
 
 ### Work Item Synchronization
 
@@ -393,10 +553,51 @@ For each **work-item and merge-request**, the connector:
   Comments are stored as **BlockGroups** within the parent work item or merge request **BlocksContainer** (not as separate top-level records). That keeps threads organized and ensures comments are removed when the parent record is deleted.
 </Note>
 
+### Permission handling
+
+Each project's member list is read from GitLab and translated into per-user permissions. Because a
+project is split into three containers, a member's GitLab **access level** decides which of them
+they can reach:
+
+| GitLab role | Access level | Work items | Merge requests | Code repository |
+|-------------|--------------|:----------:|:--------------:|:---------------:|
+| **Guest** | 10 | ✅ | — | — |
+| **Reporter** | 20 | ✅ | ✅ | ✅ |
+| **Developer** | 30 | ✅ | ✅ | ✅ |
+| **Maintainer** | 40 | ✅ | ✅ | ✅ |
+| **Owner** | 50 | ✅ | ✅ | ✅ |
+
+A GitLab user is matched to a PipesHub account **by email address**, which is why the email
+visibility prerequisite in the Configuration Guide matters. A member whose email cannot be resolved
+gets no permission edge; once they make their email visible, the next sync grants their access
+automatically.
+
+If member enumeration fails for a project, the connector falls back to granting the connector
+creator alone. It never falls back to granting everyone.
+
+**Admin and auditor accounts.** If the authenticating account is an instance administrator or an
+EE auditor, the connector widens its listing scope to every project and group that account can
+read, instead of only those it holds a membership row on.
+
+<Warning>
+  GitLab documents a [known issue](https://docs.gitlab.com/administration/auditor_users/) where the
+  auditor flag does not actually grant read access through most listing endpoints. When an auditor
+  account returns zero groups or projects, the connector automatically retries with a
+  membership-scoped query and logs a warning. If you expect instance-wide coverage and see that
+  warning, use an administrator account instead.
+</Warning>
+
 ### Checkpoint Management
 
-After each successful sync:
-- Stores the latest work items, merge requests update timestamps as checkpoint for each project
+Checkpoints are stored **per project**, and each content type carries its own:
+
+- **Work items / merge requests** — the latest update timestamp seen, so the next run only asks
+  GitLab for items changed since then
+- **Code repository** — the default branch's commit SHA at the end of the last successful walk,
+  used as the base of the next comparison
+
+A checkpoint is only written after its stage succeeds. If a sync fails partway, the affected
+stage is simply repeated on the next run.
 
 </Accordion>
 
@@ -421,18 +622,51 @@ Common causes:
 </Accordion>
 
 <Accordion title="How long does the initial sync take?">
-  The initial sync duration depends on the size of your GitLab projects:
-  
-  | Approx Code files, Work items & MR count | Estimated Time |
-  |----------------|----------------|
-  | Small (< 1,000) | 1-5 minutes |
-  | Medium (1,000 - 10,000 ) | 5-15 minutes |
-  | Large (10,000 - 50,000 ) | 15-45 minutes |
+  The initial sync duration depends on how much content your GitLab projects hold. A record is a
+  single item — a work item, a merge request, a code file, or an attachment.
+
+  | Approx record count | Estimated time |
+  |---------------------|----------------|
+  | Up to 10,000 | Under 10 minutes |
+  | 10,000 to 50,000 | 10 to 30 minutes |
+  | 50,000 to 100,000 | 30 to 60 minutes |
+  | Over 100,000 | Roughly 1 hour per 100,000 records |
+
+  As a rule of thumb, the connector syncs about **100,000 records per hour**.
 
 </Accordion>
 
 <Accordion title="Why do I see no records after authenticating?">
   The most common causes are missing scopes or selecting the wrong GitLab account. Re-run authentication, ensure the PipesHub email and GitLab account emails match.
+</Accordion>
+
+<Accordion title="Can I sync only specific groups or projects?">
+
+Yes. On the **Configure Records** tab:
+
+- Use the **GitLab Groups** filter with the `In` operator to restrict the sync to selected groups
+  and their subgroups, or `Not In` to exclude them
+- Use the **Repositories** filter the same way to target individual projects
+
+Narrowing scope here also speeds up sync, because excluded projects are never fetched at all.
+Both fields are live pickers that query your GitLab instance as you type.
+
+</Accordion>
+
+<Accordion title="Does the connector sync all branches?">
+
+No. Code files are synced from each project's **default branch** only. Merge request diffs still
+capture the changes proposed from other branches, so review discussion remains searchable, but
+the file records themselves reflect the default branch.
+
+</Accordion>
+
+<Accordion title="Does it work with self-managed GitLab?">
+
+Yes. Set the **GitLab Instance URL** field to your host (for example
+`https://gitlab.mycompany.com`) when configuring authentication, and create the OAuth application
+on that instance rather than on gitlab.com. Leave the field blank for GitLab.com.
+
 </Accordion>
 
 </AccordionGroup>

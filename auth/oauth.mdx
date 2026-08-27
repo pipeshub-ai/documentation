@@ -58,14 +58,17 @@ Go to **Workspace settings → Authentication** and add the OAuth method.
 | **Authorization URL** | Yes | Where PipesHub sends people to sign in. |
 | **Token Endpoint** | Yes | Where PipesHub exchanges the authorisation code for a token. |
 | **User Info Endpoint** | Yes | Where PipesHub reads the signed-in person's identity. |
-| **Scope** | Yes | Space-separated scopes to request. `openid email profile` covers most providers. |
+| **Scope** | No | Space-separated scopes to request. Defaults to `openid email profile`, which covers most providers. |
 | **Redirect URI** | Shown, not editable | PipesHub fills this in and displays it read-only. Copy it into your provider. |
 | **Enable JIT provisioning** | No | Create a PipesHub account on first sign-in. **On by default.** |
 
 <Note>
-Every field except JIT provisioning is required. PipesHub uses a confidential
-client: the authorisation code is exchanged for a token server-side using the
-client secret, so a public client with PKCE and no secret will not work here.
+Provider Name, Client ID, Client Secret, Authorization URL, Token Endpoint and
+User Info Endpoint are all required. Scope and JIT provisioning are optional.
+
+PipesHub uses a confidential client: the authorisation code is exchanged for a
+token server-side using the client secret, so a public client with PKCE and no
+secret will not work here.
 </Note>
 
 <Warning>

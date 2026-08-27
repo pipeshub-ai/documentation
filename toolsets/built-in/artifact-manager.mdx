@@ -1,0 +1,33 @@
+---
+title: "Artifact Manager"
+description: "Saves and retrieves versioned artifacts an agent has composed, so output survives beyond a single reply"
+---
+
+# Artifact Manager
+
+Saves and retrieves versioned artifacts an agent has composed, so output survives beyond a single reply.
+
+This toolset is **built in**. It needs no credentials and no external account, and it is loaded for every deployment.
+
+## Available Tools
+
+| Tool | What it does |
+|------|--------------|
+| `artifacts.get_artifact_download_url` | Get a short-lived, permission-checked download URL for an existing artifact |
+| `artifacts.get_record_download_url` | Get a download URL for a record (uploaded file or connector record) |
+| `artifacts.list_artifacts` | List every artifact generated so far in this conversation |
+| `artifacts.promote_artifact` | Promote a staging artifact to visible, surfacing it to the user as a download card |
+| `artifacts.save_artifact` | Save text/data content you composed as a new versioned artifact, or update an existing one with the same name |
+| `artifacts.update_artifact` | Update an existing artifact (by artifact_id) with new content, creating a new version |
+
+## Using it in an agent
+
+1. Open **Agents** and create or edit an agent.
+2. From the **Tools** panel, drag this toolset onto the canvas and connect it to the Agent Core.
+3. To let the same agent also search indexed content, add a node from the **Knowledge** panel and connect that too.
+
+The agent chooses which tool to call from the descriptions above, so a specific instruction routes better than a vague one.
+
+## Related
+
+- [Toolsets overview](/toolsets/overview)

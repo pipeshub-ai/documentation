@@ -62,16 +62,19 @@ That URL is written to `.env` as `FRONTEND_PUBLIC_URL`, and it is what OAuth cal
 
 ## Choosing your backends
 
-The installer asks which graph database, message broker and key-value store to use, and writes the answers to `.env`. The defaults suit most deployments:
+The installer asks which graph database, message broker and key-value store to use, and writes the answers to `.env`:
 
-| Component | Default | Alternative |
+| Component | `.env` variable | Default |
 |---|---|---|
-| Graph database | Neo4j | ArangoDB |
-| Vector database | Qdrant | OpenSearch, Redis |
-| Key-value store | Redis | etcd |
-| Message broker | Redis Streams | Kafka |
+| Graph database | `DATA_STORE` | `neo4j` (or `arangodb`) |
+| Key-value store | `KV_STORE_TYPE` | `redis` (or `etcd`) |
+| Message broker | `MESSAGE_BROKER` | `kafka` on a full install, `redis` on slim |
 
-Kafka is worth choosing when you expect sustained high-volume indexing across many connectors. Redis Streams is simpler to run and is the right default otherwise.
+The vector database is Qdrant, and the installer does not ask about it. The
+provider is chosen by `VECTOR_DB_TYPE`, which defaults to `qdrant` when unset,
+and the Docker Compose deployment does not set that variable.
+
+Kafka is worth choosing when you expect sustained high-volume indexing across many connectors. Redis Streams is simpler to run, and is what the slim deployment uses.
 
 ## Day-two operations
 

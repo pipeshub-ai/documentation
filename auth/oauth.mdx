@@ -54,15 +54,29 @@ Go to **Workspace settings → Authentication** and add the OAuth method.
 |---|---|---|
 | **Provider Name** | Yes | The label shown on the sign-in button, for example `Okta` or `Company SSO`. |
 | **Client ID** | Yes | The client identifier from your provider. |
-| **Client Secret** | No | Required for a confidential client. Leave blank only if your provider issued a public client that uses PKCE. Stored encrypted. |
-| **Authorization URL** | No | Where PipesHub sends people to sign in. |
-| **Token Endpoint** | No | Where PipesHub exchanges the code for a token. Never exposed to the browser. |
-| **User Info Endpoint** | No | Where PipesHub reads the signed-in person's identity. Never exposed to the browser. |
-| **Scope** | No | Space-separated scopes to request. `openid email profile` covers most providers. |
-| **Redirect URI** | No | Override the callback address. Leave blank to use the default described in step 1. |
+| **Client Secret** | Yes | The client secret from your provider. Stored encrypted. |
+| **Authorization URL** | Yes | Where PipesHub sends people to sign in. |
+| **Token Endpoint** | Yes | Where PipesHub exchanges the authorisation code for a token. |
+| **User Info Endpoint** | Yes | Where PipesHub reads the signed-in person's identity. |
+| **Scope** | Yes | Space-separated scopes to request. `openid email profile` covers most providers. |
+| **Redirect URI** | Shown, not editable | PipesHub fills this in and displays it read-only. Copy it into your provider. |
 | **Enable JIT provisioning** | No | Create a PipesHub account on first sign-in. **On by default.** |
 
-The token endpoint, user info endpoint, and client secret are held server-side and are never sent to the browser, so they are not visible to someone inspecting the sign-in page.
+<Note>
+Every field except JIT provisioning is required. PipesHub uses a confidential
+client: the authorisation code is exchanged for a token server-side using the
+client secret, so a public client with PKCE and no secret will not work here.
+</Note>
+
+<Warning>
+**Do not treat the values on this page as hidden from end users.** Configure this
+method as though the client secret could be read by anyone who can reach the
+sign-in page, and rely on the redirect URI allow-list at your identity provider —
+not on the secret staying private — as the control that stops it being reused.
+
+Register the exact redirect URI and nothing broader, so an authorisation code
+cannot be redirected anywhere else.
+</Warning>
 
 ## Just-in-time provisioning
 

@@ -30,16 +30,26 @@ On a host with no internet access, move the images across yourself.
 **On a machine that does have access,** pull and save the images:
 
 ```bash
-docker pull pipeshub/pipeshub-ai:latest
-docker save pipeshub/pipeshub-ai:latest -o pipeshub.tar
+docker pull pipeshubai/pipeshub-ai:latest
+docker pull pipeshubai/pipeshub-sandbox:latest
+docker pull mongo:8.0.17
+docker pull redis:7.4-bookworm
+docker pull qdrant/qdrant:v1.15
+docker pull neo4j:5.26.0          # or arangodb, if that is your graph backend
+
+docker save -o pipeshub-images.tar \
+  pipeshubai/pipeshub-ai:latest \
+  pipeshubai/pipeshub-sandbox:latest \
+  mongo:8.0.17 redis:7.4-bookworm qdrant/qdrant:v1.15 neo4j:5.26.0
 ```
 
-Repeat for the supporting images your deployment uses — MongoDB, Redis, Qdrant, and your chosen graph database.
+The sandbox image is required — PipesHub will not start without it. Add
+`zookeeper` and `kafka` images as well if you chose Kafka as the message broker.
 
 **On the air-gapped host,** load them and install without pulling:
 
 ```bash
-docker load -i pipeshub.tar
+docker load -i pipeshub-images.tar
 ./install.sh --no-pull
 ```
 

@@ -1,0 +1,72 @@
+---
+title: "Google Sheets Toolset"
+description: "Spreadsheets and cell values for AI agents"
+icon: "/logo/gsheets.png"
+---
+
+<div className="not-prose mt-10">
+  <div className="p-6 border border-gray-200 dark:border-gray-700 rounded-xl bg-blue-50 dark:bg-gray-800">
+    <div className="flex items-center gap-3 mb-4">
+      <img
+        src="/logo/gsheets.png"
+        alt="Google Sheets Logo"
+        className="w-8 h-8 object-contain flex-shrink-0"
+      />
+      <div className="text-xl font-semibold text-gray-900 dark:text-white">Google Sheets Toolset</div>
+    </div>
+    <p className="text-base text-gray-700 dark:text-gray-300 mt-0 mb-5">Spreadsheets and cell values</p>
+    <div className="flex flex-wrap items-center gap-2">
+      <span className="px-3 py-1.5 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 rounded-full text-sm font-medium">
+        Ready
+      </span>
+      <span className="px-3 py-1.5 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-full text-sm font-medium">
+        Google Workspace
+      </span>
+    </div>
+  </div>
+</div>
+
+## Overview
+
+The Google Sheets toolset lets PipesHub agents act in Google Sheets rather than only read from it. It exposes **7 tools**.
+
+If you want Google Sheets content to be searchable instead, you need a [connector](/connectors/overview). Connectors index data; toolsets perform actions. Many teams use both.
+
+## Setting it up
+
+Toolsets authorise separately from connectors, even where you already have a connector for the same service. A connector indexes data for search; a toolset lets an agent act.
+
+1. In PipesHub, go to **Workspace settings → Connectors → Your Connectors** and find this integration.
+2. Select **Setup** and copy the **redirect URI** that PipesHub displays. It ends with the capitalised toolset name, and it must be copied exactly.
+3. Create an OAuth application in the provider's developer console and register that redirect URI against it.
+4. Copy the client ID and client secret back into PipesHub and save.
+5. Select **Authorize** and complete the provider's consent screen.
+
+<Warning>
+The redirect URI must match character for character — scheme, host, port, and the capitalisation of the name at the end. A mismatch is the most common cause of a failed authorisation.
+</Warning>
+
+## Available Tools
+
+| Tool | What it does |
+|------|--------------|
+| `sheets.append_values` | Append values to a range |
+| `sheets.batch_get_values` | Batch get values from multiple ranges |
+| `sheets.clear_values` | Clear values from a range |
+| `sheets.create_spreadsheet` | Create a new Google Sheet |
+| `sheets.get_spreadsheet` | Get spreadsheet details |
+| `sheets.get_values` | Get values from a range |
+| `sheets.update_values` | Update values in a range |
+
+## Using it in an agent
+
+1. Open **Agents** and create or edit an agent.
+2. From the **Tools** panel, drag this toolset onto the canvas and connect it to the Agent Core.
+3. To let the same agent also search indexed content, add a node from the **Knowledge** panel and connect that too.
+
+The agent chooses which tool to call from the descriptions above, so a clear instruction such as "create an issue titled X" routes better than a vague one.
+
+## Related
+
+- [Toolsets overview](/toolsets/overview)
+- [Google Sheets API documentation](https://developers.google.com/sheets/api)

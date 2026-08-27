@@ -1,0 +1,71 @@
+---
+title: "FreshDesk Toolset"
+description: "Support tickets, replies, and agents for AI agents"
+icon: "/logo/freshdesk.png"
+---
+
+<div className="not-prose mt-10">
+  <div className="p-6 border border-gray-200 dark:border-gray-700 rounded-xl bg-blue-50 dark:bg-gray-800">
+    <div className="flex items-center gap-3 mb-4">
+      <img
+        src="/logo/freshdesk.png"
+        alt="FreshDesk Logo"
+        className="w-8 h-8 object-contain flex-shrink-0"
+      />
+      <div className="text-xl font-semibold text-gray-900 dark:text-white">FreshDesk Toolset</div>
+    </div>
+    <p className="text-base text-gray-700 dark:text-gray-300 mt-0 mb-5">Support tickets, replies, and agents</p>
+    <div className="flex flex-wrap items-center gap-2">
+      <span className="px-3 py-1.5 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 rounded-full text-sm font-medium">
+        Ready
+      </span>
+      <span className="px-3 py-1.5 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-full text-sm font-medium">
+        Support
+      </span>
+    </div>
+  </div>
+</div>
+
+## Overview
+
+The FreshDesk toolset lets PipesHub agents act in FreshDesk rather than only read from it. It exposes **8 tools**.
+
+If you want FreshDesk content to be searchable instead, you need a [connector](/connectors/overview). Connectors index data; toolsets perform actions. Many teams use both.
+
+## Setting it up
+
+Toolsets authorise separately from connectors, even where you already have a connector for the same service. A connector indexes data for search; a toolset lets an agent act.
+
+1. Create an API credential in the provider's own console, scoped to the least access the agent needs.
+2. In PipesHub, go to **Workspace settings → Connectors → Your Connectors** and find this integration.
+3. Select **Setup**, paste the credential, and save.
+
+<Note>
+An agent can do anything the credential allows. Prefer a dedicated, least-privilege credential over reusing an administrator's.
+</Note>
+
+## Available Tools
+
+| Tool | What it does |
+|------|--------------|
+| `freshdesk.create_agent` | Create a new agent in FreshDesk |
+| `freshdesk.create_note` | Add a note to an existing ticket |
+| `freshdesk.create_reply` | Add a reply to an existing ticket |
+| `freshdesk.create_ticket` | Create a new support ticket in FreshDesk |
+| `freshdesk.delete_ticket` | Delete a ticket |
+| `freshdesk.get_ticket` | Get details of a specific ticket |
+| `freshdesk.search_tickets` | Search for tickets with various filters |
+| `freshdesk.update_ticket` | Update an existing ticket |
+
+## Using it in an agent
+
+1. Open **Agents** and create or edit an agent.
+2. From the **Tools** panel, drag this toolset onto the canvas and connect it to the Agent Core.
+3. To let the same agent also search indexed content, add a node from the **Knowledge** panel and connect that too.
+
+The agent chooses which tool to call from the descriptions above, so a clear instruction such as "create an issue titled X" routes better than a vague one.
+
+## Related
+
+- [Toolsets overview](/toolsets/overview)
+- [FreshDesk API documentation](https://developers.freshdesk.com/api/)

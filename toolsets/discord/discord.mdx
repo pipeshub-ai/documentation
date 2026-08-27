@@ -1,0 +1,73 @@
+---
+title: "Discord Toolset"
+description: "Channels, messages, and roles for AI agents"
+icon: "/logo/discord.png"
+---
+
+<div className="not-prose mt-10">
+  <div className="p-6 border border-gray-200 dark:border-gray-700 rounded-xl bg-blue-50 dark:bg-gray-800">
+    <div className="flex items-center gap-3 mb-4">
+      <img
+        src="/logo/discord.png"
+        alt="Discord Logo"
+        className="w-8 h-8 object-contain flex-shrink-0"
+      />
+      <div className="text-xl font-semibold text-gray-900 dark:text-white">Discord Toolset</div>
+    </div>
+    <p className="text-base text-gray-700 dark:text-gray-300 mt-0 mb-5">Channels, messages, and roles</p>
+    <div className="flex flex-wrap items-center gap-2">
+      <span className="px-3 py-1.5 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 rounded-full text-sm font-medium">
+        Ready
+      </span>
+      <span className="px-3 py-1.5 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-full text-sm font-medium">
+        Communication
+      </span>
+    </div>
+  </div>
+</div>
+
+## Overview
+
+The Discord toolset lets PipesHub agents act in Discord rather than only read from it. It exposes **10 tools**.
+
+If you want Discord content to be searchable instead, you need a [connector](/connectors/overview). Connectors index data; toolsets perform actions. Many teams use both.
+
+## Setting it up
+
+Toolsets authorise separately from connectors, even where you already have a connector for the same service. A connector indexes data for search; a toolset lets an agent act.
+
+1. Create an API credential in the provider's own console, scoped to the least access the agent needs.
+2. In PipesHub, go to **Workspace settings → Connectors → Your Connectors** and find this integration.
+3. Select **Setup**, paste the credential, and save.
+
+<Note>
+An agent can do anything the credential allows. Prefer a dedicated, least-privilege credential over reusing an administrator's.
+</Note>
+
+## Available Tools
+
+| Tool | What it does |
+|------|--------------|
+| `discord.create_channel` | Create a new channel in a Discord guild |
+| `discord.create_role` | Create a new role in a Discord guild |
+| `discord.delete_channel` | Delete a Discord channel |
+| `discord.get_channel` | Get information about a Discord channel |
+| `discord.get_guild_channels` | Get all channels in a Discord guild |
+| `discord.get_guild_members` | Get members of a Discord guild |
+| `discord.get_guilds` | Get all guilds (servers) the bot has access to |
+| `discord.get_messages` | Get messages from a Discord text channel |
+| `discord.send_direct_message` | Send a direct message to a Discord user |
+| `discord.send_message` | Send a message to a Discord text channel |
+
+## Using it in an agent
+
+1. Open **Agents** and create or edit an agent.
+2. From the **Tools** panel, drag this toolset onto the canvas and connect it to the Agent Core.
+3. To let the same agent also search indexed content, add a node from the **Knowledge** panel and connect that too.
+
+The agent chooses which tool to call from the descriptions above, so a clear instruction such as "create an issue titled X" routes better than a vague one.
+
+## Related
+
+- [Toolsets overview](/toolsets/overview)
+- [Discord API documentation](https://discord.com/developers/docs/intro)

@@ -169,7 +169,7 @@ sudo apt install -y net-tools nginx git
 
   <Step title="Install PipesHub">
 
-Add your user to the `docker` group (see the Docker step above) and run `newgrp docker` (or log out and back in) **before** this step, so the installer can talk to the daemon without `curl | sudo bash`. Later commands still use `sudo docker` so they work if you skip the group.
+Add your user to the `docker` group (see the Docker step above) and run `newgrp docker` (or log out and back in) **before** this step. `curl | bash` and later `./install.sh --stop` / `--uninstall` talk to Docker without sudo, so they fail if you skip the group. Commands that start with `sudo docker` still work without it.
 
 The recommended install does not clone the repository. It downloads the installer and writes Compose files into `~/pipeshub`:
 
@@ -479,18 +479,26 @@ else
     ~/pipeshub-backups/qdrant-backup-${BACKUP_DATE}.snapshot
 fi
 
-# Backup Redis using BGSAVE (asynchronous — wait until it finishes)
-sudo docker compose -p pipeshub-ai exec -T redis redis-cli -a "${REDIS_PASSWORD}" --no-auth-warning BGSAVE
-while sudo docker compose -p pipeshub-ai exec -T redis redis-cli -a "${REDIS_PASSWORD}" --no-auth-warning INFO persistence \
-  | grep -q '^rdb_bgsave_in_progress:1'; do
-  sleep 1
-done
-if sudo docker compose -p pipeshub-ai exec -T redis redis-cli -a "${REDIS_PASSWORD}" --no-auth-warning INFO persistence \
-  | grep -q '^rdb_last_bgsave_status:ok'; then
-  sudo docker compose -p pipeshub-ai cp redis:/data/dump.rdb \
-    ~/pipeshub-backups/redis-backup-${BACKUP_DATE}.rdb
+# Backup Redis using BGSAVE (asynchronous — wait until it finishes).
+# The installer always writes REDIS_PASSWORD; omit -a only if you cleared it.
+REDIS_AUTH=(--no-auth-warning)
+[ -n "${REDIS_PASSWORD:-}" ] && REDIS_AUTH+=(-a "${REDIS_PASSWORD}")
+REDIS_BGSAVE=$(sudo docker compose -p pipeshub-ai exec -T redis redis-cli "${REDIS_AUTH[@]}" BGSAVE)
+echo "${REDIS_BGSAVE}"
+if echo "${REDIS_BGSAVE}" | grep -qi 'Background saving started'; then
+  while sudo docker compose -p pipeshub-ai exec -T redis redis-cli "${REDIS_AUTH[@]}" INFO persistence \
+    | grep -q '^rdb_bgsave_in_progress:1'; do
+    sleep 1
+  done
+  if sudo docker compose -p pipeshub-ai exec -T redis redis-cli "${REDIS_AUTH[@]}" INFO persistence \
+    | grep -q '^rdb_last_bgsave_status:ok'; then
+    sudo docker compose -p pipeshub-ai cp redis:/data/dump.rdb \
+      ~/pipeshub-backups/redis-backup-${BACKUP_DATE}.rdb
+  else
+    echo "Redis BGSAVE failed — not copying dump.rdb"
+  fi
 else
-  echo "Redis BGSAVE failed — not copying dump.rdb"
+  echo "Redis BGSAVE did not start — not copying dump.rdb"
 fi
 
 # Backup application data (safe to use tar for non-database files)
@@ -696,15 +704,26 @@ sleep 20
 sudo docker rm -f qdrant-restore
 sudo docker compose -p pipeshub-ai up -d qdrant
 
-# Restore Redis into a stopped volume. This stack runs --appendonly yes, so a
-# dump.rdb copied into a running container is ignored on the next start
-# (Redis loads /data/appendonlydir). Clear the AOF first.
+# Restore Redis. This stack runs --appendonly yes. If AOF is on at start and
+# there is no AOF manifest, Redis creates an empty AOF and ignores dump.rdb.
+# Load the RDB with AOF off, then turn AOF on so Redis rewrites AOF from the
+# restored dataset before Compose starts it the normal way.
 sudo docker compose -p pipeshub-ai stop redis
+sudo docker rm -f redis-restore 2>/dev/null || true
 sudo docker run --rm \
   -v pipeshub-ai_redis_data:/data \
   -v ~/pipeshub-backups:/backup \
   ubuntu \
   sh -c "rm -rf /data/appendonlydir && cp /backup/redis-backup-${BACKUP_DATE}.rdb /data/dump.rdb"
+sudo docker run -d --name redis-restore --network none \
+  -v pipeshub-ai_redis_data:/data \
+  redis:7.4-bookworm redis-server --appendonly no --dir /data
+until sudo docker exec redis-restore redis-cli ping 2>/dev/null | grep -q PONG; do sleep 1; done
+sudo docker exec redis-restore redis-cli CONFIG SET appendonly yes
+sleep 1
+until sudo docker exec redis-restore redis-cli INFO persistence \
+  | grep -q '^aof_rewrite_in_progress:0'; do sleep 1; done
+sudo docker stop redis-restore && sudo docker rm redis-restore
 sudo docker compose -p pipeshub-ai up -d redis
 
 # Restore application data

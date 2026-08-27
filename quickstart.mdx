@@ -46,7 +46,7 @@ If you see a white screen after deploying PipesHub while accessing it over HTTP,
     - Pull images and start the stack
     - Wait for PipesHub to become healthy, verify it is reachable, and print the URL
 
-    When prompted for a **Public HTTPS URL**, enter the URL you'll use to access PipesHub (e.g. `https://pipeshub.yourdomain.com`). This is written to `.env` as `FRONTEND_PUBLIC_URL` and is required for OAuth callbacks, email invites, and to avoid the HTTP white-screen issue described above. Leave it blank only for local, `localhost`-only access. You can update it later by editing `.env` and running `./install.sh --reconfigure` from the install directory, or by setting `PIPESHUB_PUBLIC_URL` for a non-interactive install.
+    When prompted for a **Public HTTPS URL**, enter the URL you'll use to access PipesHub (e.g. `https://pipeshub.yourdomain.com`). This is written to `.env` as `FRONTEND_PUBLIC_URL` and is required for OAuth callbacks, email invites, and to avoid the HTTP white-screen issue described above. Leave it blank only for local, `localhost`-only access. You can update it later by editing `.env` and running `./install.sh --reconfigure` from the directory the installer prints, or by setting `PIPESHUB_PUBLIC_URL` for a non-interactive install.
 
     #### Installer options
 
@@ -85,6 +85,9 @@ For more information, refer to our [Onboarding Guide](/onboarding).
 </Step>
 
 <Step title="🛑 To stop the services">
+
+`curl | bash` does not `cd` your shell. The success banner prints the directory for later commands — `./pipeshub` by default, or `PIPESHUB_DIR` if you set it. `--stop`, `--upgrade`, `--reconfigure`, and `--uninstall` all run from there.
+
 ```bash
 cd pipeshub
 ./install.sh --stop
@@ -105,4 +108,4 @@ cd pipeshub-ai
 ./install.sh
 ```
 
-Building local images from source requires this cloned-repo path (`./install.sh --build`). The one-command installer above always uses prebuilt images.
+Building local images from source requires this cloned-repo path (`./install.sh --build`). The one-command installer above always uses prebuilt images. From a clone, run `--stop`, `--upgrade`, `--reconfigure`, and `--uninstall` from this same repository root.

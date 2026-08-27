@@ -1,51 +1,51 @@
 ---
 title: "Development"
-description: "Preview changes locally to update your docs"
+description: "Build PipesHub from source for local development"
 icon: "code"
 ---
 
 ## Requirements
 
 - Git
-- Docker with Compose
+- Docker with Compose v2
 
 ## Setup
 
 ### 📦 Developer Build
 
+Use this path when you want to run images built from your checkout instead of pulling prebuilt images from Docker Hub.
+
 <Steps>
   <Step title="🔁 Clone the repository">
     ```bash
     git clone https://github.com/pipeshub-ai/pipeshub-ai.git
+    cd pipeshub-ai
     ```
   </Step>
 
-  <Step title="📁 Navigate to the deployment folder">
+  <Step title="🚀 Build and start">
     ```bash
-    cd pipeshub-ai/deployment/docker-compose
-    ```
-  </Step>
-  
-  <Step title="🛠️ Copy and update the environment file">
-    ```bash
-    cp env.template .env
+    ./install.sh --build
     ```
 
-    👉 Edit the `.env` file to set secrets, passwords, and the public URLs of the Frontend and Connector services.
+    The installer writes a `.env`, builds the local image, starts Compose, and waits until the app is reachable. Open **http://localhost:3000** once it finishes.
 
     <Info>
-      These are required for webhook notifications and real-time updates.
-    </Info>
+      `docker-compose.build.neo4j.yml` is a **legacy standalone build file**, not what `./install.sh --build` drives. It hardcodes Neo4j + Kafka (no Arango/etcd profiles), builds `pipeshub-ai:latest`, and pins port 3000. Do not run it against a stack the installer already started — that builds a second image into the same Compose project.
 
+      It does not generate `.env`. Copy and edit one first, or Mongo/Neo4j start with empty passwords:
+
+      ```bash
+      cd deployment/docker-compose
+      cp env.template .env   # then set secrets, passwords, and public URLs
+      docker compose -f docker-compose.build.neo4j.yml -p pipeshub-ai up --build -d
+      ```
+    </Info>
   </Step>
-  <Step title="🚀 Start the development deployment with build">
-    ```bash
-    docker compose -f docker-compose.build.neo4j.yml -p pipeshub-ai up --build -d
-    ```
-  </Step>
+
   <Step title="Onboarding Setup">
 
-    1. After docker build is up and running, **open the UI** via localhost:3000 (if running on same system) or Frontend Public Url or Port that you entered in your .env.
+    1. After the installer reports PipesHub is healthy, **open the UI** via localhost:3000 (if running on the same system) or the Frontend Public URL / port you configured.
     2. If you're an individual, select the **"Individual"** account type. For businesses, choose **"Enterprise"** and complete your account setup by filling in the basic details.
     3. You will then be redirected to the **onboarding** page. Please fill in all the required information carefully. You can always update these details later under the "Profile" tab in the Settings page.
 
@@ -54,8 +54,12 @@ icon: "code"
   </Step>
 
   <Step title="🛑 To stop the services">
+    The success banner prints this directory. Run `--stop`, `--upgrade`, `--reconfigure`, and `--uninstall` from the **repository root**, not from `deployment/docker-compose`.
+
     ```bash
-    docker compose -f docker-compose.build.neo4j.yml -p pipeshub-ai down
+    ./install.sh --stop
     ```
   </Step>
 </Steps>
+
+For the no-clone prebuilt install, see [Quickstart](/quickstart).

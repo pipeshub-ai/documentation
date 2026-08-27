@@ -6,8 +6,7 @@ icon: "play"
 
 ## Requirements
 
-- Git
-- Docker with Compose v2
+- [Docker](https://docs.docker.com/get-docker/) with Compose v2
 
 ## Setup
 
@@ -20,20 +19,24 @@ You can use a reverse proxy like Cloudflare, Nginx, or Traefik to terminate SSL/
 If you see a white screen after deploying PipesHub while accessing it over HTTP, this is likely the cause. The frontend will refuse to load due to stricter security checks.
 
 <Steps>
-  <Step title="🔁 Clone the repository">
+  <Step title="⚡ Run the one-command installer">
     ```bash
-    # Clone the repository
-    git clone https://github.com/pipeshub-ai/pipeshub-ai.git
-
-    # Navigate to the deployment folder
-    cd pipeshub-ai/deployment/docker-compose
+    curl -fsSL https://get.pipeshub.com/install | bash
     ```
-  </Step>
 
-  <Step title="⚡ Run the interactive installer">
-    ```bash
-    ./install.sh
-    ```
+    This downloads the deployment files for the latest GitHub **release** into `./pipeshub` (falling back to `main` if the unauthenticated GitHub API lookup fails — 60 requests/hour per IP) and launches the interactive installer. Open **http://localhost:3000** once it finishes.
+
+    `get.pipeshub.com/install` is a 302 to the root [`install.sh`](https://github.com/pipeshub-ai/pipeshub-ai/blob/main/install.sh) on GitHub (`https://raw.githubusercontent.com/pipeshub-ai/pipeshub-ai/main/install.sh`). The wrapper then fetches `docker-compose.yml` and the in-tree installer for that resolved ref.
+
+    <Info>
+      Prefer to read before running?
+
+      ```bash
+      curl -fsSL https://get.pipeshub.com/install -o pipeshub-install.sh
+      less pipeshub-install.sh        # review it
+      bash pipeshub-install.sh
+      ```
+    </Info>
 
     The installer will:
     - Check Docker, RAM, and disk prerequisites
@@ -41,26 +44,34 @@ If you see a white screen after deploying PipesHub while accessing it over HTTP,
     - Let you optionally customize the graph DB, message broker, and KV store
     - Generate randomized secrets and write a `.env` file
     - Pull images and start the stack
-    - Wait for PipesHub to pass its health check and print the URL
+    - Wait for PipesHub to become healthy, verify it is reachable, and print the URL
 
-    When prompted for a **Public HTTPS URL**, enter the URL you'll use to access PipesHub (e.g. `https://pipeshub.yourdomain.com`). This is written to `.env` as `FRONTEND_PUBLIC_URL` and is required for OAuth callbacks, email invites, and to avoid the HTTP white-screen issue described above. Leave it blank only for local, `localhost`-only access. You can update it later by editing `.env` and running `./install.sh --reconfigure`, or by setting `PIPESHUB_PUBLIC_URL` for a non-interactive install.
-
-    Open [http://localhost:3000](http://localhost:3000) once the installer completes.
+    When prompted for a **Public HTTPS URL**, enter the URL you'll use to access PipesHub (e.g. `https://pipeshub.yourdomain.com`). This is written to `.env` as `FRONTEND_PUBLIC_URL` and is required for OAuth callbacks, email invites, and to avoid the HTTP white-screen issue described above. Leave it blank only for local, `localhost`-only access. You can update it later by editing `.env` and running `./install.sh --reconfigure` from the directory the installer prints, or by setting `PIPESHUB_PUBLIC_URL` for a non-interactive install.
 
     #### Installer options
 
     | Flag | Description |
     |------|-------------|
     | `-y` / `--yes` | Accept all defaults; skip interactive prompts (CI-friendly) |
-    | `--version TAG` | Pin a specific image tag, e.g. `--version 0.7.0` |
+    | `--version TAG` | Pin the **Docker image** tag only, e.g. `--version 0.7.0`. Does not pin compose/installer files — use `PIPESHUB_REF` for that |
+    | `--no-pull` | Keep the locally cached images (do not refresh) |
     | `--reconfigure` | Re-run the wizard and overwrite an existing `.env` |
     | `--print-env-only` | Write `.env` and print the compose command without starting containers |
     | `--upgrade` | Pull/rebuild images and recreate containers using the existing `.env` |
     | `--stop` | Stop the running stack (data preserved) |
     | `--uninstall` | Stop the stack and remove all data volumes |
-    | `--build` | Build the image locally instead of pulling from Docker Hub |
+    | `--build` | Build the image locally instead of pulling from Docker Hub (clone only) |
 
-    Advanced options such as CI environment variables, slim vs. full deployment types, manual Compose profile usage, and local source builds are covered in [Advanced Deployment Options](https://github.com/pipeshub-ai/pipeshub-ai/blob/main/deployment/docker-compose/ADVANCED_DEPLOYMENT.md).
+    Standalone `curl | bash` uses prebuilt Hub images only. `--build` needs a git clone — see [From a cloned repository](#from-a-cloned-repository-developers).
+
+    Standalone-only environment overrides (set them on the `bash` side of the pipe):
+
+    | Variable | Description |
+    |----------|-------------|
+    | `PIPESHUB_REF` | Branch, tag, or commit SHA for `docker-compose.yml` and the in-tree installer. Default: latest GitHub release, else `main` |
+    | `PIPESHUB_DIR` | Directory to download deployment files into. Default: `./pipeshub` |
+
+    Advanced options such as CI environment variables, slim vs. full deployment types, a second instance on the same host, and manual Compose profile usage are covered in [Advanced Deployment Options](https://github.com/pipeshub-ai/pipeshub-ai/blob/main/deployment/docker-compose/ADVANCED_DEPLOYMENT.md).
   </Step>
 
   <Step title="Onboarding Setup">
@@ -74,9 +85,27 @@ For more information, refer to our [Onboarding Guide](/onboarding).
 </Step>
 
 <Step title="🛑 To stop the services">
+
+`curl | bash` does not `cd` your shell. The success banner prints the directory for later commands — `./pipeshub` by default, or `PIPESHUB_DIR` if you set it. `--stop`, `--upgrade`, `--reconfigure`, and `--uninstall` all run from there.
+
 ```bash
+cd pipeshub
 ./install.sh --stop
 ```
 
 </Step>
 </Steps>
+
+### From a cloned repository (developers)
+
+Requires Git. To build from source, contribute, or pin the installer to your checkout:
+
+```bash
+git clone https://github.com/pipeshub-ai/pipeshub-ai.git
+cd pipeshub-ai
+
+# Same installer, run from the repo root
+./install.sh
+```
+
+Building local images from source requires this cloned-repo path (`./install.sh --build`). The one-command installer above always uses prebuilt images. From a clone, run `--stop`, `--upgrade`, `--reconfigure`, and `--uninstall` from this same repository root.

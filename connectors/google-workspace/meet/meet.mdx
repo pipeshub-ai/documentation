@@ -1,0 +1,75 @@
+---
+title: "Google Meet"
+description: "Sync Google Meet spaces and their linked calendar events"
+icon: "/logo/meet.png"
+---
+
+# Google Meet Connector
+
+The Google Meet connector indexes your Meet spaces and the calendar events they are attached to, so meeting context is searchable in PipesHub alongside your documents.
+
+<Info>
+This is a **beta connector**. It is registered and usable, and its behaviour may still change.
+</Info>
+
+## Required APIs
+
+Enable both of these in **APIs & Services → Library**:
+
+- **Google Meet API**
+- **Google Calendar API**
+
+The Calendar API is required as well as Meet, because a Meet space is reached through the calendar event that hosts it.
+
+## OAuth scopes
+
+The connector requests these scopes:
+
+| Scope | Why it is needed |
+|---|---|
+| `meetings.space.created` | Access spaces created by the authorising account |
+| `meetings.space.settings` | Read a space's configuration |
+| `meetings.space.readonly` | Read space details |
+| `calendar` | Find the calendar events that host each space |
+| `calendar.events` | Read the individual events |
+
+## Step 1: Create the OAuth credentials in Google Cloud
+
+1. Open the [Google Cloud Console](https://console.cloud.google.com/) and select or create a project.
+2. Go to **APIs & Services → Library** and enable the APIs listed under *Required APIs* below.
+3. Go to **APIs & Services → OAuth consent screen** and complete it. Choose **Internal** if everyone using PipesHub is in your Google Workspace organisation; choose **External** otherwise.
+4. Go to **APIs & Services → Credentials**, select **Create Credentials → OAuth client ID**, and choose **Web application**.
+5. Under **Authorised redirect URIs**, add the redirect URI that PipesHub shows you. To find it, open PipesHub, go to **Workspace settings → Connectors → Your Connectors**, find this connector, and select **Setup**. Copy the URI exactly, including its capitalisation.
+6. Save, then copy the **Client ID** and **Client Secret**.
+
+<Warning>
+The redirect URI must match character for character, including the scheme, the port, and the capitalised connector name at the end. A mismatch produces Google's `redirect_uri_mismatch` error at sign-in.
+</Warning>
+
+## Step 2: Configure the connector in PipesHub
+
+1. Go to **Workspace settings → Connectors → Your Connectors**.
+2. Find the connector and select **Setup**.
+3. Enter the **Client ID** and **Client Secret** from step 1.
+4. Save, then select **Authorize** and complete the Google consent screen.
+
+## Sync settings
+
+The connector supports **scheduled** and **manual** syncing, and runs every 60 minutes by default.
+
+It also supports real-time updates through webhooks for `space.created`, `space.modified` and `space.deleted` events.
+
+## Use with agents
+
+This connector supports agent access, so an agent can use meeting context when answering.
+
+## Troubleshooting
+
+**`redirect_uri_mismatch` at sign-in.** The redirect URI in Google Cloud does not exactly match the one PipesHub shows. It ends with a capitalised `Meet`, and capitalisation matters.
+
+**Authorisation succeeds but nothing appears.** Confirm both the Meet API and the Calendar API are enabled. Enabling only the Meet API is the common case, and it fails quietly because the connector cannot read the hosting events.
+
+## Related
+
+- [Google Calendar connector](/connectors/google-workspace/calendar/calendar)
+- [Google Workspace authentication overview](https://developers.google.com/workspace/guides/auth-overview)

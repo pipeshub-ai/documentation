@@ -1,0 +1,80 @@
+---
+title: "Google Forms"
+description: "Sync Google Forms and their responses"
+icon: "/logo/forms.png"
+---
+
+# Google Forms Connector
+
+The Google Forms connector indexes your forms — their questions and their submitted responses — so survey and intake data can be searched and used as context in PipesHub.
+
+<Info>
+This is a **beta connector**. It is registered and usable, and its behaviour may still change.
+</Info>
+
+## Required APIs
+
+Enable both of these in **APIs & Services → Library**:
+
+- **Google Forms API**
+- **Google Drive API**
+
+The Drive API is required as well as Forms, because forms are stored as Drive files and the connector discovers them through Drive.
+
+## OAuth scopes
+
+The connector requests these scopes:
+
+| Scope | Why it is needed |
+|---|---|
+| `forms.body` | Access the form's structure |
+| `forms.body.readonly` | Read questions and settings |
+| `forms.responses.readonly` | Read submitted responses |
+| `drive` | Locate forms in Drive |
+| `drive.file` | Access individual form files |
+| `drive.readonly` | Read file metadata |
+
+<Warning>
+Responses to a form often contain personal data supplied by the people who filled it in. Once indexed, that content is searchable in PipesHub by anyone who can search this connector. Confirm this is appropriate before syncing forms that collect personal information.
+</Warning>
+
+## Step 1: Create the OAuth credentials in Google Cloud
+
+1. Open the [Google Cloud Console](https://console.cloud.google.com/) and select or create a project.
+2. Go to **APIs & Services → Library** and enable the APIs listed under *Required APIs* below.
+3. Go to **APIs & Services → OAuth consent screen** and complete it. Choose **Internal** if everyone using PipesHub is in your Google Workspace organisation; choose **External** otherwise.
+4. Go to **APIs & Services → Credentials**, select **Create Credentials → OAuth client ID**, and choose **Web application**.
+5. Under **Authorised redirect URIs**, add the redirect URI that PipesHub shows you. To find it, open PipesHub, go to **Workspace settings → Connectors → Your Connectors**, find this connector, and select **Setup**. Copy the URI exactly, including its capitalisation.
+6. Save, then copy the **Client ID** and **Client Secret**.
+
+<Warning>
+The redirect URI must match character for character, including the scheme, the port, and the capitalised connector name at the end. A mismatch produces Google's `redirect_uri_mismatch` error at sign-in.
+</Warning>
+
+## Step 2: Configure the connector in PipesHub
+
+1. Go to **Workspace settings → Connectors → Your Connectors**.
+2. Find the connector and select **Setup**.
+3. Enter the **Client ID** and **Client Secret** from step 1.
+4. Save, then select **Authorize** and complete the Google consent screen.
+
+## Sync settings
+
+The connector supports **scheduled** and **manual** syncing, and runs every 60 minutes by default.
+
+It also supports real-time updates through webhooks for `form.created`, `form.modified` and `form.deleted` events.
+
+## Use with agents
+
+This connector supports agent access, so an agent can draw on form responses when answering.
+
+## Troubleshooting
+
+**`redirect_uri_mismatch` at sign-in.** The redirect URI in Google Cloud does not exactly match the one PipesHub shows. It ends with a capitalised `Forms`, and capitalisation matters.
+
+**Forms are found but responses are empty.** The `forms.responses.readonly` scope was not granted. Remove the connector's authorisation and authorise again, accepting every requested permission.
+
+## Related
+
+- [Google Drive connector](/connectors/google-workspace/drive/drive)
+- [Google Workspace authentication overview](https://developers.google.com/workspace/guides/auth-overview)

@@ -1,0 +1,71 @@
+---
+title: "MinIO"
+description: "Sync files and folders from MinIO S3-compatible storage"
+icon: "/logo/minio.png"
+---
+
+# MinIO Connector
+
+MinIO is S3-compatible object storage that you host yourself. This connector indexes the files in your MinIO buckets so they can be searched and used as context in PipesHub.
+
+Because MinIO speaks the S3 API, this connector works the same way as the [Amazon S3](/connectors/s3/s3) connector. The difference is that you supply the address of your own server rather than using an AWS region.
+
+## What gets synced
+
+Files and folders from the buckets you select. You can narrow the scope by bucket, by file extension, and by created or modified date.
+
+## Permissions
+
+This connector uses an **app-level permission model**. Everything the access key can read becomes visible to every PipesHub user who can search the connector. It does not map MinIO policies onto individual PipesHub users.
+
+Create a dedicated MinIO user for PipesHub and give it read-only access to just the buckets you intend to index, rather than reusing an administrative key.
+
+## Before you start
+
+You need:
+
+- A running MinIO server that PipesHub can reach over the network.
+- An access key and secret key for a MinIO user that can list and read the buckets you want to index.
+
+## Configuration
+
+Go to **Workspace settings → Connectors → Your Connectors**, find **MinIO**, and select **Setup**.
+
+| Field | Required | Description |
+|---|---|---|
+| **Endpoint URL** | Yes | The address of your MinIO server, including the scheme and port — for example `http://localhost:9000` or `https://minio.example.com`. |
+| **Access Key** | Yes | The access key of the MinIO user PipesHub should connect as. |
+| **Secret Key** | Yes | The matching secret key. Stored encrypted. |
+| **Use SSL/TLS** | No | Connect over HTTPS. On by default, and recommended for anything other than local testing. |
+| **Verify SSL Certificate** | No | Check the server's certificate. On by default. Turn it off only if your MinIO server uses a self-signed certificate. |
+
+<Note>
+PipesHub runs inside a container. If MinIO runs directly on the same host, use `http://host.docker.internal:9000` rather than `http://localhost:9000`, because `localhost` refers to the PipesHub container itself. If MinIO runs as another container on the same Docker network, use its service name, for example `http://minio:9000`.
+</Note>
+
+## Sync settings
+
+After the connector is authorised you can set:
+
+- **Bucket Names** — which buckets to sync. The list is fetched from your server, so connect first and then choose.
+- **File Extensions** — restrict to certain types, for example `pdf`, `docx`, `txt`. Leave empty to sync every file.
+- **Modified date** and **Created date** — only sync files within a date range.
+
+The connector supports **scheduled** and **manual** syncing. Scheduled syncing is on by default and runs every 60 minutes.
+
+## Use with agents
+
+This connector supports agent access, so a PipesHub agent can retrieve MinIO content as part of its knowledge.
+
+## Troubleshooting
+
+**Connection refused.** Check the endpoint from inside the PipesHub container rather than from your laptop. `localhost` is the usual mistake — see the note above.
+
+**Certificate errors on a self-signed setup.** Turn off **Verify SSL Certificate**. Keep **Use SSL/TLS** on so traffic is still encrypted.
+
+**Access denied when listing buckets.** The MinIO user needs both list and read permission on the buckets. A policy that grants read on objects but not list on the bucket lets the connector authenticate and then find nothing.
+
+## Related
+
+- [Amazon S3](/connectors/s3/s3)
+- [MinIO documentation](https://min.io/docs/minio/linux/index.html)

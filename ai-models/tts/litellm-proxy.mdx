@@ -1,0 +1,48 @@
+---
+title: LiteLLM Proxy
+description: "Configure PipesHub to generate speech through a self-hosted LiteLLM Proxy gateway"
+---
+
+# LiteLLM Proxy Text to Speech Configuration
+
+PipesHub can turn AI responses into spoken audio through a LiteLLM Proxy instance, using the same gateway that serves your chat and embedding models.
+
+## Before you start
+
+Your LiteLLM Proxy needs at least one text-to-speech model in its `model_list`. See [LiteLLM Proxy for text generation](/ai-models/llm/litellm-proxy) for setup.
+
+## Required Fields
+
+### Endpoint URL *
+
+The address of your LiteLLM Proxy.
+
+**Default:** `http://host.docker.internal:4000`
+
+Use `host.docker.internal` rather than `localhost` when the proxy runs on the Docker host.
+
+### API Key *
+
+The master key or a virtual key from your LiteLLM Proxy.
+
+### Model Name *
+
+The speech model as named in your proxy configuration, for example `tts-1` or `tts-1-hd`.
+
+## Optional Fields
+
+### Voice
+
+The voice used for the generated speech. The values available depend on the upstream model you route to.
+
+### Audio Format
+
+The container format of the returned audio, such as `mp3`, `opus`, `aac`, `flac`, `wav`, or `pcm`. Choose `mp3` unless you have a reason not to; it is the most widely playable.
+
+### Model Friendly Name
+
+A label shown in the PipesHub interface so you can tell several configurations apart.
+
+## Related
+
+- [LiteLLM Proxy for text generation](/ai-models/llm/litellm-proxy)

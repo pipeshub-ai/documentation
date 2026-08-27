@@ -169,6 +169,8 @@ sudo apt install -y net-tools nginx git
 
   <Step title="Install PipesHub">
 
+Add your user to the `docker` group (see the Docker step above) and run `newgrp docker` (or log out and back in) **before** this step, so the installer can talk to the daemon without `curl | sudo bash`. Later commands still use `sudo docker` so they work if you skip the group.
+
 The recommended install does not clone the repository. It downloads the installer and writes Compose files into `~/pipeshub`:
 
 ```bash
@@ -189,8 +191,6 @@ curl -fsSL https://get.pipeshub.com/install \
   | PIPESHUB_DIR="$HOME/pipeshub" PIPESHUB_PUBLIC_URL="https://your-domain.com" bash -s -- --yes
 cd ~/pipeshub
 ```
-
-Add your user to the `docker` group (see the Docker step above) so the installer can talk to the daemon without `curl | sudo bash`.
 
 The installer will:
 - Download all required Docker images
@@ -465,13 +465,19 @@ sudo docker run --rm \
 sudo docker compose -p pipeshub-ai start neo4j
 
 # Backup Qdrant using the full-storage snapshot API.
-# The API only creates the snapshot server-side — it does not return the file itself,
-# so capture the generated filename from the response and copy that exact file out
-# (default snapshot path in the official image is /qdrant/snapshots).
-QDRANT_SNAPSHOT_RESPONSE=$(sudo docker compose -p pipeshub-ai exec -T qdrant curl -s -X POST 'http://localhost:6333/snapshots')
+# The qdrant image has no curl, publishes no host port, and requires QDRANT_API_KEY
+# (sourced from .env above). Call the API from a curl sidecar on the Compose network
+# ({project}_pipeshub → pipeshub-ai_pipeshub). The API only creates the snapshot
+# server-side — copy that file out of /qdrant/snapshots.
+QDRANT_SNAPSHOT_RESPONSE=$(sudo docker run --rm --network pipeshub-ai_pipeshub curlimages/curl \
+  -sS -X POST -H "api-key: ${QDRANT_API_KEY}" 'http://qdrant:6333/snapshots')
 QDRANT_SNAPSHOT_NAME=$(echo "$QDRANT_SNAPSHOT_RESPONSE" | grep -oP '"name"\s*:\s*"\K[^"]+')
-sudo docker compose -p pipeshub-ai cp "qdrant:/qdrant/snapshots/${QDRANT_SNAPSHOT_NAME}" \
-  ~/pipeshub-backups/qdrant-backup-${BACKUP_DATE}.snapshot
+if [ -z "$QDRANT_SNAPSHOT_NAME" ]; then
+  echo "Qdrant snapshot failed: ${QDRANT_SNAPSHOT_RESPONSE}"
+else
+  sudo docker compose -p pipeshub-ai cp "qdrant:/qdrant/snapshots/${QDRANT_SNAPSHOT_NAME}" \
+    ~/pipeshub-backups/qdrant-backup-${BACKUP_DATE}.snapshot
+fi
 
 # Backup Redis using BGSAVE (asynchronous — wait until it finishes)
 sudo docker compose -p pipeshub-ai exec -T redis redis-cli -a "${REDIS_PASSWORD}" --no-auth-warning BGSAVE
@@ -479,10 +485,13 @@ while sudo docker compose -p pipeshub-ai exec -T redis redis-cli -a "${REDIS_PAS
   | grep -q '^rdb_bgsave_in_progress:1'; do
   sleep 1
 done
-sudo docker compose -p pipeshub-ai exec -T redis redis-cli -a "${REDIS_PASSWORD}" --no-auth-warning INFO persistence \
-  | grep -q '^rdb_last_bgsave_status:ok' || { echo "Redis BGSAVE failed"; exit 1; }
-sudo docker compose -p pipeshub-ai cp redis:/data/dump.rdb \
-  ~/pipeshub-backups/redis-backup-${BACKUP_DATE}.rdb
+if sudo docker compose -p pipeshub-ai exec -T redis redis-cli -a "${REDIS_PASSWORD}" --no-auth-warning INFO persistence \
+  | grep -q '^rdb_last_bgsave_status:ok'; then
+  sudo docker compose -p pipeshub-ai cp redis:/data/dump.rdb \
+    ~/pipeshub-backups/redis-backup-${BACKUP_DATE}.rdb
+else
+  echo "Redis BGSAVE failed — not copying dump.rdb"
+fi
 
 # Backup application data (safe to use tar for non-database files)
 sudo docker run --rm \
@@ -645,10 +654,9 @@ set -a
 . ./.env
 set +a
 
-# Start only MongoDB and Redis for now — leave Neo4j and Qdrant stopped since both
-# `neo4j-admin database load` and Qdrant's full-storage snapshot recovery require
-# an OFFLINE database
-sudo docker compose -p pipeshub-ai up -d mongodb redis
+# Start only MongoDB. Neo4j, Qdrant, and Redis restores write into stopped volumes
+# (`neo4j-admin database load`, Qdrant `--storage-snapshot`, and Redis AOF vs dump.rdb).
+sudo docker compose -p pipeshub-ai up -d mongodb
 
 # Wait for databases to be ready
 sleep 10
@@ -688,9 +696,16 @@ sleep 20
 sudo docker rm -f qdrant-restore
 sudo docker compose -p pipeshub-ai up -d qdrant
 
-# Restore Redis
-sudo docker compose -p pipeshub-ai cp ~/pipeshub-backups/redis-backup-${BACKUP_DATE}.rdb \
-  redis:/data/dump.rdb
+# Restore Redis into a stopped volume. This stack runs --appendonly yes, so a
+# dump.rdb copied into a running container is ignored on the next start
+# (Redis loads /data/appendonlydir). Clear the AOF first.
+sudo docker compose -p pipeshub-ai stop redis
+sudo docker run --rm \
+  -v pipeshub-ai_redis_data:/data \
+  -v ~/pipeshub-backups:/backup \
+  ubuntu \
+  sh -c "rm -rf /data/appendonlydir && cp /backup/redis-backup-${BACKUP_DATE}.rdb /data/dump.rdb"
+sudo docker compose -p pipeshub-ai up -d redis
 
 # Restore application data
 sudo docker run --rm \
@@ -698,8 +713,8 @@ sudo docker run --rm \
   -v ~/pipeshub-backups:/backup \
   ubuntu tar xzf /backup/pipeshub-data-backup-${BACKUP_DATE}.tar.gz -C /
 
-# Restart all services
-sudo docker compose -p pipeshub-ai restart
+# Bring the app and remaining profile services back
+sudo docker compose -p pipeshub-ai up -d
 
 echo "Restore completed successfully"
 ```
@@ -801,7 +816,7 @@ sudo docker compose -p pipeshub-ai logs --tail=50
 # Test database connections
 sudo docker compose -p pipeshub-ai exec -T mongodb mongosh --eval "db.adminCommand('ping')"
 sudo docker compose -p pipeshub-ai exec -T neo4j wget -qO- http://localhost:7474
-sudo docker compose -p pipeshub-ai exec -T qdrant curl -s http://localhost:6333/health
+sudo docker compose -p pipeshub-ai exec -T qdrant bash -c ':> /dev/tcp/127.0.0.1/6333'
 if [ -n "${REDIS_PASSWORD:-}" ]; then
   sudo docker compose -p pipeshub-ai exec -T redis redis-cli -a "${REDIS_PASSWORD}" --no-auth-warning ping
 else

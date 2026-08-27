@@ -1,75 +1,71 @@
 ---
 title: "Google Meet"
-description: "Sync Google Meet spaces and their linked calendar events"
-icon: "/logo/meet.png"
+description: "Beta connector definition for Google Meet — sync not yet implemented"
+icon: "/logo/gmeet.png"
 ---
 
-# Google Meet Connector
+<div className="not-prose mt-10">
+  <div className="p-6 border border-gray-200 dark:border-gray-700 rounded-xl bg-amber-50 dark:bg-gray-800">
+    <div className="flex items-center gap-3 mb-4">
+      <img
+        src="/logo/gmeet.png"
+        alt="Google Meet Logo"
+        className="w-8 h-8 object-contain flex-shrink-0"
+      />
+      <div className="text-xl font-semibold text-gray-900 dark:text-white">Google Meet</div>
+    </div>
+    <p className="text-base text-gray-700 dark:text-gray-300 mt-0 mb-5">Beta connector definition for Google Meet — sync not yet implemented</p>
+    <div className="flex flex-wrap items-center gap-2">
+      <span className="px-3 py-1.5 bg-amber-100 dark:bg-amber-900 text-amber-800 dark:text-amber-200 rounded-full text-sm font-medium">
+        Beta — not yet syncing
+      </span>
+    </div>
+  </div>
+</div>
 
-The Google Meet connector indexes your Meet spaces and the calendar events they are attached to, so meeting context is searchable in PipesHub alongside your documents.
+## Current status
 
-<Info>
-This is a **beta connector**. It is registered and usable, and its behaviour may still change.
-</Info>
-
-## Required APIs
-
-Enable both of these in **APIs & Services → Library**:
-
-- **Google Meet API**
-- **Google Calendar API**
-
-The Calendar API is required as well as Meet, because a Meet space is reached through the calendar event that hosts it.
-
-## OAuth scopes
-
-The connector requests these scopes:
-
-| Scope | Why it is needed |
-|---|---|
-| `meetings.space.created` | Access spaces created by the authorising account |
-| `meetings.space.settings` | Read a space's configuration |
-| `meetings.space.readonly` | Read space details |
-| `calendar` | Find the calendar events that host each space |
-| `calendar.events` | Read the individual events |
-
-## Step 1: Create the OAuth credentials in Google Cloud
-
-1. Open the [Google Cloud Console](https://console.cloud.google.com/) and select or create a project.
-2. Go to **APIs & Services → Library** and enable the APIs listed under *Required APIs* below.
-3. Go to **APIs & Services → OAuth consent screen** and complete it. Choose **Internal** if everyone using PipesHub is in your Google Workspace organisation; choose **External** otherwise.
-4. Go to **APIs & Services → Credentials**, select **Create Credentials → OAuth client ID**, and choose **Web application**.
-5. Under **Authorised redirect URIs**, add the redirect URI that PipesHub shows you. To find it, open PipesHub, go to **Workspace settings → Connectors → Your Connectors**, find this connector, and select **Setup**. Copy the URI exactly, including its capitalisation.
-6. Save, then copy the **Client ID** and **Client Secret**.
+Google Meet is registered as a **beta connector definition**. It appears in the connector catalogue and has a complete OAuth configuration, but the sync itself is not implemented.
 
 <Warning>
-The redirect URI must match character for character, including the scheme, the port, and the capitalised connector name at the end. A mismatch produces Google's `redirect_uri_mismatch` error at sign-in.
+**This connector does not index anything yet.** Its definition sets
+`with_sync_support(False)` (`core/registry/connector.py:193`), and `MeetConnector.connect()` is a placeholder that
+returns without contacting the API. Setting it up will not make Google Meet content
+searchable in PipesHub.
 </Warning>
 
-## Step 2: Configure the connector in PipesHub
+The definition is present so the connector appears in the catalogue and its OAuth
+application can be registered ahead of the sync implementation landing. It is also
+gated behind the beta connector registry, so it only appears when beta connectors
+are enabled for your deployment.
 
-1. Go to **Workspace settings → Connectors → Your Connectors**.
-2. Find the connector and select **Setup**.
-3. Enter the **Client ID** and **Client Secret** from step 1.
-4. Save, then select **Authorize** and complete the Google consent screen.
+## What works today
 
-## Sync settings
+Nothing in this connector reaches Google Meet yet. If you need this data now, the
+practical options are:
 
-The connector supports **scheduled** and **manual** syncing, and runs every 60 minutes by default.
+- **Google Drive connector** — Forms and Meet recordings that are stored as Drive
+  files are indexed by the [Google Drive connector](/connectors/google-workspace/drive/drive)
+  like any other file.
+- **Google Calendar** — meeting details attached to calendar events are covered by
+  the [Google Calendar page](/connectors/google-workspace/calendar/calendar).
 
-It also supports real-time updates through webhooks for `space.created`, `space.modified` and `space.deleted` events.
+## For when it ships
 
-## Use with agents
+The OAuth application it will use is already defined, so this part is stable and
+worth setting up in advance if you are preparing an environment.
 
-This connector supports agent access, so an agent can use meeting context when answering.
+Google Meet requires **two** Google APIs enabled, not one:
 
-## Troubleshooting
+- **Google Meet API**
+- **Google Calendar API** — a Meet space is reached through the calendar event that hosts it
 
-**`redirect_uri_mismatch` at sign-in.** The redirect URI in Google Cloud does not exactly match the one PipesHub shows. It ends with a capitalised `Meet`, and capitalisation matters.
+Enabling only the obvious one is the common mistake, and it fails quietly.
 
-**Authorisation succeeds but nothing appears.** Confirm both the Meet API and the Calendar API are enabled. Enabling only the Meet API is the common case, and it fails quietly because the connector cannot read the hosting events.
+The redirect URI ends with the capitalised connector name and must be registered
+exactly as PipesHub displays it.
 
 ## Related
 
-- [Google Calendar connector](/connectors/google-workspace/calendar/calendar)
-- [Google Workspace authentication overview](https://developers.google.com/workspace/guides/auth-overview)
+- [Google Drive connector](/connectors/google-workspace/drive/drive)
+- [Connectors overview](/connectors/overview)

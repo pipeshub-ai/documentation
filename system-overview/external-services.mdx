@@ -27,7 +27,7 @@ etcd is a distributed, reliable key-value store for the most critical data of a 
 
 ## Graph database (Neo4j or ArangoDB)
 
-PipesHub stores the knowledge graph — the relationships between records, users, and metadata — in a graph database. Which one an instance uses is set by the `DATA_STORE` environment variable, and services talk to it through the `IGraphDBProvider` abstraction rather than a driver directly.
+PipesHub stores the knowledge graph — the relationships between records, users, and metadata — in a graph database. Which one an instance uses is set by the `DATA_STORE` environment variable. Services do not open a Neo4j or ArangoDB driver directly, so the same features work on either backend.
 
 **Neo4j** is the default. It is what `install.sh` selects for both the full and slim deployment types, what `backend/env.template` ships with, and what the Helm chart enables out of the box. Set `DATA_STORE=neo4j`.
 

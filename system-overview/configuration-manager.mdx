@@ -41,9 +41,9 @@ The Configuration Manager handles various types of configurations:
 2. **Authentication Configurations** - Azure AD, Google, Microsoft, SSO, and OAuth settings
 3. **SMTP Configurations** - Email service settings
 4. **AI Models Configurations** - Settings for LLM, embedding, OCR, SLM, reasoning, and multiModal models
-8. **Connector Configurations** - Google Workspace, Atlassian, OneDrive, and SharePoint integrations
-9. **Public URL Configurations** - Frontend and connector URLs
-10. **Metrics Collection Configurations** - Settings for metrics gathering
+5. **Connector Configurations** - Google Workspace, Atlassian, OneDrive, and SharePoint integrations
+6. **Public URL Configurations** - Frontend and connector URLs
+7. **Metrics Collection Configurations** - Settings for metrics gathering
 
 ## API Endpoints
 
@@ -570,16 +570,28 @@ message broker are **no longer configured through this API**. The endpoints that
 them (`/mongoDBConfig`, `/arangoDBConfig`, `/qdrantConfig`, `/redisConfig`, `/kafkaConfig`)
 have been removed.
 
-These are now read from the environment at startup. The installer writes them into
-`deployment/docker-compose/.env`, and the Helm chart sets them from `values.yaml`:
+These are now read from the environment at startup. On the Docker Compose
+deployment, `install.sh` writes them into `deployment/docker-compose/.env`; on
+Kubernetes, the Helm chart sets them from `values.yaml`.
 
-| Setting | Environment variable |
-|---------|----------------------|
-| Graph database | `DATA_STORE` (`neo4j` by default, or `arangodb`) |
-| Vector database | `VECTOR_DB_TYPE` (`qdrant` by default) |
-| Key-value store | `KV_STORE_TYPE` (`redis` by default, or `etcd`) |
-| Message broker | `MESSAGE_BROKER` (`redis` by default, or `kafka`) |
-| MongoDB | `MONGO_URI`, `MONGO_USERNAME`, `MONGO_PASSWORD` |
+| Setting | Environment variable in `.env` | Default |
+|---------|-------------------------------|---------|
+| Graph database | `DATA_STORE` | `neo4j` (or `arangodb`) |
+| Key-value store | `KV_STORE_TYPE` | `redis` (or `etcd`) |
+| Message broker | `MESSAGE_BROKER` | `kafka` on a full install, `redis` on slim (or set either explicitly) |
+| MongoDB credentials | `MONGO_USERNAME`, `MONGO_PASSWORD` | generated at install time |
+
+Compose builds the MongoDB connection string from those two credentials, so there
+is no `MONGO_URI` key in `.env` to edit. The graph, vector and cache passwords
+(`NEO4J_PASSWORD` or `ARANGO_PASSWORD`, `QDRANT_API_KEY`, `REDIS_PASSWORD`) are
+generated at install time and live in the same file.
+
+<Note>
+The vector database is Qdrant. The provider is selected by the `VECTOR_DB_TYPE`
+environment variable, which defaults to `qdrant` when it is unset — and the Docker
+Compose deployment does not set it. Adding `VECTOR_DB_TYPE` to `.env` has no effect
+on Compose, because the variable is not passed into the container.
+</Note>
 
 To change any of them, edit `.env` and re-run `./install.sh --upgrade`, or set the value in
 your Helm values and upgrade the release. See the
@@ -1721,26 +1733,6 @@ interface LocalConfig {
 ```
 </Tab>
 
-<Tab title="Database Config Schema">
-```typescript
-// Qdrant Config
-interface QdrantConfig {
-  host: string;
-  port: number;
-  grpcPort?: number;
-  apiKey?: string; // Not required for localhost
-}
-
-// Redis Config
-interface RedisConfig {
-  host: string;
-  port: number;
-  password?: string;
-  tls?: boolean;
-}
-```
-</Tab>
-
 <Tab title="AI Models Config Schema">
 ```typescript
 // AI Model Configuration
@@ -1857,16 +1849,6 @@ interface SharePointConfig {
 
 <Tab title="Other Config Schemas">
 ```typescript
-// Message Broker Config
-interface KafkaConfig {
-  brokers: string[]; // Array of broker URLs
-  sasl?: {
-    mechanism: string;
-    username: string;
-    password: string;
-  };
-}
-
 // SMTP Config
 interface SMTPConfig {
   host: string;

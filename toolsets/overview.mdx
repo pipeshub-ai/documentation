@@ -45,9 +45,17 @@ Unlike **Connectors** (which index data for querying and search), **Toolsets** p
 
 ## Available Toolsets
 
-These are the toolsets loaded by every PipesHub deployment. Tool counts come from the toolsets themselves.
+Tool counts come from the toolsets themselves.
 
-### Built in — no credentials needed
+The first group is different from the rest. Those toolsets are marked **internal**:
+they are attached to every agent automatically, they are never sent to the
+interface, and they do not appear under **Workspace settings → Actions**. You do
+not add them and you cannot remove them.
+
+Everything below that group is a **catalogue toolset**. Those you authorise under
+**Actions** and then attach to an agent from the **Tools** panel.
+
+### Always on — internal, not in the catalogue
 
 | Toolset | What agents can do | Tools |
 |---------|--------------------|-------|
@@ -105,16 +113,23 @@ These are the toolsets loaded by every PipesHub deployment. Tool counts come fro
 | [MariaDB](/toolsets/mariadb/mariadb) | Query tables and inspect schemas | 5 |
 | [Redshift](/toolsets/redshift/redshift) | Query tables and inspect schemas | 8 |
 
-That is **28 toolsets** and **365 tools**.
+That is **19 catalogue toolsets** (342 tools) that you authorise and attach, plus **9 internal toolsets** (23 tools) that every agent already has.
 
 <Note>
-The repository contains additional toolset implementations — Notion, Linear, GitLab, Dropbox, Box, S3, Zendesk and others — that are not loaded in this release. They are commented out of the toolset discovery list in `toolset_registry.py`, so they do not appear in **Actions** and cannot be added to an agent yet.
+Two kinds of toolset are deliberately absent from **Actions**, for different reasons.
+
+**Internal toolsets** — the first group above — are excluded by design. They are
+attached to every agent already, so there is nothing to configure.
+
+**Unreleased implementations** — Notion, Linear, GitLab, Dropbox, Box, S3, Zendesk
+and others — exist in the repository but are commented out of the toolset discovery
+list, so they are not loaded and cannot be added to an agent yet.
 </Note>
 ## Configuring Toolsets
 
 ### Step 1: Navigate to Toolsets Settings
 
-1. Click on your **Connector Settings** in the navigation
+1. Open **Workspace settings → Actions** in the navigation
 2. Go to **Settings** in the sidebar
 3. Click **Toolsets**
 

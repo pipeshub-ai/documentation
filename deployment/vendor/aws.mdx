@@ -1,12 +1,82 @@
 ---
-title: "Deploy on AWS"
-description: "How to deploy on AWS"
-icon: "aws"
+title: "AWS"
+description: "Run PipesHub on AWS"
+icon: "cloud"
 ---
 
-<div className="flex flex-col items-center justify-center text-center pt-10">
-  <h1 className=" font-bold">🚧 Coming Soon</h1>
-  <h3 className="text-xl mt-2">
-    We are working hard to bring you this content. Please check back shortly!
-  </h3>
-</div>
+# Deploying PipesHub on AWS
+
+PipesHub installs the same way on AWS as anywhere else. This page covers the parts that are specific to AWS; the rest is in the [Deployment Overview](/deployment/overview).
+
+<Info>
+The [Google Cloud guide](/deployment/vendor/gcp) is a complete worked example, including reverse proxy configuration and backup and restore procedures. Those sections are not GCP-specific and apply here too.
+</Info>
+
+## 1. Create the machine
+
+Launch an **EC2** instance running Ubuntu 22.04 LTS or later. A `t3.xlarge` (4 vCPU, 16 GB) is a reasonable starting point for the full deployment. Attach at least 50 GB of gp3 storage.
+
+**Sizing.** 16 GB RAM or more for the full deployment, and 50 GB or more of disk. The installer checks both and warns you if the machine is short.
+
+## 2. Open the ports
+
+Edit the instance's **security group** to allow inbound `80` and `443` from anywhere, and `22` from your own address only.
+
+Do not expose the database ports. PipesHub reaches them over the internal Docker network, and nothing outside the host needs them.
+
+## 3. Install Docker
+
+Follow [Docker's install guide](https://docs.docker.com/engine/install/) for your Linux distribution, then add your user to the `docker` group so the installer can reach the daemon without `sudo`:
+
+```bash
+sudo usermod -aG docker $USER
+newgrp docker
+```
+
+## 4. Install PipesHub
+
+```bash
+curl -fsSL https://get.pipeshub.com/install | PIPESHUB_DIR="$HOME/pipeshub" bash
+cd ~/pipeshub
+```
+
+When the installer asks for the **Public HTTPS URL**, enter the domain people will use. This is written to `.env` as `FRONTEND_PUBLIC_URL` and is what OAuth callbacks and email invitations are built from.
+
+## 5. Put HTTPS in front of it
+
+<Warning>
+Browsers block features PipesHub needs when the page is served over plain HTTP from anything other than `localhost`. The usual symptom is a white screen after a deployment that otherwise looks healthy.
+</Warning>
+
+Two common choices on AWS:
+
+- **Application Load Balancer** with a certificate from AWS Certificate Manager, forwarding to the instance on port 3000. Certificate renewal is handled for you.
+- **Nginx or Caddy on the instance**, with a Let's Encrypt certificate. Fewer moving parts, and no load balancer cost.
+
+Whichever you choose, terminate TLS there and forward to PipesHub on port 3000.
+
+## 6. Check it is running
+
+```bash
+docker compose -p pipeshub-ai ps
+curl -fsS http://localhost:3000/api/v1/health/services
+```
+
+Then open your domain in a browser and complete the [onboarding](/onboarding).
+
+## Day-two operations
+
+Run these from `~/pipeshub`:
+
+```bash
+./install.sh --upgrade      # pull the latest images
+./install.sh --stop         # stop, keeping data
+./install.sh --uninstall    # stop and delete all data
+```
+
+For backup and restore, follow the [procedures in the GCP guide](/deployment/vendor/gcp#backup-data) — they operate on Docker volumes and are not specific to any cloud.
+
+## Related
+
+- [Deployment Overview](/deployment/overview)
+- [Quickstart](/quickstart)

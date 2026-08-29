@@ -1,12 +1,91 @@
 ---
-title: "Deploy on Private Cloud"
-description: "How to deploy on Private CLoud"
-icon: "cloud"
+title: "Private Cloud & On-Premises"
+description: "Run PipesHub on your own hardware, including air-gapped networks"
+icon: "building"
 ---
 
-<div className="flex flex-col items-center justify-center text-center pt-10">
-  <h1 className=" font-bold">🚧 Coming Soon</h1>
-  <h3 className="text-xl mt-2">
-    We are working hard to bring you this content. Please check back shortly!
-  </h3>
-</div>
+# Private Cloud and On-Premises
+
+PipesHub is designed to run entirely inside your own network. Nothing about the core product requires an outbound connection once the images are on the host, which makes it suitable for regulated environments and air-gapped networks.
+
+## Requirements
+
+- A Linux host with Docker and Compose v2.
+- 16 GB RAM or more for the full deployment; 50 GB or more of disk.
+- Internal DNS pointing a hostname at the machine.
+- A TLS certificate, from your internal certificate authority or a public one.
+
+## Install
+
+The [Deployment Overview](/deployment/overview) covers the standard install. On a machine with internet access:
+
+```bash
+curl -fsSL https://get.pipeshub.com/install | bash
+```
+
+## Air-gapped installation
+
+On a host with no internet access, move the images across yourself.
+
+**On a machine that does have access,** pull and save the images:
+
+```bash
+docker pull pipeshubai/pipeshub-ai:latest
+docker pull pipeshubai/pipeshub-sandbox:latest
+docker pull mongo:8.0.17
+docker pull redis:7.4-bookworm
+docker pull qdrant/qdrant:v1.15
+docker pull neo4j:5.26.0          # or arangodb, if that is your graph backend
+
+docker save -o pipeshub-images.tar \
+  pipeshubai/pipeshub-ai:latest \
+  pipeshubai/pipeshub-sandbox:latest \
+  mongo:8.0.17 redis:7.4-bookworm qdrant/qdrant:v1.15 neo4j:5.26.0
+```
+
+The sandbox image is required — PipesHub will not start without it. Add
+`zookeeper` and `kafka` images as well if you chose Kafka as the message broker.
+
+**On the air-gapped host,** load them and install without pulling:
+
+```bash
+docker load -i pipeshub-images.tar
+./install.sh --no-pull
+```
+
+`--no-pull` tells the installer to use the images already present rather than trying to reach Docker Hub.
+
+## Choosing models
+
+An air-gapped deployment cannot reach a hosted model provider, so configure local ones:
+
+- **Text generation:** [Ollama](/ai-models/llm/ollama) or [vLLM](/ai-models/llm/vllm) on your own hardware.
+- **Embeddings:** [Sentence Transformers](/ai-models/embedding/sentence-transformer), which run inside PipesHub with no separate server.
+- **Speech to text:** [Whisper](/ai-models/stt/whisper), which runs locally.
+
+Download the model weights on a connected machine and mount them into the deployment, since the first run would otherwise try to fetch them.
+
+## Telemetry
+
+PipesHub collects usage telemetry by default. On an isolated network those requests simply fail and nothing breaks, but you can turn the collection off in **Settings → General** so the attempts stop.
+
+## Certificates
+
+If you terminate TLS with a certificate from an internal certificate authority, make sure that authority is trusted by the machines people browse from. PipesHub itself does not care which authority signed it.
+
+## Day-two operations
+
+```bash
+./install.sh --stop         # stop, keeping data
+./install.sh --upgrade      # recreate containers using the current images
+./install.sh --uninstall    # stop and delete all data
+```
+
+On an air-gapped host, `--upgrade` will not find new images. Load the new image with `docker load` first, then run `./install.sh --upgrade --no-pull`.
+
+For backup and restore, follow the [procedures in the GCP guide](/deployment/vendor/gcp#backup-data) — they operate on Docker volumes and work anywhere.
+
+## Related
+
+- [Deployment Overview](/deployment/overview)
+- [Quickstart](/quickstart)

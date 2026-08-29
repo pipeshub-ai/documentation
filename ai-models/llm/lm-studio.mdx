@@ -1,0 +1,83 @@
+---
+title: LM Studio
+description: "Configure PipesHub to use local models served by LM Studio"
+---
+
+# LM Studio Configuration
+
+LM Studio is a desktop application that downloads open-source models and serves them from your own machine through an OpenAI-compatible API. Nothing leaves your computer, which makes it a good fit for private or offline work.
+
+## Before you start
+
+1. Install [LM Studio](https://lmstudio.ai/) on the machine that will run the model.
+2. Download a model from the **Discover** tab.
+3. Open the **Developer** tab (called **Local Server** in older versions), load the model, and start the server.
+4. Note the port. LM Studio uses `1234` by default, so the server address is usually `http://localhost:1234/v1`.
+
+<Warning>
+The machine running LM Studio needs enough memory to hold the model. As a rough guide, a quantised 8-billion-parameter model needs about 8 GB of free RAM, and larger models need proportionally more.
+</Warning>
+
+## Required Fields
+
+### Endpoint URL *
+
+The address of the LM Studio server, including the `/v1` path.
+
+**Default:** `http://host.docker.internal:1234/v1`
+
+**Which value to use:**
+
+| Where LM Studio runs | Endpoint URL to enter |
+|---|---|
+| On the same machine as PipesHub | `http://host.docker.internal:1234/v1` |
+| On another machine on your network | `http://192.168.1.50:1234/v1` |
+
+PipesHub runs inside a container, so `http://localhost:1234/v1` points at the PipesHub container rather than your desktop. Use `host.docker.internal` instead.
+
+If LM Studio runs on a different machine, enable **Serve on Local Network** in its server settings, otherwise it only accepts connections from its own host.
+
+### Model Name *
+
+The model identifier shown in LM Studio's server panel, for example `lmstudio-community/Meta-Llama-3.1-8B-Instruct-GGUF`.
+
+You can list the exact identifiers the server is serving with:
+
+```bash
+curl http://localhost:1234/v1/models
+```
+
+## Optional Fields
+
+### API Key
+
+LM Studio does not check API keys. Leave this blank unless you have put the server behind a proxy that requires one, in which case enter the key that proxy expects.
+
+### Model Friendly Name
+
+A label shown in the PipesHub interface so you can tell several configurations apart. If you leave it blank, the model name is used.
+
+### Context Length
+
+The size of the model's context window, in tokens. PipesHub uses this number to decide how much retrieved content it can safely include in a prompt. Set it to the value published for your model. If you leave it blank, PipesHub uses a conservative default.
+
+### Is Multimodal
+
+Turn this on if the model accepts images as well as text. It is on by default.
+
+### Is Reasoning
+
+Turn this on if the model performs extended reasoning before answering. It is on by default.
+
+## Troubleshooting
+
+**"Connection refused".** The LM Studio server is not running, or you used `localhost` where `host.docker.internal` is needed.
+
+**Requests time out on the first message.** LM Studio loads the model into memory on the first request, which can take a minute for a large model. Load the model in the Developer tab before using it from PipesHub.
+
+**"Model not found".** The identifier does not match. Copy it from the `curl` output above rather than typing it by hand.
+
+## Related
+
+- [LM Studio for embeddings](/ai-models/embedding/lm-studio)
+- [Ollama](/ai-models/llm/ollama) — another way to run local models

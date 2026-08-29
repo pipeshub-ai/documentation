@@ -1,0 +1,53 @@
+---
+title: LM Studio
+description: "Configure PipesHub to generate embeddings with a local LM Studio server"
+---
+
+# LM Studio Embedding Configuration
+
+LM Studio can serve embedding models as well as chat models, so you can index your documents entirely on your own hardware.
+
+## Before you start
+
+Download an embedding model in LM Studio — `nomic-ai/nomic-embed-text-v1.5-GGUF` is a good general-purpose choice — then load it and start the server. See [LM Studio for text generation](/ai-models/llm/lm-studio) for the full setup.
+
+## Required Fields
+
+### Endpoint URL *
+
+The address of the LM Studio server, including `/v1`.
+
+**Default:** `http://host.docker.internal:1234/v1`
+
+Use `host.docker.internal` rather than `localhost` when LM Studio runs on the Docker host.
+
+### Model Name *
+
+The embedding model's identifier, for example `nomic-ai/nomic-embed-text-v1.5-GGUF`.
+
+## Optional Fields
+
+### API Key
+
+LM Studio does not check API keys. Leave this blank unless a proxy in front of it requires one.
+
+### Model Friendly Name
+
+A label shown in the PipesHub interface so you can tell several configurations apart. If you leave it blank, the model name is used.
+
+### Dimensions
+
+The number of dimensions in the vectors this model produces. PipesHub uses it to size the vector collection.
+
+<Warning>
+Changing the embedding model or its dimensions after documents are indexed means existing vectors no longer match new ones. Re-index your content after switching.
+</Warning>
+
+### Is Multimodal
+
+Turn this on if the model can embed images as well as text. It is off by default.
+
+## Related
+
+- [LM Studio for text generation](/ai-models/llm/lm-studio)
+- [Sentence Transformers](/ai-models/embedding/sentence-transformer) — embeddings that run inside PipesHub with no separate server

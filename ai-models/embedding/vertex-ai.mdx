@@ -1,0 +1,57 @@
+---
+title: Vertex AI
+description: "Configure PipesHub to generate embeddings with Google Cloud Vertex AI"
+---
+
+# Vertex AI Embedding Configuration
+
+Vertex AI serves Google's text embedding models from your own Google Cloud project, billed and governed alongside the rest of your cloud resources.
+
+## Before you start
+
+Create a service account with the **Vertex AI User** role and download a JSON key. The steps are the same as for [Vertex AI text generation](/ai-models/llm/vertex-ai).
+
+## Required Fields
+
+### GCP Project ID *
+
+The Google Cloud project that hosts Vertex AI. It must match the `project_id` inside your service account JSON.
+
+### Service Account JSON *
+
+Upload the JSON key file. PipesHub checks that it is valid JSON, contains `type`, `project_id` and `private_key`, and has `"type": "service_account"`.
+
+### Model Name *
+
+The embedding model to use, for example `text-embedding-004` or `text-multilingual-embedding-002`.
+
+Use a multilingual model if your documents are not all in English.
+
+## Optional Fields
+
+### Region
+
+The Vertex AI region, for example `us-central1`.
+
+**Default:** `us-central1`
+
+### Model Friendly Name
+
+A label shown in the PipesHub interface so you can tell several configurations apart. If you leave it blank, the model name is used.
+
+### Dimensions
+
+The number of dimensions in the vectors this model produces. PipesHub uses it to size the vector collection.
+
+<Warning>
+Changing the embedding model or its dimensions after documents are indexed means existing vectors no longer match new ones. Re-index your content after switching.
+</Warning>
+
+### Is Multimodal
+
+Turn this on if the model can embed images as well as text. It is off by default.
+
+## Related
+
+- [Vertex AI for text generation](/ai-models/llm/vertex-ai)
+- [Gemini for embeddings](/ai-models/embedding/gemini)

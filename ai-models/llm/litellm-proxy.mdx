@@ -1,0 +1,94 @@
+---
+title: LiteLLM Proxy
+description: "Configure PipesHub to reach any LLM through a self-hosted LiteLLM Proxy gateway"
+---
+
+# LiteLLM Proxy Configuration
+
+LiteLLM Proxy is a self-hosted gateway that speaks the OpenAI API and forwards requests to more than 100 upstream providers. You run it yourself, define your models in its configuration, and point PipesHub at it.
+
+Use LiteLLM Proxy when you want one place to manage keys, spending limits, and fallbacks for every model your organisation uses, instead of configuring each provider separately in PipesHub.
+
+<Info>
+LiteLLM Proxy is the only provider in PipesHub that supports all five model types: text generation, embeddings, image generation, text to speech, and speech to text. You configure each one separately, and they can point at the same proxy.
+</Info>
+
+## Before you start
+
+You need a running LiteLLM Proxy instance. Follow the [LiteLLM Proxy quick start](https://docs.litellm.ai/docs/simple_proxy) to install it and add at least one model to its `config.yaml`. Note the port it listens on; the default is `4000`.
+
+## Required Fields
+
+### Endpoint URL *
+
+The address where your LiteLLM Proxy is reachable, including the scheme and port.
+
+**Default:** `http://host.docker.internal:4000`
+
+**Which value to use:**
+
+| Where LiteLLM Proxy runs | Endpoint URL to enter |
+|---|---|
+| On the same machine as PipesHub, in Docker | `http://host.docker.internal:4000` |
+| On another server | `https://litellm.your-domain.com` |
+| In the same Docker network as PipesHub | `http://<container-name>:4000` |
+
+PipesHub runs inside a container, so `http://localhost:4000` refers to the PipesHub container itself and will not reach a proxy running on your host. Use `host.docker.internal` instead.
+
+### API Key *
+
+The master key or virtual key from your LiteLLM Proxy. This is the key you set as `master_key` in the proxy's configuration, or a virtual key you generated with it.
+
+This is not the upstream provider's key. Your OpenAI or Anthropic keys stay in the proxy's own configuration; PipesHub never sees them.
+
+### Model Name *
+
+The model name exactly as it appears under `model_name` in your LiteLLM Proxy configuration, not the upstream provider's name for it.
+
+For example, if your proxy config contains:
+
+```yaml
+model_list:
+  - model_name: my-gpt
+    litellm_params:
+      model: openai/gpt-4o
+```
+
+then enter `my-gpt` here.
+
+You can list the names your proxy exposes with:
+
+```bash
+curl http://localhost:4000/v1/models -H "Authorization: Bearer YOUR_MASTER_KEY"
+```
+
+## Optional Fields
+
+### Model Friendly Name
+
+A label shown in the PipesHub interface so you can tell several configurations apart. If you leave it blank, the model name is used.
+
+### Context Length
+
+The size of the model's context window, in tokens. PipesHub uses this number to decide how much retrieved content it can safely include in a prompt. Set it to the value published for your model. If you leave it blank, PipesHub uses a conservative default.
+
+### Is Multimodal
+
+Turn this on if the model accepts images as well as text. It is on by default.
+
+### Is Reasoning
+
+Turn this on if the model performs extended reasoning before answering. It is on by default.
+
+## Troubleshooting
+
+**"Connection refused" when saving.** PipesHub cannot reach the endpoint. Check that the proxy is running, and that you used `host.docker.internal` rather than `localhost` if the proxy runs on the Docker host.
+
+**"Model not found".** The model name does not match any `model_name` in the proxy configuration. List the available names with the `curl` command above.
+
+**Authentication errors.** The API Key does not match the proxy's `master_key`, or the virtual key has expired.
+
+## Related
+
+- [LiteLLM Proxy for embeddings](/ai-models/embedding/litellm-proxy)
+- [OpenAI Compatible](/ai-models/llm/openai-compatible) — for a single OpenAI-shaped endpoint rather than a multi-provider gateway

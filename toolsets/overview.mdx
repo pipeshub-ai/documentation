@@ -47,27 +47,38 @@ Unlike **Connectors** (which index data for querying and search), **Toolsets** p
 
 Tool counts come from the toolsets themselves.
 
-The first group is different from the rest. Those toolsets are marked **internal**:
-they are attached to every agent automatically, they are never sent to the
-interface, and they do not appear under **Workspace settings → Actions**. You do
-not add them and you cannot remove them.
+Every agent already has a set of **built-in capabilities**. They are attached
+automatically, they do not appear under **Workspace settings → Actions**, and there
+is nothing to configure — you cannot add or remove them. They are listed here so you
+know what an agent can already do before you attach anything.
 
-Everything below that group is a **catalogue toolset**. Those you authorise under
-**Actions** and then attach to an agent from the **Tools** panel.
+| Built-in capability | What the agent can do | Tools |
+|---------------------|-----------------------|-------|
+| Retrieval | Search the organisation's indexed knowledge | 1 |
+| Knowledge Hub | Find indexed items by name | 1 |
+| Knowledge Graph | Navigate and search content through the graph | 4 |
+| Artifact Manager | Save and retrieve versioned output | 6 |
+| Internal Tools | Ask the user a structured question with options | 1 |
+| Calculator | Arithmetic and working-day date maths | 5 |
+| Code Sandbox | Run Python or TypeScript in an isolated sandbox | 2 |
+| Database Sandbox | Run SQL in an ephemeral database | 2 |
+| Image Generator | Generate or edit an image from a prompt | 1 |
 
-### Always on — internal, not in the catalogue
+Two of these are worth knowing about when writing prompts. **Calculator** exists
+because language models are unreliable at arithmetic, so an agent that must produce
+exact numbers should be told to use it. **Image Generator** calls whichever image
+model is configured under **Settings → AI Models**, so it only works once one is set
+up.
 
-| Toolset | What agents can do | Tools |
-|---------|--------------------|-------|
-| [Retrieval](/toolsets/built-in/retrieval) | Search indexed knowledge | 1 |
-| [Knowledge Hub](/toolsets/built-in/knowledge-hub) | Find indexed items by name | 1 |
-| [Knowledge Graph](/toolsets/built-in/knowledge-graph) | Walk the content hierarchy | 4 |
-| [Artifact Manager](/toolsets/built-in/artifact-manager) | Save and retrieve versioned output | 6 |
-| [Internal Tools](/toolsets/built-in/internal-tools) | Ask the user a structured question | 1 |
-| [Calculator](/toolsets/built-in/calculator) | Arithmetic and working-day date maths | 5 |
-| [Code Sandbox](/toolsets/built-in/coding-sandbox) | Run Python or TypeScript in isolation | 2 |
-| [Database Sandbox](/toolsets/built-in/database-sandbox) | Run SQL in an ephemeral database | 2 |
-| [Image Generator](/toolsets/built-in/image-generator) | Generate or edit images from a prompt | 1 |
+<Warning>
+**Code Sandbox** and **Database Sandbox** execute code, and every agent has them.
+Python, TypeScript and SQL run in an isolated sandbox rather than against your
+services, but if your security review needs to account for code execution, this is
+where it happens.
+</Warning>
+
+Everything below is a **catalogue toolset**: you authorise it under **Actions** and
+then attach it to an agent from the **Tools** panel.
 
 ### Google Workspace
 
@@ -113,7 +124,7 @@ Everything below that group is a **catalogue toolset**. Those you authorise unde
 | [MariaDB](/toolsets/mariadb/mariadb) | Query tables and inspect schemas | 5 |
 | [Redshift](/toolsets/redshift/redshift) | Query tables and inspect schemas | 8 |
 
-That is **19 catalogue toolsets** (342 tools) that you authorise and attach, plus **9 internal toolsets** (23 tools) that every agent already has.
+That is **19 catalogue toolsets** carrying 342 tools that you authorise and attach, on top of the 9 built-in capabilities above.
 
 <Note>
 Two kinds of toolset are deliberately absent from **Actions**, for different reasons.

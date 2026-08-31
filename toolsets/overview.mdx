@@ -47,34 +47,38 @@ Unlike **Connectors** (which index data for querying and search), **Toolsets** p
 
 Tool counts come from the toolsets themselves.
 
-Every agent already has a set of **built-in capabilities**. They are attached
-automatically, they do not appear under **Workspace settings → Actions**, and there
-is nothing to configure — you cannot add or remove them. They are listed here so you
-know what an agent can already do before you attach anything.
+Every agent also gets a set of **built-in capabilities** it did not have to be given.
+They do not appear under **Workspace settings → Actions** and there is nothing to
+configure. They are listed here so you know what an agent can already do before you
+attach anything.
 
 | Built-in capability | What the agent can do | Tools |
 |---------------------|-----------------------|-------|
-| Retrieval | Search the organisation's indexed knowledge | 1 |
-| Knowledge Hub | Find indexed items by name | 1 |
 | Knowledge Graph | Navigate and search content through the graph | 4 |
 | Artifact Manager | Save and retrieve versioned output | 6 |
 | Internal Tools | Ask the user a structured question with options | 1 |
 | Calculator | Arithmetic and working-day date maths | 5 |
-| Code Sandbox | Run Python or TypeScript in an isolated sandbox | 2 |
-| Database Sandbox | Run SQL in an ephemeral database | 2 |
 | Image Generator | Generate or edit an image from a prompt | 1 |
 
-Two of these are worth knowing about when writing prompts. **Calculator** exists
-because language models are unreliable at arithmetic, so an agent that must produce
-exact numbers should be told to use it. **Image Generator** calls whichever image
-model is configured under **Settings → AI Models**, so it only works once one is set
-up.
+Two of these change how you write a prompt. **Calculator** exists because language
+models are unreliable at arithmetic, so an agent that must produce exact numbers
+should be told to use it. **Image Generator** needs an image model configured under
+**Workspace → AI Models → Image Generation** before it will work.
+
+Two more capabilities are attached only when the agent has no knowledge sources:
+**Retrieval** and **Knowledge Hub**. When knowledge is active, Knowledge Graph covers
+both searching and listing, so those two are left out rather than giving the model
+two overlapping sets of tools.
 
 <Warning>
-**Code Sandbox** and **Database Sandbox** execute code, and every agent has them.
-Python, TypeScript and SQL run in an isolated sandbox rather than against your
-services, but if your security review needs to account for code execution, this is
-where it happens.
+**Agents can run code.** When code execution is enabled — which it is by default —
+an agent gets `run_code`, `install_packages` and `read_sandbox_file`, letting it
+execute Python, TypeScript and SQL in an isolated sandbox. Set
+`PIPESHUB_ENABLE_CODE_EXECUTION=false` to turn this off for the deployment.
+
+These are not toolsets you attach, and they are not the `coding_sandbox` or
+`database_sandbox` entries in the repository — those are always excluded from agents
+in favour of `run_code`.
 </Warning>
 
 Everything below is a **catalogue toolset**: you authorise it under **Actions** and
@@ -124,7 +128,7 @@ then attach it to an agent from the **Tools** panel.
 | [MariaDB](/toolsets/mariadb/mariadb) | Query tables and inspect schemas | 5 |
 | [Redshift](/toolsets/redshift/redshift) | Query tables and inspect schemas | 8 |
 
-That is **19 catalogue toolsets** carrying 342 tools that you authorise and attach, on top of the 9 built-in capabilities above.
+That is **19 catalogue toolsets** carrying 342 tools that you authorise and attach, on top of the built-in capabilities above.
 
 <Note>
 Two kinds of toolset are deliberately absent from **Actions**, for different reasons.
@@ -142,12 +146,14 @@ list, so they are not loaded and cannot be added to an agent yet.
 ### Step 1: Open Actions
 
 Go to **Workspace settings → Actions**. Team-wide toolsets live there and require an
-administrator; your own live under **Your Actions**.
+administrator; your own live under **Your Actions**, which filters by
+**All**, **Authenticated** and **Not authenticated** rather than by configuration
+state.
 
 <div className="text-center">
   <img
     src="/images/toolsets/navigate-to-toolsets.png"
-    alt="Navigate to Toolsets Settings"
+    alt="Navigate to Actions"
     className="block mx-auto w-11/12"
   />
 </div>
@@ -163,14 +169,14 @@ The Actions page filters by configuration state:
 <div className="text-center">
   <img
     src="/images/toolsets/toolsets-page.png"
-    alt="Toolsets Page"
+    alt="Actions page"
     className="block mx-auto w-11/12"
   />
 </div>
 
 ### Step 3: Configure a Toolset
 
-1. Find the toolset you want to configure in the **Available** tab
+1. Find the toolset you want to configure under the **Not configured** filter
 2. Click the **"Configure"** button on the toolset card
 3. The **Configuration Dialog** will open
 

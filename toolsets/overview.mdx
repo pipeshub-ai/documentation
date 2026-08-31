@@ -45,75 +45,137 @@ Unlike **Connectors** (which index data for querying and search), **Toolsets** p
 
 ## Available Toolsets
 
+Tool counts come from the toolsets themselves.
+
+Every agent also gets a set of **built-in capabilities** it did not have to be given.
+They do not appear under **Workspace settings → Actions** and there is nothing to
+configure. They are listed here so you know what an agent can already do before you
+attach anything.
+
+| Built-in capability | What the agent can do | Tools |
+|---------------------|-----------------------|-------|
+| Artifact Manager | Save and retrieve versioned output | 6 |
+| Internal Tools | Ask the user a structured question with options | 1 |
+| Calculator | Arithmetic and working-day date maths | 5 |
+| Image Generator | Generate or edit an image from a prompt | 1 |
+
+Two of these change how you write a prompt. **Calculator** exists because language
+models are unreliable at arithmetic, so an agent that must produce exact numbers
+should be told to use it. **Image Generator** needs an image model configured under
+**Workspace → AI Models → Image Generation** before it will work.
+
+One more is added only when the agent has knowledge attached to it. **Knowledge
+Graph** (4 tools) lets the agent search indexed content and walk the structure it
+sits in. An agent with no knowledge sources does not get it, because there would be
+nothing to search.
+
+<Warning>
+**Agents can run code.** When code execution is enabled — which it is by default —
+an agent gets `run_code`, `install_packages` and `read_sandbox_file`, letting it
+execute Python, TypeScript and SQL in an isolated sandbox. Set
+`PIPESHUB_ENABLE_CODE_EXECUTION=false` to turn this off for the deployment.
+
+These are not toolsets you attach, and they are not the `coding_sandbox` or
+`database_sandbox` entries in the repository — those are always excluded from agents
+in favour of `run_code`.
+</Warning>
+
+Everything below is a **catalogue toolset**: you authorise it under **Actions** and
+then attach it to an agent from the **Tools** panel.
+
 ### Google Workspace
 
-| Toolset | Description | Auth Type |
-|---------|-------------|-----------|
-| [Gmail](/toolsets/google-workspace/gmail) | Send and manage emails | OAuth 2.0 |
-| [Calendar](/toolsets/google-workspace/calendar) | Manage calendar events | OAuth 2.0 |
-| [Drive](/toolsets/google-workspace/drive) | Access and manage files | OAuth 2.0 |
-
-### Atlassian
-
-| Toolset | Description | Auth Type |
-|---------|-------------|-----------|
-| [Jira](/toolsets/jira/jira) | Issue tracking and project management | OAuth 2.0 |
-| [Confluence](/toolsets/confluence/confluence) | Wiki and documentation | OAuth 2.0 |
+| Toolset | What agents can do | Tools |
+|---------|--------------------|-------|
+| [Gmail](/toolsets/google-workspace/gmail) | Read, send, and reply to email | 7 |
+| [Calendar](/toolsets/google-workspace/calendar) | Create and manage calendar events | 7 |
+| [Drive](/toolsets/google-workspace/drive) | Find, read, and manage files | 8 |
 
 ### Microsoft 365
 
-| Toolset | Description | Auth Type |
-|---------|-------------|-----------|
-| [Microsoft Teams](/toolsets/ms-teams/teams) | Teams channels, chats, meetings, and calendar via Microsoft Graph | OAuth 2.0 |
+| Toolset | What agents can do | Tools |
+|---------|--------------------|-------|
+| [Outlook](/toolsets/microsoft-365/outlook) | Send email and manage the calendar | 19 |
+| [OneDrive](/toolsets/microsoft-365/onedrive) | Find, read, and manage files | 21 |
+| [SharePoint](/toolsets/microsoft-365/sharepoint) | Sites, lists, and documents | 19 |
+| [Teams](/toolsets/microsoft-365/teams) | Channels, chats, and meetings | 34 |
 
-### Slack
+### Atlassian
 
-| Toolset | Description | Auth Type |
-|---------|-------------|-----------|
-| [Slack](/toolsets/slack/slack) | Team messaging and collaboration | OAuth 2.0 |
+| Toolset | What agents can do | Tools |
+|---------|--------------------|-------|
+| [Jira](/toolsets/jira/jira) | Issues, comments, and transitions | 15 |
+| [Jira Data Center](/toolsets/jira/jira-data-center) | Self-hosted Jira | 13 |
+| [Confluence](/toolsets/confluence/confluence) | Pages, comments, and attachments | 16 |
+| [Confluence Data Center](/toolsets/confluence/confluence-data-center) | Self-hosted Confluence | 15 |
 
-### Database
+### Work and customer systems
 
-| Toolset | Description | Auth Type |
-|---------|-------------|-----------|
-| [MariaDB](/toolsets/mariadb/mariadb) | Schema introspection and SQL execution | Basic Auth |
+| Toolset | What agents can do | Tools |
+|---------|--------------------|-------|
+| [GitHub](/toolsets/github/github) | Repositories, issues, and pull requests | 23 |
+| [ClickUp](/toolsets/clickup/clickup) | Tasks, docs, and checklists | 26 |
+| [Slack](/toolsets/slack/slack) | Messages, channels, and threads | 37 |
+| [Zoom](/toolsets/zoom/zoom) | Meetings and contacts | 13 |
+| [Salesforce](/toolsets/salesforce/salesforce) | Records, cases, and SOQL queries | 30 |
+| Lumos | Access requests and app permissions | 26 |
 
----
+### Databases
+
+| Toolset | What agents can do | Tools |
+|---------|--------------------|-------|
+| [MariaDB](/toolsets/mariadb/mariadb) | Query tables and inspect schemas | 5 |
+| [Redshift](/toolsets/redshift/redshift) | Query tables and inspect schemas | 8 |
+
+That is **19 catalogue toolsets** carrying 342 tools that you authorise and attach, on top of the built-in capabilities above.
+
+<Note>
+Two kinds of toolset are deliberately absent from **Actions**, for different reasons.
+
+**Internal toolsets** — the first group above — are excluded by design. They are
+attached to every agent already, so there is nothing to configure.
+
+**Unreleased implementations** — Notion, Linear, GitLab, Dropbox, Box, S3, Zendesk
+and others — exist in the repository but are commented out of the toolset discovery
+list, so they are not loaded and cannot be added to an agent yet.
+</Note>
 
 ## Configuring Toolsets
 
-### Step 1: Navigate to Toolsets Settings
+### Step 1: Open Actions
 
-1. Click on your **Connector Settings** in the navigation
-2. Go to **Settings** in the sidebar
-3. Click **Toolsets**
+Go to **Workspace settings → Actions**. Team-wide toolsets live there and require an
+administrator; your own live under **Your Actions**, which filters by
+**All**, **Authenticated** and **Not authenticated** rather than by configuration
+state.
 
 <div className="text-center">
   <img
     src="/images/toolsets/navigate-to-toolsets.png"
-    alt="Navigate to Toolsets Settings"
+    alt="Navigate to Actions"
     className="block mx-auto w-11/12"
   />
 </div>
 
 ### Step 2: Browse Available Toolsets
 
-The Toolsets page has two tabs:
+The Actions page filters by configuration state:
 
-- **My Toolsets** - Toolsets you've already configured
-- **Available** - All available toolsets ready to configure
+- **All** - every toolset in the catalogue
+- **Configured** - the ones already set up
+- **Not configured** - the ones still to authorise
 
 <div className="text-center">
   <img
     src="/images/toolsets/toolsets-page.png"
-    alt="Toolsets Page"
+    alt="Actions page"
     className="block mx-auto w-11/12"
   />
 </div>
 
 ### Step 3: Configure a Toolset
 
-1. Find the toolset you want to configure in the **Available** tab
+1. Find the toolset you want to configure under the **Not configured** filter
 2. Click the **"Configure"** button on the toolset card
 3. The **Configuration Dialog** will open
 
@@ -141,7 +203,7 @@ Follow the authentication flow for the toolset:
 
 ### Step 5: Verify Configuration
 
-Once configured, the toolset will appear in your **My Toolsets** tab with an "Authenticated" status.
+Once configured, the toolset will appear under the **Configured** filter with an "Authenticated" status.
 
 <div className="text-center">
   <img
@@ -153,7 +215,7 @@ Once configured, the toolset will appear in your **My Toolsets** tab with an "Au
 
 ### Managing Toolset Configuration
 
-You can manage your toolset by clicking on it in the **My Toolsets** tab to open the configuration dialog. Available actions:
+You can manage your toolset by clicking on it under the **Configured** filter to open the configuration dialog. Available actions:
 
 - **Update Configuration** - Modify credentials or settings
 - **Reauthenticate** - Refresh authentication if it expires or encounters issues

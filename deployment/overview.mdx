@@ -1,11 +1,99 @@
 ---
 title: "Deployment Overview"
-description: "Overview of the PipesHub Workplace AI Deployment"
+description: "Ways to run PipesHub, and how to choose between them"
+icon: "server"
 ---
 
-<div className="flex flex-col items-center justify-center text-center pt-10">
-  <h1 className=" font-bold">🚧 Coming Soon</h1>
-  <h3 className="text-xl mt-2">
-    We are working hard to bring you this content. Please check back shortly!
-  </h3>
-</div>
+# Deployment Overview
+
+PipesHub runs anywhere Docker runs. The installer is the same on a laptop, a cloud virtual machine, and a server in your own rack — what changes is how people reach it and how you handle TLS.
+
+## Choose a path
+
+| You want to | Use |
+|---|---|
+| Try PipesHub on your own machine | [Quickstart](/quickstart) |
+| Run it on a cloud VM for your team | This page, plus the [GCP guide](/deployment/vendor/gcp) for a worked example |
+| Build images from your own checkout | [Development](/development) |
+| Run it on Kubernetes | The Helm chart in the [pipeshub-ai repository](https://github.com/pipeshub-ai/pipeshub-ai/tree/main/deployment/helm) |
+
+## Requirements
+
+- **Docker** with Compose v2.
+- **RAM:** 16 GB or more for the full deployment; the slim deployment needs less.
+- **Disk:** 50 GB or more, mostly for indexed content and model files.
+- A domain name and TLS certificate if anyone will reach PipesHub over anything other than `localhost`.
+
+The installer checks Docker, memory and disk before it starts, and tells you if the machine is short.
+
+## Install
+
+The same command works on any server:
+
+```bash
+curl -fsSL https://get.pipeshub.com/install | bash
+```
+
+It downloads the deployment files, asks a few questions, generates secrets, writes a `.env` file, pulls the images, and waits until the application answers its health check.
+
+For an unattended install, pass the public URL and skip the prompts:
+
+```bash
+curl -fsSL https://get.pipeshub.com/install \
+  | PIPESHUB_PUBLIC_URL="https://pipeshub.example.com" bash -s -- --yes
+```
+
+See the [Quickstart](/quickstart) for the full list of installer flags.
+
+## Serving it over HTTPS
+
+<Warning>
+Browsers block features PipesHub needs when the page is served over plain HTTP from anything other than `localhost`. The usual symptom is a white screen after a successful deployment. Put a TLS-terminating reverse proxy in front of PipesHub for any deployment people reach by hostname.
+</Warning>
+
+The shape is the same whichever proxy you use:
+
+1. Point a DNS record at the server.
+2. Terminate TLS at Nginx, Caddy, Traefik, Cloudflare, or a cloud load balancer.
+3. Forward traffic to PipesHub on port 3000.
+4. Set the public HTTPS URL during installation, or afterwards with `./install.sh --reconfigure`.
+
+That URL is written to `.env` as `FRONTEND_PUBLIC_URL`, and it is what OAuth callbacks, email invitations and webhooks are built from. If it is wrong, sign-in and connector authorisation break in ways that are hard to trace back.
+
+## Choosing your backends
+
+The installer asks which graph database, message broker and key-value store to use, and writes the answers to `.env`:
+
+| Component | `.env` variable | Default |
+|---|---|---|
+| Graph database | `DATA_STORE` | `neo4j` (or `arangodb`) |
+| Key-value store | `KV_STORE_TYPE` | `redis` (or `etcd`) |
+| Message broker | `MESSAGE_BROKER` | `kafka` on a full install, `redis` on slim |
+
+The vector database is Qdrant, and the installer does not ask about it. The
+provider is chosen by `VECTOR_DB_TYPE`, which defaults to `qdrant` when unset,
+and the Docker Compose deployment does not set that variable.
+
+Kafka is worth choosing when you expect sustained high-volume indexing across many connectors. Redis Streams is simpler to run, and is what the slim deployment uses.
+
+## Day-two operations
+
+Run these from the directory the installer prints when it finishes:
+
+```bash
+./install.sh --upgrade      # pull the latest images and recreate containers
+./install.sh --stop         # stop, keeping all data
+./install.sh --reconfigure  # re-run the wizard over the existing .env
+./install.sh --uninstall    # stop and delete all data (irreversible)
+```
+
+`curl | bash` does not change your shell's directory, so the success banner prints the path to use.
+
+## Cloud guides
+
+- [Google Cloud](/deployment/vendor/gcp) — a complete worked example including firewall rules, Nginx, backup and restore.
+- [AWS](/deployment/vendor/aws)
+- [Azure](/deployment/vendor/azure)
+- [Private cloud and on-premises](/deployment/vendor/private)
+
+The GCP guide is the most detailed. The steps that are not GCP-specific — installing Docker, running the installer, setting up the reverse proxy, backing up volumes — apply anywhere.

@@ -1,0 +1,119 @@
+---
+title: "OAuth / OIDC"
+description: "Let people sign in to PipesHub with any OAuth 2.0 or OpenID Connect provider"
+---
+
+# OAuth / OIDC Sign-in
+
+PipesHub can accept sign-ins from any identity provider that speaks OAuth 2.0 or OpenID Connect. Use this when your provider is not one of the ones with a dedicated page — Okta, Auth0, Keycloak, Authentik, Ping, and self-hosted providers all work through this method.
+
+If you use Google or Microsoft, configure those directly instead: [Google](/auth/google), [Microsoft / Azure AD](/auth/microsoft-azureAd). They need less setup.
+
+## How it works
+
+1. Someone selects your provider's button on the PipesHub sign-in page.
+2. PipesHub sends them to your provider's authorisation URL.
+3. They sign in there and approve the request.
+4. Your provider redirects back to PipesHub with a code, which PipesHub exchanges for a token.
+5. PipesHub reads their identity from the user info endpoint and signs them in.
+
+## Before you start
+
+You need administrator access to both PipesHub and your identity provider.
+
+Decide first whether people without a PipesHub account should be able to create one by signing in. That is controlled by **Enable JIT provisioning**, described below, and it is the single most important choice on this page.
+
+## Step 1: Register PipesHub with your provider
+
+Create an application (your provider may call it a client, an app integration, or a relying party) and set its redirect URI to:
+
+```
+https://your-pipeshub-domain/auth/oauth/callback
+```
+
+Replace `your-pipeshub-domain` with the address people use to reach PipesHub — the same value as `FRONTEND_PUBLIC_URL` in your `.env`.
+
+Then note these values from your provider, which you will need in the next step:
+
+- Client ID and client secret
+- Authorization URL
+- Token endpoint
+- User info endpoint
+
+Most OpenID Connect providers publish the three URLs at `https://your-provider/.well-known/openid-configuration`. Fetching that document is usually quicker than hunting through the console:
+
+```bash
+curl -s https://your-provider/.well-known/openid-configuration | grep -E 'authorization_endpoint|token_endpoint|userinfo_endpoint'
+```
+
+## Step 2: Configure PipesHub
+
+Go to **Workspace settings → Authentication** and add the OAuth method.
+
+| Field | Required | Description |
+|---|---|---|
+| **Provider Name** | Yes | The label shown on the sign-in button, for example `Okta` or `Company SSO`. |
+| **Client ID** | Yes | The client identifier from your provider. |
+| **Client Secret** | Yes | The client secret from your provider. Stored encrypted. |
+| **Authorization URL** | Yes | Where PipesHub sends people to sign in. |
+| **Token Endpoint** | Yes | Where PipesHub exchanges the authorisation code for a token. |
+| **User Info Endpoint** | Yes | Where PipesHub reads the signed-in person's identity. |
+| **Scope** | No | Space-separated scopes to request. Defaults to `openid email profile`, which covers most providers. |
+| **Redirect URI** | Shown, not editable | PipesHub fills this in and displays it read-only. Copy it into your provider. |
+| **Enable JIT provisioning** | No | Create a PipesHub account on first sign-in. **On by default.** |
+
+<Note>
+Provider Name, Client ID, Client Secret, Authorization URL, Token Endpoint and
+User Info Endpoint are all required. Scope and JIT provisioning are optional.
+
+PipesHub uses a confidential client: the authorisation code is exchanged for a
+token server-side using the client secret, so a public client with PKCE and no
+secret will not work here.
+</Note>
+
+<Warning>
+**Do not treat the values on this page as hidden from end users.** Configure this
+method as though the client secret could be read by anyone who can reach the
+sign-in page, and rely on the redirect URI allow-list at your identity provider —
+not on the secret staying private — as the control that stops it being reused.
+
+Register the exact redirect URI and nothing broader, so an authorisation code
+cannot be redirected anywhere else.
+</Warning>
+
+## Just-in-time provisioning
+
+**JIT provisioning is on by default for this method.** With it on, anyone who can authenticate at your identity provider gets a PipesHub account the first time they sign in, without an invitation.
+
+<Warning>
+If your identity provider is open to a wider audience than PipesHub should be — a shared corporate tenant, a provider that permits self-registration, or a social login — turn JIT provisioning **off**. Otherwise anyone able to sign in at the provider can create their own PipesHub account.
+
+With JIT off, someone without an existing PipesHub account is refused with *"Account not found. Please contact your administrator."* You invite people first, and sign-in matches them by email.
+</Warning>
+
+Turn JIT on when your identity provider already contains exactly the people who should have access. Turn it off when access to PipesHub should be narrower than access to the provider.
+
+## Step 3: Test before you rely on it
+
+1. Save the configuration.
+2. Open PipesHub in a private browsing window so you are not signed in.
+3. Select your provider's button and complete sign-in.
+4. Confirm you land in PipesHub, and check that the account was created or matched as you intended.
+
+Keep one administrator account on password or OTP sign-in until you have confirmed OAuth works. If the provider configuration is wrong, that account is how you get back in to fix it.
+
+## Troubleshooting
+
+**`redirect_uri_mismatch`.** The redirect URI registered with your provider does not exactly match the one PipesHub uses. It must match on scheme, host, port and path. `http` versus `https` and a trailing slash both count as a mismatch.
+
+**"Account not found. Please contact your administrator."** Sign-in worked, but no PipesHub account matches and JIT provisioning is off. Either invite the person first, or turn JIT on if that suits your access model.
+
+**Sign-in succeeds and then returns to the login page.** PipesHub could not read an identity from the user info endpoint. Check that the endpoint is correct and that your scope includes `openid email profile`, or whatever your provider requires to return an email address.
+
+**The button does not appear.** The method is configured but not enabled for the organisation. Check **Workspace settings → Authentication** and confirm OAuth is in the list of allowed methods.
+
+## Related
+
+- [Google](/auth/google)
+- [Microsoft / Azure AD](/auth/microsoft-azureAd)
+- [SAML](/auth/saml)

@@ -1,11 +1,79 @@
 ---
 title: Vertex AI
-description: "Configure PipesHub Workplace AI to use different Vertex AI models"
+description: "Configure PipesHub Workplace AI to use Gemini models on Google Cloud Vertex AI"
 ---
 
-<div className="flex flex-col items-center justify-center text-center pt-10">
-  <h1 className=" font-bold">🚧 Coming Soon</h1>
-  <h3 className="text-xl mt-2">
-    We are working hard to bring you this content. Please check back shortly!
-  </h3>
-</div>
+# Vertex AI Configuration
+
+Vertex AI is Google Cloud's managed platform for running Gemini and other foundation models. Choose it over the direct [Gemini](/ai-models/llm/gemini) provider when you need requests billed to a Google Cloud project, kept inside a specific region, or governed by your existing IAM policies.
+
+Vertex AI authenticates with a service account JSON key that you upload in PipesHub. It does not use an API key, and it does not read credentials from environment variables.
+
+## Before you start
+
+1. In the [Google Cloud Console](https://console.cloud.google.com/), select or create a project.
+2. Enable the **Vertex AI API** for that project.
+3. Go to **IAM & Admin → Service Accounts** and create a service account.
+4. Grant it the **Vertex AI User** role, or a role that includes it.
+5. Open the service account, go to the **Keys** tab, and create a new JSON key. The file downloads once — keep it safe.
+
+## Required Fields
+
+### GCP Project ID *
+
+The Google Cloud project that hosts Vertex AI. This must match the `project_id` field inside your service account JSON file.
+
+### Service Account JSON *
+
+Upload the JSON key file you created above. PipesHub validates the file before saving and will reject it if:
+
+- the file is not valid JSON,
+- it is missing `type`, `project_id`, or `private_key`, or
+- its `type` field is not `service_account` — which usually means an OAuth client secret was uploaded by mistake.
+
+The key is stored encrypted and is used only to authenticate requests to Vertex AI.
+
+### Model Name *
+
+The Vertex AI model to call, for example `gemini-2.5-flash` or `gemini-2.5-pro`.
+
+Check Google's [Vertex AI model reference](https://cloud.google.com/vertex-ai/generative-ai/docs/learn/models) for the current list, and confirm the model is available in the region you chose.
+
+## Optional Fields
+
+### Region
+
+The Vertex AI region requests are sent to, for example `us-central1` or `europe-west4`.
+
+**Default:** `us-central1`
+
+Pick a region close to your users for lower latency, or one that satisfies your data residency requirements. Not every model is offered in every region.
+
+### Model Friendly Name
+
+A label shown in the PipesHub interface so you can tell several configurations apart. If you leave it blank, the model name is used.
+
+### Context Length
+
+The size of the model's context window, in tokens. PipesHub uses this number to decide how much retrieved content it can safely include in a prompt. Set it to the value published for your model. If you leave it blank, PipesHub uses a conservative default.
+
+### Is Multimodal
+
+Turn this on if the model accepts images as well as text. It is on by default.
+
+### Is Reasoning
+
+Turn this on if the model performs extended reasoning before answering. It is on by default.
+
+## Troubleshooting
+
+**"Permission denied".** The service account is missing the Vertex AI User role, or the Vertex AI API is not enabled on the project.
+
+**"Model not found" in a specific region.** The model is not offered there. Try `us-central1`, which carries the widest selection.
+
+**The upload is rejected.** You uploaded an OAuth client secret rather than a service account key. Open the file and confirm `"type": "service_account"`.
+
+## Related
+
+- [Vertex AI for embeddings](/ai-models/embedding/vertex-ai)
+- [Gemini](/ai-models/llm/gemini) — the same models through Google AI Studio, with an API key instead of a service account

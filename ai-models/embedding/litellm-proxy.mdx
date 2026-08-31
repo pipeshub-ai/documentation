@@ -1,0 +1,52 @@
+---
+title: LiteLLM Proxy
+description: "Configure PipesHub to generate embeddings through a self-hosted LiteLLM Proxy gateway"
+---
+
+# LiteLLM Proxy Embedding Configuration
+
+PipesHub can generate document embeddings through a LiteLLM Proxy instance, using the same gateway that serves your chat models. This keeps every model key and spending limit in one place.
+
+## Before you start
+
+You need a running LiteLLM Proxy with at least one embedding model in its `model_list`. See [LiteLLM Proxy for text generation](/ai-models/llm/litellm-proxy) for setup, and the [LiteLLM embedding documentation](https://docs.litellm.ai/docs/embedding/supported_embedding) for supported models.
+
+## Required Fields
+
+### Endpoint URL *
+
+The address where your LiteLLM Proxy is reachable.
+
+**Default:** `http://host.docker.internal:4000`
+
+Use `host.docker.internal` rather than `localhost` when the proxy runs on the Docker host, because PipesHub itself runs in a container.
+
+### API Key *
+
+The master key or a virtual key from your LiteLLM Proxy.
+
+### Model Name *
+
+The embedding model's name as defined under `model_name` in your proxy configuration — for example `text-embedding-3-small` or `azure-embeddings`.
+
+## Optional Fields
+
+### Model Friendly Name
+
+A label shown in the PipesHub interface so you can tell several configurations apart. If you leave it blank, the model name is used.
+
+### Dimensions
+
+The number of dimensions in the vectors this model produces. PipesHub uses it to size the vector collection.
+
+<Warning>
+Changing the embedding model or its dimensions after documents are indexed means existing vectors no longer match new ones. Re-index your content after switching.
+</Warning>
+
+### Is Multimodal
+
+Turn this on if the model can embed images as well as text. It is off by default.
+
+## Related
+
+- [LiteLLM Proxy for text generation](/ai-models/llm/litellm-proxy)

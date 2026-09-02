@@ -16,7 +16,7 @@ Authorization: Bearer YOUR_TOKEN
 
 ## Architecture Overview
 
-The Knowledge Base Service is built on a Node.js backend, with graph-based data persistence in whichever graph database the instance is configured to use (Neo4j by default, ArangoDB as an alternative). The service consists of several key components:
+The Knowledge Base Service is built on a Node.js backend with ArangoDB for graph-based data persistence. The service consists of several key components:
 
 - **Record Management** - Core document storage and metadata handling
 - **File Storage Integration** - Connects with external storage services
@@ -1340,7 +1340,7 @@ All endpoints return structured error responses with specific HTTP status codes:
 
 When a record is created or updated, the Knowledge Base Service:
 
-1. Stores the file metadata in the graph database
+1. Stores the file metadata in ArangoDB
 2. Uploads the file content to the Storage Service
 3. Publishes a Kafka event with the file metadata and download URL
 4. The AI Backend consumes these events and:

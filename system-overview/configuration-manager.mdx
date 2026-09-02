@@ -39,11 +39,14 @@ The Configuration Manager handles various types of configurations:
 
 1. **Storage Configurations** - AWS S3, Azure Blob, or Local storage settings
 2. **Authentication Configurations** - Azure AD, Google, Microsoft, SSO, and OAuth settings
-3. **SMTP Configurations** - Email service settings
-4. **AI Models Configurations** - Settings for LLM, embedding, OCR, SLM, reasoning, and multiModal models
-5. **Connector Configurations** - Google Workspace, Atlassian, OneDrive, and SharePoint integrations
-6. **Public URL Configurations** - Frontend and connector URLs
-7. **Metrics Collection Configurations** - Settings for metrics gathering
+3. **Database Configurations** - MongoDB, ArangoDB, and Qdrant settings
+4. **Key-Value Store Configurations** - Redis settings
+5. **Message Broker Configurations** - Kafka settings
+6. **SMTP Configurations** - Email service settings
+7. **AI Models Configurations** - Settings for LLM, embedding, OCR, SLM, reasoning, and multiModal models
+8. **Connector Configurations** - Google Workspace, Atlassian, OneDrive, and SharePoint integrations
+9. **Public URL Configurations** - Frontend and connector URLs
+10. **Metrics Collection Configurations** - Settings for metrics gathering
 
 ## API Endpoints
 
@@ -564,38 +567,331 @@ Configure custom OAuth authentication.
 </AccordionGroup>
 </Accordion>
 
-<Accordion title="Infrastructure Configuration (moved to environment variables)">
-Connection settings for MongoDB, the graph database, Qdrant, the key-value store, and the
-message broker are **no longer configured through this API**. The endpoints that once served
-them (`/mongoDBConfig`, `/arangoDBConfig`, `/qdrantConfig`, `/redisConfig`, `/kafkaConfig`)
-have been removed.
+<Accordion title="Database Configuration">
+Configure database connections for your application. All database configurations include automatic health checks before saving.
 
-These are now read from the environment at startup. On the Docker Compose
-deployment, `install.sh` writes them into `deployment/docker-compose/.env`; on
-Kubernetes, the Helm chart sets them from `values.yaml`.
+<AccordionGroup>
 
-| Setting | Environment variable in `.env` | Default |
-|---------|-------------------------------|---------|
-| Graph database | `DATA_STORE` | `neo4j` (or `arangodb`) |
-| Key-value store | `KV_STORE_TYPE` | `redis` (or `etcd`) |
-| Message broker | `MESSAGE_BROKER` | `kafka` on a full install, `redis` on slim (or set either explicitly) |
-| MongoDB credentials | `MONGO_USERNAME`, `MONGO_PASSWORD` | generated at install time |
+<Accordion title="MongoDB Configuration">
+Configure MongoDB database connection.
 
-Compose builds the MongoDB connection string from those two credentials, so there
-is no `MONGO_URI` key in `.env` to edit. The graph, vector and cache passwords
-(`NEO4J_PASSWORD` or `ARANGO_PASSWORD`, `QDRANT_API_KEY`, `REDIS_PASSWORD`) are
-generated at install time and live in the same file.
+<AccordionGroup>
 
-<Note>
-The vector database is Qdrant. The provider is selected by the `VECTOR_DB_TYPE`
-environment variable, which defaults to `qdrant` when it is unset — and the Docker
-Compose deployment does not set it. Adding `VECTOR_DB_TYPE` to `.env` has no effect
-on Compose, because the variable is not passed into the container.
-</Note>
+<Accordion title="POST /mongoDBConfig - Set MongoDB Config">
+<Tabs>
+<Tab title="Request">
+**Endpoint:** `POST /api/v1/configurationManager/mongoDBConfig`
 
-To change any of them, edit `.env` and re-run `./install.sh --upgrade`, or set the value in
-your Helm values and upgrade the release. See the
-[Quickstart](/quickstart) for the installer flags.
+**Request Body Parameters:**
+  
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| uri | string | Yes | MongoDB connection URI |
+
+```json
+{
+  "uri": "mongodb://username:password@hostname:port/database"
+}
+```
+</Tab>
+
+<Tab title="Response">
+**Status:** `200 OK`
+
+```json
+{
+  "message": "Mongo DB config created successfully"
+}
+```
+</Tab>
+</Tabs>
+</Accordion>
+
+<Accordion title="GET /mongoDBConfig - Get MongoDB Config">
+<Tabs>
+<Tab title="Request">
+**Endpoint:** `GET /api/v1/configurationManager/mongoDBConfig`
+</Tab>
+
+<Tab title="Response">
+**Status:** `200 OK`
+
+```json
+{
+  "uri": "mongodb://username:password@hostname:port/database",
+  "db": "pipesHub"
+}
+```
+</Tab>
+</Tabs>
+</Accordion>
+
+</AccordionGroup>
+</Accordion>
+
+<Accordion title="ArangoDB Configuration">
+Configure ArangoDB database connection.
+
+<AccordionGroup>
+
+<Accordion title="POST /arangoDBConfig - Set ArangoDB Config">
+<Tabs>
+<Tab title="Request">
+**Endpoint:** `POST /api/v1/configurationManager/arangoDBConfig`
+
+**Request Body Parameters:**
+  
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| url | string | Yes | ArangoDB connection URL |
+| username | string | No | ArangoDB username |
+| password | string | No | ArangoDB password |
+
+```json
+{
+  "url": "http://localhost:8529",
+  "username": "root",
+  "password": "password"
+}
+```
+</Tab>
+
+<Tab title="Response">
+**Status:** `200 OK`
+
+```json
+{
+  "message": "Arango DB config created successfully"
+}
+```
+</Tab>
+</Tabs>
+</Accordion>
+
+<Accordion title="GET /arangoDBConfig - Get ArangoDB Config">
+<Tabs>
+<Tab title="Request">
+**Endpoint:** `GET /api/v1/configurationManager/arangoDBConfig`
+</Tab>
+
+<Tab title="Response">
+**Status:** `200 OK`
+
+```json
+{
+  "url": "http://localhost:8529",
+  "username": "root",
+  "password": "password",
+  "db": "pipesHub"
+}
+```
+</Tab>
+</Tabs>
+</Accordion>
+
+</AccordionGroup>
+</Accordion>
+
+<Accordion title="Qdrant Configuration">
+Configure Qdrant vector database connection.
+
+<AccordionGroup>
+
+<Accordion title="POST /qdrantConfig - Set Qdrant Config">
+<Tabs>
+<Tab title="Request">
+**Endpoint:** `POST /api/v1/configurationManager/qdrantConfig`
+
+**Request Body Parameters:**
+  
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| host | string | Yes | Qdrant server host |
+| port | number | Yes | Qdrant HTTP port |
+| grpcPort | number | No | Qdrant gRPC port |
+| apiKey | string | No | Qdrant API key (not required for localhost) |
+
+```json
+{
+  "host": "localhost",
+  "port": 6333,
+  "grpcPort": 6334,
+  "apiKey": "your-api-key"
+}
+```
+</Tab>
+
+<Tab title="Response">
+**Status:** `200 OK`
+
+```json
+{
+  "message": "Qdrant config created successfully",
+  "warningMessage": "localhost does not require an API key"
+}
+```
+</Tab>
+</Tabs>
+</Accordion>
+
+<Accordion title="GET /qdrantConfig - Get Qdrant Config">
+<Tabs>
+<Tab title="Request">
+**Endpoint:** `GET /api/v1/configurationManager/qdrantConfig`
+</Tab>
+
+<Tab title="Response">
+**Status:** `200 OK`
+
+```json
+{
+  "host": "localhost",
+  "port": 6333,
+  "grpcPort": 6334,
+  "apiKey": "your-api-key"
+}
+```
+</Tab>
+</Tabs>
+</Accordion>
+
+</AccordionGroup>
+</Accordion>
+
+</AccordionGroup>
+</Accordion>
+
+<Accordion title="Key-Value Store Configuration">
+Configure Redis as a key-value store with automatic health checks.
+
+<AccordionGroup>
+
+<Accordion title="POST /redisConfig - Set Redis Config">
+<Tabs>
+<Tab title="Request">
+**Endpoint:** `POST /api/v1/configurationManager/redisConfig`
+
+**Request Body Parameters:**
+  
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| host | string | Yes | Redis server host |
+| port | number | Yes | Redis server port |
+| password | string | No | Redis password |
+| tls | boolean | No | Enable TLS for Redis connection |
+
+```json
+{
+  "host": "redis.example.com",
+  "port": 6379,
+  "password": "your-password",
+  "tls": true
+}
+```
+</Tab>
+
+<Tab title="Response">
+**Status:** `200 OK`
+
+```json
+{
+  "message": "Redis config created successfully"
+}
+```
+</Tab>
+</Tabs>
+</Accordion>
+
+<Accordion title="GET /redisConfig - Get Redis Config">
+<Tabs>
+<Tab title="Request">
+**Endpoint:** `GET /api/v1/configurationManager/redisConfig`
+</Tab>
+
+<Tab title="Response">
+**Status:** `200 OK`
+
+```json
+{
+  "host": "redis.example.com",
+  "port": 6379,
+  "password": "your-password",
+  "tls": true
+}
+```
+</Tab>
+</Tabs>
+</Accordion>
+
+</AccordionGroup>
+</Accordion>
+
+<Accordion title="Message Broker Configuration">
+Configure Kafka message broker with automatic health checks and broker validation.
+
+<AccordionGroup>
+
+<Accordion title="POST /kafkaConfig - Set Kafka Config">
+<Tabs>
+<Tab title="Request">
+**Endpoint:** `POST /api/v1/configurationManager/kafkaConfig`
+
+**Request Body Parameters:**
+  
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| brokers | string[] | Yes | Array of Kafka broker URLs |
+| sasl | object | No | SASL authentication details |
+
+```json
+{
+  "brokers": ["kafka-1:9092", "kafka-2:9092"],
+  "sasl": {
+    "mechanism": "plain",
+    "username": "your-username",
+    "password": "your-password"
+  }
+}
+```
+</Tab>
+
+<Tab title="Response">
+**Status:** `200 OK`
+
+```json
+{
+  "message": "Kafka config created successfully",
+  "warningMessage": "Unreachable-Brokers detected : \"kafka-3:9092\""
+}
+```
+</Tab>
+</Tabs>
+</Accordion>
+
+<Accordion title="GET /kafkaConfig - Get Kafka Config">
+<Tabs>
+<Tab title="Request">
+**Endpoint:** `GET /api/v1/configurationManager/kafkaConfig`
+</Tab>
+
+<Tab title="Response">
+**Status:** `200 OK`
+
+```json
+{
+  "brokers": ["kafka-1:9092", "kafka-2:9092"],
+  "sasl": {
+    "mechanism": "plain",
+    "username": "your-username",
+    "password": "your-password"
+  }
+}
+```
+</Tab>
+</Tabs>
+</Accordion>
+
+</AccordionGroup>
 </Accordion>
 
 <Accordion title="AI Models Configuration">
@@ -1646,10 +1942,12 @@ These events allow other services to react to configuration changes without poll
 
 The service includes built-in health checks for various configurations that are automatically performed before saving:
 
+- **Kafka Health Check**: Verifies Kafka broker connectivity and validates broker URLs
+- **Redis Health Check**: Tests Redis connection with timeout and retry logic
+- **Qdrant Health Check**: Ensures Qdrant vector database is accessible via HTTP
+- **MongoDB Health Check**: Validates MongoDB connection using ping command
+- **ArangoDB Health Check**: Confirms ArangoDB connection and authentication
 - **AI Models Health Check**: Validates AI model configurations with provider APIs
-
-Infrastructure connections (MongoDB, the graph database, Qdrant, the key-value store, and the
-message broker) are validated at service startup from the environment, not through this API.
 
 ## Schema Definitions
 
@@ -1729,6 +2027,40 @@ interface LocalConfig {
   storageType: "local";
   mountName?: string;
   baseUrl?: string;
+}
+```
+</Tab>
+
+<Tab title="Database Config Schema">
+```typescript
+// MongoDB Config
+interface MongoDBConfig {
+  uri: string; // MongoDB connection URI
+  db: string; // Database name (automatically set to "pipesHub")
+}
+
+// ArangoDB Config
+interface ArangoDBConfig {
+  url: string;
+  username?: string;
+  password?: string;
+  db: string; // Database name (automatically set to "pipesHub")
+}
+
+// Qdrant Config
+interface QdrantConfig {
+  host: string;
+  port: number;
+  grpcPort?: number;
+  apiKey?: string; // Not required for localhost
+}
+
+// Redis Config
+interface RedisConfig {
+  host: string;
+  port: number;
+  password?: string;
+  tls?: boolean;
 }
 ```
 </Tab>
@@ -1849,6 +2181,16 @@ interface SharePointConfig {
 
 <Tab title="Other Config Schemas">
 ```typescript
+// Message Broker Config
+interface KafkaConfig {
+  brokers: string[]; // Array of broker URLs
+  sasl?: {
+    mechanism: string;
+    username: string;
+    password: string;
+  };
+}
+
 // SMTP Config
 interface SMTPConfig {
   host: string;

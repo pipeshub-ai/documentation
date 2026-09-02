@@ -211,7 +211,7 @@ The `run_sync` method executes a complete synchronization cycle. It follows a ma
 
 The `_sync_users` function first checks the Sync Point for the last synchronization timestamp.
 
-- **Full Sync:** If no prior timestamp is found, a full sync is performed, fetching all entities (users, roles, books, pages, etc.) from the BookStack API and passing them to the data processor for creation. After which, the timestamp is stored as a sync point in ArangoDB with the key as `{app_id}/BOOKSTACK/{SyncDataPointType}/bookstack/{entity_type}/global`
+- **Full Sync:** If no prior timestamp is found, a full sync is performed, fetching all entities (users, roles, books, pages, etc.) from the BookStack API and passing them to the data processor for creation. After which, the timestamp is stored as a sync point in the graph database with the key as `{app_id}/BOOKSTACK/{SyncDataPointType}/bookstack/{entity_type}/global`
 
 - **Incremental Sync (Audit Log-Based):** If a timestamp exists, the process switches to an incremental approach using the BookStack Audit Log to find changes since the last sync.
 

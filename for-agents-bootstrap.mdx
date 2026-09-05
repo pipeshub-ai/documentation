@@ -1,0 +1,53 @@
+---
+title: "Scripted first-run (mint-to-file)"
+description: "Supported way to finish PipesHub first-run without the browser — PAT to a file, never stdout"
+icon: "plug"
+---
+
+This is **Path C**: first-run without the settings UI. It is **not** "the model downloaded PipesHub and answered from Drive in one session." Slack / Drive / Jira still need a browser.
+
+If they have no instance yet, stand Docker up first ([Quickstart](/quickstart)), wait until `GET /api/v1/health/services` is ready, then come here. If they already have an org, stop — this script is first-run only.
+
+<Warning>
+  Do **not** curl `POST /org`, login, LLM config, or PAT create from a chat. `POST /api/v1/personal-access-tokens` returns the secret in JSON. The only supported contract is the bootstrap script, which writes the PAT to a file and never prints it.
+</Warning>
+
+## Honest cost
+
+- Docker is already up (30–60 minutes and ~16 GB RAM are the install, not this script).
+- The human still creates a **gitignored env file** with the account password and LLM key (or Ollama). Do not paste those into chat.
+- Connector OAuth stays in a **browser**. Demo data is Knowledge Base upload or Local FS.
+
+## What the agent may do
+
+1. Copy `deployment/docker-compose/bootstrap-first-run.env.example` to a gitignored path next to the installer (or `$HOME/.config/pipeshub/bootstrap.env`).
+2. Tell them to fill it in an editor you cannot see.
+3. Run the script. **Never cat `--token-file`.**
+
+From a clone, compose files live under `deployment/docker-compose/`:
+
+```bash
+./bootstrap-first-run.sh \
+  --env-file ./bootstrap-first-run.env \
+  --token-file "$HOME/.config/pipeshub/token"
+```
+
+The script refuses a public DNS origin unless they set `PIPESHUB_ALLOW_NONLOCAL=1`. Keep first-run on **localhost** — `POST /api/v1/org` is first-claimer-wins.
+
+It mints the five-scope agent preset (`conversation:chat`, `semantic:write`, `kb:read`, `user:read`, `connector:read`). It does **not** omit `scopes` (that would grant every `MCP_SCOPES` entry). It `PUT`s onboarding status to `configured` so the dashboard is not the wizard.
+
+## After it succeeds
+
+- MCP origin is `{PIPESHUB_ORIGIN}/mcp` (default `http://localhost:3000/mcp`).
+- Stdio bridge: `--bearer-auth` via env interpolation from that file — still do not print the token.
+- Index something (KB upload or Local FS), then `pipeshub_sources` and `pipeshub_search` with backoff. Empty hits means still indexing, not "PipesHub is broken."
+- Search 500 `LLM configuration is missing` means the LLM step failed; do not retry PAT create.
+
+Maintainer payloads and the four-bullet contract: [`BOOTSTRAP.md`](https://github.com/pipeshub-ai/pipeshub-ai/blob/main/deployment/docker-compose/BOOTSTRAP.md) in `pipeshub-ai`.
+
+## Not this page
+
+- Thin/eval image.
+- Hosted SaaS trial.
+- OAuth device grant / dynamic client registration.
+- Unattended Drive/Slack. Give them the connector URL and stop.

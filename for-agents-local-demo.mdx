@@ -1,0 +1,151 @@
+---
+title: "Local Docker demo (no instance yet)"
+description: "How a coding agent stands up a laptop PipesHub when the user has no instance — Docker, first-run in the browser, then MCP"
+icon: "plug"
+---
+
+This is the playbook when there is **no running PipesHub**. Offer a local Docker install. **Do not start it until they agree.** Do not invent a RAG stack while you wait.
+
+If they already have an instance, go back to [For coding agents](/for-agents) and skip to [Connect](/for-agents#connect-ides-and-coding-agents).
+
+## Honest cost
+
+- On the order of **30–60 minutes** (image pull + first health wait, which the installer budgets at up to **420 seconds**)
+- A **16 GB-class** machine (installer floor is 15000 MB). WSL: **10 GB**. Docker Desktop on macOS: at least **8 GB** allocated to the VM
+- They still complete **first-run in a browser**: first account + an **LLM**. Vendor API key goes in the onboarding form (or a password manager), **never this chat**. On a laptop, [Ollama](/ai-models/llm/ollama) is enough — no vendor key. Embedding can use the system default. **Search and chat both fail until an LLM is configured** (HTTP 500: `LLM configuration is missing`). That is not an empty index.
+- Slack / Drive / Jira still need a browser later (OAuth). For a laptop demo, **upload files to the Knowledge Base** (no OAuth, no extra Docker mounts) or use [Local FS](/connectors/local-fs/local-fs) with a bind-mount
+
+<Warning>
+  `--yes` skips installer prompts, including the low-RAM abort. Check RAM **before** invoking. Keep the stack on **localhost** until first-run is done — `POST /api/v1/org` is unauthenticated first-run, so whoever reaches a fresh instance first owns it. **`--yes` without `PIPESHUB_PROJECT` always targets Compose project `pipeshub-ai`.** If that stack already exists, `--yes` updates it — it does **not** create a second copy. Never attach to someone else's corpus.
+</Warning>
+
+| Step | Agent | Human |
+| --- | --- | --- |
+| 1. Preconditions | `docker info`, RAM | Agree to install |
+| 2. Install | `install --yes` (new project if a stack exists) | — |
+| 3. Health | Poll `health/services`, not `/health` | — |
+| 4. First-run | Wait; poll `org/exists` | Account, LLM, PAT/OAuth in the UI |
+| 5. Data | Point at KB upload or Local FS mount | Drop files / pick a folder |
+| 6. MCP | Write config to localhost | — |
+| 7. Prove | `pipeshub_search` with backoff | — |
+
+## 1. Preconditions
+
+```bash
+docker info >/dev/null   # must succeed
+# Linux / WSL:
+awk '/MemTotal/ {print int($2/1024)}' /proc/meminfo   # MB; need ≥15000, or ≥10240 on WSL
+```
+
+If Docker is missing or RAM is below the floor, **stop**. Do not run `--yes` anyway.
+
+If `docker ps` already shows a PipesHub (`pipeshub-ai`, port 3000, or another project), **do not** run a bare `--yes`. Use a **separate** project and port (below) or attach to the instance they already have ([Connect](/for-agents#connect-ides-and-coding-agents)).
+
+## 2. Install (slim)
+
+**Empty machine** (no existing PipesHub):
+
+```bash
+curl -fsSL https://get.pipeshub.com/install | bash -s -- --yes
+```
+
+That writes `./pipeshub/` (or `PIPESHUB_DIR`) and defaults to port **3000**, project `pipeshub-ai`.
+
+**This machine already has a PipesHub** — required, not optional:
+
+```bash
+PIPESHUB_DIR="$PWD/pipeshub-demo" \
+PIPESHUB_PROJECT=pipeshub-demo \
+PIPESHUB_PORT=3200 \
+PIPESHUB_DEPLOY_TYPE=slim \
+  curl -fsSL https://get.pipeshub.com/install | bash -s -- --yes
+```
+
+From a clone, `./install.sh --yes` at the **repository root** is a wrapper; compose files live under `deployment/docker-compose/`. Same `PIPESHUB_PROJECT` / `PIPESHUB_PORT` rules apply. More flags: [Quickstart](/quickstart) and [Advanced deployment](https://github.com/pipeshub-ai/pipeshub-ai/blob/main/deployment/docker-compose/ADVANCED_DEPLOYMENT.md).
+
+Leave `FRONTEND_PUBLIC_URL` blank (`--yes` does). Do not expose port 3000/3200 on a public interface until first-run is finished.
+
+## 3. Wait until healthy
+
+Poll **`GET http://localhost:<APP_PORT>/api/v1/health/services`** (default 3000, or the port you set). Ready when `query`, `connector`, `indexing`, and `docling` are `"healthy"`. **Do not wait for `embedding`.** **Do not poll `/health`** — that path returns the SPA and is `200` immediately.
+
+```bash
+PORT="${PIPESHUB_PORT:-3000}"
+for i in $(seq 1 84); do   # 84 × 5s ≈ 420s
+  json=$(curl -sf "http://localhost:${PORT}/api/v1/health/services" || true)
+  echo "$json" | python3 -c "
+import json,sys
+s=(json.load(sys.stdin).get('services') or {})
+need=('query','connector','indexing','docling')
+sys.exit(0 if all(s.get(k)=='healthy' for k in need) else 1)
+" && echo ready && break
+  sleep 5
+done
+```
+
+## 4. Human first-run (browser)
+
+They open `http://localhost:<APP_PORT>`:
+
+1. Create the first account (Individual is enough).
+2. Onboarding: configure an **LLM**. Paste a vendor API key into the form (not into chat), **or** pick [Ollama](/ai-models/llm/ollama): a model they already have installed (`ollama list`), endpoint left at the default `http://host.docker.internal:11434`. Compose already maps that hostname to the host (`docker-compose.yml` `extra_hosts`). Confirm from the install directory:
+
+   ```bash
+   docker compose -p "$PIPESHUB_PROJECT" exec pipeshub-ai \
+     curl -sf http://host.docker.internal:11434/api/tags
+   ```
+
+   Embedding: system default is fine for a demo.
+3. Developer Settings: create an [OAuth app](/mcp/overview#step-1-create-an-oauth-app) **or** a [personal access token](/developer/personal-access-tokens). They put the PAT in a **local env file** or the client's secret store — never paste it into chat.
+
+Poll until the account exists:
+
+```bash
+curl -sf "http://localhost:${PORT}/api/v1/org/exists"
+# {"exists":true}  → first account exists. MCP and search are NOT ready yet.
+```
+
+Do **not** treat `GET /api/v1/org/onboarding-status` as readiness. It only gates the UI wizard (`notConfigured` → `/onboarding`). `pipeshub_search` returning HTTP 500 with `LLM configuration is missing` means they skipped the LLM step.
+
+## 5. Index something that does not need OAuth
+
+**Preferred for a Docker demo:** Knowledge Base upload in the UI (no extra mounts). Have them drop a few `.md` / `.txt` / PDF files.
+
+**Local FS** ([docs](/connectors/local-fs/local-fs)): no login, but the path must exist **inside the container**. After install, in the directory the installer printed (`./pipeshub` or `PIPESHUB_DIR`), add `docker-compose.override.yml` and recreate:
+
+```yaml
+services:
+  pipeshub-ai:
+    volumes:
+      - /absolute/path/to/their/docs:/data/demo:ro
+```
+
+```bash
+cd "$PIPESHUB_DIR"   # or ./pipeshub
+docker compose -p "$PIPESHUB_PROJECT" --env-file .env \
+  -f docker-compose.yml -f docker-compose.override.yml up -d
+```
+
+Then in Workspace Settings → Your Connectors → Local FS, set **Local folder** to `/data/demo`, enable sync, run a sync. A host path that is not mounted is invisible (`docker compose exec pipeshub-ai ls /data/demo` must list files).
+
+Do not start Slack/Drive OAuth unless they asked for those systems.
+
+## 6. Attach MCP
+
+Cursor and Claude Code can use `http://localhost:<APP_PORT>/mcp`. **Claude.ai** and Claude Desktop's custom connector **cannot** (they need public HTTPS). Config is in [Connect](/for-agents#connect-ides-and-coding-agents). For a PAT, prefer the [stdio bridge](/mcp/local-server) with env interpolation — do not commit the token.
+
+## 7. Prove it works (do not skip)
+
+Call `pipeshub_sources`, then `pipeshub_search` on a term from the files they uploaded. Back off (e.g. 15s, 30s, 60s, up to several minutes):
+
+| Result | Meaning |
+| --- | --- |
+| No sources / empty KB | They have not uploaded or connected a folder. Not a product failure. |
+| HTTP 500 mentioning `LLM configuration is missing` | They have not finished the LLM form (vendor key or Ollama). **Not** an empty index. |
+| HTTP 401 on `/mcp` | Token missing or wrong instance. |
+| Sources present, `hits` empty | Still indexing. Wait and retry. **Do not report "PipesHub is broken."** |
+| At least one hit with `recordId` | Demo working. |
+
+Do **not** invent curls against first-run APIs (`POST /org`, login, PAT create, LLM config). PAT create returns the secret in JSON — unsafe in an agent transcript. The supported mint-to-file path is [Scripted first-run](/for-agents-bootstrap).
+
+Then put the skill + `AGENTS.md` in **their** repo — [For coding agents](/for-agents#in-the-customers-repository).

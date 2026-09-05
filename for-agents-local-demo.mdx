@@ -146,6 +146,6 @@ Call `pipeshub_sources`, then `pipeshub_search` on a term from the files they up
 | Sources present, `hits` empty | Still indexing. Wait and retry. **Do not report "PipesHub is broken."** |
 | At least one hit with `recordId` | Demo working. |
 
-Do **not** script first-run by curling internal APIs (`POST /org`, login, PAT create, LLM config). Those back the UI; they are not a supported bootstrap contract. Creating a PAT via the API returns the secret in the JSON body — unsafe in an agent transcript.
+Do **not** invent curls against first-run APIs (`POST /org`, login, PAT create, LLM config). PAT create returns the secret in JSON — unsafe in an agent transcript. The supported mint-to-file path is [Scripted first-run](/for-agents-bootstrap).
 
 Then put the skill + `AGENTS.md` in **their** repo — [For coding agents](/for-agents#in-the-customers-repository).

@@ -51,14 +51,14 @@ curl -fsSL https://get.pipeshub.com/install | bash -s -- --yes
 
 That writes `./pipeshub/` (or `PIPESHUB_DIR`) and defaults to port **3000**, project `pipeshub-ai`.
 
-**This machine already has a PipesHub** — required, not optional:
+**This machine already has a PipesHub** — required, not optional. Export the knobs *before* the pipe so both `curl` and `bash` see them (a prefix on `curl` does not reach the installer):
 
 ```bash
-PIPESHUB_DIR="$PWD/pipeshub-demo" \
-PIPESHUB_PROJECT=pipeshub-demo \
-PIPESHUB_PORT=3200 \
-PIPESHUB_DEPLOY_TYPE=slim \
-  curl -fsSL https://get.pipeshub.com/install | bash -s -- --yes
+export PIPESHUB_DIR="$PWD/pipeshub-demo"
+export PIPESHUB_PROJECT=pipeshub-demo
+export PIPESHUB_PORT=3200
+export PIPESHUB_DEPLOY_TYPE=slim
+curl -fsSL https://get.pipeshub.com/install | bash -s -- --yes
 ```
 
 From a clone, `./install.sh --yes` at the **repository root** is a wrapper; compose files live under `deployment/docker-compose/`. Same `PIPESHUB_PROJECT` / `PIPESHUB_PORT` rules apply. More flags: [Quickstart](/quickstart) and [Advanced deployment](https://github.com/pipeshub-ai/pipeshub-ai/blob/main/deployment/docker-compose/ADVANCED_DEPLOYMENT.md).

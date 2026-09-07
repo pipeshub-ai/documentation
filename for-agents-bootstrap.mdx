@@ -28,15 +28,15 @@ If they have no instance yet, stand Docker up first ([Quickstart](/quickstart)),
 2. Tell them to fill it in an editor you cannot see.
 3. Run the script. **Never cat `--token-file`.**
 
-From a clone, compose files live under `deployment/docker-compose/`:
+From a clone, compose files live under `deployment/docker-compose/` (run from the repository root):
 
 ```bash
-./bootstrap-first-run.sh \
-  --env-file ./bootstrap-first-run.env \
+./deployment/docker-compose/bootstrap-first-run.sh \
+  --env-file ./deployment/docker-compose/bootstrap-first-run.env \
   --token-file "$HOME/.config/pipeshub/token"
 ```
 
-The script refuses a public DNS origin unless they set `PIPESHUB_ALLOW_NONLOCAL=1`. Keep first-run on **localhost** — `POST /api/v1/org` is whoever-reaches-it-first.
+The script refuses a public DNS origin unless they set `PIPESHUB_ALLOW_NONLOCAL=1`, and that origin must still be `https://`. Keep first-run on **localhost** — `POST /api/v1/org` is whoever-reaches-it-first.
 
 It mints these scopes: `conversation:chat`, `semantic:write`, `kb:read`, `user:read`, `connector:read`. It does **not** omit `scopes` (that would grant every `MCP_SCOPES` entry). It `PUT`s onboarding status to `configured` so the dashboard is not the wizard.
 

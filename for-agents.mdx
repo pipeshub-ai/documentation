@@ -150,9 +150,9 @@ These are how a stranger's agent finds PipesHub without this page already in con
 
 Auth for an IDE or stdio client is the signed-in user (OAuth app or a PAT from the settings panel). Never paste a token into chat. Never `client_credentials`. A Claude Directory listing is OAuth 2.0 only.
 
-## Scripted first-run
+## First-run without a browser
 
-The settings panel is a client of existing APIs. That is **not** a supported agent contract — `POST /api/v1/personal-access-tokens` returns the secret in JSON. If they want first-run without the browser, run the mint-to-file script: [Scripted first-run](/for-agents-bootstrap). Do not invent curls. Connector OAuth still needs a browser.
+Do not curl `POST /api/v1/personal-access-tokens` from a chat — the response body contains the secret. Use the bootstrap script instead: [First-run without a browser](/for-agents-bootstrap). Slack / Drive / Jira still need a browser.
 
 ## Rules that are easy to get wrong
 

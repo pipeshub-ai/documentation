@@ -171,6 +171,10 @@ These are how a stranger's agent finds PipesHub without this page already in con
 
 Auth for an IDE or stdio client is the signed-in user (OAuth app or a PAT from the settings panel). Never paste a token into chat. Never `client_credentials`. A Claude Directory listing is OAuth 2.0 only.
 
+## First-run without a browser
+
+Do not curl `POST /api/v1/personal-access-tokens` from a chat — the response body contains the secret. Use the bootstrap script instead: [First-run without a browser](/for-agents-bootstrap). Slack / Drive / Jira still need a browser.
+
 ## Rules that are easy to get wrong
 
 `semantic:write` is what runs a search. `semantic:read` is search *history* and is not on a stock instance. Do not ask the user to add `semantic:read`.

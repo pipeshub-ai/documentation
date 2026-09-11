@@ -4,23 +4,95 @@ description: "Connect Claude Code to the PipesHub MCP server"
 icon: "/logo/claude.svg"
 ---
 
-Claude Code supports remote HTTP MCP servers with static OAuth credentials via `--client-id`, `--client-secret`, and `--callback-port`.
+Claude Code connects to PipesHub's remote MCP endpoint over HTTP. There are two ways to authenticate:
 
-PipesHub exposes discovery at `/.well-known/oauth-protected-resource/mcp`, so Claude Code auto-discovers the authorization and token endpoints.
-
-<Note>
-  Before you start, create an OAuth app in PipesHub and note your **Client ID** and **Client Secret**. See [MCP Server Overview](/mcp/overview#step-1-create-an-oauth-app).
-</Note>
+- **A Personal Access Token** (recommended for your own use) — one command, no admin involvement, results respect your own permissions.
+- **An OAuth app** — for shared, team, or admin-managed setups where an administrator issues credentials.
 
 <Tip>
   Coding agents: read [For coding agents](/for-agents) first. If they have no PipesHub yet, follow [Local Docker demo](/for-agents-local-demo) (do not scaffold LangChain). MCP config is not enough — also install the skill into **this** repo (`npx skills add pipeshub-ai/mcp-server`) and append the `AGENTS.md` snippet on that page. Otherwise the next chat still invents RAG.
 </Tip>
 
+## Personal Access Token (recommended)
+
+Requires PipesHub **0.7.0 or later**. Any user can do this; you do not need to be an admin.
+
+<Steps>
+  <Step title="Mint a token">
+    In PipesHub, go to **Workspace → Developer settings → Personal Access Tokens → New token**. Name it (for example `claude-code`), pick an expiry, keep the default scopes, and copy the two lines shown — they appear only once:
+
+    ```bash
+    PIPESHUB_MCP_URL=https://your-instance/mcp
+    PIPESHUB_MCP_TOKEN=phpat_...
+    ```
+
+    Export both in your shell. See [Personal Access Tokens](/developer/personal-access-tokens) for scopes and revocation.
+  </Step>
+  <Step title="Add the server">
+    ```bash
+    claude mcp add --transport http pipeshub "$PIPESHUB_MCP_URL" \
+      --header "Authorization: Bearer $PIPESHUB_MCP_TOKEN"
+    ```
+
+    Add `--scope user` to make it available in every project instead of just the current one.
+  </Step>
+  <Step title="Tell Claude when to use it">
+    In the project you're working in (not a PipesHub repository):
+
+    ```bash
+    npx skills add pipeshub-ai/mcp-server
+    ```
+
+    and add the "Company knowledge" block from [For coding agents](/for-agents#agents-md) to your `CLAUDE.md`. Without this, a fresh chat has the tools but no reason to reach for them.
+  </Step>
+  <Step title="Verify">
+    ```bash
+    claude mcp list
+    ```
+
+    `pipeshub` should show as connected. Then ask something only your company's data can answer.
+  </Step>
+</Steps>
+
+<Note>
+  Measured on a fresh `slim` install of the released image with five documents indexed: steps 2–4 took **46 seconds** end to end, returning a four-source cited answer.
+</Note>
+
+### Project-scoped `.mcp.json` with a token
+
+If you prefer a checked-in config, keep the token in the environment and reference it:
+
+```json
+{
+  "mcpServers": {
+    "pipeshub": {
+      "type": "http",
+      "url": "${PIPESHUB_MCP_URL}",
+      "headers": {
+        "Authorization": "Bearer ${PIPESHUB_MCP_TOKEN}"
+      }
+    }
+  }
+}
+```
+
+<Warning>
+  Never commit a token, paste one into a chat, or pass one on a command line that gets logged. If a token leaks, revoke it from the same Personal Access Tokens page.
+</Warning>
+
+## OAuth app (shared or admin-managed setups)
+
+Claude Code also supports remote HTTP MCP servers with static OAuth credentials via `--client-id`, `--client-secret`, and `--callback-port`. PipesHub exposes discovery at `/.well-known/oauth-protected-resource/mcp`, so Claude Code auto-discovers the authorization and token endpoints. Use this when an administrator issues credentials for a team rather than each person minting their own token.
+
+<Note>
+  Before you start, create an OAuth app in PipesHub and note your **Client ID** and **Client Secret**. See [MCP Server Overview](/mcp/overview#step-1-create-an-oauth-app).
+</Note>
+
 <Warning>
   Claude Code does **not** support configuring specific scopes. It fetches `/.well-known/oauth-protected-resource/mcp`, reads the `scopes_supported` list, and requests **all** of them. Your OAuth app in PipesHub **must have access to all scopes** listed in the discovery endpoint, otherwise the authorization request will fail. To limit the exposed scopes, see [Customizing Default Scopes](/mcp/overview#customizing-default-scopes).
 </Warning>
 
-## Add with CLI
+### Add with CLI
 
 ```bash
 claude mcp add --transport http \
@@ -52,7 +124,7 @@ claude mcp add --transport http --scope user \
   pipeshub PIPESHUB_INSTANCE_URL/mcp
 ```
 
-## Add with JSON
+### Add with JSON
 
 ```bash
 claude mcp add-json pipeshub '{
@@ -65,7 +137,7 @@ claude mcp add-json pipeshub '{
 }' --client-secret
 ```
 
-## Project-Scoped (`.mcp.json`)
+### Project-scoped `.mcp.json` with OAuth
 
 Create a `.mcp.json` file in your project root. This can be committed to version control (secrets stay out via env vars):
 
@@ -95,7 +167,7 @@ export PIPESHUB_CLIENT_ID="your-client-id"
   The client secret is stored in the system keychain, not in config files. You'll be prompted to enter it when you first authenticate via `/mcp`.
 </Note>
 
-## Authenticate
+### Authenticate
 
 After adding the server, run `/mcp` inside Claude Code and follow the browser login flow. Tokens are stored securely and refreshed automatically.
 

@@ -1,48 +1,56 @@
 ---
-title: 'PipesHub External Service'
-description: 'Documentation for the PipesHub External Service'
+title: "External services"
+description: "The databases and brokers PipesHub uses: the knowledge graph, Qdrant, MongoDB, Redis, and optional Kafka and etcd."
 ---
 
-# External Services
+This page describes the databases and brokers along the bottom of the [system overview](/system-overview) diagram. A default install starts these services for you. Use this page to learn what each service is for, and when you would switch to the other option.
 
-Our architecture leverages several industry-standard external services to provide a robust, scalable, and efficient system. Below is an overview of each service and its role in our ecosystem.
+The sections follow the same order as the diagram: search data, application data, then how services pass work to each other and where configuration is stored.
 
-## Apache Kafka
+## Knowledge graph ([Neo4j](https://neo4j.com/) or [ArangoDB](https://www.arangodb.com/))
 
-Apache Kafka is an open-source distributed event streaming platform used for building real-time data pipelines and streaming applications. In our architecture, Kafka enables event-driven communication between services, making the system loosely coupled and highly scalable.
+The knowledge graph is how PipesHub stores that a Slack thread, a Drive file, and a person belong together. Permission checks and citations follow those links.
 
-[Learn more about Apache Kafka](https://kafka.apache.org/)
+You choose one graph database with the `DATA_STORE` environment variable. Application services talk to a graph abstraction, so the product behaves the same on either backend.
 
-## MongoDB
+- **Neo4j** is the default (`DATA_STORE=neo4j`). The default install, `backend/env.template`, and the Helm chart all use Neo4j.
+- **ArangoDB** is the other option (`DATA_STORE=arangodb`). If an existing install already has an ArangoDB data volume, the installer keeps ArangoDB.
 
-MongoDB is a document-oriented NoSQL database used for high volume data storage. We utilize MongoDB as our primary persistence layer for storing and retrieving application data in JSON-like documents with dynamic schemas.
+## Vector search ([Qdrant](https://qdrant.tech/))
 
-[Learn more about MongoDB](https://www.mongodb.com/)
+After Indexing parses a document, an embedding model turns each chunk of text into a vector. Qdrant stores those vectors and finds similar text when Query answers a question.
 
-## etcd
+A default install uses Qdrant. The application also supports OpenSearch and Redis (`VECTOR_DB_TYPE=opensearch` or `VECTOR_DB_TYPE=redis`). Those values apply only when the app container receives `VECTOR_DB_TYPE`. The default Docker Compose file does not pass that variable, so Qdrant stays in use unless you add it to the service environment.
 
-etcd is a distributed, reliable key-value store for the most critical data of a distributed system. We use etcd for managing configuration across our services, ensuring consistency and availability of configuration parameters.
+## Application data ([MongoDB](https://www.mongodb.com/))
 
-[Learn more about etcd](https://etcd.io/)
+MongoDB stores application data that is not part of the knowledge graph: sessions, file metadata, and similar state.
 
-## Graph database (Neo4j or ArangoDB)
+## Files
 
-PipesHub stores the knowledge graph — the relationships between records, users, and metadata — in a graph database. Which one an instance uses is set by the `DATA_STORE` environment variable. Services do not open a Neo4j or ArangoDB driver directly, so the same features work on either backend.
+The contents of files are not stored in MongoDB. They live on local disk, S3, or Azure Blob, through the [storage](/system-overview/storage) module in the API.
 
-**Neo4j** is the default. It is what `install.sh` selects for both the full and slim deployment types, what `backend/env.template` ships with, and what the Helm chart enables out of the box. Set `DATA_STORE=neo4j`.
+## How services hand work to each other
 
-**ArangoDB** is the alternative, a multi-model database supporting graph, document, and key-value models. Existing installations that were set up on ArangoDB continue to run on it, and the installer keeps that choice when it finds an ArangoDB data volume. Set `DATA_STORE=arangodb`.
+Connectors publish records, and Indexing consumes them. That path is the **event bus** in the architecture diagram.
 
-[Learn more about Neo4j](https://neo4j.com/) · [Learn more about ArangoDB](https://www.arangodb.com/)
+- On a **local machine**, the event bus is Redis Streams (`MESSAGE_BROKER=redis`). Kafka is not started.
+- In a **larger deployment**, the event bus is [Apache Kafka](https://kafka.apache.org/) (`MESSAGE_BROKER=kafka`).
 
-## Qdrant
+The Python services stay the same. Only the transport between them changes.
 
-Qdrant is a vector similarity search engine designed for production-ready AI applications. We use Qdrant as our vector database for efficient storage, management, and search of high-dimensional vectors for machine learning models and embeddings.
+## Cache, configuration, and [Redis](https://redis.io/)
 
-[Learn more about Qdrant](https://qdrant.tech/)
+Redis always runs. It can do three jobs, depending on how you deploy:
 
-## Redis
+1. **Cache** — frequently used data and locks.
+2. **Encrypted configuration** — the default key-value store for settings (`KV_STORE_TYPE=redis`).
+3. **Event bus** — Redis Streams, when `MESSAGE_BROKER=redis`.
 
-Redis is an open-source, in-memory data structure store used as a database, cache, message broker, and streaming engine. In our architecture, Redis serves as a high-performance key-value store for caching and real-time data operations.
+In a larger deployment, Kafka takes over the event bus. Redis continues to provide the cache, and it remains the configuration store unless you switch that store to etcd.
 
-[Learn more about Redis](https://redis.io/)
+## Optional: [etcd](https://etcd.io/)
+
+etcd is the other place to keep encrypted configuration. A default install uses Redis for this.
+
+To use etcd, set `KV_STORE_TYPE=etcd` and enable the Compose profile `kv-etcd`.

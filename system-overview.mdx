@@ -1,77 +1,147 @@
 ---
 title: "System Overview"
-description: "Different components of PipesHub system"
+description: "How PipesHub is put together: the web app, REST and SDK clients, MCP, the API, the Python services, and the data stores."
 icon: "network-wired"
+mode: wide
 ---
 
-PipesHub platform is a modern, distributed system designed for flexible data processing and service orchestration. The architecture follows event-driven principles to ensure components remain loosely coupled while maintaining high scalability and reliability.
+PipesHub is a workplace AI platform that you run yourself. It is made of three parts:
 
-## System Architecture Diagram
+1. A **web app** that people use in the browser for search, chat, and administration.
+2. An **API** that authenticates users, enforces permissions, and manages knowledge bases and files.
+3. **Python services** that sync data from your company apps, turn documents into searchable pieces, and return answers with citations.
 
-<a href="/images/system-architecture/architecture-diagram.png" target="_blank">
-  <img src="/images/system-architecture/architecture-diagram.png" alt="PipesHub Architecture Diagram" style={{ maxWidth: "100%", height: "auto", cursor: "zoom-in" }} />
-</a>
+A person using the web app, an application using the REST API or an SDK, and an agent calling MCP see the same records. If you could not open a file in Slack, none of them can see it either.
 
-The architecture is organized into three main tiers: Presentation, Application, and Data, with external AI Models Provider and External Services integrations.
+## Follow a question through the system
 
-## Presentation Tier
+<Steps>
+  <Step title="You ask in the browser, through an API, or through an agent">
+    The browser, a REST or SDK client, or an MCP client sends your question to the **Node.js API** over HTTP. Chat and search can stream the reply over Server-Sent Events (SSE), which keeps a live connection open so the answer appears as it is written.
+  </Step>
+  <Step title="The API checks who is asking">
+    The Node.js API verifies your session or token, applies your permissions, and forwards the question to the **Query** service.
+  </Step>
+  <Step title="Query finds sources and writes a cited answer">
+    Query looks up related records in the **knowledge graph** and similar text in **Qdrant**, then calls the **language model you configured**. You get an answer with citations that point back to the original documents.
+  </Step>
+</Steps>
 
-### Web App in Browser
-The frontend application runs in the browser and communicates with the backend through REST APIs, WebSocket connections, and Server-Sent Events (SSE). This provides a responsive and real-time user experience for interacting with the platform.
+That path only works after your company data is already in those stores. In the background, PipesHub fills them as follows:
 
-## Application Tier
+1. **Connectors** pull data from Slack, Drive, Jira, Confluence, and your other sources.
+2. They publish new or changed records onto the **event bus**.
+3. **Indexing** parses the files, turns the text into vectors, and writes the knowledge graph and Qdrant.
 
-### Express Web App
-The primary web application server built with Express.js handles HTTP API requests, serves the frontend application, and orchestrates communication between various services. It acts as the main gateway for client interactions and coordinates with auxiliary services.
+On a local machine, the event bus is **Redis Streams**. In a larger deployment, it is **Kafka**. The work the services do is the same in both cases; only the transport changes.
 
-### Auxiliary Services
-A collection of microservices that provide essential functionality:
-- **Storage**: Manages file storage and retrieval operations
-- **Mail**: Handles email sending and processing via SMTP relay servers
-- **Config**: Centralized configuration management for all services
-- **Notifications**: Manages user notifications and alerts
-- **Auth**: Handles authentication and authorization with support for Azure AD, Okta, and other identity providers
-- **Crawling**: Manages the scheduling and execution of data crawling operations
+The diagram below shows that flow. Read it from top to bottom: who talks to PipesHub, then the API and the event bus, then Query, Indexing, and Connectors, then the data stores.
 
-### Event Bus (Kafka)
-Apache Kafka serves as the central event streaming platform, enabling asynchronous communication between services. It ensures reliable message delivery and allows services to scale independently while maintaining loose coupling.
+## Architecture diagram
 
-### Query Service (Python FastAPI Server)
-A high-performance Python-based API service that handles search queries and interacts with AI models. It processes user queries, performs semantic search operations, and communicates with external AI model providers like Bedrock and Azure AI.
+<Frame caption="Click the figure to open it full size.">
+  <a href="/images/system-architecture/architecture-diagram.svg" target="_blank">
+    <img
+      src="/images/system-architecture/architecture-diagram.svg"
+      alt="PipesHub architecture: presentation, application, and data tiers"
+      width="1200"
+      height="980"
+      className="w-full h-auto"
+    />
+  </a>
+</Frame>
 
-### Indexing Service
-The Indexing service extracts content from various data sources and indexes it for search. This service processes documents, extracts metadata, and prepares data for storage in blob, vector, and graph databases.
+The sections below follow the same order as the diagram.
 
-### Connectors Service
-Pre-built integrations with popular enterprise platforms including SharePoint, Slack, Jira, Confluence, Outlook, and many more. Connectors handle authentication, data extraction, and synchronization with external systems.
+## Who talks to PipesHub
 
-## Data Tier
+### Web app
 
-### Vector database (Qdrant by default)
-Stores vector embeddings for semantic search capabilities. Enables fast similarity search and powers the platform's AI-driven search functionality. Qdrant is what the installer deploys. `VECTOR_DB_TYPE` selects the provider and defaults to `qdrant`.
+People use PipesHub in the browser. The interface is a [Next.js](https://nextjs.org/) application for search, chat, and administration.
 
-### Graph database (Neo4j by default)
-Manages relationships between entities and enables complex graph-based queries. Useful for understanding connections between documents, users, and metadata. Selected with `DATA_STORE`: `neo4j` (the default written by `install.sh`, the Helm chart, and `env.template`) or `arangodb`.
+### REST and SDK clients
 
-### NoSQL (MongoDB)
-Primary database for storing document metadata, user information, and application state. Provides flexible schema and high scalability.
+Your own applications talk to the HTTP API. Use the REST endpoints directly, or the [Python](https://github.com/pipeshub-ai/pipeshub-sdk-python), [TypeScript](https://github.com/pipeshub-ai/pipeshub-sdk-typescript), and [Go](https://github.com/pipeshub-ai/pipeshub-sdk-go) SDKs. The [API reference](/developer/api-reference) lists the routes.
 
-### Blob Storage (Local/S3)
-Stores large files and binary objects. Supports both local storage for development and cloud storage (S3) for production deployments.
+### Agents and MCP
 
-### Redis Cache
-High-performance in-memory data store used for caching frequently accessed data, managing session state, and implementing distributed locks. Significantly improves response times and reduces load on primary databases.
+Agents connect at `/mcp` using Streamable HTTP. Setup is in the [MCP overview](/mcp/overview). An agent signs in with a personal access token and receives the same records you would see when signed in as that user.
 
-### Encrypted KV Store (etcd)
-A secure key-value store used by all services for caching, session management, and storing sensitive configuration data. All data is encrypted at rest.
+### Node.js API
 
-## External Services
+The API is a Node.js process built with Express. The web app, REST and SDK clients, and MCP clients all talk to this process. It handles accounts, permissions, knowledge bases, file uploads, user authentication, personal access tokens, and MCP.
 
-The platform integrates with numerous external services for authentication, communication, and data sources:
-- **Identity Providers**: Azure AD, Okta and more
-- **Email Services**: SMTP Relay Server
-- **Collaboration Platforms**: SharePoint, Outlook, Slack, Teams and more
-- **Project Management**: Jira, Linear and more
-- **Documentation**: Confluence, Notion and more
-- **AI Models**: Azure AI, AWS Bedrock, Vertex AI, OpenAI, Anthropic, Google AI Studio and more
-- And many more...
+On a default Docker install, this is the only Node process. It listens on port 3000 and serves the built Next.js files, `/api`, and `/mcp`. If you run from source during development, the Next.js dev server is typically on port 3001 and Express is on port 3000. Helm exposes this combined Node service on port 3001.
+
+If you need the HTTP reference for a specific area:
+
+- [User management](/system-overview/user-management)
+- [Knowledge base](/system-overview/knowledge-base)
+- [Enterprise search](/system-overview/enterprise-search)
+
+## How work is done
+
+### Modules in the API process
+
+Auth, Storage, Mail, Config, Notifications, Crawling, and the connector manager run **inside this Express process**.
+
+| Module | What it does |
+| --- | --- |
+| [Auth](/system-overview/authentication) | Signs people in with password, OTP, Google, Microsoft, or SAML. |
+| [Storage](/system-overview/storage) | Stores file bytes on disk, S3, or Azure Blob. |
+| [Config](/system-overview/configuration-manager) | Holds encrypted settings that the other services read. |
+| [Mail](/system-overview/mail-service) | Sends outbound email such as invites and one-time codes. |
+| Notifications | Sends in-app and email alerts. |
+| [Crawling](/system-overview/crawling-manager) | Schedules when connectors run. |
+| [Connector manager](/system-overview/connector-manager) | Stores encrypted connector configuration and forwards the browser's OAuth redirects (`/oauth/authorize` and `/oauth/callback`) to the Python connectors service. |
+
+### Event bus
+
+Connectors publish records onto the event bus, and Indexing consumes them. You choose the transport to match the size of the deployment:
+
+- On a **local machine**, the event bus is Redis Streams (`MESSAGE_BROKER=redis`).
+- In a **larger deployment**, the event bus is Kafka (`MESSAGE_BROKER=kafka`).
+
+Redis still runs in both cases. It is the cache, and by default it is also the encrypted configuration store.
+
+### Query, Indexing, and Connectors
+
+**Query**, **Indexing**, and **Connectors** are Python FastAPI services.
+
+**Connectors** talk to Slack, Drive, Jira, Confluence, and the rest of your company apps. They complete OAuth with those providers, refresh the tokens, and publish new or changed records onto the event bus. The connector manager in the API stores the encrypted configuration and forwards the browser OAuth redirects to this Python service. See the [connectors overview](/connectors/overview) for the full list.
+
+**Indexing** consumes those records from the event bus. It parses files, splits them into chunks, embeds the text, and writes Qdrant and the knowledge graph. **Docling** is the heavier parser for PDFs, tables, and OCR. Two additional processes, Parsing and Extraction, start only if you set `USE_PARSING_SERVICE=true`.
+
+**Query** answers questions. It reads the knowledge graph and the vector store, then calls your language model. On the event bus it listens for configuration updates.
+
+### Embedding server
+
+Indexing and Query need **vectors**: lists of numbers that represent the meaning of a piece of text, so similar passages can be found later.
+
+On a default install they call a **local embedding server** over HTTP. The server speaks the OpenAI-compatible `/v1/embeddings` API. The box is dashed in the diagram because Query and Indexing call this server directly over HTTP. If you configure a cloud embedding provider, you can skip this process.
+
+## Where data lives
+
+Each box along the bottom of the diagram holds a different kind of state. The table below matches a default install. Vendor notes and links are on [external services](/system-overview/external-services).
+
+| Store | What it holds | Default |
+| --- | --- | --- |
+| **Graph** | Records, people, and the relationships between them (the knowledge graph). | Neo4j (`DATA_STORE=neo4j`). ArangoDB is the other option. The same features work on either; services go through a graph abstraction. |
+| **Vectors** | Embedded chunks used for similarity search. | Qdrant (`VECTOR_DB_TYPE=qdrant`). |
+| **Documents** | Sessions, file metadata, and other application state. | MongoDB. |
+| **Files** | The bytes of uploaded files and files pulled in by connectors. | Local disk, S3, or Azure Blob. See [storage](/system-overview/storage). |
+| **Redis** | Cache, the default encrypted configuration store, and Redis Streams when Redis is the event bus. | Always running. |
+| **etcd** | An alternative store for encrypted configuration. | Started when you set `KV_STORE_TYPE=etcd` (Compose profile `kv-etcd`). |
+
+## Models you bring
+
+You point PipesHub at models you already use.
+
+- An **embedding model** turns parsed text into vectors for Qdrant. The local embedding server is the default for this.
+- A **language model (LLM)** writes the cited answer. You can use any provider, or a local model through Ollama.
+
+The AI models box on the left of the diagram is those two models.
+
+## Identity and other company systems
+
+The right side of the diagram shows identity providers such as Azure AD and Okta, an SMTP server for email, and the 50+ apps that connectors sync. You register those connections in PipesHub. Auth uses the identity providers, Mail uses SMTP, and Connectors sync the company apps.

@@ -1,0 +1,89 @@
+---
+title: "Try PipesHub with demo data"
+description: "Load Acme Corp, a small fictional company, so a fresh install has something worth asking before you connect a real source"
+icon: "flask"
+---
+
+A fresh PipesHub has nothing to search until you connect a source, and connecting a real one takes an OAuth round-trip you may not want to do just to see what the product does. The **Demo** connector fills that gap: it loads *Acme Corp*, a small fictional company, and nothing else — no external service is contacted.
+
+<Note>
+  Available from the first release after 0.7.0. On 0.7.0 and earlier the Demo connector is not in the connectors list.
+</Note>
+
+## What you get
+
+Acme Corp is 41 records across five systems, loaded the way real connectors load them, so search, citations and permissions behave exactly as they would with your own data:
+
+| Looks like | Contains |
+| --- | --- |
+| **GitHub** | two repositories: pull requests, issues, review comments |
+| **Jira** | an incidents project and a support-escalation project |
+| **Slack** | four channels, including two decision threads |
+| **Google Drive** | design docs, a runbook, the on-call handbook, release notes — and one restricted pricing document |
+| **ServiceNow** | customer cases that led to an escalation |
+
+Two story lines run through it: a billing-retry incident (why the payment service changed, and who decided), and an export-timeout problem that travels from customer cases through support into engineering. Citations read "GitHub · Pull request", "Jira · Ticket" and so on.
+
+Once the connector is active, the new-chat landing offers five questions the data was written to answer. The first is the one to try:
+
+> Why was the payment service architecture changed, and how was the decision made?
+
+A good answer cites a pull request, an incident, a Slack thread and a design document together — the point being that no single source holds the whole story.
+
+## Load it from the browser
+
+1. Go to **Workspace → Connectors** and pick **Demo** (it has its own group in the list).
+2. Add it as a **team** connector. It needs no credentials.
+3. **Enable** it. The sync takes well under a minute; records index over the next minute or two.
+4. Open a new chat. The five questions appear under the input.
+
+The person who adds the connector automatically sees everything except the restricted pricing material (see below).
+
+<Tip>
+  Keep the connector's name descriptive. In Agent mode the assistant chooses which sources to search by their names; a name like "Acme Corp demo data: GitHub, Jira, Slack, Google Drive and ServiceNow" tells it what is inside. That is the name the headless setup uses.
+</Tip>
+
+## Load it headlessly
+
+If you are scripting first-run with [`bootstrap-first-run.sh`](/for-agents-bootstrap), add to the env file:
+
+```bash
+PIPESHUB_DEMO_DATA=1
+```
+
+The script creates the connector and starts its sync after configuring the LLM and minting the token. Everything else about the script is unchanged.
+
+## Two people who see different things
+
+The most convincing thing the demo shows is that the same question gets different answers for different people. Acme has two employees who can sign in:
+
+| Person | Groups | Sees |
+| --- | --- | --- |
+| **Alice Chen** (`alice@acme-demo.example`) | engineering, support | both story lines, the handbook |
+| **Bob Okafor** (`bob@acme-demo.example`) | engineering, support, **pricing committee** | everything Alice sees, plus the pricing strategy and the `#pricing-committee` thread |
+
+Ask both *"What is the enterprise pricing strategy for 2026?"* — Alice gets nothing relevant, Bob gets the document, cited from Google Drive.
+
+To create them you need a **business** account (individual accounts are single-user) and the headless script:
+
+```bash
+PIPESHUB_ACCOUNT_TYPE=business
+PIPESHUB_REGISTERED_NAME='Acme Corp (demo)'
+PIPESHUB_DEMO_DATA=1
+PIPESHUB_DEMO_PERSONAS=1
+PIPESHUB_DEMO_PASSWORD='ChangeMe1!'   # same rules as the admin password
+```
+
+Both accounts are created with that password before the connector syncs, so their group memberships attach immediately. There is no email involved.
+
+<Warning>
+  These are real accounts in your organisation with a password you chose. Use them on a laptop or a throwaway instance, and delete them (Workspace → Users) when you are done.
+</Warning>
+
+## Remove it
+
+Delete the Demo connector from **Workspace → Connectors**. Its records, groups and permissions go with it. If you created Alice and Bob, delete them under **Workspace → Users**.
+
+## For coding agents
+
+If you are standing up a laptop instance for someone and they have no data ready, the Demo connector is the fastest way to a first cited answer: enable it, wait for `health/services`, then call `pipeshub_search` with the first question above. See [Local Docker demo](/for-agents-local-demo).

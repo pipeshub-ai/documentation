@@ -20,7 +20,7 @@ You choose one graph database with the `DATA_STORE` environment variable. Applic
 
 After Indexing parses a document, an embedding model turns each chunk of text into a vector. Qdrant stores those vectors and finds similar text when Query answers a question.
 
-A default install runs Qdrant (`VECTOR_DB_TYPE=qdrant`). You can also set `VECTOR_DB_TYPE` to `opensearch` or `redis`.
+A default install uses Qdrant. The application also supports OpenSearch and Redis (`VECTOR_DB_TYPE=opensearch` or `VECTOR_DB_TYPE=redis`). Those values apply only when the app container receives `VECTOR_DB_TYPE`. The default Docker Compose file does not pass that variable, so Qdrant stays in use unless you add it to the service environment.
 
 ## Application data ([MongoDB](https://www.mongodb.com/))
 

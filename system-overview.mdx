@@ -4,79 +4,78 @@ description: "How PipesHub is put together: web app, API, Python services, and d
 icon: "network-wired"
 ---
 
-PipesHub has three parts. They share one permission model: a person in the UI and an agent on MCP see the same records.
+PipesHub is organized in three tiers: Presentation, Application, and Data. A person in the UI and an agent on MCP see the same records.
 
-```mermaid
-flowchart LR
-  subgraph clients [Clients]
-    Browser["Web app"]
-    Agents["Agents and MCP"]
-  end
-  API["Node.js API"]
-  subgraph python [Python]
-    Conn[Connectors]
-    Idx[Indexing]
-    Qry[Query]
-    Emb[Embedding]
-  end
-  Broker["Redis Streams or Kafka"]
-  subgraph data [Data]
-    Graph[Neo4j]
-    Vec[Qdrant]
-    Mongo[MongoDB]
-    Files[Files]
-  end
-  Browser --> API
-  Agents --> API
-  API --> Conn
-  API --> Qry
-  Conn --> Broker
-  Broker --> Idx
-  Idx --> Graph
-  Idx --> Vec
-  Idx --> Files
-  Qry --> Graph
-  Qry --> Vec
-  Emb --> Idx
-  Emb --> Qry
-```
+## System Architecture Diagram
 
-## Web app
+<a href="/images/system-architecture/architecture-diagram.svg" target="_blank">
+  <img
+    src="/images/system-architecture/architecture-diagram.svg"
+    alt="PipesHub architecture: presentation, application, and data tiers"
+    style={{ maxWidth: "100%", height: "auto", cursor: "zoom-in" }}
+  />
+</a>
 
-[Next.js](https://nextjs.org/). Search, chat, and admin in the browser. It talks to the API over HTTP and SSE. Express does not serve this app.
+Same shape as the older architecture diagram: browser on top, API and event bus in the middle, Python services on that bus, data stores along the bottom. The labels match what a current install runs.
 
-## API
+## Presentation tier
 
-Node.js (Express) on the same host as the UI in a typical Compose install. Accounts, permissions, knowledge bases, files, OAuth, personal access tokens, and **`/mcp`**.
+### Web app in browser
 
-Storage, mail, notifications, configuration, and crawl scheduling are modules in this process, not separate microservices. Operator pages for those modules: [storage](/system-overview/storage), [authentication](/system-overview/authentication), [mail](/system-overview/mail-service).
+[Next.js](https://nextjs.org/). Search, chat, and admin. It talks to the API over HTTP and SSE. Express does not serve this app.
 
-## Python services
+### MCP clients and agents
 
-- **Connectors** — OAuth, token refresh, and sync from Slack, Drive, Jira, and the other sources into the graph.
-- **Indexing** — parse, chunk, embed; write vectors and graph nodes.
-- **Query** — retrieval and the cited answer. Calls the LLM you configured.
-- **Embedding** — local dense embeddings (OpenAI-compatible `/v1/embeddings`) when you are not using a cloud embedding provider. Indexing and query call it. Cloud embedding providers do not need this process.
-- **Docling** — heavier PDF, table, and OCR parsing.
-- **Parsing** and **Extraction** — optional. Start them only with `USE_PARSING_SERVICE=true`.
+The API exposes MCP at `/mcp` (Streamable HTTP). Same access checks as a signed-in user. Setup: [MCP overview](/mcp/overview).
 
-## How work moves
+## Application tier
 
-Connectors publish records; indexing consumes them:
+### Node.js API
+
+Express on the same host as the UI in a typical Compose install. Accounts, permissions, knowledge bases, files, OAuth, personal access tokens, and **`/mcp`**. Operator pages: [user management](/system-overview/user-management), [knowledge base](/system-overview/knowledge-base), [enterprise search](/system-overview/enterprise-search).
+
+### API modules
+
+Storage, mail, notifications, configuration, auth, and crawl scheduling run **in this process**. They are not separate microservices.
+
+- [Authentication](/system-overview/authentication)
+- [Storage](/system-overview/storage)
+- [Configuration](/system-overview/configuration-manager)
+- [Mail](/system-overview/mail-service)
+- [Crawling](/system-overview/crawling-manager)
+- [Connector manager](/system-overview/connector-manager) (OAuth tokens and connector config in Node; the Python connectors service does the sync)
+
+### Event bus
+
+Connectors publish records; indexing consumes them.
 
 - On a local machine: **Redis Streams** (`MESSAGE_BROKER=redis`). No Kafka containers.
 - In a larger deployment: **Kafka** (`MESSAGE_BROKER=kafka`).
 
-Redis is also the cache, and the default store for encrypted config. **etcd** is the other key-value option (`KV_STORE` / the `kv-etcd` Compose profile). A default laptop install does not start etcd.
+### Query
 
-## Data
+Python FastAPI. Retrieval and the cited answer. Reads the graph and the vector store, then calls the LLM you configured.
 
-- **Graph** — Neo4j by default (`DATA_STORE=neo4j`). ArangoDB is the other option. Same features either way; services go through the graph abstraction, not a vendor driver.
-- **Vectors** — Qdrant by default (`VECTOR_DB_TYPE=qdrant`).
+### Indexing
+
+Python FastAPI. Parse, chunk, embed; write vectors and graph nodes. **Docling** handles heavier PDF, table, and OCR parsing. **Parsing** and **Extraction** are optional — start them only with `USE_PARSING_SERVICE=true`.
+
+### Connectors
+
+Python FastAPI. OAuth, token refresh, and sync from Slack, Drive, Jira, Confluence, and the other sources into the graph.
+
+### Embedding
+
+Local dense embeddings (OpenAI-compatible `/v1/embeddings`). Indexing and Query call it over HTTP; it is not on the event bus. Cloud embedding providers do not need this process.
+
+## Data tier
+
+- **Vector DB** — Qdrant by default (`VECTOR_DB_TYPE=qdrant`).
+- **Graph DB** — Neo4j by default (`DATA_STORE=neo4j`). ArangoDB is the other option. Same features either way; services go through the graph abstraction, not a vendor driver.
 - **Documents** — MongoDB (sessions, file metadata, application state).
 - **Files** — local disk, S3, Azure Blob, or GCS. See [storage](/system-overview/storage).
-- **Redis** — cache; default KV; Redis Streams when that is the broker.
-- **etcd** — optional KV, not the installer default.
+- **Redis** — cache; default store for encrypted config; Redis Streams when that is the broker.
+- **etcd** — the other key-value option (`KV_STORE_TYPE=etcd` / the `kv-etcd` Compose profile). A default laptop install does not start etcd.
 
 Datastore notes and vendor links: [external services](/system-overview/external-services).
 
@@ -84,6 +83,6 @@ Datastore notes and vendor links: [external services](/system-overview/external-
 
 You bring the models. An **embedding model** turns parsed text into vectors. An **LLM** writes the cited answer. Any provider, or local (Ollama). The local embedding server is the default for vectors.
 
-## Agents
+## External systems
 
-The API exposes MCP at `/mcp` (Streamable HTTP). Same access checks as a signed-in user. Setup: [MCP overview](/mcp/overview).
+Identity (Azure AD, Okta, and others), SMTP, and 50+ connectors (SharePoint, Outlook, Slack, Jira, Confluence, Drive, and the rest). Connector list: [connectors overview](/connectors/overview).

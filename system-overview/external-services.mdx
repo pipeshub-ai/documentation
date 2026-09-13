@@ -9,7 +9,9 @@ Our architecture leverages several industry-standard external services to provid
 
 ## Apache Kafka
 
-Apache Kafka is an open-source distributed event streaming platform used for building real-time data pipelines and streaming applications. In our architecture, Kafka enables event-driven communication between services, making the system loosely coupled and highly scalable.
+Kafka is the message broker on a **larger** deployment (`MESSAGE_BROKER=kafka`). Connectors and indexing use it to hand records to each other — the same path as Redis Streams on a local machine.
+
+A local install does **not** start Kafka. It uses Redis Streams instead.
 
 [Learn more about Apache Kafka](https://kafka.apache.org/)
 
@@ -21,7 +23,7 @@ MongoDB is a document-oriented NoSQL database used for high volume data storage.
 
 ## etcd
 
-etcd is a distributed, reliable key-value store for the most critical data of a distributed system. We use etcd for managing configuration across our services, ensuring consistency and availability of configuration parameters.
+etcd is an **optional** key-value store for encrypted configuration (`KV_STORE` / the `kv-etcd` Compose profile). The installer default is Redis, not etcd.
 
 [Learn more about etcd](https://etcd.io/)
 
@@ -29,7 +31,7 @@ etcd is a distributed, reliable key-value store for the most critical data of a 
 
 PipesHub stores the knowledge graph — the relationships between records, users, and metadata — in a graph database. Which one an instance uses is set by the `DATA_STORE` environment variable. Services do not open a Neo4j or ArangoDB driver directly, so the same features work on either backend.
 
-**Neo4j** is the default. It is what `install.sh` selects for both the full and slim deployment types, what `backend/env.template` ships with, and what the Helm chart enables out of the box. Set `DATA_STORE=neo4j`.
+**Neo4j** is the default. It is what `install.sh` writes, what `backend/env.template` ships with, and what the Helm chart enables out of the box. Set `DATA_STORE=neo4j`.
 
 **ArangoDB** is the alternative, a multi-model database supporting graph, document, and key-value models. Existing installations that were set up on ArangoDB continue to run on it, and the installer keeps that choice when it finds an ArangoDB data volume. Set `DATA_STORE=arangodb`.
 
@@ -43,6 +45,6 @@ Qdrant is a vector similarity search engine designed for production-ready AI app
 
 ## Redis
 
-Redis is an open-source, in-memory data structure store used as a database, cache, message broker, and streaming engine. In our architecture, Redis serves as a high-performance key-value store for caching and real-time data operations.
+Redis is the cache, the default encrypted config store, and — on a local machine — the event broker (Redis Streams, `MESSAGE_BROKER=redis`). In a larger deployment the broker is Kafka and Redis stays as cache and (unless you switch KV to etcd) the config store.
 
 [Learn more about Redis](https://redis.io/)

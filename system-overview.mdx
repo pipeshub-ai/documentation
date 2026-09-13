@@ -1,77 +1,89 @@
 ---
 title: "System Overview"
-description: "Different components of PipesHub system"
+description: "How PipesHub is put together: web app, API, Python services, and data stores."
 icon: "network-wired"
 ---
 
-PipesHub platform is a modern, distributed system designed for flexible data processing and service orchestration. The architecture follows event-driven principles to ensure components remain loosely coupled while maintaining high scalability and reliability.
+PipesHub has three parts. They share one permission model: a person in the UI and an agent on MCP see the same records.
 
-## System Architecture Diagram
+```mermaid
+flowchart LR
+  subgraph clients [Clients]
+    Browser["Web app"]
+    Agents["Agents and MCP"]
+  end
+  API["Node.js API"]
+  subgraph python [Python]
+    Conn[Connectors]
+    Idx[Indexing]
+    Qry[Query]
+    Emb[Embedding]
+  end
+  Broker["Redis Streams or Kafka"]
+  subgraph data [Data]
+    Graph[Neo4j]
+    Vec[Qdrant]
+    Mongo[MongoDB]
+    Files[Files]
+  end
+  Browser --> API
+  Agents --> API
+  API --> Conn
+  API --> Qry
+  Conn --> Broker
+  Broker --> Idx
+  Idx --> Graph
+  Idx --> Vec
+  Idx --> Files
+  Qry --> Graph
+  Qry --> Vec
+  Emb --> Idx
+  Emb --> Qry
+```
 
-<a href="/images/system-architecture/architecture-diagram.png" target="_blank">
-  <img src="/images/system-architecture/architecture-diagram.png" alt="PipesHub Architecture Diagram" style={{ maxWidth: "100%", height: "auto", cursor: "zoom-in" }} />
-</a>
+## Web app
 
-The architecture is organized into three main tiers: Presentation, Application, and Data, with external AI Models Provider and External Services integrations.
+[Next.js](https://nextjs.org/). Search, chat, and admin in the browser. It talks to the API over HTTP and SSE. Express does not serve this app.
 
-## Presentation Tier
+## API
 
-### Web App in Browser
-The frontend application runs in the browser and communicates with the backend through REST APIs, WebSocket connections, and Server-Sent Events (SSE). This provides a responsive and real-time user experience for interacting with the platform.
+Node.js (Express) on the same host as the UI in a typical Compose install. Accounts, permissions, knowledge bases, files, OAuth, personal access tokens, and **`/mcp`**.
 
-## Application Tier
+Storage, mail, notifications, configuration, and crawl scheduling are modules in this process, not separate microservices. Operator pages for those modules: [storage](/system-overview/storage), [authentication](/system-overview/authentication), [mail](/system-overview/mail-service).
 
-### Express Web App
-The primary web application server built with Express.js handles HTTP API requests, serves the frontend application, and orchestrates communication between various services. It acts as the main gateway for client interactions and coordinates with auxiliary services.
+## Python services
 
-### Auxiliary Services
-A collection of microservices that provide essential functionality:
-- **Storage**: Manages file storage and retrieval operations
-- **Mail**: Handles email sending and processing via SMTP relay servers
-- **Config**: Centralized configuration management for all services
-- **Notifications**: Manages user notifications and alerts
-- **Auth**: Handles authentication and authorization with support for Azure AD, Okta, and other identity providers
-- **Crawling**: Manages the scheduling and execution of data crawling operations
+- **Connectors** — OAuth, token refresh, and sync from Slack, Drive, Jira, and the other sources into the graph.
+- **Indexing** — parse, chunk, embed; write vectors and graph nodes.
+- **Query** — retrieval and the cited answer. Calls the LLM you configured.
+- **Embedding** — local dense embeddings (OpenAI-compatible `/v1/embeddings`) when you are not using a cloud embedding provider. Indexing and query call it. Cloud embedding providers do not need this process.
+- **Docling** — heavier PDF, table, and OCR parsing.
+- **Parsing** and **Extraction** — optional. Start them only with `USE_PARSING_SERVICE=true`.
 
-### Event Bus (Kafka)
-Apache Kafka serves as the central event streaming platform, enabling asynchronous communication between services. It ensures reliable message delivery and allows services to scale independently while maintaining loose coupling.
+## How work moves
 
-### Query Service (Python FastAPI Server)
-A high-performance Python-based API service that handles search queries and interacts with AI models. It processes user queries, performs semantic search operations, and communicates with external AI model providers like Bedrock and Azure AI.
+Connectors publish records; indexing consumes them:
 
-### Indexing Service
-The Indexing service extracts content from various data sources and indexes it for search. This service processes documents, extracts metadata, and prepares data for storage in blob, vector, and graph databases.
+- On a local machine: **Redis Streams** (`MESSAGE_BROKER=redis`). No Kafka containers.
+- In a larger deployment: **Kafka** (`MESSAGE_BROKER=kafka`).
 
-### Connectors Service
-Pre-built integrations with popular enterprise platforms including SharePoint, Slack, Jira, Confluence, Outlook, and many more. Connectors handle authentication, data extraction, and synchronization with external systems.
+Redis is also the cache, and the default store for encrypted config. **etcd** is the other key-value option (`KV_STORE` / the `kv-etcd` Compose profile). A default laptop install does not start etcd.
 
-## Data Tier
+## Data
 
-### Vector database (Qdrant by default)
-Stores vector embeddings for semantic search capabilities. Enables fast similarity search and powers the platform's AI-driven search functionality. Qdrant is what the installer deploys. `VECTOR_DB_TYPE` selects the provider and defaults to `qdrant`.
+- **Graph** — Neo4j by default (`DATA_STORE=neo4j`). ArangoDB is the other option. Same features either way; services go through the graph abstraction, not a vendor driver.
+- **Vectors** — Qdrant by default (`VECTOR_DB_TYPE=qdrant`).
+- **Documents** — MongoDB (sessions, file metadata, application state).
+- **Files** — local disk, S3, Azure Blob, or GCS. See [storage](/system-overview/storage).
+- **Redis** — cache; default KV; Redis Streams when that is the broker.
+- **etcd** — optional KV, not the installer default.
 
-### Graph database (Neo4j by default)
-Manages relationships between entities and enables complex graph-based queries. Useful for understanding connections between documents, users, and metadata. Selected with `DATA_STORE`: `neo4j` (the default written by `install.sh`, the Helm chart, and `env.template`) or `arangodb`.
+Datastore notes and vendor links: [external services](/system-overview/external-services).
 
-### NoSQL (MongoDB)
-Primary database for storing document metadata, user information, and application state. Provides flexible schema and high scalability.
+## Models
 
-### Blob Storage (Local/S3)
-Stores large files and binary objects. Supports both local storage for development and cloud storage (S3) for production deployments.
+You bring the models. An **embedding model** turns parsed text into vectors. An **LLM** writes the cited answer. Any provider, or local (Ollama). The local embedding server is the default for vectors.
 
-### Redis Cache
-High-performance in-memory data store used for caching frequently accessed data, managing session state, and implementing distributed locks. Significantly improves response times and reduces load on primary databases.
+## Agents
 
-### Encrypted KV Store (etcd)
-A secure key-value store used by all services for caching, session management, and storing sensitive configuration data. All data is encrypted at rest.
-
-## External Services
-
-The platform integrates with numerous external services for authentication, communication, and data sources:
-- **Identity Providers**: Azure AD, Okta and more
-- **Email Services**: SMTP Relay Server
-- **Collaboration Platforms**: SharePoint, Outlook, Slack, Teams and more
-- **Project Management**: Jira, Linear and more
-- **Documentation**: Confluence, Notion and more
-- **AI Models**: Azure AI, AWS Bedrock, Vertex AI, OpenAI, Anthropic, Google AI Studio and more
-- And many more...
+The API exposes MCP at `/mcp` (Streamable HTTP). Same access checks as a signed-in user. Setup: [MCP overview](/mcp/overview).

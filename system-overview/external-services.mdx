@@ -20,7 +20,7 @@ You choose one graph database with the `DATA_STORE` environment variable. Applic
 
 After Indexing parses a document, an embedding model turns each chunk of text into a vector. Qdrant stores those vectors and finds similar text when Query answers a question.
 
-A first install runs Qdrant (`VECTOR_DB_TYPE=qdrant`).
+A first install runs Qdrant (`VECTOR_DB_TYPE=qdrant`). You can also set `VECTOR_DB_TYPE` to `opensearch` or `redis`.
 
 ## Application data ([MongoDB](https://www.mongodb.com/))
 
@@ -28,7 +28,7 @@ MongoDB stores application data that is not part of the knowledge graph: session
 
 ## Files
 
-The contents of files are not stored in MongoDB. They live on local disk or in object storage (S3, Azure Blob, or GCS), through the [storage](/system-overview/storage) module in the API.
+The contents of files are not stored in MongoDB. They live on local disk, S3, or Azure Blob, through the [storage](/system-overview/storage) module in the API. Google Cloud Storage is a [connector](/connectors/gcs/gcs) you can index, not a blob backend for this module.
 
 ## How services hand work to each other
 

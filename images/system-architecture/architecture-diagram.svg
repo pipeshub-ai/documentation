@@ -1,208 +1,141 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2084 1186" role="img" aria-labelledby="title desc">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 980" width="1200" height="980" role="img" aria-labelledby="title desc">
   <title id="title">PipesHub architecture</title>
   <desc id="desc">Three tiers. Presentation is the Next.js web app and MCP clients. Application is the Node.js API with in-process modules, an event bus of Redis Streams or Kafka, and Python query, indexing, and connector services plus a local embedding server. Data is Qdrant, Neo4j or ArangoDB, MongoDB, files, and Redis, with etcd optional.</desc>
   <defs>
-    <marker id="arrow" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="10" orient="auto">
+    <marker id="arrow" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="8" markerHeight="9" orient="auto">
       <path d="M0 1.5 L11 6 L0 10.5 Z" fill="#444"/>
     </marker>
-    <marker id="arrow-rev" viewBox="0 0 12 12" refX="2" refY="6" markerWidth="9" markerHeight="10" orient="auto">
+    <marker id="arrow-rev" viewBox="0 0 12 12" refX="2" refY="6" markerWidth="8" markerHeight="9" orient="auto">
       <path d="M12 1.5 L1 6 L12 10.5 Z" fill="#444"/>
     </marker>
-    <filter id="soft" x="-4%" y="-2%" width="108%" height="108%">
-      <feDropShadow dx="0" dy="1" stdDeviation="1.1" flood-color="#000" flood-opacity="0.09"/>
-    </filter>
     <style>
-      .title { font: 700 32px ui-sans-serif, system-ui, sans-serif; fill: #111; }
+      .title { font: 700 28px ui-sans-serif, system-ui, sans-serif; fill: #111; }
       .tier { font: 700 13px ui-sans-serif, system-ui, sans-serif; fill: #333; }
-      .h { font: 700 16px ui-sans-serif, system-ui, sans-serif; fill: #111; }
-      .h2 { font: 700 14px ui-sans-serif, system-ui, sans-serif; fill: #111; }
-      .s { font: 12.5px ui-sans-serif, system-ui, sans-serif; fill: #333; }
-      .s2 { font: 11.5px ui-sans-serif, system-ui, sans-serif; fill: #444; }
-      .cap { font: 11px ui-sans-serif, system-ui, sans-serif; fill: #555; }
-      .tiny { font: 10.5px ui-sans-serif, system-ui, sans-serif; fill: #555; }
-      .ext { font: 12.5px ui-sans-serif, system-ui, sans-serif; fill: #222; }
+      .h { font: 700 20px ui-sans-serif, system-ui, sans-serif; fill: #111; }
+      .h2 { font: 700 16px ui-sans-serif, system-ui, sans-serif; fill: #111; }
+      .s { font: 14px ui-sans-serif, system-ui, sans-serif; fill: #333; }
+      .s2 { font: 13px ui-sans-serif, system-ui, sans-serif; fill: #444; }
+      .tiny { font: 12px ui-sans-serif, system-ui, sans-serif; fill: #555; }
+      .ext { font: 13px ui-sans-serif, system-ui, sans-serif; fill: #222; }
     </style>
   </defs>
+  <rect x="4" y="4" width="1192" height="972" rx="8" fill="#fbfbfc" stroke="#d5d9de" stroke-width="1.5"/>
 
-  <rect x="8" y="8" width="2068" height="1170" rx="8" fill="#fbfbfc" stroke="#d5d9de" stroke-width="1.5"/>
-  <text x="1042" y="46" text-anchor="middle" class="title">Architecture Diagram</text>
-
-  <polygon points="24,78 160,78 182,106 160,134 24,134" fill="#fff" stroke="#c45c5c" stroke-width="2"/>
-  <text x="98" y="102" text-anchor="middle" class="tier">Presentation</text>
-  <text x="98" y="120" text-anchor="middle" class="tier">Tier</text>
-
-  <polygon points="24,430 160,430 182,458 160,486 24,486" fill="#fff" stroke="#c45c5c" stroke-width="2"/>
-  <text x="98" y="454" text-anchor="middle" class="tier">Application</text>
-  <text x="98" y="472" text-anchor="middle" class="tier">Tier</text>
-
-  <polygon points="24,980 160,980 182,1008 160,1036 24,1036" fill="#fff" stroke="#c45c5c" stroke-width="2"/>
-  <text x="98" y="1004" text-anchor="middle" class="tier">Data</text>
-  <text x="98" y="1022" text-anchor="middle" class="tier">Tier</text>
-
-  <g filter="url(#soft)">
-    <rect x="22" y="700" width="162" height="124" rx="6" fill="#d8d9db" stroke="#666" stroke-width="1.2"/>
-    <text x="103" y="730" text-anchor="middle" class="h2">AI models</text>
-    <text x="103" y="750" text-anchor="middle" class="s2">you bring</text>
-    <text x="103" y="776" text-anchor="middle" class="s">Embedding + LLM</text>
-    <text x="103" y="796" text-anchor="middle" class="tiny">any provider or Ollama</text>
-  </g>
-
-  <rect x="210" y="128" width="1450" height="1010" rx="58" fill="#fff" stroke="#2a2a2a" stroke-width="2.2"/>
-
-  <g filter="url(#soft)">
-    <rect x="500" y="74" width="310" height="66" rx="6" fill="#e4e4e4" stroke="#555" stroke-width="1.4"/>
-    <text x="655" y="102" text-anchor="middle" class="h">Web app in browser</text>
-    <text x="655" y="124" text-anchor="middle" class="s2">Next.js  -  search, chat, admin</text>
-  </g>
-  <g filter="url(#soft)">
-    <rect x="840" y="74" width="280" height="66" rx="6" fill="#e4e4e4" stroke="#555" stroke-width="1.4"/>
-    <text x="980" y="102" text-anchor="middle" class="h">MCP clients / agents</text>
-    <text x="980" y="124" text-anchor="middle" class="s2">same permissions as a user</text>
-  </g>
-  <text x="655" y="166" text-anchor="middle" class="cap">REST APIs, SSE</text>
-  <text x="980" y="166" text-anchor="middle" class="cap">HTTP, Bearer  /mcp</text>
-
-  <g filter="url(#soft)">
-    <rect x="400" y="188" width="310" height="96" rx="6" fill="#fff" stroke="#333" stroke-width="1.6"/>
-    <text x="555" y="224" text-anchor="middle" class="h">Node.js API</text>
-    <text x="555" y="246" text-anchor="middle" class="s">accounts, permissions, KBs, files</text>
-    <text x="555" y="266" text-anchor="middle" class="s">OAuth, PATs, /mcp</text>
-  </g>
-
-  <g filter="url(#soft)">
-    <rect x="760" y="180" width="470" height="112" rx="6" fill="#fff" stroke="#333" stroke-width="1.6"/>
-    <text x="995" y="202" text-anchor="middle" class="h2">API modules (same process, not microservices)</text>
-    <rect x="778" y="214" width="138" height="28" rx="3" fill="#eee" stroke="#999"/>
-    <text x="847" y="233" text-anchor="middle" class="s">Auth</text>
-    <rect x="926" y="214" width="138" height="28" rx="3" fill="#eee" stroke="#999"/>
-    <text x="995" y="233" text-anchor="middle" class="s">Storage</text>
-    <rect x="1074" y="214" width="138" height="28" rx="3" fill="#eee" stroke="#999"/>
-    <text x="1143" y="233" text-anchor="middle" class="s">Config</text>
-    <rect x="778" y="248" width="138" height="28" rx="3" fill="#eee" stroke="#999"/>
-    <text x="847" y="267" text-anchor="middle" class="s">Mail</text>
-    <rect x="926" y="248" width="138" height="28" rx="3" fill="#eee" stroke="#999"/>
-    <text x="995" y="267" text-anchor="middle" class="s">Notifications</text>
-    <rect x="1074" y="248" width="138" height="28" rx="3" fill="#eee" stroke="#999"/>
-    <text x="1143" y="267" text-anchor="middle" class="s">Crawling</text>
-  </g>
-
-  <g filter="url(#soft)">
-    <rect x="270" y="336" width="1180" height="74" rx="8" fill="#e4e4e4" stroke="#555" stroke-width="1.4"/>
-    <text x="860" y="366" text-anchor="middle" class="h">Event bus</text>
-    <text x="860" y="390" text-anchor="middle" class="s">Redis Streams on a local machine, or Kafka in a larger deployment</text>
-  </g>
-
-  <!-- Embedding is HTTP, not on the bus -->
-  <g filter="url(#soft)">
-    <rect x="240" y="490" width="168" height="128" rx="6" fill="#f3f3f3" stroke="#666" stroke-width="1.3" stroke-dasharray="5 4"/>
-    <text x="324" y="522" text-anchor="middle" class="h2">Embedding</text>
-    <text x="324" y="544" text-anchor="middle" class="s">local vectors</text>
-    <text x="324" y="566" text-anchor="middle" class="tiny">HTTP from Query</text>
-    <text x="324" y="584" text-anchor="middle" class="tiny">and Indexing</text>
-    <text x="324" y="602" text-anchor="middle" class="tiny">skip if cloud embedder</text>
-  </g>
-
-  <g filter="url(#soft)">
-    <rect x="430" y="470" width="300" height="148" rx="6" fill="#fff" stroke="#333" stroke-width="1.6"/>
-    <text x="580" y="508" text-anchor="middle" class="h">Query</text>
-    <text x="580" y="534" text-anchor="middle" class="s">Python FastAPI</text>
-    <text x="580" y="556" text-anchor="middle" class="s">retrieve, cite, LLM answer</text>
-    <text x="580" y="586" text-anchor="middle" class="tiny">reads graph + vectors</text>
-  </g>
-  <g filter="url(#soft)">
-    <rect x="760" y="470" width="300" height="148" rx="6" fill="#fff" stroke="#333" stroke-width="1.6"/>
-    <text x="910" y="508" text-anchor="middle" class="h">Indexing</text>
-    <text x="910" y="534" text-anchor="middle" class="s">Python FastAPI</text>
-    <text x="910" y="556" text-anchor="middle" class="s">parse, chunk, embed</text>
-    <text x="910" y="586" text-anchor="middle" class="tiny">Docling for PDF, tables, OCR</text>
-  </g>
-  <g filter="url(#soft)">
-    <rect x="1090" y="470" width="300" height="148" rx="6" fill="#fff" stroke="#333" stroke-width="1.6"/>
-    <text x="1240" y="508" text-anchor="middle" class="h">Connectors</text>
-    <text x="1240" y="534" text-anchor="middle" class="s">Python FastAPI</text>
-    <text x="1240" y="556" text-anchor="middle" class="s">OAuth, token refresh, sync</text>
-    <text x="1240" y="586" text-anchor="middle" class="tiny">Slack, Drive, Jira, Confluence...</text>
-  </g>
-
-  <g filter="url(#soft)">
-    <rect x="250" y="990" width="204" height="96" rx="5" fill="#d4d4d4" stroke="#555" stroke-width="1.2"/>
-    <text x="352" y="1022" text-anchor="middle" class="h2">Vector DB</text>
-    <text x="352" y="1044" text-anchor="middle" class="s">Qdrant</text>
-    <text x="352" y="1064" text-anchor="middle" class="tiny">default</text>
-  </g>
-  <g filter="url(#soft)">
-    <rect x="474" y="990" width="204" height="96" rx="5" fill="#d4d4d4" stroke="#555" stroke-width="1.2"/>
-    <text x="576" y="1022" text-anchor="middle" class="h2">Graph DB</text>
-    <text x="576" y="1044" text-anchor="middle" class="s">Neo4j default</text>
-    <text x="576" y="1064" text-anchor="middle" class="tiny">or ArangoDB</text>
-  </g>
-  <g filter="url(#soft)">
-    <rect x="698" y="990" width="204" height="96" rx="5" fill="#d4d4d4" stroke="#555" stroke-width="1.2"/>
-    <text x="800" y="1022" text-anchor="middle" class="h2">Documents</text>
-    <text x="800" y="1044" text-anchor="middle" class="s">MongoDB</text>
-    <text x="800" y="1064" text-anchor="middle" class="tiny">sessions, metadata</text>
-  </g>
-  <g filter="url(#soft)">
-    <rect x="922" y="990" width="204" height="96" rx="5" fill="#d4d4d4" stroke="#555" stroke-width="1.2"/>
-    <text x="1024" y="1022" text-anchor="middle" class="h2">Files</text>
-    <text x="1024" y="1044" text-anchor="middle" class="s">disk, S3, Azure Blob, GCS</text>
-    <text x="1024" y="1064" text-anchor="middle" class="tiny">local or object storage</text>
-  </g>
-  <g filter="url(#soft)">
-    <rect x="1146" y="990" width="204" height="96" rx="5" fill="#d4d4d4" stroke="#555" stroke-width="1.2"/>
-    <text x="1248" y="1018" text-anchor="middle" class="h2">Redis</text>
-    <text x="1248" y="1040" text-anchor="middle" class="s">cache, default KV</text>
-    <text x="1248" y="1060" text-anchor="middle" class="tiny">etcd optional for KV</text>
-  </g>
-
-  <ellipse cx="1800" cy="170" rx="82" ry="34" fill="#e6e4e4" stroke="#888"/>
-  <text x="1800" y="176" text-anchor="middle" class="ext">SMTP</text>
-  <ellipse cx="1948" cy="214" rx="82" ry="34" fill="#e6e4e4" stroke="#888"/>
-  <text x="1948" y="220" text-anchor="middle" class="ext">Azure AD</text>
-  <ellipse cx="1800" cy="252" rx="82" ry="34" fill="#e6e4e4" stroke="#888"/>
-  <text x="1800" y="258" text-anchor="middle" class="ext">Okta</text>
-  <text x="1874" y="302" text-anchor="middle" class="tiny">and other IdPs</text>
-
-  <rect x="1698" y="430" width="12" height="290" rx="4" fill="#cfcfcf" stroke="#999"/>
-  <ellipse cx="1834" cy="448" rx="88" ry="30" fill="#e6e4e4" stroke="#888"/>
-  <text x="1834" y="454" text-anchor="middle" class="ext">SharePoint</text>
-  <ellipse cx="1968" cy="500" rx="80" ry="30" fill="#e6e4e4" stroke="#888"/>
-  <text x="1968" y="506" text-anchor="middle" class="ext">Outlook</text>
-  <ellipse cx="1834" cy="532" rx="88" ry="30" fill="#e6e4e4" stroke="#888"/>
-  <text x="1834" y="538" text-anchor="middle" class="ext">Slack</text>
-  <ellipse cx="1968" cy="584" rx="80" ry="30" fill="#e6e4e4" stroke="#888"/>
-  <text x="1968" y="590" text-anchor="middle" class="ext">Jira</text>
-  <ellipse cx="1834" cy="616" rx="88" ry="30" fill="#e6e4e4" stroke="#888"/>
-  <text x="1834" y="622" text-anchor="middle" class="ext">Confluence</text>
-  <ellipse cx="1968" cy="668" rx="80" ry="30" fill="#e6e4e4" stroke="#888"/>
-  <text x="1968" y="674" text-anchor="middle" class="ext">Drive</text>
-  <text x="1890" y="724" text-anchor="middle" class="tiny">50+ connectors</text>
-
-  <line x1="655" y1="140" x2="555" y2="188" stroke="#444" stroke-width="1.5" marker-start="url(#arrow-rev)" marker-end="url(#arrow)"/>
-  <line x1="900" y1="140" x2="680" y2="188" stroke="#444" stroke-width="1.5" marker-end="url(#arrow)"/>
-
-  <line x1="710" y1="236" x2="760" y2="236" stroke="#444" stroke-width="1.5" marker-end="url(#arrow)"/>
-
-  <line x1="555" y1="284" x2="555" y2="336" stroke="#444" stroke-width="1.5" marker-start="url(#arrow-rev)" marker-end="url(#arrow)"/>
-  <line x1="995" y1="292" x2="995" y2="336" stroke="#444" stroke-width="1.4" marker-start="url(#arrow-rev)" marker-end="url(#arrow)"/>
-
-  <line x1="580" y1="410" x2="580" y2="470" stroke="#444" stroke-width="1.5" marker-start="url(#arrow-rev)" marker-end="url(#arrow)"/>
-  <line x1="910" y1="410" x2="910" y2="470" stroke="#444" stroke-width="1.5" marker-start="url(#arrow-rev)" marker-end="url(#arrow)"/>
-  <line x1="1240" y1="410" x2="1240" y2="470" stroke="#444" stroke-width="1.5" marker-start="url(#arrow-rev)" marker-end="url(#arrow)"/>
-
-  <line x1="408" y1="554" x2="430" y2="544" stroke="#666" stroke-width="1.2" marker-end="url(#arrow)"/>
-
-  <path d="M580 618 C 580 680, 240 720, 184 760" fill="none" stroke="#444" stroke-width="1.5" marker-end="url(#arrow)"/>
-
-  <path d="M580 618 C 580 820, 370 920, 352 990" fill="none" stroke="#555" stroke-width="1.25" marker-end="url(#arrow)"/>
-  <path d="M610 618 C 620 840, 576 920, 576 990" fill="none" stroke="#555" stroke-width="1.25" marker-end="url(#arrow)"/>
-  <path d="M910 618 C 910 800, 576 920, 576 990" fill="none" stroke="#555" stroke-width="1.25" marker-end="url(#arrow)"/>
-  <path d="M930 618 C 900 840, 820 920, 800 990" fill="none" stroke="#555" stroke-width="1.25" marker-end="url(#arrow)"/>
-  <path d="M960 618 C 1000 840, 1010 920, 1024 990" fill="none" stroke="#555" stroke-width="1.25" marker-end="url(#arrow)"/>
-
-  <path d="M1230 200 C 1500 150, 1640 160, 1718 170" fill="none" stroke="#555" stroke-width="1.2" marker-end="url(#arrow)"/>
-  <path d="M1230 226 C 1540 214, 1700 214, 1866 214" fill="none" stroke="#555" stroke-width="1.2" marker-end="url(#arrow)"/>
-
-  <path d="M1390 534 C 1520 534, 1600 534, 1698 534" fill="none" stroke="#444" stroke-width="1.5" marker-end="url(#arrow)"/>
+<text x="600" y="38" text-anchor="middle" class="title">Architecture Diagram</text>
+<polygon points="10,72 104,72 122,97.0 104,122 10,122" fill="#fff" stroke="#c45c5c" stroke-width="2"/>
+<text x="60" y="92" text-anchor="middle" class="tier">Presentation</text>
+<text x="60" y="110" text-anchor="middle" class="tier">Tier</text>
+<polygon points="10,360 104,360 122,385.0 104,410 10,410" fill="#fff" stroke="#c45c5c" stroke-width="2"/>
+<text x="60" y="380" text-anchor="middle" class="tier">Application</text>
+<text x="60" y="398" text-anchor="middle" class="tier">Tier</text>
+<polygon points="10,820 104,820 122,845.0 104,870 10,870" fill="#fff" stroke="#c45c5c" stroke-width="2"/>
+<text x="60" y="840" text-anchor="middle" class="tier">Data</text>
+<text x="60" y="858" text-anchor="middle" class="tier">Tier</text>
+<rect x="10" y="560" width="112" height="118" rx="6" fill="#d8d9db" stroke="#666" stroke-width="1.2"/>
+<text x="66" y="588" text-anchor="middle" class="h2">AI models</text>
+<text x="66" y="608" text-anchor="middle" class="s2">you bring</text>
+<text x="66" y="632" text-anchor="middle" class="s">Embed + LLM</text>
+<text x="66" y="654" text-anchor="middle" class="tiny">any / Ollama</text>
+<rect x="128" y="88" width="868" height="860" rx="36" fill="#fff" stroke="#2a2a2a" stroke-width="2"/>
+<rect x="270" y="50" width="250" height="60" rx="6" fill="#e4e4e4" stroke="#555" stroke-width="1.4"/>
+<text x="395" y="76" text-anchor="middle" class="h">Web app in browser</text>
+<text x="395" y="96" text-anchor="middle" class="s2">Next.js - search, chat, admin</text>
+<rect x="540" y="50" width="250" height="60" rx="6" fill="#e4e4e4" stroke="#555" stroke-width="1.4"/>
+<text x="665" y="76" text-anchor="middle" class="h">MCP clients / agents</text>
+<text x="665" y="96" text-anchor="middle" class="s2">same permissions as a user</text>
+<text x="395" y="130" text-anchor="middle" class="tiny">REST APIs, SSE</text>
+<text x="665" y="130" text-anchor="middle" class="tiny">HTTP, Bearer /mcp</text>
+<rect x="200" y="150" width="250" height="92" rx="6" fill="#fff" stroke="#333" stroke-width="1.6"/>
+<text x="325" y="180" text-anchor="middle" class="h">Node.js API</text>
+<text x="325" y="202" text-anchor="middle" class="s">accounts, KBs, files</text>
+<text x="325" y="222" text-anchor="middle" class="s">OAuth, PATs, /mcp</text>
+<rect x="470" y="142" width="390" height="104" rx="6" fill="#fff" stroke="#333" stroke-width="1.6"/>
+<text x="665" y="164" text-anchor="middle" class="h2">API modules (same process)</text>
+<rect x="486" y="176" width="112" height="28" rx="3" fill="#eee" stroke="#999" stroke-width="1"/>
+<text x="542" y="195" text-anchor="middle" class="s">Auth</text>
+<rect x="608" y="176" width="112" height="28" rx="3" fill="#eee" stroke="#999" stroke-width="1"/>
+<text x="664" y="195" text-anchor="middle" class="s">Storage</text>
+<rect x="730" y="176" width="112" height="28" rx="3" fill="#eee" stroke="#999" stroke-width="1"/>
+<text x="786" y="195" text-anchor="middle" class="s">Config</text>
+<rect x="486" y="210" width="112" height="28" rx="3" fill="#eee" stroke="#999" stroke-width="1"/>
+<text x="542" y="229" text-anchor="middle" class="s">Mail</text>
+<rect x="606" y="210" width="112" height="28" rx="3" fill="#eee" stroke="#999" stroke-width="1"/>
+<text x="662" y="229" text-anchor="middle" class="s">Notifications</text>
+<rect x="726" y="210" width="112" height="28" rx="3" fill="#eee" stroke="#999" stroke-width="1"/>
+<text x="782" y="229" text-anchor="middle" class="s">Crawling</text>
+<rect x="168" y="270" width="790" height="66" rx="8" fill="#e4e4e4" stroke="#555" stroke-width="1.4"/>
+<text x="565" y="296" text-anchor="middle" class="h">Event bus</text>
+<text x="565" y="318" text-anchor="middle" class="s">Redis Streams locally, or Kafka in a larger deployment</text>
+<rect x="150" y="384" width="128" height="124" rx="6" fill="#f3f3f3" stroke="#666" stroke-width="1.3" stroke-dasharray="5 4"/>
+<text x="214" y="412" text-anchor="middle" class="h2">Embedding</text>
+<text x="214" y="434" text-anchor="middle" class="s">local vectors</text>
+<text x="214" y="456" text-anchor="middle" class="tiny">HTTP from Query</text>
+<text x="214" y="474" text-anchor="middle" class="tiny">and Indexing</text>
+<text x="214" y="492" text-anchor="middle" class="tiny">skip if cloud</text>
+<rect x="292" y="362" width="218" height="148" rx="6" fill="#fff" stroke="#333" stroke-width="1.6"/>
+<text x="401" y="396" text-anchor="middle" class="h">Query</text>
+<text x="401" y="422" text-anchor="middle" class="s">Python FastAPI</text>
+<text x="401" y="444" text-anchor="middle" class="s">retrieve, cite, LLM</text>
+<text x="401" y="478" text-anchor="middle" class="tiny">reads graph + vectors</text>
+<rect x="528" y="362" width="218" height="148" rx="6" fill="#fff" stroke="#333" stroke-width="1.6"/>
+<text x="637" y="396" text-anchor="middle" class="h">Indexing</text>
+<text x="637" y="422" text-anchor="middle" class="s">Python FastAPI</text>
+<text x="643" y="444" text-anchor="middle" class="s">parse, chunk, embed</text>
+<text x="637" y="478" text-anchor="middle" class="tiny">Docling: PDF, tables, OCR</text>
+<rect x="764" y="362" width="218" height="148" rx="6" fill="#fff" stroke="#333" stroke-width="1.6"/>
+<text x="873" y="396" text-anchor="middle" class="h">Connectors</text>
+<text x="873" y="422" text-anchor="middle" class="s">Python FastAPI</text>
+<text x="873" y="444" text-anchor="middle" class="s">OAuth, sync</text>
+<text x="873" y="478" text-anchor="middle" class="tiny">Slack, Drive, Jira...</text>
+<rect x="160" y="820" width="158" height="90" rx="5" fill="#d4d4d4" stroke="#555" stroke-width="1.2"/>
+<text x="239" y="848" text-anchor="middle" class="h2">Vector DB</text>
+<text x="239" y="868" text-anchor="middle" class="s">Qdrant</text>
+<text x="239" y="888" text-anchor="middle" class="tiny">default</text>
+<rect x="332" y="820" width="158" height="90" rx="5" fill="#d4d4d4" stroke="#555" stroke-width="1.2"/>
+<text x="411" y="848" text-anchor="middle" class="h2">Graph DB</text>
+<text x="411" y="868" text-anchor="middle" class="s">Neo4j default</text>
+<text x="411" y="888" text-anchor="middle" class="tiny">or ArangoDB</text>
+<rect x="504" y="820" width="158" height="90" rx="5" fill="#d4d4d4" stroke="#555" stroke-width="1.2"/>
+<text x="583" y="848" text-anchor="middle" class="h2">Documents</text>
+<text x="583" y="868" text-anchor="middle" class="s">MongoDB</text>
+<text x="583" y="888" text-anchor="middle" class="tiny">sessions, metadata</text>
+<rect x="676" y="820" width="158" height="90" rx="5" fill="#d4d4d4" stroke="#555" stroke-width="1.2"/>
+<text x="755" y="848" text-anchor="middle" class="h2">Files</text>
+<text x="755" y="868" text-anchor="middle" class="s">disk, S3, Azure, GCS</text>
+<text x="755" y="888" text-anchor="middle" class="tiny">local or object</text>
+<rect x="848" y="820" width="158" height="90" rx="5" fill="#d4d4d4" stroke="#555" stroke-width="1.2"/>
+<text x="927" y="848" text-anchor="middle" class="h2">Redis</text>
+<text x="927" y="868" text-anchor="middle" class="s">cache, default KV</text>
+<text x="927" y="888" text-anchor="middle" class="tiny">etcd optional</text>
+<ellipse cx="1078" cy="152" rx="74" ry="28" fill="#e6e4e4" stroke="#888"/><text x="1078" y="157" text-anchor="middle" class="ext">SMTP</text>
+<ellipse cx="1156" cy="190" rx="72" ry="28" fill="#e6e4e4" stroke="#888"/><text x="1156" y="195" text-anchor="middle" class="ext">Azure AD</text>
+<ellipse cx="1078" cy="228" rx="74" ry="28" fill="#e6e4e4" stroke="#888"/><text x="1078" y="233" text-anchor="middle" class="ext">Okta</text>
+<text x="1118" y="266" text-anchor="middle" class="tiny">and other IdPs</text>
+<rect x="1010" y="340" width="10" height="250" rx="4" fill="#cfcfcf" stroke="#999" stroke-width="1"/>
+<ellipse cx="1100" cy="358" rx="74" ry="26" fill="#e6e4e4" stroke="#888"/><text x="1100" y="363" text-anchor="middle" class="ext">SharePoint</text>
+<ellipse cx="1164" cy="400" rx="66" ry="26" fill="#e6e4e4" stroke="#888"/><text x="1164" y="405" text-anchor="middle" class="ext">Outlook</text>
+<ellipse cx="1100" cy="442" rx="74" ry="26" fill="#e6e4e4" stroke="#888"/><text x="1100" y="447" text-anchor="middle" class="ext">Slack</text>
+<ellipse cx="1164" cy="484" rx="66" ry="26" fill="#e6e4e4" stroke="#888"/><text x="1164" y="489" text-anchor="middle" class="ext">Jira</text>
+<ellipse cx="1100" cy="526" rx="74" ry="26" fill="#e6e4e4" stroke="#888"/><text x="1100" y="531" text-anchor="middle" class="ext">Confluence</text>
+<ellipse cx="1164" cy="568" rx="66" ry="26" fill="#e6e4e4" stroke="#888"/><text x="1164" y="573" text-anchor="middle" class="ext">Drive</text>
+<text x="1130" y="608" text-anchor="middle" class="tiny">50+ connectors</text>
+<line x1="395" y1="110" x2="325" y2="150" stroke="#444" stroke-width="1.7" marker-start="url(#arrow-rev)" marker-end="url(#arrow)"/>
+<line x1="580" y1="110" x2="400" y2="150" stroke="#444" stroke-width="1.7" marker-end="url(#arrow)"/>
+<line x1="450" y1="196" x2="470" y2="196" stroke="#444" stroke-width="1.7" marker-end="url(#arrow)"/>
+<line x1="325" y1="242" x2="325" y2="270" stroke="#444" stroke-width="1.7" marker-start="url(#arrow-rev)" marker-end="url(#arrow)"/>
+<line x1="665" y1="246" x2="665" y2="270" stroke="#444" stroke-width="1.7" marker-start="url(#arrow-rev)" marker-end="url(#arrow)"/>
+<line x1="401" y1="336" x2="401" y2="362" stroke="#444" stroke-width="1.7" marker-start="url(#arrow-rev)" marker-end="url(#arrow)"/>
+<line x1="637" y1="336" x2="637" y2="362" stroke="#444" stroke-width="1.7" marker-start="url(#arrow-rev)" marker-end="url(#arrow)"/>
+<line x1="873" y1="336" x2="873" y2="362" stroke="#444" stroke-width="1.7" marker-start="url(#arrow-rev)" marker-end="url(#arrow)"/>
+<line x1="278" y1="446" x2="292" y2="430" stroke="#666" stroke-width="1.4" marker-end="url(#arrow)"/>
+<path d="M292 450 C 180 500, 150 620, 122 640" fill="none" stroke="#444" stroke-width="1.7" marker-end="url(#arrow)"/>
+<path d="M401 510 C 401 680, 230 780, 239 820" fill="none" stroke="#555" stroke-width="1.35" marker-end="url(#arrow)"/>
+<path d="M420 510 C 450 720, 390 790, 411 820" fill="none" stroke="#555" stroke-width="1.35" marker-end="url(#arrow)"/>
+<path d="M637 510 C 637 700, 411 790, 411 820" fill="none" stroke="#555" stroke-width="1.35" marker-end="url(#arrow)"/>
+<path d="M660 510 C 700 740, 540 790, 583 820" fill="none" stroke="#555" stroke-width="1.35" marker-end="url(#arrow)"/>
+<path d="M690 510 C 760 740, 740 790, 755 820" fill="none" stroke="#555" stroke-width="1.35" marker-end="url(#arrow)"/>
+<path d="M860 160 C 980 145, 1000 150, 1004 152" fill="none" stroke="#555" stroke-width="1.35" marker-end="url(#arrow)"/>
+<path d="M860 188 C 1000 190, 1060 190, 1084 190" fill="none" stroke="#555" stroke-width="1.35" marker-end="url(#arrow)"/>
+<path d="M982 436 C 996 436, 1000 436, 1010 436" fill="none" stroke="#444" stroke-width="1.7" marker-end="url(#arrow)"/>
 </svg>

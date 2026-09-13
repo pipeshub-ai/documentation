@@ -5,9 +5,39 @@ icon: "network-wired"
 mode: wide
 ---
 
-PipesHub is organized in three tiers: Presentation, Application, and Data. A person in the UI and an agent on MCP see the same records.
+PipesHub is workplace AI you run yourself. It has three parts:
 
-## System Architecture Diagram
+1. A **web app** in the browser — search, chat, and admin
+2. An **API** — who you are, what you may see, knowledge bases, and files
+3. **Python services** — sync your company apps, turn documents into searchable pieces, and answer with citations
+
+A person in the UI and an agent on MCP see the same records. If you could not open the file in Slack, the agent cannot either.
+
+## Follow a question through the system
+
+<Steps>
+  <Step title="You ask in the browser or through an agent">
+    The [Next.js](https://nextjs.org/) app (or an MCP client) sends the question to the **Node.js API** over HTTP. Chat and search can stream the reply over SSE — a live connection, so the answer appears as it is written.
+  </Step>
+  <Step title="The API checks who is asking">
+    It verifies the session or token, applies your permissions, and forwards the question to **Query**.
+  </Step>
+  <Step title="Query finds sources and writes a cited answer">
+    Query looks up related records in the **knowledge graph** and similar text in **Qdrant**, then calls the **LLM you configured**. You get an answer with citations back to the original documents.
+  </Step>
+</Steps>
+
+That path only works if the stores already hold your data. In the background:
+
+1. **Connectors** pull from Slack, Drive, Jira, Confluence, and the other sources.
+2. They publish new or changed records onto the **event bus**.
+3. **Indexing** parses the files, turns text into vectors, and writes the graph and Qdrant.
+
+On a local machine the bus is **Redis Streams**. In a larger deployment it is **Kafka**. The job is the same either way.
+
+The diagram is that picture. Read it top to bottom: who talks to PipesHub, then the API and the bus, then Query / Indexing / Connectors, then the stores.
+
+## Architecture diagram
 
 <Frame caption="Click the figure to open it full size.">
   <a href="/images/system-architecture/architecture-diagram.svg" target="_blank">
@@ -21,73 +51,92 @@ PipesHub is organized in three tiers: Presentation, Application, and Data. A per
   </a>
 </Frame>
 
-Same shape as the older architecture diagram: browser on top, API and event bus in the middle, Python services on that bus, data stores along the bottom. The labels match what a current install runs.
+The rest of this page walks the diagram in the same order.
 
-## Presentation tier
+## Who talks to PipesHub
 
-### Web app in browser
+### Web app
 
-[Next.js](https://nextjs.org/). Search, chat, and admin. It talks to the API over HTTP and SSE. Express does not serve this app.
+Search, chat, and admin run in the browser as a Next.js app. The pages are not rendered by Express — that process is the API, next.
 
-### MCP clients and agents
+### Agents and MCP
 
-The API exposes MCP at `/mcp` (Streamable HTTP). Same access checks as a signed-in user. Setup: [MCP overview](/mcp/overview).
+The same API exposes [MCP](/mcp/overview) at `/mcp` (Streamable HTTP). An agent authenticates with a personal access token and is held to **your** permissions, not a shared service account.
 
-## Application tier
+## How work is done
 
 ### Node.js API
 
-Express on the same host as the UI in a typical Compose install. Accounts, permissions, knowledge bases, files, OAuth, personal access tokens, and **`/mcp`**. Operator pages: [user management](/system-overview/user-management), [knowledge base](/system-overview/knowledge-base), [enterprise search](/system-overview/enterprise-search).
+The API is a Node.js (Express) process. In a typical Docker install it shares a host with the web app, but it does not render the UI.
 
-### API modules
+It owns accounts, permissions, knowledge bases, file upload, OAuth, personal access tokens, and `/mcp`.
 
-Storage, mail, notifications, configuration, auth, and crawl scheduling run **in this process**. They are not separate microservices.
+If you are looking up a specific API:
 
-- [Authentication](/system-overview/authentication)
-- [Storage](/system-overview/storage)
-- [Configuration](/system-overview/configuration-manager)
-- [Mail](/system-overview/mail-service)
-- [Crawling](/system-overview/crawling-manager)
-- [Connector manager](/system-overview/connector-manager) (OAuth tokens and connector config in Node; the Python connectors service does the sync)
+- [User management](/system-overview/user-management)
+- [Knowledge base](/system-overview/knowledge-base)
+- [Enterprise search](/system-overview/enterprise-search)
+
+### Modules in the API process
+
+The diagram groups Auth, Storage, Mail, Config, Notifications, and Crawling next to the API. Those are **modules in this process**, not extra containers.
+
+| Module | What it does |
+| --- | --- |
+| [Auth](/system-overview/authentication) | Sign-in: password, OTP, Google, Microsoft, SAML |
+| [Storage](/system-overview/storage) | Files on disk, S3, Azure Blob, or GCS |
+| [Config](/system-overview/configuration-manager) | Encrypted settings the other services read |
+| [Mail](/system-overview/mail-service) | Outbound email (invites, OTP) |
+| [Crawling](/system-overview/crawling-manager) | When connectors run |
+| [Connector manager](/system-overview/connector-manager) | OAuth tokens and connector config in Node. Python **Connectors** does the actual sync. |
 
 ### Event bus
 
-Connectors publish records; indexing consumes them.
+Connectors publish; indexing consumes. You pick the transport to match the machine:
 
-- On a local machine: **Redis Streams** (`MESSAGE_BROKER=redis`). No Kafka containers.
-- In a larger deployment: **Kafka** (`MESSAGE_BROKER=kafka`).
+- **Local machine** — Redis Streams (`MESSAGE_BROKER=redis`). No Kafka containers.
+- **Larger deployment** — Kafka (`MESSAGE_BROKER=kafka`).
 
-### Query
+Redis is still there in both cases as cache and, by default, the encrypted config store.
 
-Python FastAPI. Retrieval and the cited answer. Reads the graph and the vector store, then calls the LLM you configured.
+### Query, Indexing, and Connectors
 
-### Indexing
+These three Python services sit on the event bus. Each is a FastAPI process.
 
-Python FastAPI. Parse, chunk, embed; write vectors and graph nodes. **Docling** handles heavier PDF, table, and OCR parsing. **Parsing** and **Extraction** are optional — start them only with `USE_PARSING_SERVICE=true`.
+**Query** answers. It reads the graph and the vector store, then calls your LLM. It does not crawl Slack itself.
 
-### Connectors
+**Indexing** prepares data for Query. It parses files, chunks them, embeds the text, and writes Qdrant and the graph. **Docling** is the heavier parser (PDFs, tables, OCR). Two more processes, Parsing and Extraction, stay off unless you set `USE_PARSING_SERVICE=true`.
 
-Python FastAPI. OAuth, token refresh, and sync from Slack, Drive, Jira, Confluence, and the other sources into the graph.
+**Connectors** talk to the outside world: OAuth, token refresh, and sync from Slack, Drive, Jira, Confluence, and the rest. New records go onto the bus for Indexing. The full list: [connectors overview](/connectors/overview).
 
-### Embedding
+### Embedding server
 
-Local dense embeddings (OpenAI-compatible `/v1/embeddings`). Indexing and Query call it over HTTP; it is not on the event bus. Cloud embedding providers do not need this process.
+Indexing and Query need **vectors** — numbers that represent meaning, so similar text can be found later.
 
-## Data tier
+On a default install they call a **local embedding server** over HTTP (OpenAI-compatible `/v1/embeddings`). That box is dashed in the diagram because it is not on the event bus. If you configure a cloud embedding provider, you do not need this process.
 
-- **Vector DB** — Qdrant by default (`VECTOR_DB_TYPE=qdrant`).
-- **Graph DB** — Neo4j by default (`DATA_STORE=neo4j`). ArangoDB is the other option. Same features either way; services go through the graph abstraction, not a vendor driver.
-- **Documents** — MongoDB (sessions, file metadata, application state).
-- **Files** — local disk, S3, Azure Blob, or GCS. See [storage](/system-overview/storage).
-- **Redis** — cache; default store for encrypted config; Redis Streams when that is the broker.
-- **etcd** — the other key-value option (`KV_STORE_TYPE=etcd` / the `kv-etcd` Compose profile). A default laptop install does not start etcd.
+## Where data lives
 
-Datastore notes and vendor links: [external services](/system-overview/external-services).
+Each box along the bottom of the diagram holds a different kind of state. Defaults below are what a first install uses. Details and vendor docs: [external services](/system-overview/external-services).
 
-## Models
+| Store | What it holds | Default |
+| --- | --- | --- |
+| **Graph** | Records, people, and how they relate — the knowledge graph | Neo4j (`DATA_STORE=neo4j`). ArangoDB is the other option. Same features either way; services do not talk to a vendor driver. |
+| **Vectors** | Embedded chunks for similarity search | Qdrant (`VECTOR_DB_TYPE=qdrant`) |
+| **Documents** | Sessions, file metadata, application state | MongoDB |
+| **Files** | The bytes of uploaded and connector files | Disk, or S3 / Azure Blob / GCS. See [storage](/system-overview/storage). |
+| **Redis** | Cache; default encrypted config; Redis Streams when that is the bus | Always on |
+| **etcd** | The other place to keep encrypted config | Off unless you set `KV_STORE_TYPE=etcd` (Compose profile `kv-etcd`) |
 
-You bring the models. An **embedding model** turns parsed text into vectors. An **LLM** writes the cited answer. Any provider, or local (Ollama). The local embedding server is the default for vectors.
+## Models you bring
 
-## External systems
+PipesHub does not ship a hosted LLM. You point it at models you already use.
 
-Identity (Azure AD, Okta, and others), SMTP, and 50+ connectors (SharePoint, Outlook, Slack, Jira, Confluence, Drive, and the rest). Connector list: [connectors overview](/connectors/overview).
+- An **embedding model** turns parsed text into vectors for Qdrant. The local embedding server is the default.
+- An **LLM** writes the cited answer. Any provider, or a local model through Ollama.
+
+The left-hand box on the diagram is that pair.
+
+## Identity and the rest of the company
+
+On the right of the diagram: identity providers (Azure AD, Okta, and others), SMTP for mail, and the 50+ apps connectors sync. Those are not PipesHub processes. You connect them; Auth, Mail, and Connectors call out.

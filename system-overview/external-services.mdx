@@ -1,50 +1,68 @@
 ---
-title: 'PipesHub External Service'
-description: 'Documentation for the PipesHub External Service'
+title: "External services"
+description: "The databases and brokers PipesHub uses: graph, Qdrant, MongoDB, Redis, and optional Kafka and etcd."
 ---
 
-# External Services
+These are the stores and brokers along the bottom of the [system overview](/system-overview) diagram. A first install starts the defaults for you. This page is what each one is *for*, and when you would switch.
 
-Our architecture leverages several industry-standard external services to provide a robust, scalable, and efficient system. Below is an overview of each service and its role in our ecosystem.
+Read it in the same order as the diagram: search data, application data, then how services talk and where config lives.
 
-## Apache Kafka
+## Knowledge graph (Neo4j or ArangoDB)
 
-Kafka is the message broker on a **larger** deployment (`MESSAGE_BROKER=kafka`). Connectors and indexing use it to hand records to each other — the same path as Redis Streams on a local machine.
+The graph is how PipesHub remembers that a Slack thread, a Drive file, and a person belong together. Permissions and citations walk those links.
 
-A local install does **not** start Kafka. It uses Redis Streams instead.
+You pick one database with `DATA_STORE`. Services go through a graph abstraction, not a Neo4j or ArangoDB driver, so the product behaves the same on either.
 
-[Learn more about Apache Kafka](https://kafka.apache.org/)
+- **Neo4j** is the default (`DATA_STORE=neo4j`). That is what a first install, `backend/env.template`, and the Helm chart use.
+- **ArangoDB** is the other option (`DATA_STORE=arangodb`). Existing installs that already have an ArangoDB volume keep it.
 
-## MongoDB
+[Neo4j](https://neo4j.com/) · [ArangoDB](https://www.arangodb.com/)
 
-MongoDB is a document-oriented NoSQL database used for high volume data storage. We utilize MongoDB as our primary persistence layer for storing and retrieving application data in JSON-like documents with dynamic schemas.
+## Vector search (Qdrant)
 
-[Learn more about MongoDB](https://www.mongodb.com/)
+After Indexing parses a document, an embedding model turns each chunk into a vector. **Qdrant** stores those vectors and finds similar text when Query answers a question.
 
-## etcd
+Qdrant is what a first install runs (`VECTOR_DB_TYPE=qdrant`).
 
-etcd is an **optional** key-value store for encrypted configuration (`KV_STORE_TYPE=etcd` / the `kv-etcd` Compose profile). The installer default is Redis, not etcd.
+[Qdrant](https://qdrant.tech/)
 
-[Learn more about etcd](https://etcd.io/)
+## Application data (MongoDB)
 
-## Graph database (Neo4j or ArangoDB)
+MongoDB holds things that are not the knowledge graph: sessions, file metadata, and other application state.
 
-PipesHub stores the knowledge graph — the relationships between records, users, and metadata — in a graph database. Which one an instance uses is set by the `DATA_STORE` environment variable. Services do not open a Neo4j or ArangoDB driver directly, so the same features work on either backend.
+[MongoDB](https://www.mongodb.com/)
 
-**Neo4j** is the default. It is what `install.sh` writes, what `backend/env.template` ships with, and what the Helm chart enables out of the box. Set `DATA_STORE=neo4j`.
+## Files
 
-**ArangoDB** is the alternative, a multi-model database supporting graph, document, and key-value models. Existing installations that were set up on ArangoDB continue to run on it, and the installer keeps that choice when it finds an ArangoDB data volume. Set `DATA_STORE=arangodb`.
+File *bytes* are not in MongoDB. They live on local disk or in object storage (S3, Azure Blob, GCS), behind the [storage](/system-overview/storage) module in the API.
 
-[Learn more about Neo4j](https://neo4j.com/) · [Learn more about ArangoDB](https://www.arangodb.com/)
+## How services hand work to each other
 
-## Qdrant
+Connectors publish records; Indexing consumes them. That path is the **event bus** in the diagram.
 
-Qdrant is a vector similarity search engine designed for production-ready AI applications. We use Qdrant as our vector database for efficient storage, management, and search of high-dimensional vectors for machine learning models and embeddings.
+- On a **local machine**, the bus is **Redis Streams** (`MESSAGE_BROKER=redis`). Kafka is not started.
+- In a **larger deployment**, the bus is **Kafka** (`MESSAGE_BROKER=kafka`).
 
-[Learn more about Qdrant](https://qdrant.tech/)
+The Python services do not change. Only the transport does.
 
-## Redis
+[Apache Kafka](https://kafka.apache.org/)
 
-Redis is the cache, the default encrypted config store, and — on a local machine — the event broker (Redis Streams, `MESSAGE_BROKER=redis`). In a larger deployment the broker is Kafka and Redis stays as cache and (unless you switch KV to etcd) the config store.
+## Cache, config, and Redis
 
-[Learn more about Redis](https://redis.io/)
+**Redis** is always on. It does three jobs, depending on how you deploy:
+
+1. **Cache** — hot data and locks
+2. **Encrypted config** — the default key-value store for settings (`KV_STORE_TYPE=redis`)
+3. **Event bus** — Redis Streams, when `MESSAGE_BROKER=redis`
+
+In a larger deployment Kafka takes over the bus. Redis stays as cache, and as the config store unless you switch KV to etcd.
+
+[Redis](https://redis.io/)
+
+## Optional: etcd
+
+etcd is the other place to keep encrypted configuration. A laptop install does not start it.
+
+Turn it on with `KV_STORE_TYPE=etcd` and the Compose profile `kv-etcd`.
+
+[etcd](https://etcd.io/)

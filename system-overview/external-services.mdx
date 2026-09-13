@@ -7,7 +7,7 @@ This page describes the databases and brokers along the bottom of the [system ov
 
 The sections follow the same order as the diagram: search data, application data, then how services pass work to each other and where configuration is stored.
 
-## Knowledge graph (Neo4j or ArangoDB)
+## Knowledge graph ([Neo4j](https://neo4j.com/) or [ArangoDB](https://www.arangodb.com/))
 
 The knowledge graph is how PipesHub stores that a Slack thread, a Drive file, and a person belong together. Permission checks and citations follow those links.
 
@@ -16,21 +16,15 @@ You choose one graph database with the `DATA_STORE` environment variable. Applic
 - **Neo4j** is the default (`DATA_STORE=neo4j`). A first install, `backend/env.template`, and the Helm chart all use Neo4j.
 - **ArangoDB** is the other option (`DATA_STORE=arangodb`). If an existing install already has an ArangoDB data volume, the installer keeps ArangoDB.
 
-[Neo4j](https://neo4j.com/) · [ArangoDB](https://www.arangodb.com/)
+## Vector search ([Qdrant](https://qdrant.tech/))
 
-## Vector search (Qdrant)
-
-After Indexing parses a document, an embedding model turns each chunk of text into a vector. **Qdrant** stores those vectors and finds similar text when Query answers a question.
+After Indexing parses a document, an embedding model turns each chunk of text into a vector. Qdrant stores those vectors and finds similar text when Query answers a question.
 
 A first install runs Qdrant (`VECTOR_DB_TYPE=qdrant`).
 
-[Qdrant](https://qdrant.tech/)
-
-## Application data (MongoDB)
+## Application data ([MongoDB](https://www.mongodb.com/))
 
 MongoDB stores application data that is not part of the knowledge graph: sessions, file metadata, and similar state.
-
-[MongoDB](https://www.mongodb.com/)
 
 ## Files
 
@@ -40,16 +34,14 @@ The contents of files are not stored in MongoDB. They live on local disk or in o
 
 Connectors publish records, and Indexing consumes them. That path is the **event bus** in the architecture diagram.
 
-- On a **local machine**, the event bus is **Redis Streams** (`MESSAGE_BROKER=redis`). Kafka is not started.
-- In a **larger deployment**, the event bus is **Kafka** (`MESSAGE_BROKER=kafka`).
+- On a **local machine**, the event bus is Redis Streams (`MESSAGE_BROKER=redis`). Kafka is not started.
+- In a **larger deployment**, the event bus is [Apache Kafka](https://kafka.apache.org/) (`MESSAGE_BROKER=kafka`).
 
 The Python services stay the same. Only the transport between them changes.
 
-[Apache Kafka](https://kafka.apache.org/)
+## Cache, configuration, and [Redis](https://redis.io/)
 
-## Cache, configuration, and Redis
-
-**Redis** always runs. It can do three jobs, depending on how you deploy:
+Redis always runs. It can do three jobs, depending on how you deploy:
 
 1. **Cache** — frequently used data and locks.
 2. **Encrypted configuration** — the default key-value store for settings (`KV_STORE_TYPE=redis`).
@@ -57,12 +49,8 @@ The Python services stay the same. Only the transport between them changes.
 
 In a larger deployment, Kafka takes over the event bus. Redis continues to provide the cache, and it remains the configuration store unless you switch that store to etcd.
 
-[Redis](https://redis.io/)
-
-## Optional: etcd
+## Optional: [etcd](https://etcd.io/)
 
 etcd is the other place to keep encrypted configuration. A laptop install does not start etcd.
 
 To use it, set `KV_STORE_TYPE=etcd` and enable the Compose profile `kv-etcd`.
-
-[etcd](https://etcd.io/)

@@ -1,6 +1,6 @@
 ---
 title: "System Overview"
-description: "How PipesHub is put together: the web app, the API, the Python services, and the data stores."
+description: "How PipesHub is put together: the web app, REST and SDK clients, MCP, the API, the Python services, and the data stores."
 icon: "network-wired"
 mode: wide
 ---
@@ -11,13 +11,13 @@ PipesHub is a workplace AI platform that you run yourself. It is made of three p
 2. An **API** that authenticates users, enforces permissions, and manages knowledge bases and files.
 3. **Python services** that sync data from your company apps, turn documents into searchable pieces, and return answers with citations.
 
-A person using the web app and an agent calling MCP see the same records. If you could not open a file in Slack, the agent cannot see it either.
+A person using the web app, an application using the REST API or an SDK, and an agent calling MCP see the same records. If you could not open a file in Slack, none of them can see it either.
 
 ## Follow a question through the system
 
 <Steps>
-  <Step title="You ask in the browser or through an agent">
-    The browser, or an MCP client, sends your question to the **Node.js API** over HTTP. Chat and search can stream the reply over Server-Sent Events (SSE), which keeps a live connection open so the answer appears as it is written.
+  <Step title="You ask in the browser, through an API, or through an agent">
+    The browser, a REST or SDK client, or an MCP client sends your question to the **Node.js API** over HTTP. Chat and search can stream the reply over Server-Sent Events (SSE), which keeps a live connection open so the answer appears as it is written.
   </Step>
   <Step title="The API checks who is asking">
     The Node.js API verifies your session or token, applies your permissions, and forwards the question to the **Query** service.
@@ -59,9 +59,17 @@ The sections below follow the same order as the diagram.
 
 People use PipesHub in the browser. The interface is a [Next.js](https://nextjs.org/) application for search, chat, and administration.
 
+### REST and SDK clients
+
+Your own applications talk to the HTTP API. Use the REST endpoints directly, or the [Python](https://github.com/pipeshub-ai/pipeshub-sdk-python), [TypeScript](https://github.com/pipeshub-ai/pipeshub-sdk-typescript), and [Go](https://github.com/pipeshub-ai/pipeshub-sdk-go) SDKs. The [API reference](/developer/api-reference) lists the routes.
+
+### Agents and MCP
+
+Agents connect at `/mcp` using Streamable HTTP. Setup is in the [MCP overview](/mcp/overview). An agent signs in with a personal access token and receives the same records you would see when signed in as that user.
+
 ### Node.js API
 
-The API is a Node.js process built with Express. It handles accounts, permissions, knowledge bases, file uploads, user authentication, personal access tokens, and MCP.
+The API is a Node.js process built with Express. The web app, REST and SDK clients, and MCP clients all talk to this process. It handles accounts, permissions, knowledge bases, file uploads, user authentication, personal access tokens, and MCP.
 
 On a default Docker install, this is the only Node process. It listens on port 3000 and serves the built Next.js files, `/api`, and `/mcp`. If you run from source during development, the Next.js dev server is typically on port 3001 and Express is on port 3000. Helm exposes this combined Node service on port 3001.
 
@@ -70,10 +78,6 @@ If you need the HTTP reference for a specific area:
 - [User management](/system-overview/user-management)
 - [Knowledge base](/system-overview/knowledge-base)
 - [Enterprise search](/system-overview/enterprise-search)
-
-### Agents and MCP
-
-Agents connect to the Node.js API at `/mcp` using Streamable HTTP. Setup is in the [MCP overview](/mcp/overview). An agent signs in with a personal access token and receives the same records you would see when signed in as that user.
 
 ## How work is done
 

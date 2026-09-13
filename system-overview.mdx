@@ -20,7 +20,7 @@ A person using the web app and an agent calling MCP see the same records. If you
     The browser, or an MCP client, sends your question to the **Node.js API** over HTTP. Chat and search can stream the reply over Server-Sent Events (SSE), which keeps a live connection open so the answer appears as it is written.
   </Step>
   <Step title="The API checks who is asking">
-    The API verifies your session or token, applies your permissions, and forwards the question to the **Query** service.
+    The Node.js API verifies your session or token, applies your permissions, and forwards the question to the **Query** service.
   </Step>
   <Step title="Query finds sources and writes a cited answer">
     Query looks up related records in the **knowledge graph** and similar text in **Qdrant**, then calls the **language model you configured**. You get an answer with citations that point back to the original documents.
@@ -57,21 +57,13 @@ The sections below follow the same order as the diagram.
 
 ### Web app
 
-People use PipesHub in the browser. The interface is a [Next.js](https://nextjs.org/) application.
-
-On a default Docker install (`install.sh`), that interface is not a second Node server. One Express process on port 3000 serves the built Next.js files, `/api`, and `/mcp`.
-
-If you run from source during development, the Next.js dev server is typically on port 3001 and Express is on port 3000. Helm exposes the combined Node service on port 3001.
-
-### Agents and MCP
-
-The same API also exposes [MCP](/mcp/overview) at `/mcp` using Streamable HTTP. An agent signs in with a personal access token and is limited to **your** permissions. It does not get a shared service-account view of the company.
-
-## How work is done
+People use PipesHub in the browser. The interface is a [Next.js](https://nextjs.org/) application for search, chat, and administration.
 
 ### Node.js API
 
-The API is that same Node.js Express process. It handles accounts, permissions, knowledge bases, file uploads, user authentication, personal access tokens, and `/mcp`. In a Docker install it also serves the web app files.
+The API is a Node.js process built with Express. It handles accounts, permissions, knowledge bases, file uploads, user authentication, personal access tokens, and MCP.
+
+On a default Docker install, this is the only Node process. It listens on port 3000 and serves the built Next.js files, `/api`, and `/mcp`. If you run from source during development, the Next.js dev server is typically on port 3001 and Express is on port 3000. Helm exposes this combined Node service on port 3001.
 
 If you need the HTTP reference for a specific area:
 
@@ -79,9 +71,15 @@ If you need the HTTP reference for a specific area:
 - [Knowledge base](/system-overview/knowledge-base)
 - [Enterprise search](/system-overview/enterprise-search)
 
+### Agents and MCP
+
+Agents connect to the Node.js API at `/mcp` using Streamable HTTP. Setup is in the [MCP overview](/mcp/overview). An agent signs in with a personal access token and receives the same records you would see when signed in as that user.
+
+## How work is done
+
 ### Modules in the API process
 
-The diagram shows Auth, Storage, Mail, Config, Notifications, and Crawling next to the API. Those are **modules inside the API process**. They are not separate containers or microservices.
+Auth, Storage, Mail, Config, Notifications, Crawling, and the connector manager run **inside this Express process**.
 
 | Module | What it does |
 | --- | --- |
@@ -91,14 +89,14 @@ The diagram shows Auth, Storage, Mail, Config, Notifications, and Crawling next 
 | [Mail](/system-overview/mail-service) | Sends outbound email such as invites and one-time codes. |
 | Notifications | Sends in-app and email alerts. |
 | [Crawling](/system-overview/crawling-manager) | Schedules when connectors run. |
-| [Connector manager](/system-overview/connector-manager) | Keeps encrypted connector configuration in the key-value store and forwards `/oauth/authorize` and `/oauth/callback` to the Python connectors service. |
+| [Connector manager](/system-overview/connector-manager) | Stores encrypted connector configuration and forwards the browser's OAuth redirects (`/oauth/authorize` and `/oauth/callback`) to the Python connectors service. |
 
 ### Event bus
 
 Connectors publish records onto the event bus, and Indexing consumes them. You choose the transport to match the size of the deployment:
 
-- On a **local machine**, use Redis Streams (`MESSAGE_BROKER=redis`). Kafka is not started.
-- In a **larger deployment**, use Kafka (`MESSAGE_BROKER=kafka`).
+- On a **local machine**, the event bus is Redis Streams (`MESSAGE_BROKER=redis`).
+- In a **larger deployment**, the event bus is Kafka (`MESSAGE_BROKER=kafka`).
 
 Redis still runs in both cases. It is the cache, and by default it is also the encrypted configuration store.
 
@@ -106,19 +104,17 @@ Redis still runs in both cases. It is the cache, and by default it is also the e
 
 **Query**, **Indexing**, and **Connectors** are Python FastAPI services.
 
-Connectors publish new or changed records onto the event bus. Indexing consumes those records.
+**Connectors** talk to Slack, Drive, Jira, Confluence, and the rest of your company apps. They complete OAuth with those providers, refresh the tokens, and publish new or changed records onto the event bus. The connector manager in the API stores the encrypted configuration and forwards the browser OAuth redirects to this Python service. See the [connectors overview](/connectors/overview) for the full list.
 
-**Query** answers questions. It reads the knowledge graph and the vector store, then calls your language model. It does not consume those records from the bus. It only listens there for configuration updates.
+**Indexing** consumes those records from the event bus. It parses files, splits them into chunks, embeds the text, and writes Qdrant and the knowledge graph. **Docling** is the heavier parser for PDFs, tables, and OCR. Two additional processes, Parsing and Extraction, start only if you set `USE_PARSING_SERVICE=true`.
 
-**Indexing** prepares data for Query. It parses files, splits them into chunks, embeds the text, and writes Qdrant and the knowledge graph. **Docling** is the heavier parser for PDFs, tables, and OCR. Two additional processes, Parsing and Extraction, stay stopped unless you set `USE_PARSING_SERVICE=true`.
-
-**Connectors** talk to Slack, Drive, Jira, Confluence, and the rest of your company apps. Python completes OAuth with those providers, refreshes the tokens, and syncs records onto the event bus for Indexing. Node.js does not refresh connector tokens; the connector manager stores encrypted config and proxies the browser OAuth redirects to Python. User sign-in (password, Google, Microsoft, SAML) is the Auth module, not this service. See the [connectors overview](/connectors/overview) for the full list.
+**Query** answers questions. It reads the knowledge graph and the vector store, then calls your language model. On the event bus it listens for configuration updates.
 
 ### Embedding server
 
 Indexing and Query need **vectors**: lists of numbers that represent the meaning of a piece of text, so similar passages can be found later.
 
-On a default install they call a **local embedding server** over HTTP. The server speaks the OpenAI-compatible `/v1/embeddings` API. That box is dashed in the diagram because this service is not on the event bus; Query and Indexing call it directly. If you configure a cloud embedding provider, you do not need the local embedding server.
+On a default install they call a **local embedding server** over HTTP. The server speaks the OpenAI-compatible `/v1/embeddings` API. The box is dashed in the diagram because Query and Indexing call this server directly over HTTP. If you configure a cloud embedding provider, you can skip this process.
 
 ## Where data lives
 
@@ -126,22 +122,22 @@ Each box along the bottom of the diagram holds a different kind of state. The de
 
 | Store | What it holds | Default |
 | --- | --- | --- |
-| **Graph** | Records, people, and the relationships between them (the knowledge graph). | Neo4j (`DATA_STORE=neo4j`). ArangoDB is the other option. The same features work on either; services do not open a vendor driver directly. |
+| **Graph** | Records, people, and the relationships between them (the knowledge graph). | Neo4j (`DATA_STORE=neo4j`). ArangoDB is the other option. The same features work on either; services go through a graph abstraction. |
 | **Vectors** | Embedded chunks used for similarity search. | Qdrant (`VECTOR_DB_TYPE=qdrant`). |
 | **Documents** | Sessions, file metadata, and other application state. | MongoDB. |
 | **Files** | The bytes of uploaded files and files pulled in by connectors. | Local disk, S3, or Azure Blob. See [storage](/system-overview/storage). |
 | **Redis** | Cache, the default encrypted configuration store, and Redis Streams when Redis is the event bus. | Always running. |
-| **etcd** | An alternative store for encrypted configuration. | Not started unless you set `KV_STORE_TYPE=etcd` (Compose profile `kv-etcd`). |
+| **etcd** | An alternative store for encrypted configuration. | Started when you set `KV_STORE_TYPE=etcd` (Compose profile `kv-etcd`). |
 
 ## Models you bring
 
-PipesHub does not include a hosted language model. You point it at models you already use.
+You point PipesHub at models you already use.
 
 - An **embedding model** turns parsed text into vectors for Qdrant. The local embedding server is the default for this.
 - A **language model (LLM)** writes the cited answer. You can use any provider, or a local model through Ollama.
 
-The box on the left of the diagram is that pair of models.
+The AI models box on the left of the diagram is those two models.
 
 ## Identity and other company systems
 
-The right side of the diagram shows systems that are not PipesHub processes: identity providers such as Azure AD and Okta, an SMTP server for email, and the 50+ apps that connectors sync. You register those connections in PipesHub. The Auth and Mail modules, and the Connectors service, then call out to them.
+The right side of the diagram shows identity providers such as Azure AD and Okta, an SMTP server for email, and the 50+ apps that connectors sync. You register those connections in PipesHub. Auth uses the identity providers, Mail uses SMTP, and Connectors sync the company apps.

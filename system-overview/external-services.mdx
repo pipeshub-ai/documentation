@@ -11,7 +11,7 @@ The sections follow the same order as the diagram: search data, application data
 
 The knowledge graph is how PipesHub stores that a Slack thread, a Drive file, and a person belong together. Permission checks and citations follow those links.
 
-You choose one graph database with the `DATA_STORE` environment variable. Application services talk to a graph abstraction, not to a Neo4j or ArangoDB driver, so the product behaves the same on either backend.
+You choose one graph database with the `DATA_STORE` environment variable. Application services talk to a graph abstraction, so the product behaves the same on either backend.
 
 - **Neo4j** is the default (`DATA_STORE=neo4j`). A first install, `backend/env.template`, and the Helm chart all use Neo4j.
 - **ArangoDB** is the other option (`DATA_STORE=arangodb`). If an existing install already has an ArangoDB data volume, the installer keeps ArangoDB.
@@ -28,7 +28,7 @@ MongoDB stores application data that is not part of the knowledge graph: session
 
 ## Files
 
-The contents of files are not stored in MongoDB. They live on local disk, S3, or Azure Blob, through the [storage](/system-overview/storage) module in the API. Google Cloud Storage is a [connector](/connectors/gcs/gcs) you can index, not a blob backend for this module.
+The contents of files are not stored in MongoDB. They live on local disk, S3, or Azure Blob, through the [storage](/system-overview/storage) module in the API.
 
 ## How services hand work to each other
 
@@ -51,6 +51,6 @@ In a larger deployment, Kafka takes over the event bus. Redis continues to provi
 
 ## Optional: [etcd](https://etcd.io/)
 
-etcd is the other place to keep encrypted configuration. A laptop install does not start etcd.
+etcd is the other place to keep encrypted configuration. A first install uses Redis for this.
 
-To use it, set `KV_STORE_TYPE=etcd` and enable the Compose profile `kv-etcd`.
+To use etcd, set `KV_STORE_TYPE=etcd` and enable the Compose profile `kv-etcd`.

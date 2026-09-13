@@ -3,7 +3,7 @@ title: "External services"
 description: "The databases and brokers PipesHub uses: the knowledge graph, Qdrant, MongoDB, Redis, and optional Kafka and etcd."
 ---
 
-This page describes the databases and brokers along the bottom of the [system overview](/system-overview) diagram. A first install starts the defaults for you. Use this page to learn what each service is for, and when you would switch to the other option.
+This page describes the databases and brokers along the bottom of the [system overview](/system-overview) diagram. A default install starts these services for you. Use this page to learn what each service is for, and when you would switch to the other option.
 
 The sections follow the same order as the diagram: search data, application data, then how services pass work to each other and where configuration is stored.
 
@@ -13,14 +13,14 @@ The knowledge graph is how PipesHub stores that a Slack thread, a Drive file, an
 
 You choose one graph database with the `DATA_STORE` environment variable. Application services talk to a graph abstraction, so the product behaves the same on either backend.
 
-- **Neo4j** is the default (`DATA_STORE=neo4j`). A first install, `backend/env.template`, and the Helm chart all use Neo4j.
+- **Neo4j** is the default (`DATA_STORE=neo4j`). The default install, `backend/env.template`, and the Helm chart all use Neo4j.
 - **ArangoDB** is the other option (`DATA_STORE=arangodb`). If an existing install already has an ArangoDB data volume, the installer keeps ArangoDB.
 
 ## Vector search ([Qdrant](https://qdrant.tech/))
 
 After Indexing parses a document, an embedding model turns each chunk of text into a vector. Qdrant stores those vectors and finds similar text when Query answers a question.
 
-A first install runs Qdrant (`VECTOR_DB_TYPE=qdrant`). You can also set `VECTOR_DB_TYPE` to `opensearch` or `redis`.
+A default install runs Qdrant (`VECTOR_DB_TYPE=qdrant`). You can also set `VECTOR_DB_TYPE` to `opensearch` or `redis`.
 
 ## Application data ([MongoDB](https://www.mongodb.com/))
 
@@ -51,6 +51,6 @@ In a larger deployment, Kafka takes over the event bus. Redis continues to provi
 
 ## Optional: [etcd](https://etcd.io/)
 
-etcd is the other place to keep encrypted configuration. A first install uses Redis for this.
+etcd is the other place to keep encrypted configuration. A default install uses Redis for this.
 
 To use etcd, set `KV_STORE_TYPE=etcd` and enable the Compose profile `kv-etcd`.

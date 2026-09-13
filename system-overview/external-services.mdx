@@ -1,68 +1,68 @@
 ---
 title: "External services"
-description: "The databases and brokers PipesHub uses: graph, Qdrant, MongoDB, Redis, and optional Kafka and etcd."
+description: "The databases and brokers PipesHub uses: the knowledge graph, Qdrant, MongoDB, Redis, and optional Kafka and etcd."
 ---
 
-These are the stores and brokers along the bottom of the [system overview](/system-overview) diagram. A first install starts the defaults for you. This page is what each one is *for*, and when you would switch.
+This page describes the databases and brokers along the bottom of the [system overview](/system-overview) diagram. A first install starts the defaults for you. Use this page to learn what each service is for, and when you would switch to the other option.
 
-Read it in the same order as the diagram: search data, application data, then how services talk and where config lives.
+The sections follow the same order as the diagram: search data, application data, then how services pass work to each other and where configuration is stored.
 
 ## Knowledge graph (Neo4j or ArangoDB)
 
-The graph is how PipesHub remembers that a Slack thread, a Drive file, and a person belong together. Permissions and citations walk those links.
+The knowledge graph is how PipesHub stores that a Slack thread, a Drive file, and a person belong together. Permission checks and citations follow those links.
 
-You pick one database with `DATA_STORE`. Services go through a graph abstraction, not a Neo4j or ArangoDB driver, so the product behaves the same on either.
+You choose one graph database with the `DATA_STORE` environment variable. Application services talk to a graph abstraction, not to a Neo4j or ArangoDB driver, so the product behaves the same on either backend.
 
-- **Neo4j** is the default (`DATA_STORE=neo4j`). That is what a first install, `backend/env.template`, and the Helm chart use.
-- **ArangoDB** is the other option (`DATA_STORE=arangodb`). Existing installs that already have an ArangoDB volume keep it.
+- **Neo4j** is the default (`DATA_STORE=neo4j`). A first install, `backend/env.template`, and the Helm chart all use Neo4j.
+- **ArangoDB** is the other option (`DATA_STORE=arangodb`). If an existing install already has an ArangoDB data volume, the installer keeps ArangoDB.
 
 [Neo4j](https://neo4j.com/) · [ArangoDB](https://www.arangodb.com/)
 
 ## Vector search (Qdrant)
 
-After Indexing parses a document, an embedding model turns each chunk into a vector. **Qdrant** stores those vectors and finds similar text when Query answers a question.
+After Indexing parses a document, an embedding model turns each chunk of text into a vector. **Qdrant** stores those vectors and finds similar text when Query answers a question.
 
-Qdrant is what a first install runs (`VECTOR_DB_TYPE=qdrant`).
+A first install runs Qdrant (`VECTOR_DB_TYPE=qdrant`).
 
 [Qdrant](https://qdrant.tech/)
 
 ## Application data (MongoDB)
 
-MongoDB holds things that are not the knowledge graph: sessions, file metadata, and other application state.
+MongoDB stores application data that is not part of the knowledge graph: sessions, file metadata, and similar state.
 
 [MongoDB](https://www.mongodb.com/)
 
 ## Files
 
-File *bytes* are not in MongoDB. They live on local disk or in object storage (S3, Azure Blob, GCS), behind the [storage](/system-overview/storage) module in the API.
+The contents of files are not stored in MongoDB. They live on local disk or in object storage (S3, Azure Blob, or GCS), through the [storage](/system-overview/storage) module in the API.
 
 ## How services hand work to each other
 
-Connectors publish records; Indexing consumes them. That path is the **event bus** in the diagram.
+Connectors publish records, and Indexing consumes them. That path is the **event bus** in the architecture diagram.
 
-- On a **local machine**, the bus is **Redis Streams** (`MESSAGE_BROKER=redis`). Kafka is not started.
-- In a **larger deployment**, the bus is **Kafka** (`MESSAGE_BROKER=kafka`).
+- On a **local machine**, the event bus is **Redis Streams** (`MESSAGE_BROKER=redis`). Kafka is not started.
+- In a **larger deployment**, the event bus is **Kafka** (`MESSAGE_BROKER=kafka`).
 
-The Python services do not change. Only the transport does.
+The Python services stay the same. Only the transport between them changes.
 
 [Apache Kafka](https://kafka.apache.org/)
 
-## Cache, config, and Redis
+## Cache, configuration, and Redis
 
-**Redis** is always on. It does three jobs, depending on how you deploy:
+**Redis** always runs. It can do three jobs, depending on how you deploy:
 
-1. **Cache** — hot data and locks
-2. **Encrypted config** — the default key-value store for settings (`KV_STORE_TYPE=redis`)
-3. **Event bus** — Redis Streams, when `MESSAGE_BROKER=redis`
+1. **Cache** — frequently used data and locks.
+2. **Encrypted configuration** — the default key-value store for settings (`KV_STORE_TYPE=redis`).
+3. **Event bus** — Redis Streams, when `MESSAGE_BROKER=redis`.
 
-In a larger deployment Kafka takes over the bus. Redis stays as cache, and as the config store unless you switch KV to etcd.
+In a larger deployment, Kafka takes over the event bus. Redis continues to provide the cache, and it remains the configuration store unless you switch that store to etcd.
 
 [Redis](https://redis.io/)
 
 ## Optional: etcd
 
-etcd is the other place to keep encrypted configuration. A laptop install does not start it.
+etcd is the other place to keep encrypted configuration. A laptop install does not start etcd.
 
-Turn it on with `KV_STORE_TYPE=etcd` and the Compose profile `kv-etcd`.
+To use it, set `KV_STORE_TYPE=etcd` and enable the Compose profile `kv-etcd`.
 
 [etcd](https://etcd.io/)

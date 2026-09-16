@@ -266,7 +266,7 @@ Click the instance card to open the **Overview** panel. This is where you'll com
 
 - **Total** — how many files the connector has picked up so far
 - **Failed** — files it couldn't read (usually a permission problem)
-- **Unsupported** — files it *can* store but can't read the text of (images, videos, archives)
+- **Unsupported** — files it *can* store but can't content-index (videos, audio, archives, and other unsupported formats)
 - **Processing** — files currently being read and indexed
 - **Not Started** — files waiting in the queue
 
@@ -278,7 +278,7 @@ Click the instance card to open the **Overview** panel. This is where you'll com
 - **Full sync** — re-scan everything from scratch (use sparingly, it's slow)
 - **Manage Configuration** — re-opens the two tabs from Steps 5–7 so you can change credentials or filters later
 
-That's it — once **Not Started** and **Processing** both hit zero, your GCS files are fully searchable in PipesHub.
+That's it — once **Not Started** and **Processing** both hit zero, all supported files are content-indexed and searchable in PipesHub. Unsupported files remain synced but aren't searchable by content.
 
 </div>
 
@@ -329,7 +329,7 @@ When you turn the connector on, it does a full scan:
 
 1. Lists every bucket you gave it access to (or just the ones in your filter)
 2. Walks through every object (file) inside
-3. Grabs the file's text content so you can search it
+3. Extracts supported file content so you can search it
 
 This is the slow one. A few thousand files takes minutes. A few million takes hours.
 
@@ -464,7 +464,7 @@ Most often, the service account key was rotated or deleted in Google Cloud.
 **Files are synced but I can't find them in search**
 
 - **Processing** tile still above zero? Indexing hasn't finished yet — give it time.
-- Files showing as **Unsupported**? That's expected for images, videos, archives — they're stored but their content can't be read.
+- Files showing as **Unsupported**? That's expected for unsupported formats such as videos, audio, and archives — they're stored but their content can't be indexed.
 - Password-protected or encrypted PDFs can't be indexed either.
 
 ---
@@ -503,13 +503,14 @@ Most often, the service account key was rotated or deleted in Google Cloud.
 </Accordion>
 
 <Accordion title="Which file types can actually be searched?">
-  **Fully searchable** (we can read the text):
+  **Searchable by content:**
   - Documents — PDF, DOCX, XLSX, PPTX, ODT, RTF
   - Text — TXT, MD, CSV, JSON, XML, HTML
   - Code — Python, JavaScript, Java, Go, and most others
-  
+  - Images — JPG, PNG, GIF, WebP
+
   **Stored but not searchable by content** (they'll show up as **Unsupported**):
-  - Images — JPG, PNG, GIF, SVG
+  - SVG images
   - Video and audio
   - Archives — ZIP, RAR, TAR
   - Anything password-protected or encrypted

@@ -48,7 +48,7 @@ The connector understands S3's hierarchical structure:
 
 The connector indexes the following content for AI-powered search:
 
-- **Files**: All file types stored in S3 buckets (documents, images, videos, archives, etc.)
+- **Files**: Supported file types stored in S3 buckets, including documents and images
 - **Folders**: Directory structure and organization
 - **Metadata**: File names, sizes, modification dates, MIME types
 - **Permissions**: Access control based on bucket and object permissions
@@ -617,11 +617,11 @@ The connector respects AWS IAM permissions and PipesHub access controls:
 *Solutions:*
 1. Verify indexing filters are enabled (Index Files should be ON)
 2. Check that file types are supported for indexing (PDF, DOCX, TXT, etc.)
-3. Images and binary files cannot be indexed for text search
+3. Images can be content-indexed; check that other file types are supported for indexing
 4. Wait for indexing to complete - large files take time to process
 5. Check indexing progress in connector status
 6. Verify file content is not encrypted or password-protected
-7. Ensure files have readable text content (not just images)
+7. Ensure the file type is supported for content indexing
 
 **Partial sync or missing files:**
 
@@ -693,20 +693,22 @@ This connector is designed for **Amazon S3** and uses the AWS S3 API. It support
 </Accordion>
 
 <Accordion title="What file types can be indexed for search?">
-  The connector can index text-based file types for AI-powered search:
+  The connector can index supported file types for AI-powered search:
   
   **Supported:**
   - Documents: PDF, DOCX, XLSX, PPTX, ODT, RTF
   - Text: TXT, MD, CSV, JSON, XML, HTML
   - Code: Python, JavaScript, TypeScript, Java, Go, and many others
-  
-  **Not Supported (no text content):**
-  - Images: JPG, PNG, GIF, SVG, WebP
+  - Images: JPG, PNG, GIF, WebP
+
+  **Not Supported:**
   - Videos: MP4, AVI, MOV, etc.
+  - Audio files
   - Archives: ZIP, RAR, TAR, etc.
-  - Binary files without extractable text
-  
-  Images and binary files are synced and can be accessed, but their content cannot be indexed for text search.
+  - Password-protected files
+  - Binary files without supported content extraction
+
+  Supported images can be content-indexed for AI-powered search.
 </Accordion>
 
 <Accordion title="How does incremental sync work?">

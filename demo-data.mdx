@@ -7,7 +7,7 @@ icon: "flask"
 A fresh PipesHub has nothing to search until you connect a source, and connecting a real one takes an OAuth round-trip you may not want to do just to see what the product does. The **Demo** connector fills that gap: it loads *Acme Corp*, a small fictional company, and nothing else — no external service is contacted.
 
 <Note>
-  Available from the first release after 0.7.0. On 0.7.0 and earlier the Demo connector is not in the connectors list.
+  Available from the first release after 0.8.0. On 0.8.0 and earlier the Demo connector is not in the connectors list.
 </Note>
 
 ## What you get
@@ -62,7 +62,7 @@ The most convincing thing the demo shows is that the same question gets differen
 | **Alice Chen** (`alice@acme-demo.example`) | engineering, support | both story lines, the handbook |
 | **Bob Okafor** (`bob@acme-demo.example`) | engineering, support, **pricing committee** | everything Alice sees, plus the pricing strategy and the `#pricing-committee` thread |
 
-Ask both *"What is the enterprise pricing strategy for 2026?"* — Alice gets nothing relevant, Bob gets the document, cited from Google Drive.
+Ask both *"What is the enterprise pricing strategy for 2026?"* — Alice gets nothing relevant, Bob gets the document, cited from Google Drive. Everyone else, including the admin who set the demo up, sees what Alice sees, so for them that question comes back empty too. That is the permission check working, not a missing record.
 
 To create them you need a **business** account (individual accounts are single-user) and the headless script:
 
@@ -82,7 +82,9 @@ Choose the password per installation — for example `openssl rand -base64 12` w
 
 ## Remove it
 
-Delete the Demo connector from **Workspace → Connectors**. Its records, groups and permissions go with it. If you created Alice and Bob, delete them under **Workspace → Users**.
+Remove the demo once you connect your own data. Until then, Acme's records stay in the answers of everyone in its groups — including the admin who set it up — right next to your company's real records, and each one is labelled with the system it imitates (Jira, Slack, Google Drive, …). Answers mark them with a **Demo** badge, and once your own data is indexed, PipesHub offers admins a **Remove demo data** button on the chat landing and the Connectors page, which also offers to delete Alice and Bob.
+
+To do it by hand, delete the Demo connector from **Workspace → Connectors**. Its records, groups and permissions go with it. If you created Alice and Bob, delete them under **Workspace → Users**.
 
 ## For coding agents
 

@@ -89,15 +89,21 @@ Enter the full **Website URL** to crawl (for example `https://docs.example.com/g
 | **Crawl type** | **Single** — one URL only. **Recursive** — follow links extracted from each page’s HTML, subject to host, depth, path rules, and your caps. |
 | **Crawl depth** | Maximum link depth to which pages are crawled. |
 | **Maximum pages** | Upper bound on how many distinct URLs are processed during sync. |
-| **Maximum size (MB)** | Largest HTTP body to download per URL; larger responses are skipped. |
+| **Maximum size (MB)** | Largest HTTP body to download per URL (default 10 MB). A larger file isn't downloaded, and it is listed as a failed page with the reason, so you can raise the limit if you need it. |
 | **Follow external links** | When enabled, links to **other domains** may be followed. When disabled, crawling stays on the **same host** as the start URL. Disabled by default. |
 | **Restrict to start path** | When enabled, only URLs whose path stays **under** the starting path prefix are crawled (useful for subsites). If this is on, **Follow external links** is effectively off—you cannot combine path restriction with arbitrary external domains. |
 | **URL should contain** | Optional tags: if any are set, only URLs containing **at least one** of the substrings (case-insensitive) are synced—except the **configured start URL**, which is always allowed. |
+| **Robust Mode (slower)** | Fetches pages with a real Chromium browser. Turn it on for sites that build their pages with JavaScript or block simple requests. Documents such as PDFs are still downloaded directly, so the file itself is stored rather than the browser's viewer page. Off by default. |
+| **Respect robots.txt** | Skips pages that the site's `robots.txt` asks crawlers not to visit. On by default. See **robots.txt** under Connector Workflow below. |
+
+<Note>
+  **Respect robots.txt** is on for existing Web connectors too. If a site's `robots.txt` blocks crawlers, the next sync skips the pages it disallows, and a site that blocks crawlers entirely syncs nothing until you turn the setting off. Pages that were already synced stay in PipesHub; they just aren't fetched again.
+</Note>
 
 ### Step 5: Filters and indexing
 
 - **Enable manual sync filter:** This allows you to have control over which records are indexed. It stops records from being automatically indexed. You can then go to **All Records** section to index the records manually.
-- **File extension filter:** Restrict which file extensions are synced and skipped.
+- **File extension filter:** Restrict which file extensions are synced and skipped. Pages of excluded types are still read for their links, so a filter such as "PDF only" still finds the PDFs that HTML pages link to; the excluded pages just aren't stored.
 - **Indexing toggles:** Turn indexing on or off by category for **webpages**, **images**, and **documents** (and related options shown in connector settings) to control what downstream search indexing receives.
 
 <div style={{ textAlign: "center" }}>
@@ -130,14 +136,32 @@ After you finish configuring connector settings, click **Save Configuration**. T
 - **Crawling:** Starts from your configured **Website URL**. In recursive mode, discovers links from HTML, resolves them against the page URL, and visits URLs that pass validation (scheme, domain, path, extension, and optional URL substring filters).
 - **Fetching:** Uses a **multi-strategy** HTTP pipeline (standard client, then browser-like TLS profiles and fallbacks where available) to improve success on sites that use bot detection or CDN challenges. Requests use realistic browser headers and respect a per-response **maximum size** cap.
 - **Content types:** Treats HTML as web pages (title and cleaned text are derived for indexing). Also supports common **documents** (for example PDF, Office formats, CSV, JSON, XML, Markdown) and **images** (with processing for some formats in HTML context). Extension and indexing filters can narrow what is stored or sent for indexing.
-- **Structure:** Builds a **record group** for the configured root URL and **file records** per URL, with parent links so paths appear hierarchically where applicable. URLs are **normalized** (for example deduplication, trailing-slash handling for “directory” pages) to avoid duplicate records.
+- **Structure:** Builds a **record group** for the configured root URL and **file records** per URL, with parent links so paths appear hierarchically where applicable. URLs are **normalized** to avoid duplicate records: trailing slashes on “directory” pages, `#section` parts of links, and the order of query-string parameters (`?a=1&b=2` and `?b=2&a=1` are one page) don't create separate records.
+- **Redirects:** A page that redirects is stored once, under the address it lands on. A redirect that leaves the site is treated as an external link.
+- **Changes:** On later syncs, the connector sends back the site's `ETag` and `Last-Modified` values for documents and for pages at the crawl's depth limit. When the site answers that nothing changed, nothing is downloaded or re-indexed. Pages whose links still have to be read are always fetched in full, and sites that don't send these headers are compared by content, as before.
+- **Pages that are gone:** A page that answers **404 Not Found** or **410 Gone** on **two syncs in a row** is removed from PipesHub, along with its stored copy. Two strikes allow for a site that briefly answers 404 during a deploy. An old address that now redirects to another stored page is removed the same way. Temporary problems (a 5xx error, a 429, a 403, a timeout, or the whole site being down) never remove anything, and nothing is removed in a sync where the start page itself is gone.
 - **Sync:** Supports **scheduled** sync (default daily) and connector **filters** (manual sync selection, file extensions, and indexing toggles in the product UI). **Team** vs **personal** scope controls who receives permissions on synced records.
 
 ### Key limitations
 
 - **Public content only:** Anything that requires login, cookies, or private APIs is out of scope unless the URL returns the content without authentication.
-- **Robots and rate limits:** Respect your own policies and the target site’s terms of use. Heavy crawling can trigger **429** or blocks; the connector retries some transient errors with backoff but cannot guarantee access to every site.
+- **Rate limits and terms of use:** Respect your own policies and the target site’s terms of use. Heavy crawling can trigger **429** or blocks; the connector retries some transient errors with backoff but cannot guarantee access to every site.
 - **Starting URL is fixed:** After creation, the root **Website URL** (and its domain) **cannot** be changed; create a new connector for a different site or domain.
+
+</Accordion>
+
+<Accordion title="robots.txt" icon="robot">
+
+### robots.txt
+
+With **Respect robots.txt** on (the default), the connector reads each site's `robots.txt` once per sync and follows it the way the robots.txt standard (RFC 9309) describes:
+
+- Rules written for **PipesHub** by name (`User-agent: PipesHub`) apply if the site has them. Otherwise the rules for all crawlers (`User-agent: *`) apply. The requests themselves still carry a browser-like `User-Agent` header, so a site's server logs won't show the name PipesHub.
+- The most specific (longest) matching rule decides, and `Allow` wins a tie. The `*` and `$` wildcards are understood.
+- A `robots.txt` that is missing, or that the site refuses with a 4xx error, allows everything.
+- A `robots.txt` that can't be read (a 5xx error, a 429, or no answer within 10 seconds) means that site isn't crawled in this sync. Its stored pages are left as they are, and it is tried again on the next sync.
+
+The summary at the end of each sync says how many pages robots.txt caused to be skipped, and names any site whose `robots.txt` couldn't be read. To include the skipped pages, turn off **Respect robots.txt** in the connector settings, if the site's terms allow it.
 
 </Accordion>
 
@@ -157,7 +181,23 @@ Many sites use bot protection (CDNs, CAPTCHAs, or geographic rules). The connect
 
 <Accordion title="Why did my crawl stop at fewer pages than the maximum?">
 
-Common reasons include: **maximum pages** or **depth** reached, **URL should contain** filtering out branches, **same-domain** rules excluding external links, **path restriction** excluding parent or sibling paths, **extension** filters, **size** limits skipping large files, non-retryable HTTP errors (for example **404**), or links pointing only to asset types the crawler does not follow as pages.
+Common reasons include: **maximum pages** or **depth** reached, **URL should contain** filtering out branches, **same-domain** rules excluding external links, **path restriction** excluding parent or sibling paths, the site's **robots.txt** disallowing pages (the end-of-sync summary gives the count), **extension** filters, **size** limits skipping large files, non-retryable HTTP errors (for example **404**), or links pointing only to asset types the crawler does not follow as pages.
+
+</Accordion>
+
+<Accordion title="Why do some pages show as failed?">
+
+A page that can't be synced is listed as a failed record in **All Records**, with the reason and what to do next. A site with many broken links will therefore show many failed pages. The reasons you may see:
+
+| Reason shown | What it means |
+|---|---|
+| The page wasn't found (404 Not Found). Check the URL is correct, then sync again. | The link points at a page that doesn't exist (also shown for 410 Gone). |
+| The page refused access (401 Unauthorized or 403 Forbidden)... | The page needs a login or blocks automated visitors. Only publicly reachable pages can be synced. |
+| This file is larger than this connector's 10 MB size limit, so it wasn't downloaded... | The file is over **Maximum size (MB)**; the message shows your limit. Raise the setting to include it. |
+| We couldn't reach this page. Check the URL is correct and publicly reachable, then sync again. | The server never answered (the connection failed or timed out). |
+| The site didn't respond properly (for example 503 Service Unavailable). PipesHub will try again on the next sync. | A temporary problem on the site's side, including rate limiting (429). |
+
+The status shown is the one the site actually sent, in Robust Mode too. A failed page never replaces or deletes a page that synced before; see **Pages that are gone** above for when a page is removed.
 
 </Accordion>
 

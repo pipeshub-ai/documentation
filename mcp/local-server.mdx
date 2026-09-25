@@ -170,8 +170,8 @@ Open **Windsurf Settings > Cascade > Manage MCPs > View raw config**, then add:
 To run the local MCP server from a cloned repository instead of the npm package:
 
 ```bash
-git clone https://github.com/pipeshub-ai/pipeshub-ai.git
-cd pipeshub-ai
+git clone https://github.com/pipeshub-ai/mcp-server.git
+cd mcp-server
 npm install
 npm run build
 node ./bin/mcp-server.js start --server-url PIPESHUB_INSTANCE_URL --bearer-auth YOUR_BEARER_TOKEN
@@ -202,6 +202,48 @@ To debug with MCP Inspector:
 ```bash
 npx @modelcontextprotocol/inspector node ./bin/mcp-server.js start --server-url PIPESHUB_INSTANCE_URL --bearer-auth YOUR_BEARER_TOKEN
 ```
+
+## Retries and timeouts
+
+The local server (`start` and `serve`) waits out short outages on requests that are safe to repeat:
+
+- A request refused with **429**, **502**, **503** or **504** is retried, three tries in all. The server waits as long as PipesHub's `Retry-After` header asks, or, without one, about half a second and then a second.
+- A `Retry-After` longer than 30 seconds isn't waited out. The tool's error says how long PipesHub asked to wait instead.
+- Only `GET`, `HEAD`, `OPTIONS`, `PUT` and `DELETE` requests are retried. Search and chat are `POST` requests and are never retried, because a repeat would be a second search or a second answer.
+- A request that gets no response within 60 seconds is abandoned. The limit covers the wait for PipesHub to start answering, so a long chat answer that is already streaming is not cut off.
+
+When a call fails because PipesHub can't be reached or doesn't answer in time, the tool's error names the address, gives the reason (for example a refused connection or an untrusted certificate), and says what to check. The request's bearer token is removed from any error text before the model sees it.
+
+Change the defaults with environment variables, in your MCP client's `env` block or with `--env NAME=VALUE`:
+
+| Variable | Default | Meaning |
+|---|---|---|
+| `PIPESHUB_MCP_MAX_ATTEMPTS` | `3` | Tries per request, the first one included, from 1 to 10. `1` turns retries off. |
+| `PIPESHUB_MCP_TIMEOUT_MS` | `60000` | Milliseconds to wait for PipesHub to start answering, up to `3600000` (one hour). `0` turns the timeout off. |
+
+```json
+{
+  "mcpServers": {
+    "pipeshub": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@pipeshub-ai/mcp",
+        "start",
+        "--server-url",
+        "PIPESHUB_INSTANCE_URL",
+        "--bearer-auth",
+        "YOUR_BEARER_TOKEN"
+      ],
+      "env": {
+        "PIPESHUB_MCP_TIMEOUT_MS": "120000"
+      }
+    }
+  }
+}
+```
+
+A value that isn't a whole number in these ranges is refused, with a message saying what it must be.
 
 ## CLI Help
 

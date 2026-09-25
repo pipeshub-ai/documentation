@@ -42,8 +42,10 @@ The Auth Service employs a multi-step session-based authentication flow:
 2. **Authentication Steps**
    - Client calls `/userAccount/authenticate` with the session token in the `x-session-token` header
    - Client provides chosen authentication method and credentials
+   - The method must be one the organization allows for the **current** step. Any other method is refused with `400` before any password or code is checked
    - If multi-factor authentication is configured, the server returns information about the next step
    - Client repeats the authentication step with appropriate credentials until all required steps are completed
+   - Every step must be completed by the same account. A later step completed for a different account (for example a different Google, Microsoft, OAuth or SAML identity) is refused, and no account is created for it
 
 3. **Token Issuance**
    - After successful authentication, the server issues access and refresh tokens
@@ -257,8 +259,12 @@ Perform authentication with credentials for a specific method.
   
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-| method | string | Yes | Authentication method (password, otp, google, microsoft, azureAd, oauth, samlSso) |
+| method | string | Yes | Authentication method (password, otp, google, microsoft, azureAd, oauth). `samlSso` is not handled here; see the note below |
 | credentials | object | Yes | Credentials object for the specified method |
+
+<Note>
+  SAML uses browser redirects, so it has its own sign-in route, `GET /api/v1/saml/signIn`. Sending `"method": "samlSso"` to this endpoint returns `400` with *"Single sign-on (SAML) can't be completed with this request. On the sign-in page, choose your organisation's single sign-on option. Apps calling the API directly should send the browser to /api/v1/saml/signIn instead."*
+</Note>
 
 **Authentication Methods:**
 
@@ -340,6 +346,20 @@ Perform authentication with credentials for a specific method.
 }
 ```
 </Tab>
+
+<Tab title="Error Responses">
+Refusals are worded the same way whether or not the email has an account, and take about as long, so the endpoint can't be used to find out which emails are real.
+
+| Situation | Status | Message |
+|---|---|---|
+| Wrong password, unknown email, no password set, password missing from the request, or a locked account | `400` | "The email or password is incorrect. Check both and try again, or use Forgot password to set a new password." |
+| Wrong, expired or already-used code, no code requested, unknown email, or a locked account | `401` | "That sign-in code isn't right. Check the most recent code in your email, or request a new one." |
+| Method not allowed for the current step | `400` | "That sign-in method isn't turned on for this step. Go back to the sign-in page and use one of the options it shows, or ask your admin which sign-in methods are enabled." |
+| `samlSso` sent to this endpoint | `400` | See the note in the Request tab |
+| Sign-in session expired | `404` | "Your sign-in session expired. Start again from the sign-in page." |
+
+After five wrong passwords or codes in a row, the account is locked for 24 hours and the owner is emailed. During the lock, even correct credentials get the same answer as a wrong password or code. `404` from this endpoint now only means that the sign-in session expired, and it no longer returns `410` for an expired code.
+</Tab>
 </Tabs>
 </Accordion>
 
@@ -378,13 +398,15 @@ Generate and send an OTP to the user's email.
 <Tab title="Response">
 **Status:** `200 OK`
 
-```json
-{
-  "data": "OTP sent"
-}
+The body is this plain-text message:
+
+```text
+If that email can sign in with a code, one is being sent. It works for 10 minutes. If nothing arrives, check your spam folder or try again later.
 ```
-  
-**Note:** The actual response data may vary based on the result from the service layer.
+
+The answer is the same `200` and message for every email: an account, an unknown email, a locked account, or an email that couldn't be sent. A code is created and emailed only when the account exists and isn't locked, and it is sent in the background, so the answer doesn't wait for the mail server. A failed send is logged on the server. This endpoint no longer returns `404` or `403`.
+
+A code is valid for 10 minutes and can be used once.
 </Tab>
 </Tabs>
 </Accordion>
@@ -812,6 +834,7 @@ Update organization authentication methods configuration.
 - No duplicate authentication methods within the same step
 - No duplicate authentication methods across different steps
 - Each authentication method can only be used once in the entire configuration
+- `samlSso` can only be used in a one-step configuration. A configuration with more than one step that includes `samlSso` in any step is refused with `400`: "SAML single sign-on can't be combined with other sign-in steps yet. Use SAML on its own as a one-step sign-in, or remove it from the policy." One step that offers SAML alongside other methods (for example SAML or password) is allowed
 
 **Supported Authentication Types:**
 - `password` - Username/password authentication
@@ -1010,7 +1033,7 @@ All endpoints return structured error responses:
 
 1. **Session Token Management:** The `x-session-token` header is critical for multi-step authentication flows
 2. **Password Complexity:** Passwords must meet minimum security requirements
-3. **Account Blocking:** Users are automatically blocked after 5 failed login attempts
+3. **Account Blocking:** Users are automatically blocked for 24 hours after 5 failed login attempts, and the owner is emailed. Sign-in answers a blocked account the same way as a wrong password or code
 4. **Token Scopes:** Different endpoints require different token scopes for access
 5. **Multi-Factor Authentication:** Organizations can configure multiple authentication steps
 6. **Provider Configuration:** OAuth and SAML providers require proper configuration

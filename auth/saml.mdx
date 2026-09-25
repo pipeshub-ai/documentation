@@ -125,6 +125,10 @@ Your IdP includes the user's email in the SAML response, but different providers
   Only one authentication method can be active at a time. Turn off any currently active method before enabling SAML SSO.
 </Warning>
 
+<Note>
+  SAML SSO can't be combined with other sign-in steps yet (for example "SAML, then a code sent by email"). If a sign-in policy with more than one step includes SAML, saving it through the API is refused with *"SAML single sign-on can't be combined with other sign-in steps yet. Use SAML on its own as a one-step sign-in, or remove it from the policy."* Policies saved before this rule still sign people in, but a SAML sign-in completes them without the other steps, so change such a policy to SAML on its own.
+</Note>
+
 ---
 
 ## Logging In with SAML SSO
@@ -147,3 +151,4 @@ Once SAML SSO is enabled, users can log in as follows:
 | Login fails after entering IdP credentials | Verify the SSO Entry Point URL and X.509 Certificate are correct in the configuration panel |
 | "JIT Disabled" error on first login | Ask your admin to enable Just-in-Time Provisioning, or have your admin create your account in PipesHub manually |
 | Login redirects back to login page with an error | Ensure the Email Attribute Key matches the attribute name your IdP uses for email |
+| An app calling the API gets *"Single sign-on (SAML) can't be completed with this request"* | SAML works through browser redirects, so it can't be sent to `POST /api/v1/userAccount/authenticate`. Send the browser to `GET /api/v1/saml/signIn` instead |

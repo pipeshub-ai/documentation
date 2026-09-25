@@ -89,7 +89,7 @@ Enter the full **Website URL** to crawl (for example `https://docs.example.com/g
 | **Crawl type** | **Single** — one URL only. **Recursive** — follow links extracted from each page’s HTML, subject to host, depth, path rules, and your caps. |
 | **Crawl depth** | Maximum link depth to which pages are crawled. |
 | **Maximum pages** | Upper bound on how many distinct URLs are processed during sync. |
-| **Maximum size (MB)** | Largest HTTP body to download per URL (default 10 MB). A larger file isn't downloaded, and it is listed as a failed page with the reason, so you can raise the limit if you need it. |
+| **Maximum Size in MB (default 10MB)** | Largest HTTP body to download per URL, from 1 to 100 MB. A larger file isn't downloaded, and it is listed as a failed page with the reason, so you can raise the limit if you need it. |
 | **Follow external links** | When enabled, links to **other domains** may be followed. When disabled, crawling stays on the **same host** as the start URL. Disabled by default. |
 | **Restrict to start path** | When enabled, only URLs whose path stays **under** the starting path prefix are crawled (useful for subsites). If this is on, **Follow external links** is effectively off—you cannot combine path restriction with arbitrary external domains. |
 | **URL should contain** | Optional tags: if any are set, only URLs containing **at least one** of the substrings (case-insensitive) are synced—except the **configured start URL**, which is always allowed. |
@@ -139,7 +139,7 @@ After you finish configuring connector settings, click **Save Configuration**. T
 - **Structure:** Builds a **record group** for the configured root URL and **file records** per URL, with parent links so paths appear hierarchically where applicable. URLs are **normalized** to avoid duplicate records: trailing slashes on “directory” pages, `#section` parts of links, and the order of query-string parameters (`?a=1&b=2` and `?b=2&a=1` are one page) don't create separate records.
 - **Redirects:** A page that redirects is stored once, under the address it lands on. A redirect that leaves the site is treated as an external link.
 - **Changes:** On later syncs, the connector sends back the site's `ETag` and `Last-Modified` values for documents and for pages at the crawl's depth limit. When the site answers that nothing changed, nothing is downloaded or re-indexed. Pages whose links still have to be read are always fetched in full, and sites that don't send these headers are compared by content, as before.
-- **Pages that are gone:** A page that answers **404 Not Found** or **410 Gone** on **two syncs in a row** is removed from PipesHub, along with its stored copy. Two strikes allow for a site that briefly answers 404 during a deploy. An old address that now redirects to another stored page is removed the same way. Temporary problems (a 5xx error, a 429, a 403, a timeout, or the whole site being down) never remove anything, and nothing is removed in a sync where the start page itself is gone.
+- **Pages that are gone:** When a page answers **404 Not Found** or **410 Gone** on **two syncs in a row**, its indexed copy and stored file are deleted, so it drops out of search. Two strikes allow for a site that briefly answers 404 during a deploy. If the site still links to that address, it then shows in **All Records** as a failed page with nothing indexed, and it disappears completely once nothing links to it. An old address that now redirects to another stored page is removed the same way. Temporary problems (a 5xx error, a 429, a 403, a timeout, or the whole site being down) never remove anything, and nothing is removed in a sync where the start page itself is gone.
 - **Sync:** Supports **scheduled** sync (default daily) and connector **filters** (manual sync selection, file extensions, and indexing toggles in the product UI). **Team** vs **personal** scope controls who receives permissions on synced records.
 
 ### Key limitations
@@ -160,6 +160,8 @@ With **Respect robots.txt** on (the default), the connector reads each site's `r
 - The most specific (longest) matching rule decides, and `Allow` wins a tie. The `*` and `$` wildcards are understood.
 - A `robots.txt` that is missing, or that the site refuses with a 4xx error, allows everything.
 - A `robots.txt` that can't be read (a 5xx error, a 429, or no answer within 10 seconds) means that site isn't crawled in this sync. Its stored pages are left as they are, and it is tried again on the next sync.
+- A group for **PipesHub** that lists no rules allows everything, even if the `*` group disallows pages.
+- The rules also apply to where a redirect lands. A page that redirects to an address `robots.txt` disallows is skipped: it isn't stored or indexed, and it counts toward the skipped pages in the summary.
 
 The summary at the end of each sync says how many pages robots.txt caused to be skipped, and names any site whose `robots.txt` couldn't be read. To include the skipped pages, turn off **Respect robots.txt** in the connector settings, if the site's terms allow it.
 
@@ -191,13 +193,16 @@ A page that can't be synced is listed as a failed record in **All Records**, wit
 
 | Reason shown | What it means |
 |---|---|
-| The page wasn't found (404 Not Found). Check the URL is correct, then sync again. | The link points at a page that doesn't exist (also shown for 410 Gone). |
-| The page refused access (401 Unauthorized or 403 Forbidden)... | The page needs a login or blocks automated visitors. Only publicly reachable pages can be synced. |
-| This file is larger than this connector's 10 MB size limit, so it wasn't downloaded... | The file is over **Maximum size (MB)**; the message shows your limit. Raise the setting to include it. |
+| The page wasn't found (404 Not Found). Check the URL is correct, then sync again. | The link points at a page that doesn't exist. |
+| The page wasn't found (410 Gone). Check the URL is correct, then sync again. | The site says the page was removed for good. |
+| The page refused access (401 Unauthorized). It may need a login or block automated visitors; make sure it's publicly reachable, then sync again. | The page needs a login. Only publicly reachable pages can be synced. |
+| The page refused access (403 Forbidden). It may need a login or block automated visitors; make sure it's publicly reachable, then sync again. | The page needs a login, or the site blocks automated visitors. |
+| This file is larger than this connector's 10 MB size limit, so it wasn't downloaded. Raise the Maximum Size in MB setting to include it, then sync again. | The file is over **Maximum Size in MB**. The message shows the limit this connector is set to (10 MB unless you changed it). |
 | We couldn't reach this page. Check the URL is correct and publicly reachable, then sync again. | The server never answered (the connection failed or timed out). |
-| The site didn't respond properly (for example 503 Service Unavailable). PipesHub will try again on the next sync. | A temporary problem on the site's side, including rate limiting (429). |
+| The site didn't respond properly (503 Service Unavailable). PipesHub will try again on the next sync. | A temporary problem on the site's side. The same message is used, with the status filled in, for 408 Request Timeout, 429 Too Many Requests and every 5xx status. |
+| The page returned an error (418 I'm a Teapot). Check the URL is correct and publicly reachable, then sync again. | Any other error status. The status and its name are filled in; 418 is only an example. |
 
-The status shown is the one the site actually sent, in Robust Mode too. A failed page never replaces or deletes a page that synced before; see **Pages that are gone** above for when a page is removed.
+The status shown is the one the site actually sent, in Robust Mode too. For a 401, 403, 408, 429, 5xx or a timeout, a page that synced before keeps its record and indexed copy; the failure never replaces it. A 404 or 410 is different: on the second sync in a row, the synced copy is deleted, and the failed page takes its place while the site still links to it (see **Pages that are gone** above).
 
 </Accordion>
 

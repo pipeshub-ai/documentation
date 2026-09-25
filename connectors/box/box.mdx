@@ -378,7 +378,11 @@ Once a cursor is established, incremental sync processes only new events:
 
 3. **Update State:** Saves the new cursor position for next sync cycle.
 
-4. **Reconciliation:** Periodically validates that all Box groups exist in the database and removes orphaned entries.
+4. **Reconciliation:** Periodically validates that all Box groups exist in the database and removes orphaned entries. Groups are only removed after a group listing that reached its last page, so a listing that fails partway never deletes groups.
+
+<Note>
+  If Box can't return a group's member list during a sync, that group keeps the members PipesHub already has, and the next sync tries again. A failed read never empties a group. Groups and member lists of any size are read page by page to the end.
+</Note>
 
 ---
 
@@ -475,7 +479,7 @@ Box uses a **global Enterprise Event Stream** with a single `stream_position` cu
 
 6. **Deletion Handling:** Processes deletion events by marking records as deleted in the database.
 
-7. **Stream Position Update:** After processing all events, saves the new `stream_position` cursor for the next incremental sync cycle. This single cursor tracks the state of the entire enterprise event stream, not individual folders.
+7. **Stream Position Update:** After processing all events, saves the new `stream_position` cursor for the next incremental sync cycle. This single cursor tracks the state of the entire enterprise event stream, not individual folders. If part of a batch of events couldn't be read, the cursor stays where it was and the same batch is read again on the next run. After five attempts the batch is passed over, with an error in the sync logs, so one item Box keeps failing can't hold back every later change.
 
 ---
 
@@ -517,6 +521,15 @@ Box permissions are managed through **collaborations** - explicit grants that gi
    - Recursively removes permissions from all descendant files and folders
    - Ensures access control consistency
 
+6. **Complete collaborator lists:** An item's collaborators are read page by page to the end. If a page can't be read, the item keeps the access it already has in PipesHub and the next sync fills in the rest.
+
+### Share history
+
+A full sync also replays past sharing events from Box's enterprise event history (Box keeps up to a year of it), so each person's **Shared with me** is complete. The replay saves its place after each page:
+
+- On a large enterprise, it reads a set number of pages per sync and carries on from where it stopped on the next one, so the whole history is applied within a few syncs of connecting.
+- Later full syncs resume from the saved place instead of starting again, so only newer history is read.
+
 </Accordion>
 
 <Accordion title="File Filtering & Sync Optimization" icon="filter">
@@ -546,6 +559,11 @@ The connector automatically determines the optimal sync approach:
 1. **No Cursor:** Performs full sync
 2. **Has Cursor:** Performs incremental sync using event stream
 3. **Cursor Expired:** Falls back to full sync and establishes new cursor
+4. **Previous full sync incomplete:** If a full sync couldn't read everything (for example, a folder listing or a user's files failed after retries), the cursor isn't saved, and the next run is a full sync again. This keeps changes from being skipped. A 403 or 404 from Box is its final answer and doesn't count as incomplete.
+
+### One sync at a time
+
+Scheduled syncs, manual syncs and Box webhooks never run two syncs of the same connector at once. A webhook that arrives while a sync is running queues one follow-up sync, and any more webhooks before it starts are folded into that same run.
 
 </Accordion>
 
@@ -579,6 +597,15 @@ The connector automatically determines the optimal sync approach:
 - Check that App Access Level is set to "App + Enterprise Access"
 - Re-authorize the application if scopes were changed
 
+### No files sync, or group access isn't updated
+
+**Problem:** The sync logs say *"Box refused to list users (403), so no one's files can be synced"* or *"Box refused to list groups (403), so group access in PipesHub is not being updated"*.
+
+**Solutions:**
+- For users, turn on the app's **Manage users** scope. For groups, turn on **Manage groups**. Both are under **Administrative Actions** in the Box Developer Console (see Step 2 of **Create Box App**).
+- Have a Box admin re-authorize the app in the Box Admin Console. Scope changes only take effect after re-authorizing.
+- Until **Manage users** is fixed, every run is a full sync, which is quick because no files can be listed. The first run after the fix syncs everything.
+
 ### Sync Issues
 
 **Problem:** Files not appearing or sync taking too long
@@ -595,7 +622,8 @@ The connector automatically determines the optimal sync approach:
 **Problem:** "Rate limit exceeded" errors
 
 **Solutions:**
-- The connector has built-in rate limiting (50 req/s)
+- The connector has built-in rate limiting (50 req/s), and retries a rate-limited request after the wait Box asks for
+- When a file can't be opened because Box keeps rate-limiting, the message says how long Box asked to wait
 - Increase sync interval for scheduled syncs
 - Contact Box support to request higher rate limits for your enterprise
 

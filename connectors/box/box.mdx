@@ -473,7 +473,7 @@ Box uses a **global Enterprise Event Stream** with a single `stream_position` cu
    - Re-processes permissions
    - Updates database records
 
-6. **Deletion Handling:** Processes deletion events by marking records as deleted in the database.
+6. **Deletion Handling:** A file or folder that is deleted, or moved to the trash, in Box is removed from PipesHub on the next incremental sync. Deleting a folder also removes everything stored under it. Restoring an item from the Box trash syncs it again. If a delete can't be applied, the cursor stays where it was and the delete is retried on the next run.
 
 7. **Stream Position Update:** After processing all events, saves the new `stream_position` cursor for the next incremental sync cycle. This single cursor tracks the state of the entire enterprise event stream, not individual folders.
 
@@ -492,6 +492,10 @@ Box permissions are managed through **collaborations** - explicit grants that gi
 3. **Group Memberships:** Users inherit permissions through group collaborations.
 
 4. **Public/Company Links:** Shared links can grant broader access.
+
+<Note>
+  Sharing never moves a file. A file or folder owned by someone in your Box enterprise stays in its owner's drive, in its place in the owner's folders, and the colleagues it is shared with see it under **Shared with me**. Items owned by someone outside your enterprise appear only under **Shared with me**.
+</Note>
 
 ### Sync Process
 

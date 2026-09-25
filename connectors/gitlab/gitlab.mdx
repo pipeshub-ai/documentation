@@ -600,6 +600,13 @@ Checkpoints are stored **per project**, and each content type carries its own:
 A checkpoint is only written after its stage succeeds. If a sync fails partway, the affected
 stage is simply repeated on the next run.
 
+If a single issue or merge request can't be read or saved, the rest of the project still syncs.
+The checkpoint is saved just before the earliest failed item, so the next run asks for it again
+without re-reading everything.
+
+The OAuth token is refreshed only when GitLab actually answers **401 Unauthorized**, and only once
+when several requests fail together, so refresh tokens aren't used up needlessly.
+
 </Accordion>
 
 </AccordionGroup>

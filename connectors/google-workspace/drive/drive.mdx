@@ -550,6 +550,15 @@ In what interval the connector will sync data (default: 60 minutes).
 ### Sync Filters
 Sync filters control which files are fetched from Google Drive. Files that don't match are skipped entirely. Folders are always synced regardless of these settings to preserve directory structure.
 
+### Folder IDs
+
+Syncs only the folders you list, and everything inside them. To find a folder's ID, open the folder in Google Drive: the ID is the last part of the address, `drive.google.com/drive/folders/<FOLDER_ID>`.
+
+Before each sync, the connector checks that each listed folder can be read:
+
+- A folder that was deleted, or that the connected account can't see, is left out, and the rest of the sync carries on.
+- Any other problem, such as a Google outage or a quota limit that outlasts the retries, fails that sync run instead of quietly leaving the folder's files out. The next run starts from the same point, so no files are skipped for good.
+
 ### Created Date
 
 Filters files by when they were created. Accepts operators like `Last 365 Days`, `Is After`, `Is Before`, or `Is Between` for a specific range. 

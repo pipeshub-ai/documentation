@@ -703,6 +703,8 @@ The connector automatically determines whether to perform a full or incremental 
 2. **Group sync** — fetches all groups and their member lists
 3. **Membership mapping** — creates user-to-group relationships for permission resolution
 
+If a group's member list or a project's permission scheme can't be read for a temporary reason (rate limiting after retries, a server error, a network failure), the group or project keeps the access PipesHub already has, and the project's issues still sync. Project roles that include that group are left as stored too. A group that no longer exists in Jira ends up empty, as before.
+
 ### Project synchronization
 
 1. **Project fetch** — retrieves projects (filtered by project keys if configured)

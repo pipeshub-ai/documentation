@@ -8,9 +8,9 @@ All endpoints are prefixed with `/api/v1/crawlingManager`
 
 ## Authentication
 
-All endpoints require:
-- **Authentication** via `Authorization` header with valid JWT token
-- **Admin privileges** - Only users with admin role can access these endpoints
+All endpoints require **authentication** via `Authorization` header with valid JWT token. In addition:
+- **Endpoints for one connector** check that the caller may manage it: a team connector's schedule only by an admin, and a personal connector's only by the person who created it
+- **Admin privileges** for `DELETE /schedule/all`, because it removes the schedules of every connector in the organization, including other members' personal connectors
 
 **Headers:**
 ```
@@ -194,6 +194,13 @@ All schedule configurations inherit base properties:
   "message": "Scheduled time must be in the future"
 }
 ```
+
+Two more `400 Bad Request` messages you may see:
+
+- *"Scheduled time is missing or is not a valid date"* — a `once` schedule without a readable top-level `scheduledTime`.
+- *"This schedule can't be used: it never produces a run time. Check the cron expression and the timezone name, then try again."* — a cron expression or timezone that the scheduler can't use.
+
+A refused schedule leaves the connector's existing schedule running unchanged.
 
 **Status:** `401 Unauthorized`
 ```json
@@ -450,7 +457,7 @@ Remove a scheduled crawling job for a specific connector.
 </Accordion>
 
 <Accordion title="DELETE /schedule/all - Remove All Jobs">
-Remove all scheduled crawling jobs for the organization.
+Remove all scheduled crawling jobs for the organization. Admins only: any other caller is refused with `400` "Admin access required", and nothing is removed.
 
 **Endpoint:** `DELETE /api/v1/crawlingManager/schedule/all`
 
@@ -736,7 +743,8 @@ The API includes built-in rate limiting and concurrency controls:
 - Stalled jobs are detected after 30 seconds
 - Maximum 3 retry attempts for failed jobs
 - Job history retention: Last 10 completed and 10 failed jobs per connector type
-- Jobs are removed and recreated when updating schedules (no job modification)
+- Jobs are removed and recreated when updating schedules (no job modification). The new schedule is checked first, so a schedule that is refused never removes the one already in place
+- Removing or pausing a schedule also cancels its runs that are waiting to start, including one-time runs. If the job queue can't be reached, the request fails with `500` instead of reporting success, and a schedule is marked paused only after its runs are removed
 </Tab>
 
 <Tab title="Job Lifecycle">

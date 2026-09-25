@@ -623,6 +623,14 @@ Slack rate-limits its API per method. The connector paces its own calls to stay 
 
 - The token was regenerated or the app was uninstalled. For the team connector, paste the new **Bot User OAuth Token**. For the individual connector, re-run authorization from the **Authorize** tab.
 
+**"Invalid Slack token format"**
+
+- PipesHub accepts bot tokens (`xoxb-…`) and user tokens (`xoxp-…`), and, for apps with **token rotation** turned on, the rotating forms `xoxe.xoxb-…` and `xoxe.xoxp-…`. A token that starts with just `xoxe-` is a refresh token, which can't call Slack; paste the access token from **OAuth & Permissions** instead.
+
+<Warning>
+  PipesHub doesn't refresh rotating tokens yet. Slack expires them after about 12 hours, and the connector stops syncing when that happens. Leave **token rotation** off for the Slack app you use with PipesHub.
+</Warning>
+
 **Only a bot token was found (Individual)**
 
 - The individual connector needs a **user token** (`xoxp-…`). Confirm the scopes were added under **User Token Scopes**, not Bot Token Scopes, and authorize again.

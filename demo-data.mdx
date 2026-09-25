@@ -12,7 +12,7 @@ A fresh PipesHub has nothing to search until you connect a source, and connectin
 
 ## What you get
 
-Acme Corp is 41 records across five systems, loaded the way real connectors load them, so search, citations and permissions behave exactly as they would with your own data:
+Acme Corp is 53 records across five systems, loaded the way real connectors load them, so search, citations and permissions behave exactly as they would with your own data:
 
 | Looks like | Contains |
 | --- | --- |
@@ -62,7 +62,7 @@ The most convincing thing the demo shows is that the same question gets differen
 | **Alice Chen** (`alice@acme-demo.example`) | engineering, support | both story lines, the handbook |
 | **Bob Okafor** (`bob@acme-demo.example`) | engineering, support, **pricing committee** | everything Alice sees, plus the pricing strategy and the `#pricing-committee` thread |
 
-Ask both *"What is the enterprise pricing strategy for 2026?"* — Alice gets nothing relevant, Bob gets the document, cited from Google Drive. Everyone else, including the admin who set the demo up, sees what Alice sees, so for them that question comes back empty too. That is the permission check working, not a missing record.
+Ask both *"What is the enterprise pricing strategy for 2026?"* — Alice gets nothing relevant, Bob gets the document, cited from Google Drive. Everyone else, including the admin who set the demo up, sees what Alice sees. That is the permission check working, not a missing record, and the chat landing says so: for anyone who can't see the pricing document, that question carries a lock and *"Pricing committee only, so you'll get no answer here."* Admins are also told to sign in as `bob@acme-demo.example` to see the answer, when that account exists.
 
 To create them you need a **business** account (individual accounts are single-user) and the headless script:
 
@@ -77,14 +77,31 @@ PIPESHUB_DEMO_PASSWORD='<a password you generate>'   # same rules as the admin p
 Choose the password per installation — for example `openssl rand -base64 12` with a capital letter and a symbol added — and never reuse a value from documentation. Both accounts are created with it before the connector syncs, so their group memberships attach immediately. There is no email involved.
 
 <Warning>
-  These are real accounts in your organisation with a password you chose. Keep the instance on localhost while they exist, or use them only on a throwaway instance; anyone who can reach the sign-in page and knows the password can sign in as Alice or Bob. Delete them (Workspace → Users) when you are done.
+  These are real accounts in your organisation with a password you chose. Keep the instance on localhost while they exist, or use them only on a throwaway instance; anyone who can reach the sign-in page and knows the password can sign in as Alice or Bob. When you are done, [turn the demo off for everyone](#turn-it-off-for-everyone), which stops them signing in, or delete them under **Workspace → Users**.
 </Warning>
+
+## Show or hide it
+
+The demo never mixes silently into your company's answers. Each person decides whether Acme's records appear in their own answers, search and record lists:
+
+- **The default:** the demo is shown while your organisation has no data of its own, and hidden once a source of your own has indexed records.
+- **Your own choice:** **Profile → Demo data** has a switch, *Show Acme Corp demo data in my answers, search and records*. Choosing overrides the default, and **Use the default** goes back to it. The chat landing also offers **Hide demo data**, with a few seconds to undo.
+
+Hiding changes only what you see. Nothing is deleted, and everyone else keeps their own setting. Records from the demo carry a **Demo** badge wherever they are cited or listed, so a fictional Slack thread never passes for a real one.
+
+### Turn it off for everyone
+
+Admins also see **Offer the demo to everyone** in **Profile → Demo data**. Turning it off hides the demo from everyone's answers, search and records, whatever they chose, and stops the sample accounts (Alice, Bob) signing in. Nothing is deleted: turn it back on and each person's own choice, and the sample accounts' sign-in, come back.
 
 ## Remove it
 
-Remove the demo once you connect your own data. Until then, Acme's records stay in the answers of everyone in its groups — including the admin who set it up — right next to your company's real records, and each one is labelled with the system it imitates (Jira, Slack, Google Drive, …). Answers mark them with a **Demo** badge, and once your own data is indexed, PipesHub offers admins a **Remove demo data** button on the chat landing and the Connectors page, which also offers to delete Alice and Bob.
+Once your own data is indexed, admins see a notice on the chat landing and on the Connectors page, *The Acme Corp demo data is still in your workspace*, with three choices:
 
-To do it by hand, delete the Demo connector from **Workspace → Connectors**. Its records, groups and permissions go with it. If you created Alice and Bob, delete them under **Workspace → Users**.
+- **Turn off for everyone** — hides it as described above, deleting nothing.
+- **Remove permanently** — deletes the Demo connector with all of its records, groups and permissions. A box, ticked by default, also deletes the sample accounts, since anyone who knows their starting password can sign in as them.
+- **Keep for now** — hides the notice for a week.
+
+To do it by hand, delete the Demo connector from **Workspace → Connectors**. Its records, groups and permissions go with it. If you created Alice and Bob, delete them under **Workspace → Users**. Removed sample accounts can be created again later with the headless setup.
 
 ## For coding agents
 

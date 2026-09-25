@@ -356,9 +356,11 @@ Refusals are worded the same way whether or not the email has an account, and ta
 | Wrong, expired or already-used code, no code requested, unknown email, or a locked account | `401` | "That sign-in code isn't right. Check the most recent code in your email, or request a new one." |
 | Method not allowed for the current step | `400` | "That sign-in method isn't turned on for this step. Go back to the sign-in page and use one of the options it shows, or ask your admin which sign-in methods are enabled." |
 | `samlSso` sent to this endpoint | `400` | See the note in the Request tab |
-| Sign-in session expired | `404` | "Your sign-in session expired. Start again from the sign-in page." |
+| Step completed with a different account than the step before it | `401` | "This step was completed with a different account than the step before it. Start again from the sign-in page and use the same account for every step." |
+| No `x-session-token` header | `401` | "Invalid session token" |
+| Sign-in session expired or unknown (a sign-in session expires an hour after it starts or after its last completed step) | `401` | "Invalid session" |
 
-After five wrong passwords or codes in a row, the account is locked for 24 hours and the owner is emailed. During the lock, even correct credentials get the same answer as a wrong password or code. `404` from this endpoint now only means that the sign-in session expired, and it no longer returns `410` for an expired code.
+After five wrong passwords or codes in a row, the account is locked for 24 hours and the owner is emailed. During the lock, even correct credentials get the same answer as a wrong password or code. An expired code now gets the `401` wrong-code answer above, not `410`.
 </Tab>
 </Tabs>
 </Accordion>

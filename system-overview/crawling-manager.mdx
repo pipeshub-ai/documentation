@@ -24,7 +24,7 @@ Endpoints for one connector take two path parameters:
 - `connector` — the connector's type name (for example `drive`, `onedrive` or `jira`). The crawling manager accepts any connector type; it doesn't keep its own list.
 - `connectorId` — the ID of the connector instance. The request is checked against this instance: it must exist (otherwise `404`), and the caller must be allowed to manage it (otherwise `403`).
 
-Job IDs are built as `crawl-{connector}-{connectorId}-{orgId}`, with the connector name lowercased and spaces replaced by hyphens.
+Internally, each connector's schedule is keyed as `crawl-{connector}-{connectorId}-{orgId}`, with the connector name lowercased and spaces replaced by hyphens. That key is the job ID of a one-time (`once`) schedule and the `id` reported for a paused schedule. A repeating schedule's job ID is the one the job queue (BullMQ) assigns.
 
 ## API Endpoints
 
@@ -149,7 +149,7 @@ All schedule configurations inherit base properties:
   "success": true,
   "message": "Crawling job scheduled successfully",
   "data": {
-    "jobId": "crawl-linear-6650f1c2a9e4b3d2c1a0f9e8-6650f1c2a9e4b3d2c1a0f9e7",
+    "jobId": "repeat:3f2b9c…:1705312800000",   // assigned by the job queue; a "once" schedule gets crawl-{connector}-{connectorId}-{orgId}
     "connector": "linear",
     "scheduleConfig": {
       "scheduleType": "daily",
@@ -168,20 +168,23 @@ All schedule configurations inherit base properties:
 <Tab title="Error Responses">
 Errors use the standard error shape (see [Error Handling](#error-handling)):
 
-- `400 Bad Request` — the body doesn't match the schema: `VALIDATION_ERROR`, with a message listing the fields.
+- `400 Bad Request` — the body doesn't match the schema: `VALIDATION_ERROR`, with a message listing the fields. This includes an `interval` schedule whose `intervalMinutes` isn't a whole number from 1 to 525600.
 - `400 Bad Request` — `HTTP_BAD_REQUEST` with one of these messages:
   - "Cannot schedule a disabled job" — the schedule was sent with `isEnabled: false`. This removes the connector's current schedule first.
   - "Scheduled time must be in the future" — a `once` schedule in the past.
   - "Scheduled time is missing or is not a valid date" — a `once` schedule without a readable top-level `scheduledTime`.
   - "This schedule can't be used: it never produces a run time. Check the cron expression and the timezone name, then try again." — a cron expression or timezone the scheduler can't use.
-  - "intervalMinutes must be a positive integer" — an `interval` schedule with a bad interval.
 
   Every one of these except the disabled schedule is checked before anything is removed, so the connector's existing schedule keeps running.
 - `401 Unauthorized` — no valid sign-in token, for example `HTTP_UNAUTHORIZED` "No token provided" or "Session expired, please login again".
 - `403 Forbidden` — an OAuth token without the `crawl:write` scope: `HTTP_FORBIDDEN` "Insufficient scope. Required: crawl:write".
 - `403 Forbidden` — the caller may not manage this connector: `HTTP_FORBIDDEN` "You are not authorized to schedule this connector" (a team connector needs an admin; a personal one, the person who created it).
 - `404 Not Found` — no connector instance with that `connectorId` is visible to the caller.
-- `500 Internal Server Error` — the job queue couldn't be reached. Nothing is reported as done.
+- `500 Internal Server Error` — the job queue couldn't be reached: `INTERNAL_ERROR` "Something went wrong on PipesHub's side. Please try again; if it keeps happening, ask your admin for help."
+- `500 Internal Server Error` — the queue answered, but part of the removal failed: `HTTP_INTERNAL_SERVER_ERROR` with one of these messages, which say what may still be in place:
+  - "This connector's sync schedule could not be removed, so it may keep running. Try again in a moment; if this keeps happening, ask your admin to check the job queue."
+  - "A sync already queued for this connector could not be cancelled, so it may still run. Try again in a moment; if this keeps happening, ask your admin to check the job queue."
+  - "The previous one-time sync for this connector could not be cleared, so a new one can't be scheduled yet. If it is still running, wait for it to finish; otherwise try again in a moment."
 </Tab>
 </Tabs>
 </Accordion>
@@ -259,6 +262,7 @@ Other errors use the standard error shape (see [Error Handling](#error-handling)
 - `403 Forbidden` — an OAuth token without the `crawl:read` scope: `HTTP_FORBIDDEN` "Insufficient scope. Required: crawl:read".
 - `403 Forbidden` — the caller may not manage this connector: `HTTP_FORBIDDEN` "You are not authorized to schedule this connector" (a team connector needs an admin; a personal one, the person who created it).
 - `404 Not Found` — no connector instance with that `connectorId` is visible to the caller.
+- `500 Internal Server Error` — the job queue couldn't be reached: `INTERNAL_ERROR` "Something went wrong on PipesHub's side. Please try again; if it keeps happening, ask your admin for help."
 </Tab>
 </Tabs>
 </Accordion>
@@ -346,7 +350,7 @@ Errors use the standard error shape (see [Error Handling](#error-handling)):
 
 - `401 Unauthorized` — no valid sign-in token, for example `HTTP_UNAUTHORIZED` "No token provided" or "Session expired, please login again".
 - `403 Forbidden` — an OAuth token without the `crawl:read` scope: `HTTP_FORBIDDEN` "Insufficient scope. Required: crawl:read".
-- `500 Internal Server Error` — the job queue couldn't be reached. Nothing is reported as done.
+- `500 Internal Server Error` — the job queue couldn't be reached: `INTERNAL_ERROR` "Something went wrong on PipesHub's side. Please try again; if it keeps happening, ask your admin for help."
 </Tab>
 </Tabs>
 </Accordion>
@@ -379,7 +383,10 @@ Errors use the standard error shape (see [Error Handling](#error-handling)):
 - `403 Forbidden` — an OAuth token without the `crawl:delete` scope: `HTTP_FORBIDDEN` "Insufficient scope. Required: crawl:delete".
 - `403 Forbidden` — the caller may not manage this connector: `HTTP_FORBIDDEN` "You are not authorized to schedule this connector" (a team connector needs an admin; a personal one, the person who created it).
 - `404 Not Found` — no connector instance with that `connectorId` is visible to the caller.
-- `500 Internal Server Error` — the job queue couldn't be reached. Nothing is reported as done.
+- `500 Internal Server Error` — the job queue couldn't be reached: `INTERNAL_ERROR` "Something went wrong on PipesHub's side. Please try again; if it keeps happening, ask your admin for help."
+- `500 Internal Server Error` — the queue answered, but part of the removal failed: `HTTP_INTERNAL_SERVER_ERROR` with one of these messages, which say what may still be in place:
+  - "This connector's sync schedule could not be removed, so it may keep running. Try again in a moment; if this keeps happening, ask your admin to check the job queue."
+  - "A sync already queued for this connector could not be cancelled, so it may still run. Try again in a moment; if this keeps happening, ask your admin to check the job queue."
 </Tab>
 </Tabs>
 </Accordion>
@@ -407,7 +414,9 @@ Errors use the standard error shape (see [Error Handling](#error-handling)):
 - `400 Bad Request` — the caller isn't an admin: `HTTP_BAD_REQUEST` "Admin access required". Nothing is removed.
 - `401 Unauthorized` — no valid sign-in token, for example `HTTP_UNAUTHORIZED` "No token provided" or "Session expired, please login again".
 - `403 Forbidden` — an OAuth token without the `crawl:delete` scope: `HTTP_FORBIDDEN` "Insufficient scope. Required: crawl:delete".
-- `500 Internal Server Error` — the job queue couldn't be reached. Nothing is reported as done.
+- `500 Internal Server Error` — the job queue couldn't be reached: `INTERNAL_ERROR` "Something went wrong on PipesHub's side. Please try again; if it keeps happening, ask your admin for help."
+- `500 Internal Server Error` — the queue answered, but part of the removal failed: `HTTP_INTERNAL_SERVER_ERROR` with one of these messages, which say what may still be in place:
+  - "Some sync schedules in this organization could not be removed, so they may keep running. Try again in a moment; if this keeps happening, ask your admin to check the job queue."
 </Tab>
 </Tabs>
 </Accordion>
@@ -446,7 +455,10 @@ Errors use the standard error shape (see [Error Handling](#error-handling)):
 - `403 Forbidden` — an OAuth token without the `crawl:write` scope: `HTTP_FORBIDDEN` "Insufficient scope. Required: crawl:write".
 - `403 Forbidden` — the caller may not manage this connector: `HTTP_FORBIDDEN` "You are not authorized to schedule this connector" (a team connector needs an admin; a personal one, the person who created it).
 - `404 Not Found` — no connector instance with that `connectorId` is visible to the caller.
-- `500 Internal Server Error` — the job queue couldn't be reached. Nothing is reported as done.
+- `500 Internal Server Error` — the job queue couldn't be reached: `INTERNAL_ERROR` "Something went wrong on PipesHub's side. Please try again; if it keeps happening, ask your admin for help."
+- `500 Internal Server Error` — the queue answered, but part of the removal failed: `HTTP_INTERNAL_SERVER_ERROR` with one of these messages, which say what may still be in place:
+  - "This connector's sync schedule could not be removed, so it may keep running. Try again in a moment; if this keeps happening, ask your admin to check the job queue."
+  - "A sync already queued for this connector could not be cancelled, so it may still run. Try again in a moment; if this keeps happening, ask your admin to check the job queue."
 </Tab>
 </Tabs>
 </Accordion>
@@ -485,7 +497,7 @@ Errors use the standard error shape (see [Error Handling](#error-handling)):
 - `403 Forbidden` — an OAuth token without the `crawl:write` scope: `HTTP_FORBIDDEN` "Insufficient scope. Required: crawl:write".
 - `403 Forbidden` — the caller may not manage this connector: `HTTP_FORBIDDEN` "You are not authorized to schedule this connector" (a team connector needs an admin; a personal one, the person who created it).
 - `404 Not Found` — no connector instance with that `connectorId` is visible to the caller.
-- `500 Internal Server Error` — the job queue couldn't be reached. Nothing is reported as done.
+- `500 Internal Server Error` — the job queue couldn't be reached: `INTERNAL_ERROR` "Something went wrong on PipesHub's side. Please try again; if it keeps happening, ask your admin for help."
 </Tab>
 </Tabs>
 </Accordion>
@@ -532,7 +544,7 @@ Errors use the standard error shape (see [Error Handling](#error-handling)):
 
 - `401 Unauthorized` — no valid sign-in token, for example `HTTP_UNAUTHORIZED` "No token provided" or "Session expired, please login again".
 - `403 Forbidden` — an OAuth token without the `crawl:read` scope: `HTTP_FORBIDDEN` "Insufficient scope. Required: crawl:read".
-- `500 Internal Server Error` — the job queue couldn't be reached. Nothing is reported as done.
+- `500 Internal Server Error` — the job queue couldn't be reached: `INTERNAL_ERROR` "Something went wrong on PipesHub's side. Please try again; if it keeps happening, ask your admin for help."
 </Tab>
 </Tabs>
 </Accordion>
@@ -639,7 +651,7 @@ Errors raised by these endpoints use the API's standard error shape:
 }
 ```
 
-`code` is `HTTP_` followed by the status name (`HTTP_BAD_REQUEST`, `HTTP_UNAUTHORIZED`, `HTTP_FORBIDDEN`, `HTTP_NOT_FOUND`), or `VALIDATION_ERROR` when the request doesn't match the schema. A server-side failure answers `500` with the message "Something went wrong on PipesHub's side. Please try again; if it keeps happening, ask your admin for help." `requestId` is included when the request has one. The only exception is the `404` for a connector with no scheduled job, shown under **Get Job Status**.
+`code` is `HTTP_` followed by the status name (`HTTP_BAD_REQUEST`, `HTTP_UNAUTHORIZED`, `HTTP_FORBIDDEN`, `HTTP_NOT_FOUND`), or `VALIDATION_ERROR` when the request doesn't match the schema. A `500` comes in two kinds. When the job queue can't be reached, the code is `INTERNAL_ERROR` with the message "Something went wrong on PipesHub's side. Please try again; if it keeps happening, ask your admin for help." When the queue answered but removing a schedule or a queued run failed, the code is `HTTP_INTERNAL_SERVER_ERROR` with a specific message that says what may still be in place; each endpoint's tab lists them. `requestId` is included when the request has one. The only exception is the `404` for a connector with no scheduled job, shown under **Get Job Status**.
 
 **Common HTTP Status Codes:**
 - `200` - Success

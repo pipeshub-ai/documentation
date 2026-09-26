@@ -322,13 +322,13 @@ If Microsoft refuses to list your directory (for example, because a permission h
 Ask the agent to send a message to the right team and channel. It can use `get_teams` and `get_channels` to resolve IDs, then `send_channel_message`.
 
 **How do I direct-message someone?**  
-Ask to “DM” or “chat with” a person by display name, email, or UPN. The Microsoft Teams action uses `send_user_message` and resolves the user when possible.
+Ask to “DM” or “chat with” a person by display name, email, or UPN. The Microsoft Teams action uses `send_user_message`. It looks the person up across your whole directory and sends only on an **exact** match of display name, email, sign-in name (UPN) or ID. If the name only partly matches (for example "Sam" when the directory has "Samantha Lee"), nothing is sent: the agent gets the closest matches and asks you to confirm with an email or ID. Reading a chat with a person uses the same matching.
 
 **How do I reply in a thread?**  
 Ask to reply to a specific message or thread in a channel. The agent uses `reply_to_message` with the parent message ID when it is known, or reads the thread with `get_channel_messages` / `get_thread_replies` first.
 
 **How do I find or schedule a meeting?**  
-Use natural language with a time range. The agent can call `get_meetings`, `search_calendar_events_in_range`, `create_event`, or `create_channel_meeting` depending on whether the meeting is personal or tied to a channel.
+Use natural language with a time range. The agent can call `get_meetings`, `search_calendar_events_in_range`, `create_event`, or `create_channel_meeting` depending on whether the meeting is personal or tied to a channel. For a recurring meeting, say how it repeats: daily, weekly on certain days, monthly on a date (the 15th) or on a weekday (the first Monday), or yearly. A repeat pattern Microsoft doesn't accept is refused with a message saying what to send, rather than quietly becoming a daily meeting.
 
 **How do I get a meeting transcript or who attended?**  
 Ask for the transcript or attendance for a specific online meeting. The agent uses `get_my_meeting_transcripts`, `get_people_attended`, or `get_people_invited` as appropriate, often after resolving the meeting from calendar or join information.

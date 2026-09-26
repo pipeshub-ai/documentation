@@ -232,7 +232,7 @@ The sync begins by authenticating with the provided username and app password. T
 2. Retrieves user email from Nextcloud (if available)
 3. Uses username as the primary identifier
 
-If the Nextcloud profile can't be read (for example, during a brief server outage), the sync saves nothing and tries again next time. It never guesses the owner of your files.
+If the Nextcloud profile can't be read (for example, during a brief server outage), the sync saves nothing and tries again next time, rather than guessing who owns your files. A profile that loads but has no email address is different: the connector then uses `{username}@nextcloud.local` as the owner's email.
 
 ### Drive Creation
 
@@ -314,7 +314,13 @@ Nextcloud uses the **Activity API** to track changes:
 The connector doesn't move the cursor past changes it couldn't apply:
 
 - **Activity feed unavailable:** If Nextcloud's activity feed can't be read (an outage, or a rate limit that outlasts the retries), the cursor stays where it was. The next sync reads the same changes again, deletions included.
-- **A file or deletion that fails:** If a changed file can't be fetched or saved, or a deletion can't be applied, the cursor stays where it was and the next sync tries that page of changes again. After 5 syncs in a row the connector moves on, so one broken file can't hold up later changes, and it logs an error naming the problem.
+- **A file that is already gone:** If Nextcloud answers "not found" (HTTP 404) for a changed file, the connector treats the file as already deleted or moved, and the cursor moves on as usual. The deletion or move is in the activity feed too.
+- **A file or deletion that fails another way:** If fetching or saving a changed file fails for another reason (a server error such as HTTP 503, a listing that can't be read, or a network error), or a deletion can't be applied, the cursor stays where it was. The next sync reads that page of changes again.
+- **The limit:** A page is held for at most 5 syncs. On syncs 1 to 4 the cursor stays where it was. On the 5th, the connector moves the cursor on, so one broken file can't hold up later changes, and logs an error. That error doesn't name the file. After that, a failed change is read again only when that file next changes in Nextcloud.
+
+<Warning>
+  **A deletion that fails 5 times is not applied.** A deleted file never changes again, so nothing brings the deletion back. The file stays searchable in PipesHub.
+</Warning>
 
 ---
 
@@ -357,7 +363,7 @@ The incremental sync uses Nextcloud's Activity API to efficiently detect changes
 
 * **Path Cache:** Maintains in-memory map of paths to record IDs
 * **Batch Processing:** Groups updates into configurable batch sizes
-* **Rate Limiting:** Sends at most 50 requests per second. When Nextcloud answers with a rate limit (HTTP 429) or a temporary server error, the request is retried up to 3 times. Each retry waits as long as Nextcloud's `Retry-After` header asks, up to 60 seconds.
+* **Rate Limiting:** Sends at most 50 requests per second. When Nextcloud answers with a rate limit (HTTP 429), a temporary server error, or the connection fails, the request is retried up to 3 times. The wait before each retry is a random delay that grows with each attempt: up to 1 second, then 2, then 4, never more than 60 seconds. If Nextcloud sends a `Retry-After` header with a number of seconds, the connector waits that long instead, up to 60 seconds. A `Retry-After` given as a date, or no header at all (usual for server errors), uses the growing delay.
 * **Concurrent Batches:** Processes up to 5 batches simultaneously
 
 </Accordion>
@@ -406,7 +412,11 @@ The connector provides authenticated file downloads:
 
 ### Invalid Credentials
 
-**Symptom:** Saving the connector fails with the message *"Nextcloud rejected the app password, so nothing could be synced."* If the password is revoked after setup, syncs stop and you get a notification with the same message. Files already synced stay as they are.
+**Symptom:** Saving the connector fails with this message:
+
+> Nextcloud rejected the app password, so nothing could be synced. Create a new app password in Nextcloud (Personal settings > Security > Devices & sessions), then enter it in this connector's settings and save to reconnect.
+
+If the password is revoked after setup, syncs stop, and you get a notification titled **Nextcloud app password rejected** with the same message. Files already synced stay as they are.
 
 **Solutions:**
 1. Verify your username is correct

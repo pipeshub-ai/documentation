@@ -619,7 +619,7 @@ The API includes built-in rate limiting and concurrency controls:
 - Jobs are automatically retried with exponential backoff (5000ms initial delay) on failure
 - Stalled jobs are detected after 30 seconds
 - Maximum 3 retry attempts for failed jobs
-- Job history retention: when a run finishes, the queue keeps at most the 10 most recent completed runs and the 10 most recent failed runs, counted across the whole queue rather than per connector. Removing or replacing a connector's schedule also trims that connector instance's finished runs to its 10 most recent. Completed runs are kept in the queue but never appear in the status responses above; failed runs do
+- Job history retention: when a run finishes, the queue keeps at most the 10 most recent completed runs and the 10 most recent failed runs, counted across the whole queue rather than per connector. Removing or replacing a connector's schedule also trims that connector instance's finished runs to its 10 most recent. Completed runs are kept in the queue and counted by **GET /stats**, but Get Job Status and Get All leave them out; failed runs appear in all three
 - Jobs are removed and recreated when updating schedules (no job modification). The new schedule's time, cron expression and timezone are checked first, so a schedule refused for those reasons never removes the one already in place. A schedule sent with `isEnabled: false` still clears the current one
 - Removing or pausing a schedule also cancels its runs that are waiting to start, including one-time runs. If the job queue can't be reached, the request fails with `500` instead of reporting success, and a schedule is marked paused only after its runs are removed
 </Tab>

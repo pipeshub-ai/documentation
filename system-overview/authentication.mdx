@@ -1020,7 +1020,7 @@ Errors use the API's standard shape:
 `requestId` is included when the request has one. The codes you'll see from these endpoints:
 
 - `HTTP_BAD_REQUEST` - A request the service refuses, including a wrong password (see the `/authenticate` error table)
-- `HTTP_UNAUTHORIZED` - A missing, invalid or expired sign-in token or sign-in session; a failed sign-in-code check (wrong, expired or already-used code, no code requested, unknown email, or a locked account); or a sign-in step completed with a different account. A wrong password is `HTTP_BAD_REQUEST` instead
+- `HTTP_UNAUTHORIZED` - A missing, invalid or expired sign-in token or sign-in session; a failed sign-in-code check (wrong, expired or already-used code, no code requested, unknown email, or a locked account); or a sign-in step completed with a different account. A wrong current password on the change-password endpoint is also `HTTP_UNAUTHORIZED` ("Current password is incorrect."). On `/authenticate`, a wrong password is `HTTP_BAD_REQUEST` instead
 - `HTTP_FORBIDDEN` - Not allowed, for example an OAuth token without the required scope
 - `HTTP_NOT_FOUND` - Resource not found
 - `VALIDATION_ERROR` - The request body or parameters don't match the expected format

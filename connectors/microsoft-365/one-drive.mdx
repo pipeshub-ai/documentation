@@ -383,10 +383,12 @@ All subsequent syncs are incremental — only changes since the last run are fet
 
 <Accordion title="What happens if Microsoft 365 can't be read during a sync?">
 
-PipesHub never treats a failed read as "no access" or "no members". If a file's sharing or a group's member list can't be read, the file or group keeps the access PipesHub already has, and a later sync catches up:
+PipesHub never treats a failed read as "no access" or "no members". If the sharing of a file PipesHub already has, or a group's member list, can't be read, the file or group keeps the access PipesHub already has, and a later sync catches up:
 
-- **Temporary errors** (throttling, a 5xx error, a network problem) hold that part of the sync for the next run, up to 5 runs. After that the item is skipped, keeping its stored access, and the sync logs name it so it can be reindexed. Only the affected user's drive, or the group sync, waits; other users keep syncing.
+- **Temporary errors** (throttling, a 5xx error, a network problem) hold that page of changes for the next run, up to 5 runs. After that the page moves on, the item keeps its stored access, and the sync logs name it. Only the affected user's drive, or the group sync, waits; other users keep syncing.
 - **Permanent refusals** (403 or 404) keep the stored access and move on straight away.
+- **A new file whose sharing can't be read** is saved with no access once its page moves on (straight away for a 403 or 404). Its sharing is then read again on every later sync, with no limit, until it can be read.
+- **A folder that stops being shared:** files inside it whose own access can't be read are given the folder's current access, which also drops any sharing of their own. The sync logs name them so they can be reindexed.
 - **Groups missed on the first group sync** are read again: the full group sync repeats on each run, then applies the changes saved from the first attempt, until every group has been read (it gives up after 5 incomplete attempts). Groups deleted in the meantime are still removed.
 - **A group deletion that fails** is kept and retried on every run.
 - Member removals are applied even when the group's full member list can't be read, so a removed member loses access.

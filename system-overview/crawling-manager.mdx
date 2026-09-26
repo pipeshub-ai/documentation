@@ -200,7 +200,7 @@ Two more `400 Bad Request` messages you may see:
 - *"Scheduled time is missing or is not a valid date"* — a `once` schedule without a readable top-level `scheduledTime`.
 - *"This schedule can't be used: it never produces a run time. Check the cron expression and the timezone name, then try again."* — a cron expression or timezone that the scheduler can't use.
 
-A refused schedule leaves the connector's existing schedule running unchanged.
+These two refusals leave the connector's existing schedule running unchanged. A schedule sent with `isEnabled: false` is different: it removes the connector's current schedule and then answers `400` "Cannot schedule a disabled job".
 
 **Status:** `401 Unauthorized`
 ```json
@@ -482,13 +482,9 @@ Remove all scheduled crawling jobs for the organization. Admins only: any other 
 }
 ```
 
-**Status:** `403 Forbidden`
-```json
-{
-  "success": false,
-  "message": "Admin privileges required"
-}
-```
+**Status:** `400 Bad Request` (caller is not an admin)
+
+Message: "Admin access required". Nothing is removed.
 
 **Status:** `500 Internal Server Error`
 ```json
@@ -743,7 +739,7 @@ The API includes built-in rate limiting and concurrency controls:
 - Stalled jobs are detected after 30 seconds
 - Maximum 3 retry attempts for failed jobs
 - Job history retention: Last 10 completed and 10 failed jobs per connector type
-- Jobs are removed and recreated when updating schedules (no job modification). The new schedule is checked first, so a schedule that is refused never removes the one already in place
+- Jobs are removed and recreated when updating schedules (no job modification). The new schedule's time, cron expression and timezone are checked first, so a schedule refused for those reasons never removes the one already in place. A schedule sent with `isEnabled: false` still clears the current one
 - Removing or pausing a schedule also cancels its runs that are waiting to start, including one-time runs. If the job queue can't be reached, the request fails with `500` instead of reporting success, and a schedule is marked paused only after its runs are removed
 </Tab>
 

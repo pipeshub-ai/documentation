@@ -597,12 +597,14 @@ Checkpoints are stored **per project**, and each content type carries its own:
 - **Code repository** — the default branch's commit SHA at the end of the last successful walk,
   used as the base of the next comparison
 
-A checkpoint is only written after its stage succeeds. If a sync fails partway, the affected
-stage is simply repeated on the next run.
+If saving a batch of records fails, the sweep stops there without writing its checkpoint, and
+the next run lists the items again from the previous checkpoint. The code repository stage works
+the same way: its checkpoint is only written after the stage succeeds.
 
-If a single issue or merge request can't be read or saved, the rest of the project still syncs.
-The checkpoint is saved just before the earliest failed item, so the next run asks for it again
-without re-reading everything.
+A single issue or merge request that can't be built (for example, because its comments can't be
+read) is handled differently: the rest of the project still syncs, and the checkpoint is written
+just before the earliest failed item, so the next run asks for it again without re-reading
+everything.
 
 The OAuth token is refreshed only when GitLab actually answers **401 Unauthorized**, and only once
 when several requests fail together, so refresh tokens aren't used up needlessly.

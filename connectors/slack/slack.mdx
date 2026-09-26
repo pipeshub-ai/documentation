@@ -619,16 +619,25 @@ Slack rate-limits its API per method. The connector paces its own calls to stay 
 
 - The Redirect URL in Slack must match the one in PipesHub exactly, including scheme, host, port, and path.
 
-**`invalid_auth` / `token_revoked`**
+**`invalid_auth` / `token_revoked` / `token_expired`**
 
-- The token was regenerated or the app was uninstalled. For the team connector, paste the new **Bot User OAuth Token**. For the individual connector, re-run authorization from the **Authorize** tab.
+- **Signed in with Slack, with token rotation on:** on `invalid_auth` or `token_expired`, PipesHub renews the token and retries the call once. You still see these errors if Slack refuses the retry too. You also see `invalid_auth` without a new renewal if the token was renewed less than a minute earlier, because a newer token wouldn't help. If they keep appearing, re-run authorization from the **Authorize** tab. See **Token rotation** below.
+- **`token_expired` on a pasted token:** the token comes from a Slack app with token rotation on, and it has reached its 12-hour expiry. A new token from the same app will expire again, so follow **Token rotation** below: use an app with rotation left off, or connect the Individual connector with Slack sign-in.
+- **`token_revoked`, or `invalid_auth` on a pasted token:** the token was regenerated or the app was uninstalled. For the Workspace connector, paste the new **Bot User OAuth Token**. For the Individual connector, paste the new user token if you use the API token option, or re-run authorization from the **Authorize** tab if you signed in with Slack.
 
 **"Invalid Slack token format"**
 
 - PipesHub accepts bot tokens (`xoxb-…`) and user tokens (`xoxp-…`), and, for apps with **token rotation** turned on, the rotating forms `xoxe.xoxb-…` and `xoxe.xoxp-…`. A token that starts with just `xoxe-` is a refresh token, which can't call Slack; paste the access token from **OAuth & Permissions** instead.
 
+**Token rotation**
+
+With **token rotation** turned on, Slack's access tokens expire after about 12 hours. Each one comes with a refresh token that works once. What happens next depends on how the connector got its token:
+
+- **Signed in with Slack (Individual connector, OAuth):** rotation is supported. PipesHub renews the token before it expires and saves the new refresh token each time, so you don't need to do anything. If a renewal is missed, the connector renews the token on the next call to Slack and retries that call once.
+- **Pasted token (Workspace connector, or the API token option of the Individual connector):** a pasted token has no refresh token, so PipesHub can't renew it, and syncing stops about 12 hours after you paste it. The connector logs that the pasted token has expired. Use a Slack app with token rotation left off for pasted tokens. Slack doesn't let an app turn rotation off once it's on, so if yours has it on, create a new app without it, or connect the Individual connector with Slack sign-in instead.
+
 <Warning>
-  PipesHub doesn't refresh rotating tokens yet. Slack expires them after about 12 hours, and the connector stops syncing when that happens. Leave **token rotation** off for the Slack app you use with PipesHub.
+  **"Slack no longer accepts PipesHub's saved sign-in"** in the connector logs means Slack refused the refresh token, usually because the app was reinstalled or removed, or the sign-in was revoked. Renewing again can't fix that, so PipesHub stops trying. Re-run authorization from the connector's **Authorize** tab to reconnect Slack. After a few refused renewals, the connector is also marked as needing to be reconnected.
 </Warning>
 
 **Only a bot token was found (Individual)**

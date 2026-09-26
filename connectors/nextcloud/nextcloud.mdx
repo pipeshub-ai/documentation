@@ -48,7 +48,7 @@ This connector uses the **Nextcloud WebDAV API** for file operations. WebDAV (We
 A **cursor** (activity ID) is used to track changes between syncs.
 
 1. When you first sync, the connector fetches all files and folders using WebDAV PROPFIND.
-2. After the sync completes, the connector saves the latest activity ID as a cursor. If the first sync can't read or save the whole drive, no cursor is saved, and the next sync starts over with a full sync.
+2. After the sync completes, the connector saves the latest activity ID as a cursor. If the first sync can't list the drive, or any file or folder in it can't be read or saved, no cursor is saved, and the next sync starts over with a full sync. Files that did sync stay synced.
 3. Instead of re-downloading the entire file list to check for changes, the connector queries the Activity API with this cursor.
 4. The API returns only the files and folders that have been added, modified, or deleted since the last sync.
 
@@ -129,7 +129,7 @@ On the **Authenticate** tab, enter:
   **Email must match.** Use a Nextcloud account whose email matches the email on your PipesHub account. A mismatch breaks permission resolution and you will not see your synced records in search.
 </Warning>
 
-Click **Save** to store the credentials. PipesHub validates the connection against Nextcloud before persisting. If Nextcloud rejects the app password, the save fails with a message telling you to create a new app password and reconnect.
+Click **Save** to store the credentials. Saving doesn't contact Nextcloud. The app password is checked when you turn the connector on. If Nextcloud rejects it, turning the connector on fails with a message telling you to create a new app password (see **Invalid Credentials** under Troubleshooting below).
 
 </Accordion>
 
@@ -409,18 +409,22 @@ The connector provides authenticated file downloads:
 
 ### Invalid Credentials
 
-**Symptom:** Saving the connector fails with this message:
+**Symptom:** Turning the connector on fails with this message:
 
-> Nextcloud rejected the app password, so nothing could be synced. Create a new app password in Nextcloud (Personal settings > Security > Devices & sessions), then enter it in this connector's settings and save to reconnect.
+> Nextcloud rejected the app password, so nothing could be synced. Create a new app password in Nextcloud (Personal settings > Security > Devices & sessions). Then turn this connector off, enter the new password in its settings, save, and turn it back on.
 
-If the password is revoked after setup, syncs stop, and you get a notification titled **Nextcloud app password rejected** with the same message. Files already synced stay as they are.
+You also get a notification titled **Nextcloud app password rejected** with the same message. If the password is revoked while the connector is on, syncs stop and you get the same notification. Files already synced and the sync position stay as they are.
 
 **Solutions:**
 1. Verify your username is correct
 2. Ensure you're using an **App Password**, not your main password
 3. Check that the app password hasn't been revoked in Nextcloud Security settings
 4. Verify the Base URL is correct (should not end with `/`)
-5. If the password was revoked or expired, create a new one under **Personal settings > Security > Devices & sessions**, enter it in the connector's settings, and save to reconnect
+5. If the password was revoked or expired:
+   1. Create a new one in Nextcloud under **Personal settings > Security > Devices & sessions**.
+   2. Turn the connector off. PipesHub doesn't accept new credentials while it's on.
+   3. Enter the new app password in the connector's settings and click **Save**.
+   4. Turn the connector back on. This is when the password is checked, and syncing starts again.
 
 ### Base URL Incorrect
 

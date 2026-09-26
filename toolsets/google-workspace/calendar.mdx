@@ -185,4 +185,13 @@ Add these OAuth scopes in the **OAuth consent screen > Scopes** section:
 Ask your agent to "schedule a meeting" and provide the date, time, title, and attendees. For example: "schedule a team meeting tomorrow at 2pm with john@example.com".
 
 **How do I update an event?**  
-Ask to "move my 2pm meeting to 3pm" or "add sarah@example.com to the team meeting". The agent will find and update the event.
+Ask to "move my 2pm meeting to 3pm" or "add sarah@example.com to the team meeting". The agent will find and update the event. To move an event, the agent needs both the new start and the new end time; with only one of them, the event is left as it is and the agent is told to send both.
+
+**Which time zone are times in?**  
+Say your time zone when it matters, for example "10:00 India time" or "10:00 Asia/Kolkata". A time without an offset is read in the time zone the agent passes with the event, and in UTC if it passes none; Google then shows the event in that zone. Times can also be given as Unix timestamps. An unknown time zone, or an end before the start, is refused before anything is sent to Google.
+
+**What about all-day events?**  
+All-day events keep the date you asked for in your time zone, and a one-day event covers that whole day.
+
+**What if something goes wrong?**  
+The agent gets a plain explanation with the next step, for example that Google is rate-limiting (and how long it asked to wait), that the Google sign-in expired and needs reconnecting, or that the connected account hasn't given permission for that action. If an event was created but reading back its meeting link failed, the agent is told the event exists, so it doesn't create it (and send the invites) a second time.

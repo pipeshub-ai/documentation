@@ -606,8 +606,10 @@ read) is handled differently: the rest of the project still syncs, and the check
 just before the earliest failed item, so the next run asks for it again without re-reading
 everything.
 
-The OAuth token is refreshed only when GitLab actually answers **401 Unauthorized**, and only once
-when several requests fail together, so refresh tokens aren't used up needlessly.
+The OAuth token is refreshed ahead of its expiry by PipesHub's normal OAuth refresh. If GitLab
+still answers **401 Unauthorized**, the connector refreshes once and retries; when several requests
+get a 401 together, they share that one refresh, so refresh tokens aren't used up needlessly. Other
+errors never trigger a refresh, even if their text happens to contain "401".
 
 </Accordion>
 

@@ -383,12 +383,17 @@ All subsequent syncs are incremental — only changes since the last run are fet
 
 <Accordion title="What happens if Microsoft 365 can't be read during a sync?">
 
-PipesHub never treats a failed read as "no access" or "no members". If the sharing of a file PipesHub already has, or a group's member list, can't be read, the file or group keeps the access PipesHub already has, and a later sync catches up:
+What happens depends on what couldn't be read:
 
-- **Temporary errors** (throttling, a 5xx error, a network problem) hold that page of changes for the next run, up to 5 runs. After that the page moves on, the item keeps its stored access, and the sync logs name it. Only the affected user's drive, or the group sync, waits; other users keep syncing.
-- **Permanent refusals** (403 or 404) keep the stored access and move on straight away.
-- **A new file whose sharing can't be read** is saved with no access once its page moves on (straight away for a 403 or 404). Its sharing is then read again on every later sync, with no limit, until it can be read.
+- **A file PipesHub already has:** if its sharing can't be read, it keeps its stored access and the rest of the sync carries on. Its sharing is read again the next time the file changes.
+- **A new file, or a folder whose sharing just changed:** a temporary error (throttling, a 5xx error, a network problem) holds that page of changes for the next run, up to 5 runs. Only that user's drive waits; other users keep syncing. A 403 or 404 doesn't hold anything.
+- **A new file, once its page moves on** (straight away for a 403 or 404, or after the 5 runs): it is saved with no access, so nobody can see it yet. Its sharing is then read again on every later sync, with no limit, until it can be read.
 - **A folder that stops being shared:** files inside it whose own access can't be read are given the folder's current access, which also drops any sharing of their own. The sync logs name them so they can be reindexed.
+- **A failed request for the list of changes itself** doesn't count toward the 5 runs. The saved position stays, and the next run reads the same page again.
+
+For groups, a failed read never empties a group:
+
+- **A group whose member list can't be read** keeps its stored members. A temporary error holds that page of group changes for up to 5 runs; a 403 or 404 moves on straight away.
 - **Groups missed on the first group sync** are read again: the full group sync repeats on each run, then applies the changes saved from the first attempt, until every group has been read (it gives up after 5 incomplete attempts). Groups deleted in the meantime are still removed.
 - **A group deletion that fails** is kept and retried on every run.
 - Member removals are applied even when the group's full member list can't be read, so a removed member loses access.

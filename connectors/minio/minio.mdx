@@ -1,0 +1,379 @@
+---
+title: "MinIO"
+description: "Self-hosted S3-compatible object storage connector"
+icon: "/logo/minio.svg"
+---
+
+<div className="max-w-2xl mx-auto mt-12">
+  <div className="p-6 border border-gray-200 dark:border-gray-700 rounded-lg bg-red-50 dark:bg-gray-800">
+    <div className="flex items-center mb-4">
+      <img
+        src="/logo/minio.svg"
+        alt="MinIO Logo"
+        className="w-8 h-8 mr-3 object-contain flex-shrink-0"
+      />
+      <h2 className="text-2xl font-semibold m-0">MinIO</h2>
+    </div>
+    <p className="text-lg text-gray-700 dark:text-gray-300 mb-4">High-performance, S3-compatible object storage</p>
+    <div className="flex items-center gap-2">
+      <span className="px-3 py-1 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 rounded-full text-sm font-medium">
+        ✅ Ready
+      </span>
+      <span className="px-3 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-full text-sm font-medium">
+        📖 Documentation Available
+      </span>
+    </div>
+  </div>
+</div>
+
+## What is this?
+
+**MinIO** is object storage that speaks the same API as Amazon S3. Teams run it on their own hardware or in a private cloud when they want full control over where data lives.
+
+This connector reads buckets and objects from your MinIO cluster and brings them into PipesHub so you can **search files with AI**, the same way you would for S3, GCS, or Azure Blob.
+
+PipesHub **only reads** data from MinIO. It does not upload, move, rename, or delete objects unless you use separate tooling for that.
+
+### How MinIO organises data
+
+MinIO uses the same mental model as S3:
+
+| Term | Meaning |
+|------|---------|
+| **Bucket** | Top-level container for objects (like a drive or root folder). |
+| **Prefix** | Part of an object key that looks like a folder path (for example `reports/2024/`). |
+| **Object** | A single stored file (PDF, image, backup, anything). |
+
+### What you need before you start
+
+1. The **API endpoint URL** for your MinIO server (for example `https://minio.company.internal:9000` or `http://localhost:9000` in development).
+2. An **Access Key** and **Secret Key** that can list buckets and read objects (see setup below).
+3. Network path from PipesHub to MinIO (firewalls, TLS certificates, and DNS must allow the connector to reach the endpoint).
+4. A PipesHub workspace where you can add connectors.
+
+<Info>
+  MinIO’s **web Console** (where you create access keys) often runs on a **different port or URL** than the S3 API. The value you paste into PipesHub must be the **S3 API endpoint**, not the Console URL, unless your deployment explicitly serves the API there.
+</Info>
+
+---
+
+## Setup
+
+<AccordionGroup type="single" collapsible>
+
+<Accordion title="Setup" defaultOpen>
+
+<div className="mt-4">
+
+### How the connector authenticates
+
+The MinIO connector signs in with:
+
+- **Endpoint URL** — where the S3 API is reachable.
+- **Access Key** and **Secret Key** — programmatic credentials (same idea as AWS access keys).
+- **Use SSL/TLS** and **Verify SSL certificate** — match how your server is exposed (see tips in Step 5).
+
+### Step 1 — Confirm your API endpoint
+
+1. Ask whoever runs MinIO for the **S3 endpoint**, or check your deployment docs / Helm values / Docker Compose file.
+2. Typical patterns:
+   - **Docker / local dev:** `http://localhost:9000` or `http://127.0.0.1:9000`
+   - **Production behind TLS:** `https://minio.example.com` or `https://storage.example.com:443`
+3. Open that URL in a browser only if your setup serves a status page there; otherwise use `mc` or `curl` to verify connectivity from a machine on the same network as PipesHub.
+
+<Warning>
+  If PipesHub runs in the cloud and MinIO is only on `localhost`, the connector cannot reach it. MinIO must be reachable at a hostname or IP that **PipesHub’s backend** can resolve and connect to.
+</Warning>
+
+---
+
+### Step 2 — Create access keys in MinIO Console
+
+1. Open the **MinIO Console** in your browser (your admin will give you the URL; often port `9001` or a path on the same host as the API).
+2. Sign in with credentials that have permission to create access keys (often the root / admin user in small setups).
+3. In the left menu, go to **Identity → Access Keys** (wording may be **Users** + policies in older versions; the goal is to obtain an access key pair with **read** access to the buckets you want).
+
+<div className="text-center">
+  <img
+    src="/images/connectors/minio/console_access_keys.png"
+    alt="MinIO Console — Identity and Access Keys"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+4. Click **Create access key** (or equivalent).
+5. Optionally attach a **read-only** policy that limits which buckets can be read (recommended for production).
+6. Save the **Access Key** and **Secret Key** when they are shown — the secret is often shown **only once**.
+
+<div className="text-center">
+  <img
+    src="/images/connectors/minio/create_access_key.png"
+    alt="MinIO Console — create access key dialog"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+<Info>
+  For a quick **local** trial with the default `minio/minio` image, the environment variables `MINIO_ROOT_USER` and `MINIO_ROOT_PASSWORD` are sometimes used as the first admin pair. You can use those in PipesHub if your policy allows — still prefer dedicated keys for anything beyond a sandbox.
+</Info>
+
+<Warning>
+  Treat access keys like passwords. Anyone with the pair can read (and possibly write) whatever the attached policy allows. Rotate keys if they are exposed.
+</Warning>
+
+---
+
+### Step 3 — Open MinIO in PipesHub
+
+1. In PipesHub, open **Workspace → Connectors** in the left sidebar.
+2. Find the **MinIO** tile.
+3. Click **+ Setup** (or **Setup**).
+
+A panel opens on the right with **Authenticate Instance** and **Configure Records**. You complete them in order.
+
+---
+
+### Step 4 — Enter endpoint and keys (Authenticate Instance)
+
+<div className="text-center">
+  <img
+    src="/images/connectors/minio/authenticate_tab.png"
+    alt="MinIO Authenticate Instance tab in PipesHub"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+Fill in the fields from top to bottom:
+
+1. **Instance name** — a label for you (for example `Prod MinIO` or `Lab cluster`).
+2. **Endpoint URL** — the S3 API base URL from Step 1, with scheme (`http://` or `https://`). **No trailing slash.**
+3. **Access Key** — from Step 2.
+4. **Secret Key** — from Step 2.
+5. **Use SSL/TLS** — turn **on** for `https://` endpoints; turn **off** for plain `http://` (common in local dev).
+6. **Verify SSL certificate** — leave **on** for public certificates. Turn **off** only if you use a private CA or self-signed cert and you understand the risk.
+
+Click **Next →**.
+
+<Warning>
+  Extra spaces or line breaks when pasting keys will break authentication. Paste the values exactly as MinIO generated them.
+</Warning>
+
+---
+
+### Step 5 — Sync settings and filters (Configure Records)
+
+<div className="text-center">
+  <img
+    src="/images/connectors/minio/configure_tab.png"
+    alt="MinIO Configure Records tab — sync settings"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+Under **Sync settings**:
+
+- **Scheduled** — PipesHub checks MinIO on an interval (recommended for steady updates).
+- **Manual** — sync only when you trigger it from the instance overview.
+
+If you chose **Scheduled**, pick a **Sync Interval** (for example **1 Hour**).
+
+Scroll to **Indexing & sync filters**. With **no filters**, everything your credentials can read may be synced — which can be large.
+
+Click **+ Add filter** to narrow scope:
+
+<div className="text-center">
+  <img
+    src="/images/connectors/minio/filter_fields.png"
+    alt="MinIO filters — bucket names, file extensions, dates"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+| Filter | Use when |
+|--------|----------|
+| **Bucket Names** | You only want specific buckets. |
+| **File Extensions** | You only want certain types (for example `pdf, docx, txt`). |
+| **Modified Date** / **Created Date** | You want to skip very old objects. |
+
+Leave **Enable Manual Indexing** off unless your team has a specific reason — with it off, new files are indexed for search automatically.
+
+Click **Save Configuration**.
+
+---
+
+### Step 6 — Enable sync
+
+After saving, you see an instance row on the MinIO connector page.
+
+<div className="text-center">
+  <img
+    src="/images/connectors/minio/instance_card.png"
+    alt="MinIO instance card with Sync Enabled toggle"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+1. Turn **Sync Enabled** **on** when you are ready for PipesHub to pull data.
+
+---
+
+### Step 7 — Watch progress in Overview
+
+Click the instance row to open **Overview**.
+
+<div className="text-center">
+  <img
+    src="/images/connectors/minio/instance_panel.png"
+    alt="MinIO Overview — records status and sync actions"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+- **Records Status** — **Total**, **Failed**, **Unsupported**, **Processing**, **Not Started** (same meaning as other storage connectors).
+- **Sync** — pull latest changes now.
+- **Full sync** — rescan from scratch (slower; use if something looks inconsistent).
+- **Manage Configuration** — change keys, endpoint, TLS options, or filters.
+
+When **Failed** stays low and **Total** grows as expected, the connection is healthy.
+
+</div>
+
+</Accordion>
+
+<Accordion title="How syncing works">
+
+<div className="mt-4">
+
+### First sync
+
+The first run lists buckets (respecting filters), walks objects, and builds records. Large deployments can take a long time — use **Bucket Names** and **File Extensions** filters to keep the first sync manageable.
+
+Rough guide (same order of magnitude as S3-sized stores):
+
+| Objects (approx.) | First sync |
+|-------------------|------------|
+| Under 1,000 | Minutes |
+| 10,000 – 100,000 | Up to a few hours |
+| 1,000,000+ | Many hours |
+
+### Later syncs
+
+After the first sync, the connector tracks what changed and pulls **incremental** updates, which are usually much faster than the initial scan.
+
+### Scope in PipesHub
+
+Whether synced content is **Personal** or **Team** visible is controlled when you configure the connector in PipesHub, in addition to what your MinIO keys can read.
+
+</div>
+
+</Accordion>
+
+<Accordion title="What PipesHub can read">
+
+<div className="mt-4">
+
+### Indexed for text search
+
+Same behaviour as other document connectors — text-heavy formats are indexed for AI search:
+
+- Documents — **PDF**, **DOCX**, **XLSX**, **PPTX**, **ODT**, **RTF**
+- Text — **TXT**, **MD**, **CSV**, **JSON**, **XML**, **HTML**
+- Code — common source formats
+
+### Synced but not full-text indexed
+
+Images, video, many archives, and opaque binaries are stored and discoverable by metadata, but their **content** is not turned into searchable text.
+
+</div>
+
+</Accordion>
+
+</AccordionGroup>
+
+---
+
+## Advanced: Least-privilege policy (concept)
+
+MinIO uses **IAM-style policies** (JSON) similar to AWS. For read-only sync, a policy should allow listing the buckets you need and `s3:GetObject` on the object ARNs you care about, and **not** allow destructive actions.
+
+Refer to the official MinIO documentation for policy examples and the **Policy** editor in Console. Exact JSON depends on your bucket names and whether you use MinIO Server or a distributed setup.
+
+---
+
+## Troubleshooting
+
+<AccordionGroup type="single" collapsible>
+
+<Accordion title="Authentication failed or cannot connect">
+
+- Confirm the **Endpoint URL** is the **S3 API** address (correct scheme, host, and port).
+- Match **Use SSL/TLS** to the URL (`https` → SSL on; `http` → SSL off).
+- For self-signed TLS, try **Verify SSL certificate** off temporarily to isolate certificate issues — then fix trust properly in production.
+- Ensure no corporate proxy or firewall blocks outbound traffic from PipesHub to MinIO.
+- Re-create access keys in Console if the old pair was rotated or deleted.
+
+</Accordion>
+
+<Accordion title="Empty bucket list or missing buckets">
+
+- The access key may lack `s3:ListBucket` / list permissions on those buckets.
+- Check **Bucket Names** filters — an **exclude** rule can hide everything by mistake.
+- Verify you are pointing at the correct MinIO tenant / alias if your organisation runs several clusters.
+
+</Accordion>
+
+<Accordion title="Sync runs but many Failed records">
+
+- Often **permission denied** on specific prefixes or objects.
+- Encrypted objects may need extra configuration on the MinIO side.
+- Very large objects may hit timeouts — your platform admin may need to tune limits.
+
+</Accordion>
+
+<Accordion title="Localhost works from my laptop but not from PipesHub">
+
+- `localhost` on your laptop is **not** the same as `localhost` inside PipesHub’s servers.
+- Use a hostname or IP that the **PipesHub backend** can reach (VPN, internal DNS, or tunneling as appropriate).
+
+</Accordion>
+
+</AccordionGroup>
+
+---
+
+## Frequently asked questions
+
+<AccordionGroup type="single" collapsible>
+
+<Accordion title="Is this the same connector as Amazon S3?">
+  No. **Amazon S3** and **MinIO** are separate connector tiles in PipesHub. MinIO is tuned for a **custom endpoint** and on-prem / private deployments. Use **S3** when your data lives in AWS with standard AWS endpoints and IAM keys.
+</Accordion>
+
+<Accordion title="Can I connect multiple MinIO clusters?">
+  Yes. Add another instance from the MinIO connector page (**+ Add Another Instance**) with that cluster’s endpoint and keys.
+</Accordion>
+
+<Accordion title="Does MinIO use AWS regions?">
+  MinIO may report a default region for S3 compatibility. You normally do **not** pick a region in PipesHub the way you do in AWS; the endpoint URL defines where traffic goes.
+</Accordion>
+
+<Accordion title="What happens if I delete an object in MinIO?">
+  On a later sync, PipesHub detects the removal and updates search accordingly (subject to your retention settings).
+</Accordion>
+
+</AccordionGroup>
+
+---
+
+## Useful links
+
+- **MinIO documentation** — [https://min.io/docs/minio/linux/index.html](https://min.io/docs/minio/linux/index.html)
+- **S3 API compatibility** — [https://min.io/docs/minio/linux/operations/concepts.html](https://min.io/docs/minio/linux/operations/concepts.html)
+- **Access keys** — see *Identity* and *Security* sections in the MinIO docs for your server version
+
+<div className="text-center mt-12 p-6 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg max-w-2xl mx-auto">
+  <h3 className="text-lg font-semibold mb-2">Ready to connect?</h3>
+  <p className="text-gray-600 dark:text-gray-400">
+    Point PipesHub at your MinIO API endpoint, add read-capable keys, turn sync on, and your objects become searchable alongside the rest of your workspace.
+  </p>
+</div>

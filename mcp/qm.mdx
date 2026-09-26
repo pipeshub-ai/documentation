@@ -135,7 +135,7 @@ If the CLI says it is not connected, have the agent run `pipeshub auth connect-h
 
 | Check | Expect |
 | --- | --- |
-| `pipeshub auth status --json` | Connected; your user and org; no token printed |
+| `pipeshub auth status --json` | Connected; your user and org; no token printed (if an error page or proxy echoes the token back, the CLI shows `[redacted]` in its place) |
 | `pipeshub search "a term you know is indexed" --json` | `hits` with `recordId` / `webUrl`, or exit `6` if nothing matches |
 | `pipeshub ask "…" --json` | An answer **with citations**, or exit `6` if uncited |
 | A document you cannot access | Denial — not a leak |
@@ -147,6 +147,9 @@ If the CLI says it is not connected, have the agent run `pipeshub auth connect-h
 | Agent says it needs `semantic:read` | It called `GET /api/v1/search` (history) instead of the CLI | New chat. Tell it to use `pipeshub ask` / `search`. Do not widen the PAT |
 | `sources: []` and `ask` 401 with a `phpat_` token | PipesHub older than [pipeshub-ai#2971](https://github.com/pipeshub-ai/pipeshub-ai/pull/2971) (not in `v0.6.0-beta`) | Upgrade PipesHub. Keep the `phpat_` prefix — do not strip it |
 | `localhost` / connection refused from the agent | The sandbox is not on your machine | Use public HTTPS; put that origin in the keychain |
+| `could not reach …/mcp: fetch failed (…)` | Network, not auth. The part in brackets is the reason: `ECONNREFUSED` means nothing listens there, `ENOTFOUND` means the name does not resolve, a certificate message means this machine does not trust the instance's HTTPS certificate | Fix the address or the certificate; from a sandbox, use a public HTTPS origin |
+| `PIPESHUB_BASE_URL is not a valid URL. It does not look like an address; if it is your token, it belongs in PIPESHUB_TOKEN.` (for a bare `eyJ…` token without the `phpat_` prefix: `…It holds what looks like a token, which belongs in PIPESHUB_TOKEN.`) | The two keychain entries are swapped. The CLI never prints the value | Put the PAT under `PIPESHUB_TOKEN` and the origin under `PIPESHUB_BASE_URL` |
+| `auth status` says not connected, with a reason such as "token revoked" | The instance refused the token and said why | Mint a new PAT and replace the keychain entry |
 | `PIPESHUB_TOKEN` set, `PIPESHUB_BASE_URL` missing | `sandbox.env` does not reach Sprites | Second keychain entry (or org credential) for the URL |
 | `pipeshub: command not found` | Stock Sprite image, no first-run install | `npm install -g @pipeshub-ai/mcp` once on that Sprite |
 | `qm doctor` rejects a Resend *sending-only* key | [qm#353](https://github.com/yc-software/qm/issues/353) | Known false complaint; the key is the right kind |

@@ -12,17 +12,27 @@ A fresh PipesHub has nothing to search until you connect a source, and connectin
 
 ## What you get
 
-Acme Corp is 41 records across five systems, loaded the way real connectors load them, so search, citations and permissions behave exactly as they would with your own data:
+Acme Corp is 65 records across five systems, loaded the way real connectors load them, so search, citations and permissions behave exactly as they would with your own data:
 
 | Looks like | Contains |
 | --- | --- |
 | **GitHub** | two repositories: pull requests, issues, review comments |
-| **Jira** | an incidents project and a support-escalation project |
-| **Slack** | four channels, including two decision threads |
-| **Google Drive** | design docs, a runbook, the on-call handbook, release notes — and one restricted pricing document |
-| **ServiceNow** | customer cases that led to an escalation |
+| **Jira** | an incidents project, a support-escalation project and a finance-operations project |
+| **Slack** | engineering, support, sales, launch and people channels, including decision threads |
+| **Google Drive** | a folder per team: design docs and runbooks, account plans, launch plans and results, finance policies, the employee handbook — plus five restricted folders |
+| **ServiceNow** | customer cases that led to an escalation, and an HR service desk |
 
-Two story lines run through it: a billing-retry incident (why the payment service changed, and who decided), and an export-timeout problem that travels from customer cases through support into engineering. Citations read "GitHub · Pull request", "Jira · Ticket" and so on.
+Two engineering story lines run through it: a billing-retry incident (why the payment service changed, and who decided), and an export-timeout problem that travels from customer cases through support into engineering. Each team has its own stories too:
+
+| Team | What it can answer |
+| --- | --- |
+| **Sales** | whether the Northwind Traders renewal is at risk and what's being done, and how to handle a renewal with an open escalation |
+| **Support** | which customers reported export timeouts and what fixed them; what happened with Contoso's invoice that showed VAT on an exempt line |
+| **Marketing** | when background exports launched, why that date, and how the launch performed |
+| **Finance** | why Contoso's invoice was wrong and whether the billing rule is fixed; how much you can spend without your manager's approval |
+| **People (HR)** | how much unused leave you can carry over (the handbook is out of date), and what a new engineer does in their first week |
+
+Citations read "GitHub · Pull request", "Jira · Ticket" and so on.
 
 Once the connector is active, the new-chat landing offers five questions the data was written to answer. The first is the one to try:
 
@@ -37,7 +47,7 @@ A good answer cites a pull request, an incident, a Slack thread and a design doc
 3. **Enable** it. The sync takes well under a minute; records index over the next minute or two.
 4. Open a new chat. The five questions appear under the input.
 
-The person who adds the connector automatically sees everything except the restricted pricing material (see below).
+The person who adds the connector automatically sees every team's folders, but none of the restricted ones (see below).
 
 <Tip>
   Keep the connector's name descriptive. In Agent mode the assistant chooses which sources to search by their names; a name like "Acme Corp demo data: GitHub, Jira, Slack, Google Drive and ServiceNow" tells it what is inside. That is the name the headless setup uses.
@@ -59,10 +69,19 @@ The most convincing thing the demo shows is that the same question gets differen
 
 | Person | Groups | Sees |
 | --- | --- | --- |
-| **Alice Chen** (`alice@acme-demo.example`) | engineering, support | both story lines, the handbook |
-| **Bob Okafor** (`bob@acme-demo.example`) | engineering, support, **pricing committee** | everything Alice sees, plus the pricing strategy and the `#pricing-committee` thread |
+| **Alice Chen** (`alice@acme-demo.example`) | every team's readers group, plus **Launch core team** and **Payments contract readers** | every team's folders, the embargoed next-launch brief and the payment processing agreement |
+| **Bob Okafor** (`bob@acme-demo.example`) | every team's readers group, plus **Pricing committee**, **Deal desk** and **People managers** | every team's folders, the pricing strategy and the `#pricing-committee` thread, the Northwind deal desk decision and the compensation bands |
 
-Ask both *"What is the enterprise pricing strategy for 2026?"* — Alice gets nothing relevant, Bob gets the document, cited from Google Drive. The person who added the connector is in the same two groups as Alice, so they see what she sees and get no answer to that question either. That is the permission check working, not a missing record, and the chat landing says so: for anyone who can't see the pricing document, that question carries a lock and *"Pricing committee only, so you'll get no answer here."* Admins are also told to sign in as `bob@acme-demo.example` to see the answer, when that account exists.
+Ask both *"What is the enterprise pricing strategy for 2026?"* — Alice gets nothing relevant, Bob gets the document, cited from Google Drive. The person who added the connector is in every team's readers group but none of the restricted ones, so they get no answer to that question either. That is the permission check working, not a missing record, and the chat landing says so: for anyone who can't see the pricing document, that question carries a lock and *"Pricing committee only, so you'll get no answer here."* Admins are also told to sign in as `bob@acme-demo.example` to see the answer, when that account exists.
+
+Each team's restricted folder works the same way, and they don't all favour Bob:
+
+| Question | Alice | Bob |
+| --- | --- | --- |
+| *What discount did the deal desk approve for the Northwind renewal?* | no answer | the deal desk decision |
+| *What is the next product we are launching after background exports?* | the embargoed brief | no answer |
+| *What rate do we pay for card processing?* | the payment processing agreement | no answer: the budget review mentions fees, not the rate |
+| *What is the salary band for a senior engineer?* | no answer | the compensation bands |
 
 Nobody else in your organisation is in any of Acme's groups, so the demo shows them nothing: only the person who added it, Alice and Bob see its records.
 
@@ -104,6 +123,10 @@ Once your own data is indexed, admins see a notice on the chat landing and on th
 - **Keep for now** — hides the notice in this browser for a week; other admins, or you in another browser, still see it. The other two choices apply to the whole organisation.
 
 To do it by hand, delete the Demo connector from **Workspace → Connectors**. Its records, groups and permissions go with it. If you created Alice and Bob, delete them under **Workspace → Users**.
+
+## Build Packs on the demo data
+
+Each team's stories are the demo data behind a [Build Pack](https://github.com/pipeshub-ai/examples/tree/main/packs) in the examples repository: instructions for Claude Code, Codex, Cursor and Omnigent, the questions to ask, and the records a good answer cites. There is one per team: [Engineering](https://github.com/pipeshub-ai/examples/tree/main/packs/engineering), [Sales](https://github.com/pipeshub-ai/examples/tree/main/packs/sales), [Support](https://github.com/pipeshub-ai/examples/tree/main/packs/support), [Marketing](https://github.com/pipeshub-ai/examples/tree/main/packs/marketing), [Finance](https://github.com/pipeshub-ai/examples/tree/main/packs/finance) and [People](https://github.com/pipeshub-ai/examples/tree/main/packs/hr). Try a pack here before pointing it at your own tools.
 
 ## For coding agents
 

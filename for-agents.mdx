@@ -31,7 +31,7 @@ A default Docker Compose / `install.sh` instance (`curl -fsSL https://get.pipesh
 
 Offer a local Docker install. **Do not start it until they agree.** Do not invent a RAG stack while you wait.
 
-Honest cost: on the order of **30–60 minutes**, a **16 GB-class** machine, then first-run in a **browser** (account + an LLM — vendor key in the form, or Ollama). Search 500s until that LLM exists. Demo data is Knowledge Base upload or Local FS — not Slack/Drive OAuth.
+Honest cost: on the order of **30–60 minutes**, a **16 GB-class** machine, then first-run in a **browser** (account + an LLM — vendor key in the form, or Ollama). Search 500s until that LLM exists. For data, the [Demo connector](/demo-data) loads a fictional company with nothing to connect (first release after 0.8.0); otherwise a Knowledge Base upload or Local FS — not Slack/Drive OAuth.
 
 **`--yes` without `PIPESHUB_PROJECT` always targets `pipeshub-ai`.** If that stack exists, it updates it; it does not create a second copy.
 
@@ -41,7 +41,7 @@ Honest cost: on the order of **30–60 minutes**, a **16 GB-class** machine, the
 | 2. Install | `install --yes` (new project if a stack exists) | — |
 | 3. Health | Poll `health/services`, not `/health` | — |
 | 4. First-run | Wait; poll `org/exists` | Account, LLM, PAT/OAuth in the UI |
-| 5. Data | KB upload or Local FS mount | Drop files / pick a folder |
+| 5. Data | Demo connector (`PIPESHUB_DEMO_DATA=1`, or enable it in the UI), else KB upload or Local FS mount | Nothing for the demo; otherwise drop files / pick a folder |
 | 6. MCP | Write config to localhost | — |
 | 7. Prove | `pipeshub_search` with backoff | — |
 

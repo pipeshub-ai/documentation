@@ -20,7 +20,7 @@ If they have no instance yet, stand Docker up first ([Quickstart](/quickstart)),
 
 - Docker is already up (30–60 minutes and ~16 GB RAM are the install, not this script).
 - The human still creates a **gitignored env file** with the account password and LLM key (or Ollama). Do not paste those into chat.
-- Connector OAuth stays in a **browser**. Demo data is Knowledge Base upload or Local FS.
+- Connector OAuth stays in a **browser**. For something to search without connecting anything, set `PIPESHUB_DEMO_DATA=1` to load the [Acme Corp demo data](/demo-data); otherwise use a Knowledge Base upload or Local FS.
 
 ## What the agent may do
 
@@ -44,7 +44,7 @@ It mints these scopes: `conversation:chat`, `semantic:write`, `kb:read`, `user:r
 
 - MCP origin is `{PIPESHUB_ORIGIN}/mcp` (default `http://localhost:3000/mcp`).
 - Stdio bridge: `--bearer-auth` via env interpolation from that file — still do not print the token.
-- Index something (KB upload or Local FS), then `pipeshub_sources` and `pipeshub_search` with backoff. Empty hits means still indexing, not "PipesHub is broken."
+- Index something (the Demo connector if `PIPESHUB_DEMO_DATA=1` was set, otherwise a KB upload or Local FS), then `pipeshub_sources` and `pipeshub_search` with backoff. Empty hits means still indexing, not "PipesHub is broken."
 - Search 500 `LLM configuration is missing` means the LLM step failed; do not retry PAT create.
 
 API payloads the script sends: [`BOOTSTRAP.md`](https://github.com/pipeshub-ai/pipeshub-ai/blob/main/deployment/docker-compose/BOOTSTRAP.md) in `pipeshub-ai`.

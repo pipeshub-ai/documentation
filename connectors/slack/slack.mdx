@@ -621,8 +621,9 @@ Slack rate-limits its API per method. The connector paces its own calls to stay 
 
 **`invalid_auth` / `token_revoked` / `token_expired`**
 
-- For a connector signed in with Slack and token rotation on, PipesHub renews the token and retries the call once on `invalid_auth` or `token_expired`, so those two only show up when that renewal fails too. See **Token rotation** below.
-- `token_revoked`, or any of these on a pasted token, means the token was regenerated or the app was uninstalled. For the team connector, paste the new **Bot User OAuth Token**. For the individual connector, re-run authorization from the **Authorize** tab.
+- **Signed in with Slack, with token rotation on:** on `invalid_auth` or `token_expired`, PipesHub renews the token and retries the call once. You still see these errors if Slack refuses the retry too. You also see `invalid_auth` without a new renewal if the token was renewed less than a minute earlier, because a newer token wouldn't help. If they keep appearing, re-run authorization from the **Authorize** tab. See **Token rotation** below.
+- **`token_expired` on a pasted token:** the token comes from a Slack app with token rotation on, and it has reached its 12-hour expiry. A new token from the same app will expire again, so follow **Token rotation** below: use an app with rotation left off, or connect the Individual connector with Slack sign-in.
+- **`token_revoked`, or `invalid_auth` on a pasted token:** the token was regenerated or the app was uninstalled. For the Workspace connector, paste the new **Bot User OAuth Token**. For the Individual connector, paste the new user token if you use the API token option, or re-run authorization from the **Authorize** tab if you signed in with Slack.
 
 **"Invalid Slack token format"**
 

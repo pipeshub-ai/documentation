@@ -521,11 +521,11 @@ Box permissions are managed through **collaborations** - explicit grants that gi
    - Recursively removes permissions from all descendant files and folders
    - Ensures access control consistency
 
-6. **Complete collaborator lists:** An item's collaborators are read page by page to the end. If a page can't be read, the item keeps the access it already has in PipesHub and the next sync fills in the rest.
+6. **Complete collaborator lists:** An item's collaborators are read page by page to the end. If a page fails with a temporary error, the item keeps the access it already has in PipesHub and the next sync fills in the rest. If Box answers a later page with 403 or 404, the pages already read are saved and the rest are not requested again; Box treats that answer as final.
 
 ### Share history
 
-A full sync also replays past sharing events from Box's enterprise event history (Box keeps up to a year of it), so each person's **Shared with me** is complete. The replay saves its place after each page:
+A full sync also replays past sharing events from Box's enterprise event history (Box keeps up to a year of it), so each person's **Shared with me** is complete. The replay saves its place after each page, as long as nothing in that full sync has failed to read so far. If something has, it still reads the pages but doesn't save its place, so the next full sync replays the same history:
 
 - On a large enterprise, it reads a set number of pages per sync and carries on from where it stopped on the next one, so the whole history is applied within a few syncs of connecting.
 - Later full syncs resume from the saved place instead of starting again, so only newer history is read.
@@ -559,7 +559,7 @@ The connector automatically determines the optimal sync approach:
 1. **No Cursor:** Performs full sync
 2. **Has Cursor:** Performs incremental sync using event stream
 3. **Cursor Expired:** Falls back to full sync and establishes new cursor
-4. **Previous full sync incomplete:** If a full sync couldn't read everything (for example, a folder listing or a user's files failed after retries), the cursor isn't saved, and the next run is a full sync again. This keeps changes from being skipped. A 403 or 404 from Box is its final answer and doesn't count as incomplete.
+4. **Previous full sync incomplete:** If a full sync couldn't read everything (for example, a folder listing or a user's files failed after retries), the cursor isn't saved, and the next run is a full sync again. This keeps changes from being skipped. A 403 or 404 from Box is usually its final answer and doesn't count as incomplete. The exception is a 403 when listing users: without the user list, nobody's files can be walked, so that run is incomplete.
 
 ### One sync at a time
 
@@ -604,7 +604,7 @@ Scheduled syncs, manual syncs and Box webhooks never run two syncs of the same c
 **Solutions:**
 - For users, turn on the app's **Manage users** scope. For groups, turn on **Manage groups**. Both are under **Administrative Actions** in the Box Developer Console (see Step 2 of **Create Box App**).
 - Have a Box admin re-authorize the app in the Box Admin Console. Scope changes only take effect after re-authorizing.
-- Until **Manage users** is fixed, every run is a full sync, which is quick because no files can be listed. The first run after the fix syncs everything.
+- Until **Manage users** is fixed, a connector that hasn't finished its first full sync repeats the full sync on every run, which is quick because no files can be listed. A connector that already syncs incrementally keeps its place in the event stream and applies no changes until the user list can be read; nothing is skipped in the meantime. The first run after the fix catches up.
 
 ### Sync Issues
 
@@ -623,7 +623,7 @@ Scheduled syncs, manual syncs and Box webhooks never run two syncs of the same c
 
 **Solutions:**
 - The connector has built-in rate limiting (50 req/s), and retries a rate-limited request after the wait Box asks for
-- When a file can't be opened because Box keeps rate-limiting, the message says how long Box asked to wait
+- When a file can't be opened because Box keeps rate-limiting, the person sees *"Too many requests to …. Please try again shortly."*, with the connector's name filled in. The wait Box asked for is passed on in the response's `Retry-After` header
 - Increase sync interval for scheduled syncs
 - Contact Box support to request higher rate limits for your enterprise
 

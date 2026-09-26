@@ -621,8 +621,8 @@ Slack rate-limits its API per method. The connector paces its own calls to stay 
 
 **`invalid_auth` / `token_revoked` / `token_expired`**
 
-- For a connector signed in with Slack and token rotation on, PipesHub first renews the token and retries once, so these only show up when that renewal fails too. See **Token rotation** below.
-- Otherwise, the token was regenerated or the app was uninstalled. For the team connector, paste the new **Bot User OAuth Token**. For the individual connector, re-run authorization from the **Authorize** tab.
+- For a connector signed in with Slack and token rotation on, PipesHub renews the token and retries the call once on `invalid_auth` or `token_expired`, so those two only show up when that renewal fails too. See **Token rotation** below.
+- `token_revoked`, or any of these on a pasted token, means the token was regenerated or the app was uninstalled. For the team connector, paste the new **Bot User OAuth Token**. For the individual connector, re-run authorization from the **Authorize** tab.
 
 **"Invalid Slack token format"**
 
@@ -636,7 +636,7 @@ With **token rotation** turned on, Slack's access tokens expire after about 12 h
 - **Pasted token (Workspace connector, or the API token option of the Individual connector):** a pasted token has no refresh token, so PipesHub can't renew it, and syncing stops about 12 hours after you paste it. The connector logs that the pasted token has expired. Use a Slack app with token rotation left off for pasted tokens. Slack doesn't let an app turn rotation off once it's on, so if yours has it on, create a new app without it, or connect the Individual connector with Slack sign-in instead.
 
 <Warning>
-  **"Slack no longer accepts PipesHub's saved sign-in"** means Slack refused the refresh token, usually because the app was reinstalled or removed, or the sign-in was revoked. Renewing again can't fix that, so PipesHub stops trying. Re-run authorization from the connector's **Authorize** tab to reconnect Slack. After a few refused renewals, the connector is also marked as needing to be reconnected.
+  **"Slack no longer accepts PipesHub's saved sign-in"** in the connector logs means Slack refused the refresh token, usually because the app was reinstalled or removed, or the sign-in was revoked. Renewing again can't fix that, so PipesHub stops trying. Re-run authorization from the connector's **Authorize** tab to reconnect Slack. After a few refused renewals, the connector is also marked as needing to be reconnected.
 </Warning>
 
 **Only a bot token was found (Individual)**

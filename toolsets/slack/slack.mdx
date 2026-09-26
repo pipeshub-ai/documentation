@@ -353,7 +353,10 @@ Ask to "send a DM to John about the meeting" or "directly message sarah@company.
 Listing tools (channel members, users, conversations) read every page Slack returns. If Slack stops partway, the agent is told the list is incomplete rather than being handed part of it as if it were the whole. Errors come back in plain words with what to do next, worded for the user token this toolset signs in with.
 
 **Does the toolset work with Slack token rotation?**  
-Yes. If your Slack app has **token rotation** turned on, its sign-in expires about every 12 hours, and PipesHub renews it automatically before then. If an agent reports that the Slack sign-in has expired, try again in a few minutes. If it keeps happening, or the agent says Slack no longer accepts the saved sign-in, reconnect the Slack toolset in **Settings > Toolsets**.
+Yes. If your Slack app has **token rotation** turned on, its sign-in expires about every 12 hours, and PipesHub renews it automatically before then.
+
+- If the agent says *"The Slack sign-in has expired. PipesHub renews it automatically, so try again in a few minutes."*, wait a few minutes and ask again. If it keeps happening, reconnect the Slack toolset in **Settings > Toolsets**.
+- If the agent says *"Slack did not accept the saved sign-in."*, Slack has refused the sign-in (for example, it was revoked or the app was reinstalled), and renewing can't fix it. Reconnect the Slack toolset in **Settings > Toolsets**.
 
 **How do I reply to a message?**  
 Ask to "reply to that message in thread" or "respond to the latest message in #engineering". The agent can reply in threads to keep conversations organized.

@@ -305,7 +305,7 @@ Nextcloud uses the **Activity API** to track changes:
    - Re-processes permissions
    - Updates database records
 
-4. **Deletion Handling:** Removes deleted files from PipesHub. Deleting a folder removes everything that was inside it too.
+4. **Deletion Handling:** Removes deleted files from PipesHub. Deleting a folder removes everything that was inside it too, and restoring a folder from the Nextcloud trash brings everything it held back into PipesHub.
 
 5. **Activity Cursor Update:** After processing all events, saves the latest activity ID for the next incremental sync cycle.
 
@@ -322,7 +322,7 @@ The connector doesn't move the cursor past changes it couldn't apply:
   - if the same file is back (it was restored), the deletion is dropped and the file stays;
   - if Nextcloud can't be checked right now, or PipesHub can't read the file's full stored location, the deletion stays on the list for the next sync.
 
-  A deletion also leaves the list when nothing from that file or folder is left in PipesHub. If a folder's own record is already gone but files from inside it are still indexed, those files are removed first, and the deletion stays on the list until that succeeds. Until a deletion is applied, the file stays searchable.
+  A deletion also leaves the list when nothing from that file or folder is left in PipesHub. If a folder's own record is already gone but files from inside it are still indexed, the connector checks the folder's old location in Nextcloud first. The files are removed only if the folder is really gone; if it was restored, they stay. The deletion stays on the list until that is settled. Until a deletion is applied, the file stays searchable.
 
 ---
 

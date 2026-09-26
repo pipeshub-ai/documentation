@@ -525,10 +525,12 @@ Box permissions are managed through **collaborations** - explicit grants that gi
 
 ### Share history
 
-A full sync also replays past sharing events from Box's enterprise event history (Box keeps up to a year of it), so each person's **Shared with me** is complete. The replay saves its place after each page, as long as nothing in that full sync has failed to read so far. If something has, it still reads the pages but doesn't save its place, so the next full sync replays the same history:
+A full sync also replays past sharing events from Box's enterprise event history (Box keeps up to a year of it), so each person's **Shared with me** is complete. The replay saves its place after each page:
 
-- On a large enterprise, it reads a set number of pages per sync and carries on from where it stopped on the next one, so the whole history is applied within a few syncs of connecting.
+- On a large enterprise, it reads up to 200 pages per sync. When it hits that limit, it saves its place and marks the sync incomplete, so the next full sync carries on from there. The whole history is applied within a few syncs of connecting.
 - Later full syncs resume from the saved place instead of starting again, so only newer history is read.
+
+The place is saved only while nothing else in that full sync has failed to read. If something has, the replay still reads its pages but doesn't save its place, so the next full sync replays the same history.
 
 </Accordion>
 
@@ -604,7 +606,7 @@ Scheduled syncs, manual syncs and Box webhooks never run two syncs of the same c
 **Solutions:**
 - For users, turn on the app's **Manage users** scope. For groups, turn on **Manage groups**. Both are under **Administrative Actions** in the Box Developer Console (see Step 2 of **Create Box App**).
 - Have a Box admin re-authorize the app in the Box Admin Console. Scope changes only take effect after re-authorizing.
-- Until **Manage users** is fixed, a connector that hasn't finished its first full sync repeats the full sync on every run, which is quick because no files can be listed. A connector that already syncs incrementally keeps its place in the event stream and applies no changes until the user list can be read; nothing is skipped in the meantime. The first run after the fix catches up.
+- Until **Manage users** is fixed, a connector that hasn't finished its first full sync repeats the full sync on every run. No files can be listed, but each run still refreshes groups and replays the same share history (up to 200 pages), because the missing user list keeps the replay from saving its place. A connector that already syncs incrementally keeps its place in the event stream and applies no changes until the user list can be read; nothing is skipped in the meantime. The first run after the fix catches up.
 
 ### Sync Issues
 

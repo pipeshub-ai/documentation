@@ -608,8 +608,10 @@ everything.
 
 The OAuth token is refreshed ahead of its expiry by PipesHub's normal OAuth refresh. If GitLab
 still answers **401 Unauthorized**, the connector refreshes once and retries; when several requests
-get a 401 together, they share that one refresh, so refresh tokens aren't used up needlessly. Other
-errors never trigger a refresh, even if their text happens to contain "401".
+get a 401 together, they share that one refresh, so refresh tokens aren't used up needlessly. An
+error that carries any other status never triggers a refresh, even if its text mentions "401". An
+error with no status at all (for example, a failure partway through a paged listing) is judged by its
+text, so wording such as "401" or "unauthorized" can still trigger one refresh.
 
 </Accordion>
 

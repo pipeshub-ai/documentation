@@ -556,8 +556,9 @@ Syncs only the folders you list, and everything inside them. To find a folder's 
 
 Before each sync, the connector checks that each listed folder can be read:
 
-- A folder that was deleted, or that the connected account can't see, is left out, and the rest of the sync carries on.
-- Any other problem, such as a Google outage or a quota limit that outlasts the retries, fails that sync run instead of quietly leaving the folder's files out. The next run starts from the same point, so no files are skipped for good.
+- A folder that was deleted, that the connected account can't see, or that Google refuses with a known permission error, is left out, and the rest of the sync carries on.
+- A quota or rate-limit error that outlasts the retries, a Google outage, a network error or another HTTP error fails that sync run instead of quietly leaving the folder's files out. The next run starts from the same point.
+- An access error (HTTP 403) that gives no reason PipesHub recognises is counted. On runs 1 to 4 in a row it fails the sync, and the next run tries again. On the fifth, the folder is left out of that run's scope and the rest of the sync carries on, once no other listed folder is still on its first four runs. Your saved **Folder IDs** list isn't changed: the folder is tried again on every later run, new changes inside it sync once it can be read, and a full sync brings in what it already held. On Workspace, a folder only fails a run, or counts toward the five, when no synced user can read it.
 
 ### Created Date
 

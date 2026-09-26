@@ -248,7 +248,7 @@ A paused schedule is reported from memory, with `"state": "paused"`, `"progress"
 - `failed` - The last run failed after its retries
 - `paused` - Paused through this API
 
-Finished runs (`completed`) aren't reported. If a connector's only jobs have finished, this endpoint answers `404` "No scheduled job found for this connector".
+Runs that completed successfully (`completed`) aren't reported. Failed runs are: the queue keeps the last 10 failed runs, so a schedule that was removed, or a one-time sync that failed, can still be reported with `"state": "failed"`. The endpoint answers `404` "No scheduled job found for this connector" only when the connector has no paused schedule and no waiting, prioritized, delayed, active or failed job.
 
 **Progress Tracking:** Jobs report progress at key stages: 10% (start), 20% (task service obtained), 100% (completion). Failed jobs may show partial progress.
 </Tab>
@@ -283,7 +283,7 @@ Retrieve all scheduled crawling jobs for the organization.
 <Tab title="Success Response">
 **Status:** `200 OK`
 
-The list holds, for each connector, up to its 10 most recent queued, delayed, active or failed jobs, followed by every paused schedule in the organization. Finished runs aren't listed. Each entry has the same fields as **Get Job Status**; this example shortens `scheduleConfig`.
+The list holds, for each connector, up to its 10 most recent queued, delayed, active or failed jobs, followed by every paused schedule in the organization. Runs that completed successfully aren't listed; failed ones are, including those of a schedule that has since been removed. Each entry has the same fields as **Get Job Status**; this example shortens `scheduleConfig`.
 
 ```json
 {

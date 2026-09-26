@@ -317,12 +317,12 @@ The connector doesn't move the cursor past changes it couldn't apply:
 - **A file that is already gone:** If Nextcloud answers "not found" (HTTP 404) for a changed file, the connector treats the file as already deleted or moved, and the cursor moves on as usual. The deletion or move is in the activity feed too.
 - **A file or deletion that fails another way:** If fetching or saving a changed file fails for another reason (a server error such as HTTP 503, a listing that can't be read, or a network error), or a deletion can't be applied, the cursor stays where it was. The next sync reads that page of changes again.
 - **The limit:** A page is held for at most 5 syncs. On syncs 1 to 4 the cursor stays where it was. On the 5th, the connector moves the cursor on, so one broken file can't hold up later changes. The warning on each held sync and the error on the 5th name what failed and why: the path of each changed file, and the path and ID of each deletion (up to 20 names, then a count of the rest). After that, a changed file that failed is read again only when it next changes in Nextcloud.
-- **Deletions keep being retried:** A deleted file never changes again, so a deletion that still fails on the 5th sync goes into a list of pending deletions, saved together with the cursor. A file that Nextcloud lists again during that sync (because it was restored or recreated) isn't queued. Every sync retries that list first, before reading new changes, and checks with Nextcloud before deleting:
-  - if the file is gone (or a different file now sits at its path), the deletion is applied;
-  - if the same file is back (it was restored), the deletion is dropped and the file stays;
-  - if Nextcloud can't be checked right now, or PipesHub can't read the file's full stored location, the deletion stays on the list for the next sync.
+- **Deletions keep being retried:** A deleted file never changes again, so a deletion that still fails on the 5th sync goes into a list of pending deletions, saved together with the cursor. A file that Nextcloud lists again during that sync (because it was restored or recreated) isn't queued. Every sync retries that list first, before reading new changes, and looks the file up in Nextcloud by its ID before deleting, so a file or folder that was moved is still found:
+  - if Nextcloud no longer has it (or it's in the trash), the deletion is applied;
+  - if Nextcloud still has it, anywhere in your files, the deletion is dropped and it stays;
+  - if the lookup can't be made right now, the connector checks the file's saved location instead, and keeps the deletion on the list if that location can't be read. A folder whose own record is already gone, while files from inside it are still indexed, always waits for a lookup by ID, because its old location alone can't tell a move from a deletion.
 
-  A deletion also leaves the list when nothing from that file or folder is left in PipesHub. If a folder's own record is already gone but files from inside it are still indexed, the connector checks the folder's old location in Nextcloud first. The files are removed only if the folder is really gone; if it was restored, they stay. The deletion stays on the list until that is settled. Until a deletion is applied, the file stays searchable.
+  A deletion also leaves the list when nothing from that file or folder is left in PipesHub. Until a deletion is applied, the file stays searchable.
 
 ---
 

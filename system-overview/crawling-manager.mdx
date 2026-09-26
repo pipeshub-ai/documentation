@@ -17,47 +17,34 @@ All endpoints require **authentication** via `Authorization` header with valid J
 Authorization: Bearer <jwt_token>
 ```
 
-## Supported Connectors
+## Path Parameters
 
-- `gmail` - Gmail connector
-- `drive` - Google Drive connector  
-- `onedrive` - OneDrive connector
-- `sharepointonline` - SharePoint Online connector
-- `confluence` - Confluence connector
-- `slack` - Slack connector
-- `linear` - Linear connector
-- `dropbox` - Dropbox connector
-- `outlook` - Outlook connector
-- `jira` - Jira connector
-- `atlassian` - Atlassian connector
-- `github` - GitHub connector
-- `box` - Box connector
-- `s3` - Amazon S3 connector
-- `azure` - Azure connector
-- `airtable` - Airtable connector
-- `zammad` - Zammad connector
-- `zendesk` - Zendesk connector
+Endpoints for one connector take two path parameters:
 
-**Note:** Connector names are case-insensitive and spaces are automatically removed during processing. Job IDs are generated using the format: `crawl-{connector}-{orgId}` where connector is normalized to lowercase with hyphens.
+- `connector` — the connector's type name (for example `drive`, `onedrive` or `jira`). The crawling manager accepts any connector type; it doesn't keep its own list.
+- `connectorId` — the ID of the connector instance. The request is checked against this instance: it must exist (otherwise `404`), and the caller must be allowed to manage it (otherwise `403`).
+
+Job IDs are built as `crawl-{connector}-{connectorId}-{orgId}`, with the connector name lowercased and spaces replaced by hyphens.
 
 ## API Endpoints
 
 <AccordionGroup>
 
-<Accordion title="POST /:connector/schedule - Schedule Job">
+<Accordion title="POST /:connector/:connectorId/schedule - Schedule Job">
 Schedule a new crawling job for a specific connector type.
 
-**Endpoint:** `POST /api/v1/crawlingManager/:connector/schedule`
+**Endpoint:** `POST /api/v1/crawlingManager/:connector/:connectorId/schedule`
 
 **Parameters:**
-- `connector` (string, path) - The connector type (gmail, drive, onedrive, sharepointonline, confluence, slack, linear, dropbox, outlook, jira, atlassian, github, box, s3, azure, airtable, zammad, zendesk)
+- `connector` (string, path) - The connector type
+- `connectorId` (string, path) - The connector instance ID
 
 <Tabs>
 <Tab title="Request Body">
 ```json
 {
   "scheduleConfig": {
-    "scheduleType": "daily|weekly|monthly|hourly|custom|once",
+    "scheduleType": "daily|weekly|monthly|hourly|custom|once|interval",
     "isEnabled": true,
     "timezone": "UTC",
     // Schedule-specific configuration based on scheduleType
@@ -141,6 +128,17 @@ All schedule configurations inherit base properties:
   "timezone": "UTC"
 }
 ```
+
+**Interval Schedule:** the interval goes inside a nested `scheduleConfig` object.
+```json
+{
+  "scheduleType": "interval",
+  "isEnabled": true,
+  "scheduleConfig": {
+    "intervalMinutes": 60   // 1 to 525600 (one year)
+  }
+}
+```
 </Tab>
 
 <Tab title="Success Response">
@@ -151,7 +149,7 @@ All schedule configurations inherit base properties:
   "success": true,
   "message": "Crawling job scheduled successfully",
   "data": {
-    "jobId": "bull:crawling-scheduler:123",
+    "jobId": "crawl-linear-6650f1c2a9e4b3d2c1a0f9e8-6650f1c2a9e4b3d2c1a0f9e7",
     "connector": "linear",
     "scheduleConfig": {
       "scheduleType": "daily",
@@ -160,74 +158,42 @@ All schedule configurations inherit base properties:
       "isEnabled": true,
       "timezone": "UTC"
     },
-    "scheduledAt": "2024-01-15T10:30:00.000Z"
+    "scheduledAt": "2024-01-15T10:30:00.000Z",
+    "connectorId": "6650f1c2a9e4b3d2c1a0f9e8"
   }
 }
 ```
 </Tab>
 
 <Tab title="Error Responses">
-**Status:** `400 Bad Request`
-```json
-{
-  "success": false,
-  "message": "Invalid schedule configuration",
-  "error": {
-    "code": "VALIDATION_ERROR",
-    "details": "Schedule type 'invalid' is not supported"
-  }
-}
-```
+Errors use the standard error shape (see [Error Handling](#error-handling)):
 
-**Status:** `400 Bad Request` (Disabled Schedule)
-```json
-{
-  "success": false,
-  "message": "Cannot schedule a disabled job"
-}
-```
+- `400 Bad Request` — the body doesn't match the schema: `VALIDATION_ERROR`, with a message listing the fields.
+- `400 Bad Request` — `HTTP_BAD_REQUEST` with one of these messages:
+  - "Cannot schedule a disabled job" — the schedule was sent with `isEnabled: false`. This removes the connector's current schedule first.
+  - "Scheduled time must be in the future" — a `once` schedule in the past.
+  - "Scheduled time is missing or is not a valid date" — a `once` schedule without a readable top-level `scheduledTime`.
+  - "This schedule can't be used: it never produces a run time. Check the cron expression and the timezone name, then try again." — a cron expression or timezone the scheduler can't use.
+  - "intervalMinutes must be a positive integer" — an `interval` schedule with a bad interval.
 
-**Status:** `400 Bad Request` (Past Time for Once Schedule)
-```json
-{
-  "success": false,
-  "message": "Scheduled time must be in the future"
-}
-```
-
-Two more `400 Bad Request` messages you may see:
-
-- *"Scheduled time is missing or is not a valid date"* — a `once` schedule without a readable top-level `scheduledTime`.
-- *"This schedule can't be used: it never produces a run time. Check the cron expression and the timezone name, then try again."* — a cron expression or timezone that the scheduler can't use.
-
-These two refusals leave the connector's existing schedule running unchanged. A schedule sent with `isEnabled: false` is different: it removes the connector's current schedule and then answers `400` "Cannot schedule a disabled job".
-
-**Status:** `401 Unauthorized`
-```json
-{
-  "success": false,
-  "message": "Unauthorized access"
-}
-```
-
-**Status:** `403 Forbidden`
-```json
-{
-  "success": false,
-  "message": "Admin privileges required"
-}
-```
+  Every one of these except the disabled schedule is checked before anything is removed, so the connector's existing schedule keeps running.
+- `401 Unauthorized` — no valid sign-in token, for example `HTTP_UNAUTHORIZED` "No token provided" or "Session expired, please login again".
+- `403 Forbidden` — an OAuth token without the `crawl:write` scope: `HTTP_FORBIDDEN` "Insufficient scope. Required: crawl:write".
+- `403 Forbidden` — the caller may not manage this connector: `HTTP_FORBIDDEN` "You are not authorized to schedule this connector" (a team connector needs an admin; a personal one, the person who created it).
+- `404 Not Found` — no connector instance with that `connectorId` is visible to the caller.
+- `500 Internal Server Error` — the job queue couldn't be reached. Nothing is reported as done.
 </Tab>
 </Tabs>
 </Accordion>
 
-<Accordion title="GET /:connector/schedule - Get Job Status">
+<Accordion title="GET /:connector/:connectorId/schedule - Get Job Status">
 Retrieve the status of a scheduled crawling job for a specific connector.
 
-**Endpoint:** `GET /api/v1/crawlingManager/:connector/schedule`
+**Endpoint:** `GET /api/v1/crawlingManager/:connector/:connectorId/schedule`
 
 **Parameters:**
 - `connector` (string, path) - The connector type
+- `connectorId` (string, path) - The connector instance ID
 
 <Tabs>
 <Tab title="Success Response">
@@ -278,7 +244,7 @@ Retrieve the status of a scheduled crawling job for a specific connector.
 </Tab>
 
 <Tab title="Error Responses">
-**Status:** `404 Not Found`
+**Status:** `404 Not Found` — the connector has no scheduled job. This answer comes from the endpoint itself, so it has its own shape:
 ```json
 {
   "success": false,
@@ -287,21 +253,12 @@ Retrieve the status of a scheduled crawling job for a specific connector.
 }
 ```
 
-**Status:** `401 Unauthorized`
-```json
-{
-  "success": false,
-  "message": "Unauthorized access"
-}
-```
+Other errors use the standard error shape (see [Error Handling](#error-handling)):
 
-**Status:** `403 Forbidden`
-```json
-{
-  "success": false,
-  "message": "Admin privileges required"
-}
-```
+- `401 Unauthorized` — no valid sign-in token, for example `HTTP_UNAUTHORIZED` "No token provided" or "Session expired, please login again".
+- `403 Forbidden` — an OAuth token without the `crawl:read` scope: `HTTP_FORBIDDEN` "Insufficient scope. Required: crawl:read".
+- `403 Forbidden` — the caller may not manage this connector: `HTTP_FORBIDDEN` "You are not authorized to schedule this connector" (a team connector needs an admin; a personal one, the person who created it).
+- `404 Not Found` — no connector instance with that `connectorId` is visible to the caller.
 </Tab>
 </Tabs>
 </Accordion>
@@ -385,32 +342,23 @@ Retrieve all scheduled crawling jobs for the organization.
 </Tab>
 
 <Tab title="Error Responses">
-**Status:** `401 Unauthorized`
-```json
-{
-  "success": false,
-  "message": "Unauthorized access"
-}
-```
+Errors use the standard error shape (see [Error Handling](#error-handling)):
 
-**Status:** `403 Forbidden`
-```json
-{
-  "success": false,
-  "message": "Admin privileges required"
-}
-```
+- `401 Unauthorized` — no valid sign-in token, for example `HTTP_UNAUTHORIZED` "No token provided" or "Session expired, please login again".
+- `403 Forbidden` — an OAuth token without the `crawl:read` scope: `HTTP_FORBIDDEN` "Insufficient scope. Required: crawl:read".
+- `500 Internal Server Error` — the job queue couldn't be reached. Nothing is reported as done.
 </Tab>
 </Tabs>
 </Accordion>
 
-<Accordion title="DELETE /:connector/schedule - Remove Job">
+<Accordion title="DELETE /:connector/:connectorId/remove - Remove Job">
 Remove a scheduled crawling job for a specific connector.
 
-**Endpoint:** `DELETE /api/v1/crawlingManager/:connector/schedule`
+**Endpoint:** `DELETE /api/v1/crawlingManager/:connector/:connectorId/remove`
 
 **Parameters:**
 - `connector` (string, path) - The connector type
+- `connectorId` (string, path) - The connector instance ID
 
 <Tabs>
 <Tab title="Success Response">
@@ -425,33 +373,13 @@ Remove a scheduled crawling job for a specific connector.
 </Tab>
 
 <Tab title="Error Responses">
-**Status:** `401 Unauthorized`
-```json
-{
-  "success": false,
-  "message": "Unauthorized access"
-}
-```
+Errors use the standard error shape (see [Error Handling](#error-handling)):
 
-**Status:** `403 Forbidden`
-```json
-{
-  "success": false,
-  "message": "Admin privileges required"
-}
-```
-
-**Status:** `500 Internal Server Error`
-```json
-{
-  "success": false,
-  "message": "Internal server error",
-  "error": {
-    "code": "INTERNAL_ERROR",
-    "details": "Failed to remove job from queue"
-  }
-}
-```
+- `401 Unauthorized` — no valid sign-in token, for example `HTTP_UNAUTHORIZED` "No token provided" or "Session expired, please login again".
+- `403 Forbidden` — an OAuth token without the `crawl:delete` scope: `HTTP_FORBIDDEN` "Insufficient scope. Required: crawl:delete".
+- `403 Forbidden` — the caller may not manage this connector: `HTTP_FORBIDDEN` "You are not authorized to schedule this connector" (a team connector needs an admin; a personal one, the person who created it).
+- `404 Not Found` — no connector instance with that `connectorId` is visible to the caller.
+- `500 Internal Server Error` — the job queue couldn't be reached. Nothing is reported as done.
 </Tab>
 </Tabs>
 </Accordion>
@@ -474,36 +402,24 @@ Remove all scheduled crawling jobs for the organization. Admins only: any other 
 </Tab>
 
 <Tab title="Error Responses">
-**Status:** `401 Unauthorized`
-```json
-{
-  "success": false,
-  "message": "Unauthorized access"
-}
-```
+Errors use the standard error shape (see [Error Handling](#error-handling)):
 
-**Status:** `400 Bad Request` (caller is not an admin)
-
-Message: "Admin access required". Nothing is removed.
-
-**Status:** `500 Internal Server Error`
-```json
-{
-  "success": false,
-  "message": "Internal server error"
-}
-```
+- `400 Bad Request` — the caller isn't an admin: `HTTP_BAD_REQUEST` "Admin access required". Nothing is removed.
+- `401 Unauthorized` — no valid sign-in token, for example `HTTP_UNAUTHORIZED` "No token provided" or "Session expired, please login again".
+- `403 Forbidden` — an OAuth token without the `crawl:delete` scope: `HTTP_FORBIDDEN` "Insufficient scope. Required: crawl:delete".
+- `500 Internal Server Error` — the job queue couldn't be reached. Nothing is reported as done.
 </Tab>
 </Tabs>
 </Accordion>
 
-<Accordion title="POST /:connector/pause - Pause Job">
+<Accordion title="POST /:connector/:connectorId/pause - Pause Job">
 Pause a scheduled crawling job for a specific connector.
 
-**Endpoint:** `POST /api/v1/crawlingManager/:connector/pause`
+**Endpoint:** `POST /api/v1/crawlingManager/:connector/:connectorId/pause`
 
 **Parameters:**
 - `connector` (string, path) - The connector type
+- `connectorId` (string, path) - The connector instance ID
 
 <Tabs>
 <Tab title="Success Response">
@@ -523,48 +439,26 @@ Pause a scheduled crawling job for a specific connector.
 </Tab>
 
 <Tab title="Error Responses">
-**Status:** `400 Bad Request` (No Job Found)
-```json
-{
-  "success": false,
-  "message": "No active job found to pause"
-}
-```
+Errors use the standard error shape (see [Error Handling](#error-handling)):
 
-**Status:** `400 Bad Request` (Already Paused)
-```json
-{
-  "success": false,
-  "message": "Job is already paused"
-}
-```
-
-**Status:** `401 Unauthorized`
-```json
-{
-  "success": false,
-  "message": "Unauthorized access"
-}
-```
-
-**Status:** `403 Forbidden`
-```json
-{
-  "success": false,
-  "message": "Admin privileges required"
-}
-```
+- `400 Bad Request` — `HTTP_BAD_REQUEST` "No active job found to pause" or "Job is already paused".
+- `401 Unauthorized` — no valid sign-in token, for example `HTTP_UNAUTHORIZED` "No token provided" or "Session expired, please login again".
+- `403 Forbidden` — an OAuth token without the `crawl:write` scope: `HTTP_FORBIDDEN` "Insufficient scope. Required: crawl:write".
+- `403 Forbidden` — the caller may not manage this connector: `HTTP_FORBIDDEN` "You are not authorized to schedule this connector" (a team connector needs an admin; a personal one, the person who created it).
+- `404 Not Found` — no connector instance with that `connectorId` is visible to the caller.
+- `500 Internal Server Error` — the job queue couldn't be reached. Nothing is reported as done.
 </Tab>
 </Tabs>
 </Accordion>
 
-<Accordion title="POST /:connector/resume - Resume Job">
+<Accordion title="POST /:connector/:connectorId/resume - Resume Job">
 Resume a paused crawling job for a specific connector.
 
-**Endpoint:** `POST /api/v1/crawlingManager/:connector/resume`
+**Endpoint:** `POST /api/v1/crawlingManager/:connector/:connectorId/resume`
 
 **Parameters:**
 - `connector` (string, path) - The connector type
+- `connectorId` (string, path) - The connector instance ID
 
 <Tabs>
 <Tab title="Success Response">
@@ -584,29 +478,14 @@ Resume a paused crawling job for a specific connector.
 </Tab>
 
 <Tab title="Error Responses">
-**Status:** `400 Bad Request`
-```json
-{
-  "success": false,
-  "message": "No paused job found to resume"
-}
-```
+Errors use the standard error shape (see [Error Handling](#error-handling)):
 
-**Status:** `401 Unauthorized`
-```json
-{
-  "success": false,
-  "message": "Unauthorized access"
-}
-```
-
-**Status:** `403 Forbidden`
-```json
-{
-  "success": false,
-  "message": "Admin privileges required"
-}
-```
+- `400 Bad Request` — `HTTP_BAD_REQUEST` "No paused job found to resume".
+- `401 Unauthorized` — no valid sign-in token, for example `HTTP_UNAUTHORIZED` "No token provided" or "Session expired, please login again".
+- `403 Forbidden` — an OAuth token without the `crawl:write` scope: `HTTP_FORBIDDEN` "Insufficient scope. Required: crawl:write".
+- `403 Forbidden` — the caller may not manage this connector: `HTTP_FORBIDDEN` "You are not authorized to schedule this connector" (a team connector needs an admin; a personal one, the person who created it).
+- `404 Not Found` — no connector instance with that `connectorId` is visible to the caller.
+- `500 Internal Server Error` — the job queue couldn't be reached. Nothing is reported as done.
 </Tab>
 </Tabs>
 </Accordion>
@@ -649,29 +528,11 @@ Retrieve statistics about the crawling job queue.
 </Tab>
 
 <Tab title="Error Responses">
-**Status:** `401 Unauthorized`
-```json
-{
-  "success": false,
-  "message": "Unauthorized access"
-}
-```
+Errors use the standard error shape (see [Error Handling](#error-handling)):
 
-**Status:** `403 Forbidden`
-```json
-{
-  "success": false,
-  "message": "Admin privileges required"
-}
-```
-
-**Status:** `500 Internal Server Error`
-```json
-{
-  "success": false,
-  "message": "Failed to retrieve queue statistics"
-}
-```
+- `401 Unauthorized` — no valid sign-in token, for example `HTTP_UNAUTHORIZED` "No token provided" or "Session expired, please login again".
+- `403 Forbidden` — an OAuth token without the `crawl:read` scope: `HTTP_FORBIDDEN` "Insufficient scope. Required: crawl:read".
+- `500 Internal Server Error` — the job queue couldn't be reached. Nothing is reported as done.
 </Tab>
 </Tabs>
 </Accordion>
@@ -689,7 +550,8 @@ enum CrawlingScheduleType {
   WEEKLY = 'weekly',
   MONTHLY = 'monthly',
   CUSTOM = 'custom',
-  ONCE = 'once'
+  ONCE = 'once',
+  INTERVAL = 'interval'
 }
 ```
 </Tab>
@@ -757,49 +619,33 @@ The API includes built-in rate limiting and concurrency controls:
 </Tab>
 
 <Tab title="Sync Events">
-Upon successful job completion, the system publishes sync events:
-- `drive` → `SyncDriveEvent`
-- `gmail` → `SyncGmailEvent` 
-- `onedrive` → `SyncOneDriveEvent`
-- `sharepointonline` → `SyncSharePointOnlineEvent`
-- `linear` → `SyncLinearEvent`
-- `dropbox` → `SyncDropboxEvent`
-- `outlook` → `SyncOutlookEvent`
-- `jira` → `SyncJiraEvent`
-- `atlassian` → `SyncAtlassianEvent`
-- `github` → `SyncGithubEvent`
-- `box` → `SyncBoxEvent`
-- `s3` → `SyncS3Event`
-- `azure` → `SyncAzureEvent`
-- `airtable` → `SyncAirtableEvent`
-- `zammad` → `SyncZammadEvent`
-- `zendesk` → `SyncZendeskEvent`
-- `confluence` and `slack` → `ReindexAllRecordEvent` (fallback)
+When a scheduled run is due, the crawling manager publishes a sync event for that connector instance. The event type is the connector name, lowercased with spaces removed, followed by `.resync` (for example `drive.resync` or `onedrive.resync`). The payload carries `orgId`, `connector`, `connectorId`, `origin: 'CONNECTOR'`, the user who scheduled it (`syncedBy`), and timestamps.
 
-Events include metadata such as `orgId`, `connector`, `origin: 'CONNECTOR'`, and timestamps for tracking and audit purposes.
+A scheduled Local FS run is skipped, and counted as done, while no desktop app is connected.
 </Tab>
 </Tabs>
 
 ## Error Handling
 
-All endpoints follow a consistent error response format:
+Errors raised by these endpoints use the API's standard error shape:
 
 ```json
 {
-  "success": false,
-  "message": "Error description",
   "error": {
-    "code": "ERROR_CODE",
-    "details": "Additional error details"
+    "code": "HTTP_BAD_REQUEST",
+    "message": "Scheduled time must be in the future",
+    "requestId": "…"
   }
 }
 ```
 
+`code` is `HTTP_` followed by the status name (`HTTP_BAD_REQUEST`, `HTTP_UNAUTHORIZED`, `HTTP_FORBIDDEN`, `HTTP_NOT_FOUND`), or `VALIDATION_ERROR` when the request doesn't match the schema. A server-side failure answers `500` with the message "Something went wrong on PipesHub's side. Please try again; if it keeps happening, ask your admin for help." `requestId` is included when the request has one. The only exception is the `404` for a connector with no scheduled job, shown under **Get Job Status**.
+
 **Common HTTP Status Codes:**
 - `200` - Success
 - `201` - Created (for scheduling jobs)
-- `400` - Bad Request (validation errors, invalid configuration)
+- `400` - Bad Request (validation errors, invalid configuration, or a non-admin calling Remove All)
 - `401` - Unauthorized (missing or invalid authentication)
-- `403` - Forbidden (insufficient privileges, admin required)
-- `404` - Not Found (job not found)
+- `403` - Forbidden (not allowed to manage this connector, or an OAuth token missing the scope)
+- `404` - Not Found (connector instance not found, or no scheduled job)
 - `500` - Internal Server Error

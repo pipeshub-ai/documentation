@@ -107,8 +107,8 @@ The native shape is **remote MCP** over Streamable HTTP. No npm process is requi
 
 1. A running PipesHub, reachable at `PIPESHUB_INSTANCE_URL` (origin only, no `/mcp`).
 2. Auth as the **user**, not the app. Do **not** use `client_credentials` — that grant has no user identity, so permission filters collapse.
-   - The **IDE guides below use OAuth.** Create an [OAuth app](/mcp/overview#step-1-create-an-oauth-app), then follow the client page.
-   - A [personal access token](/developer/personal-access-tokens) is `Authorization: Bearer`. Use it only with a client that accepts a custom header, or with the [stdio bridge](/mcp/local-server). Cursor's `auth` object and Claude Code's `claude mcp add --client-id` are OAuth, not PAT.
+   - **Prefer a [personal access token](/developer/personal-access-tokens)** for a single user's own client. It is `Authorization: Bearer phpat_…`, minted by that user in **Workspace → Developer settings** (PipesHub 0.7.0+). Claude Code takes it directly: `claude mcp add --transport http pipeshub "$PIPESHUB_MCP_URL" --header "Authorization: Bearer $PIPESHUB_MCP_TOKEN"`, where `PIPESHUB_MCP_URL` is the URL from the token's paste block (it already ends in `/mcp`) — see [Claude Code](/mcp/claude-code). The [stdio bridge](/mcp/local-server) takes it as `--bearer-auth`.
+   - **OAuth app** for shared or admin-managed setups: create an [OAuth app](/mcp/overview#step-1-create-an-oauth-app), then follow the client page. Cursor's `auth` object and Claude Code's `--client-id` are the OAuth paths, not PAT.
 3. Client config — pick one:
 
 | Client | Guide |
@@ -139,7 +139,16 @@ The native shape is **remote MCP** over Streamable HTTP. No npm process is requi
 }
 ```
 
-**Claude Code** (`claude mcp add` — not Cursor's `auth` JSON):
+**Claude Code** with a personal access token (`claude mcp add` — not Cursor's `auth` JSON). `PIPESHUB_MCP_URL` and `PIPESHUB_MCP_TOKEN` are the two lines shown when the token is minted; the URL already ends in `/mcp`:
+
+```bash
+claude mcp add --transport http pipeshub "$PIPESHUB_MCP_URL" \
+  --header "Authorization: Bearer $PIPESHUB_MCP_TOKEN"
+```
+
+A project-scoped `.mcp.json` uses `type: "http"` with a `headers` entry for the same bearer token. Only the shared or admin-managed OAuth setup, below, uses an `oauth` object instead. See [Connect Claude Code](/mcp/claude-code).
+
+**Claude Code with an OAuth app** — only for shared or admin-managed setups, where an admin created an [OAuth app](/mcp/overview#step-1-create-an-oauth-app):
 
 ```bash
 claude mcp add --transport http \
@@ -148,8 +157,6 @@ claude mcp add --transport http \
   --callback-port 8080 \
   pipeshub PIPESHUB_INSTANCE_URL/mcp
 ```
-
-Project-scoped `.mcp.json` uses `type: "http"` and an `oauth` object. See [Connect Claude Code](/mcp/claude-code).
 
 Tools: `pipeshub_chat`, `pipeshub_search`, `pipeshub_get_record_content`, `pipeshub_download_record`, `pipeshub_directory`, `pipeshub_sources`, `pipeshub_agents`. See [Tools](/mcp/tools).
 

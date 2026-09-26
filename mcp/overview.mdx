@@ -28,7 +28,7 @@ This lets AI clients such as **Cursor**, **Claude Code**, **Gemini CLI**, **Clau
 - Either an OAuth app (see [Step 1](#step-1-create-an-oauth-app) below), **or** a [Personal Access Token](/developer/personal-access-tokens) — see the note below for which one to use
 
 <Note>
-  Most **client setup guides below** (Cursor, Claude Code, Gemini CLI, Claude.ai, LibreChat) connect over OAuth — you'll need an OAuth app for those. [Omnigent](/mcp/omnigent) is the exception: it attaches with an `Authorization` header, so a personal access token is all you need.
+  Most **client setup guides below** (Cursor, Gemini CLI, Claude.ai, LibreChat) connect over OAuth — you'll need an OAuth app for those. [Claude Code](/mcp/claude-code) and [Omnigent](/mcp/omnigent) are the exceptions: they attach with an `Authorization` header, so a personal access token is all you need. Claude Code can also use an OAuth app for shared or admin-managed setups.
 
   For your own tooling, skip OAuth entirely: create a **[Personal Access Token](/developer/personal-access-tokens)** under **Developer Settings > Personal Access Tokens** and use it as a `Bearer` token — either directly against `/mcp`, as `--bearer-auth` with the [Local Server (Stdio)](/mcp/local-server) package, or with any MCP client you configure yourself with a custom `Authorization` header.
 </Note>
@@ -98,7 +98,7 @@ Pick your client to connect it to the PipesHub MCP server:
     Remote MCP via the `auth` object in `mcp.json`.
   </Card>
   <Card title="Claude Code" icon="/logo/claude.svg" href="/mcp/claude-code">
-    Remote HTTP MCP with static OAuth credentials.
+    Remote HTTP MCP with a personal access token, or an OAuth app for shared setups.
   </Card>
   <Card title="Gemini CLI" icon="/logo/gemini.svg" href="/mcp/gemini-cli">
     Remote MCP with OAuth dynamic discovery.

@@ -321,10 +321,10 @@ The connector doesn't move the cursor past changes it couldn't apply:
   - if Nextcloud no longer has it (or it's in the trash), the deletion is applied;
   - if Nextcloud still has it, anywhere in your files, the deletion is dropped and it stays. For a folder that still has files indexed inside it (including one whose own record is already gone), the folder is first saved where it is now, whether it moved or is back where it was, and those files are linked back under it. The deletion is dropped only once that save works; if any part of it fails, the deletion stays on the list and the next sync tries again;
   - if the lookup can't be made right now, or its answer can't be read, the connector falls back to the file's saved location in PipesHub, but only while PipesHub still has a record for it:
-    - if that saved location is the file's full path, it is checked: "not found" there, or a different file in its place, applies the deletion, and the same file drops it;
+    - if that saved location is the file's full path, it is checked: the same file there drops the deletion. "Not found" there, or a different file in its place, applies it, unless it's a folder with files still indexed inside it: then it stays on the list, since a folder that was moved looks the same as one that was deleted;
     - if the saved location can't be read, or is only the file's name while the file sits in a folder, nothing is checked and the deletion stays on the list for the next sync.
 
-    A folder whose own record is already gone, while files from inside it are still indexed, always waits for a lookup by ID, because its old location alone can't tell a move from a deletion.
+    A folder whose own record is already gone, while files from inside it are still indexed, also waits for a lookup by ID.
 
   A deletion also leaves the list when nothing from that file or folder is left in PipesHub. Until a deletion is applied, the file stays searchable.
 

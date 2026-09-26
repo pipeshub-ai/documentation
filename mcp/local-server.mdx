@@ -210,9 +210,9 @@ The local server (`start` and `serve`) waits out short outages on requests that 
 - A request refused with **429**, **502**, **503** or **504** is retried, three tries in all. The server waits as long as PipesHub's `Retry-After` header asks, or, without one, about half a second and then a second.
 - A `Retry-After` longer than 30 seconds isn't waited out. The tool's error says how long PipesHub asked to wait instead.
 - Only `GET`, `HEAD`, `OPTIONS`, `PUT` and `DELETE` requests are retried. Search and chat are `POST` requests and are never retried, because a repeat would be a second search or a second answer.
-- A request that gets no response within 60 seconds is abandoned. The limit covers the wait for PipesHub to start answering, so a long chat answer that is already streaming is not cut off.
+- Each try that gets no response within 60 seconds is abandoned. The limit covers the wait for PipesHub to start answering, so a long chat answer that is already streaming is not cut off. The limit applies to each try, not to the whole call. A try that gets no answer at all ends the call without a retry, but when slow tries end in a 429, 502, 503 or 504 and are retried, a `GET`, `PUT` or `DELETE` can take up to about three minutes at the defaults (three tries plus the waits between them). Search and chat get one try.
 
-When a call fails because PipesHub can't be reached or doesn't answer in time, the tool's error names the address, gives the reason (for example a refused connection or an untrusted certificate), and says what to check. The request's bearer token is removed from any error text before the model sees it.
+When a call fails because PipesHub can't be reached, the tool's error names the address, gives the reason (for example a refused connection or an untrusted certificate), and says to check the `--server-url` or `--instance-url` the server was started with. When a call times out, the error says to try again, check that PipesHub is healthy, or raise `PIPESHUB_MCP_TIMEOUT_MS`. The request's bearer token (if it is at least eight characters) is removed from the body of any 4xx or 5xx response before the model sees it. Error text inside a successful streamed answer is passed on as it is.
 
 Change the defaults with environment variables, in your MCP client's `env` block or with `--env NAME=VALUE`:
 

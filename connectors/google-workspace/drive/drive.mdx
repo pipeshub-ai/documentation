@@ -548,11 +548,11 @@ Sync settings allow you to control how the connector syncs data from Google Driv
 In what interval the connector will sync data (default: 60 minutes).
 
 ### Sync Filters
-Sync filters control which files are fetched from Google Drive. Files that don't match are skipped entirely. Folders are always synced regardless of these settings to preserve directory structure.
+Sync filters control which files are fetched from Google Drive. Files that don't match are skipped entirely. The **Created Date**, **Modified Date** and **Sync Files with Extensions** filters always let folders through, so the folder structure is kept. **Folder IDs** works the other way: see below.
 
 ### Folder IDs
 
-Syncs only the folders you list, and everything inside them. To find a folder's ID, open the folder in Google Drive: the ID is the last part of the address, `drive.google.com/drive/folders/<FOLDER_ID>`.
+Syncs only the folders you list, and everything inside them. Anything outside the listed folders is skipped, including other folders and everything under them. To find a folder's ID, open the folder in Google Drive: the ID is the last part of the address, `drive.google.com/drive/folders/<FOLDER_ID>`.
 
 Before each sync, the connector checks that each listed folder can be read:
 

@@ -381,6 +381,26 @@ All subsequent syncs are incremental — only changes since the last run are fet
 
 </Accordion>
 
+<Accordion title="What happens if Microsoft 365 can't be read during a sync?">
+
+What happens depends on what couldn't be read:
+
+- **A file PipesHub already has:** if its sharing can't be read, it keeps its stored access and the rest of the sync carries on. Its sharing is read again the next time the file changes.
+- **A new file, or a folder whose sharing just changed:** a temporary error (throttling, a 5xx error, a network problem) holds that page of changes for the next run, up to 5 runs. Only that user's drive waits; other users keep syncing. A 403 or 404 doesn't hold anything.
+- **A new file, once its page moves on** (straight away for a 403 or 404, or after the 5 runs): it is saved with no access, so nobody can see it yet. Its sharing is then read again on every later sync, with no limit, until it can be read.
+- **A folder that stops being shared, when the folder's own sharing can be read:** files inside it whose access can't be read are handled by the error. A temporary error holds that page of changes for up to 5 runs, without changing them. A 403 or 404, or the end of those 5 runs, gives them the folder's current access, which also drops any sharing of their own; the sync logs name them so they can be reindexed.
+- **A folder whose own sharing can't be read** after its sharing changed: its files keep their stored access and are read again on every later sync until it can be read.
+- **A failed request for the list of changes itself** doesn't count toward the 5 runs. The saved position stays, and the next run reads the same page again.
+
+For groups, a failed read never empties a group:
+
+- **A group whose member list can't be read** keeps its stored members. A temporary error holds that page of group changes for up to 5 runs; a 403 or 404 moves on straight away.
+- **Groups missed on the first group sync** are read again: the full group sync repeats on each run, then applies the changes saved from the first attempt, until every group has been read (it gives up after 5 incomplete attempts). Groups deleted in the meantime are still removed.
+- **A group deletion that fails** is kept and retried on every run.
+- Member removals are applied even when the group's full member list can't be read, so a removed member loses access.
+
+</Accordion>
+
 <Accordion title="A file's sharing settings changed in OneDrive. When will that reflect in PipesHub?">
 
 Permission changes are picked up automatically on the next sync cycle. The connector compares current permissions from the Microsoft Graph API against what's stored and updates accordingly. 

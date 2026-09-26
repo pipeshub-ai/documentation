@@ -1005,31 +1005,28 @@ The Authentication Service implements several security measures:
 
 ## Error Handling
 
-All endpoints return structured error responses:
+Errors use the API's standard shape:
 
 ```json
 {
   "error": {
-    "code": "AUTHENTICATION_FAILED",
-    "message": "Invalid credentials provided",
-    "details": {
-      "field": "password",
-      "issue": "Password does not match"
-    }
+    "code": "HTTP_BAD_REQUEST",
+    "message": "The email or password is incorrect. Check both and try again, or use Forgot password to set a new password.",
+    "requestId": "…"
   }
 }
 ```
 
-**Common Error Codes:**
-- `AUTHENTICATION_FAILED` - Invalid credentials
-- `SESSION_EXPIRED` - Session token expired
-- `INVALID_TOKEN` - Invalid or malformed token
-- `USER_BLOCKED` - Account is blocked due to failed attempts
-- `VALIDATION_ERROR` - Invalid request parameters
-- `UNAUTHORIZED` - Missing or invalid authentication
-- `FORBIDDEN` - Insufficient permissions
-- `NOT_FOUND` - Resource not found
-- `INTERNAL_ERROR` - Server error
+`requestId` is included when the request has one. The codes you'll see from these endpoints:
+
+- `HTTP_BAD_REQUEST` - A request the service refuses, including a wrong password (see the `/authenticate` error table)
+- `HTTP_UNAUTHORIZED` - A missing, invalid or expired sign-in token or sign-in session; a failed sign-in-code check (wrong, expired or already-used code, no code requested, unknown email, or a locked account); or a sign-in step completed with a different account. A wrong current password on the change-password endpoint is also `HTTP_UNAUTHORIZED` ("Current password is incorrect."). On `/authenticate`, a wrong password is `HTTP_BAD_REQUEST` instead
+- `HTTP_FORBIDDEN` - Not allowed, for example an OAuth token without the required scope
+- `HTTP_NOT_FOUND` - Resource not found
+- `VALIDATION_ERROR` - The request body or parameters don't match the expected format
+- `INTERNAL_ERROR` - A failure on PipesHub's side; the message doesn't describe internals
+
+There is no separate code for a locked account. A locked account gets the same answer as a wrong password (`HTTP_BAD_REQUEST`) or a wrong sign-in code (`HTTP_UNAUTHORIZED`), so that sign-in doesn't reveal whether an account exists.
 
 ## Important Notes
 

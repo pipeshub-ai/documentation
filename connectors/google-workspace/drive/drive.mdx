@@ -548,7 +548,17 @@ Sync settings allow you to control how the connector syncs data from Google Driv
 In what interval the connector will sync data (default: 60 minutes).
 
 ### Sync Filters
-Sync filters control which files are fetched from Google Drive. Files that don't match are skipped entirely. Folders are always synced regardless of these settings to preserve directory structure.
+Sync filters control which files are fetched from Google Drive. Files that don't match are skipped entirely. The **Created Date**, **Modified Date** and **Sync Files with Extensions** filters always let folders through, so the folder structure is kept. **Folder IDs** works the other way: see below.
+
+### Folder IDs
+
+Syncs only the folders you list, and everything inside them. Anything outside the listed folders is skipped, including other folders and everything under them. To find a folder's ID, open the folder in Google Drive: the ID is the last part of the address, `drive.google.com/drive/folders/<FOLDER_ID>`.
+
+Before each sync, the connector checks that each listed folder can be read:
+
+- A folder that was deleted, that the connected account can't see, or that Google refuses with a known permission error, is left out, and the rest of the sync carries on.
+- A quota or rate-limit error that outlasts the retries, a Google outage, a network error or another HTTP error fails that sync run instead of quietly leaving the folder's files out. The next run starts from the same point.
+- An access error (HTTP 403) that gives no reason PipesHub recognises is counted. On runs 1 to 4 in a row it fails the sync, and the next run tries again. On the fifth, the folder is left out of that run's scope and the rest of the sync carries on, once no other listed folder is still on its first four runs. Your saved **Folder IDs** list isn't changed: the folder is tried again on every later run, new changes inside it sync once it can be read, and a full sync brings in what it already held. On Workspace, a folder only fails a run, or counts toward the five, when no synced user can read it.
 
 ### Created Date
 
@@ -560,9 +570,9 @@ For example, set `Last 365 Days` to fetch only files created in the last year.
 
 Same as Created Date but filters by the file's last modified timestamp. Use `Last 30 Days` or `Is After` to limit sync to recently updated files.
 
-### File Extensions
+### Sync Files with Extensions
 
-Filters files support 2 options: `In` (only sync listed extensions) or `Not In` (sync everything except listed extensions). After selecting your desired option, you can select your desired extensions from a list of supported extensions.
+Filters files by type. It supports 2 options: `In` (only sync the listed types) or `Not In` (sync everything except the listed types). After choosing the option, pick the types from the list: **google docs**, **google sheets** and **google slides** for Google's own formats, and file extensions such as `.pdf` or `.docx` for everything else. Folders are always synced, whatever you pick.
 
 <Note>
 Unsupported extensions are excluded under `In` and allowed through under `Not In`.

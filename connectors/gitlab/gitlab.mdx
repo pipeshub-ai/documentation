@@ -597,8 +597,21 @@ Checkpoints are stored **per project**, and each content type carries its own:
 - **Code repository** — the default branch's commit SHA at the end of the last successful walk,
   used as the base of the next comparison
 
-A checkpoint is only written after its stage succeeds. If a sync fails partway, the affected
-stage is simply repeated on the next run.
+If saving a batch of records fails, the sweep stops there without writing its checkpoint, and
+the next run lists the items again from the previous checkpoint. The code repository stage works
+the same way: its checkpoint is only written after the stage succeeds.
+
+A single issue or merge request that can't be built (for example, because its comments can't be
+read) is handled differently: the rest of the project still syncs, and the checkpoint is written
+just before the earliest failed item, so the next run asks for it again without re-reading
+everything.
+
+The OAuth token is refreshed ahead of its expiry by PipesHub's normal OAuth refresh. If GitLab
+still answers **401 Unauthorized**, the connector refreshes once and retries; when several requests
+get a 401 together, they share that one refresh, so refresh tokens aren't used up needlessly. An
+error that carries any other status never triggers a refresh, even if its text mentions "401". An
+error with no status at all (for example, a failure partway through a paged listing) is judged by its
+text, so wording such as "401" or "unauthorized" can still trigger one refresh.
 
 </Accordion>
 

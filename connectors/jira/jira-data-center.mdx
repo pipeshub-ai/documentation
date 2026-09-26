@@ -93,7 +93,11 @@ The connector reads a few admin-only APIs to work out who is allowed to see what
 |----------|-------|----------------------------------|
 | `GET /rest/api/2/applicationrole` | Jira administrator | The connector cannot expand application roles into their groups. Projects that grant access that way fall back to giving access only to the person who set up the connector. |
 | `GET /rest/api/2/project/{key}/permissionscheme` and its grants | Project or Jira administrator | The connector cannot read who has access to that project. The same fallback applies. |
-| `GET /rest/auditing/1.0/events` | Jira administrator | The connector cannot tell which issues were deleted, so deleted issues may stay in the index until a full resync. |
+| `GET /rest/auditing/1.0/events` | Jira administrator | The connector cannot tell which issues were deleted, so deleted issues stay in the index. The connector keeps its place, and once the account can read the audit log, every deletion since the last successful read is applied. |
+
+<Note>
+  A **temporary** error (a timeout, a server error, rate limiting) is not the same as access being denied. If a project's permissions or a group's members can't be read for that reason, the project or group keeps the access PipesHub already has, and its issues still sync. A failed read never opens content up and never removes anyone's access. The next sync tries again.
+</Note>
 
 <Warning>
   A non-admin account can still sync issues, but **some permissions will be missing**. Content may end up visible only to the person who set up the connector. Use a Jira administrator account for production.
@@ -387,6 +391,10 @@ The Jira Data Center connector syncs:
 **Some users are missing from permissions:**
 - On Jira 10 and later, the bulk user list can be restricted, and the fallback search may not return everyone
 - Give the account Browse Users permission, or ask a Jira administrator to set **User email visibility** to **Public** in General Configuration
+
+**Project role access doesn't update for groups past the first 1000:**
+- Jira Data Center's group list returns at most 1000 groups, and it has no way to page past them. The sync logs say *"More than 1000 groups (Jira reports N): roles that include groups past the first 1000 were left unchanged."*
+- The first 1000 groups keep syncing. A project role that includes a group past the first 1000 keeps the members it already has in PipesHub, so nobody loses access. But that role's membership isn't updated: people who join a group past the first 1000 don't gain the role's access in PipesHub, and people who leave it keep the access they had. Roles made only of users, or only of groups in the first 1000, sync as usual.
 
 **Deleted issues still show up in search:**
 - Deleted issues are found through the audit log, which needs Jira administrator access

@@ -417,6 +417,9 @@ Each sync runs these steps in order:
 - **Page and blog restrictions** are read as effective view restrictions. Only real read restrictions change who can see a page. A restriction that only limits editing still lets people read the page based on the space permissions
 - **Public spaces** — if a space allows anonymous read access, it is treated as public and per-user permissions are skipped
 - **Unknown users** — permissions for users whose email is not known yet are held on a placeholder and moved to the real user once that user syncs
+- **Attachments and comments** of a restricted page are restricted the same way as the page. When the audit log reports a page becoming restricted, or opened up, its stored attachments and comments follow
+- **Groups** — a restriction that names a group only by its name is matched by name. A page restricted to a group PipesHub hasn't synced yet stays restricted, and the group's members get access once the group syncs and the page is read again
+- **Failed reads** — if a space's permissions, a group's members, or a page's restrictions can't be read for a temporary reason, PipesHub keeps what it already has. A page whose restrictions can't be read is skipped for that sync, while the rest of the space keeps syncing. The space's checkpoint doesn't move, so the next sync reads that window again and retries the page. A failed read never opens a page to its whole space and never removes access
 
 ### How Data Center differs from Confluence Cloud
 

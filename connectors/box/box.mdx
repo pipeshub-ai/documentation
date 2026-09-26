@@ -532,10 +532,11 @@ A full sync also replays past sharing events from Box's enterprise event history
 
 The place is saved only while nothing else in that full sync has failed to read. If something has, the replay still reads its pages but doesn't save its place, so the next full sync replays the same history.
 
-If a page of history can't be read, or its events can't be applied, the replay stops there:
+When a page of history fails:
 
-- A temporary error marks the sync incomplete, so the next full sync reads that page again. Pages saved earlier in the run stay saved.
-- A 403 or 404 from Box is final and doesn't mark the sync incomplete, so the sync can still finish and switch to incremental runs. Incremental runs don't replay history, so the rest of it waits for a later full sync.
+- **A temporary error**, while fetching the page or applying its events, marks the sync incomplete and stops the replay there. The next full sync reads that page again, and pages saved earlier in the run stay saved.
+- **A 403 or 404 while fetching a page** stops the replay without marking the sync incomplete, so the sync can still finish and switch to incremental runs. Incremental runs don't replay history, so the rest of it waits for a later full sync.
+- **A 403 or 404 while applying a page's events** is treated as Box's final answer for that item. The replay carries on, and its place is saved past that page.
 
 </Accordion>
 
@@ -611,7 +612,7 @@ Scheduled syncs, manual syncs and Box webhooks never run two syncs of the same c
 **Solutions:**
 - For users, turn on the app's **Manage users** scope. For groups, turn on **Manage groups**. Both are under **Administrative Actions** in the Box Developer Console (see Step 2 of **Create Box App**).
 - Have a Box admin re-authorize the app in the Box Admin Console. Scope changes only take effect after re-authorizing.
-- Until **Manage users** is fixed, a connector that hasn't finished its first full sync repeats the full sync on every run. No files can be listed, but each run still refreshes groups and replays the same share history (up to 200 pages), because the missing user list keeps the replay from saving its place. A connector that already syncs incrementally keeps its place in the event stream and applies no changes until the user list can be read. If the scope is fixed within 14 days, the first run after the fix applies every change from the gap. After 14 days, Box no longer keeps those events, so the connector runs a full sync instead: that brings in what exists in Box now, but it can't replay changes from the gap such as removed shares or deletions.
+- Until **Manage users** is fixed, a connector that hasn't finished its first full sync repeats the full sync on every run. No files can be listed, but each run still refreshes groups and replays the same share history (up to 200 pages), because the missing user list keeps the replay from saving its place. A connector that already syncs incrementally keeps its place in the event stream and applies no changes until the user list can be read. If the scope is fixed within 14 days, the first run after the fix applies every change from the gap. After 14 days, Box no longer keeps those events, so the connector runs a full sync instead. That brings in what exists in Box now, and its share-history replay (which reads up to a year back) also applies shares added or removed in the gap, possibly over more than one full sync. Deletions from the gap aren't applied: the full sync doesn't remove records for items that are gone from Box.
 
 ### Sync Issues
 

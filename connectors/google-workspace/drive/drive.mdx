@@ -558,7 +558,7 @@ Before each sync, the connector checks that each listed folder can be read:
 
 - A folder that was deleted, that the connected account can't see, or that Google refuses with a known permission error, is left out, and the rest of the sync carries on.
 - A quota or rate-limit error that outlasts the retries, a Google outage, a network error or another HTTP error fails that sync run instead of quietly leaving the folder's files out. The next run starts from the same point.
-- An access error (HTTP 403) that gives no reason PipesHub recognises is counted. On runs 1 to 4 in a row it fails the sync, and the next run tries again. On the fifth, the folder is left out of that run's scope and the rest of the sync carries on, once no other listed folder is still on its first four runs. Your saved **Folder IDs** list isn't changed: the folder is tried again on every later run, new changes inside it sync once it can be read, and a full sync brings in what it already held. On Workspace, a folder only fails a run, or counts toward the five, when no synced user can read it.
+- An access error (HTTP 403) that gives no reason PipesHub recognises is counted. On runs 1 to 4 in a row it fails the sync, and the next run tries again. On the fifth, the folder is left out of that run's scope and the rest of the sync carries on, once no other listed folder is still on its first four runs. Your saved **Folder IDs** list isn't changed: the folder is tried again on every later run, new changes inside it sync once it can be read, and a full sync brings in what it already held. On Workspace, a folder only fails a run, or counts toward the five, when no synced user can read it. See the FAQ below for details.
 
 ### Created Date
 
@@ -626,6 +626,26 @@ When enabled, files the user has shared with others are indexed. Disable this to
 | **When to Use** | Query/search files and folders | Create files, manage folders |
 
 **Example:** Use **Drive Connector** to search and retrieve document content. Use **Drive Toolset** to let agents create folders and manage file organization.
+
+</Accordion>
+
+<Accordion title="Sync keeps failing on one folder that Google Drive refuses. What happens?">
+
+Sometimes Google Drive refuses a folder with an access error (HTTP 403) that gives no reason PipesHub recognises. This can happen to a folder you listed under **Folder IDs**, or to a folder shared with one of the synced users. Normally a failed check fails the sync so that no files are skipped for good. An unrecognised 403 that keeps coming back is the one exception: PipesHub doesn't let one such folder stop the connector for good.
+
+**Runs 1 to 4:** nothing is skipped, and the next run tries again from the same point. What stops depends on the folder:
+
+- On a personal Drive, any refused folder, whether under **Folder IDs** or shared with you, fails the whole sync run.
+- On Workspace, a folder under **Folder IDs** is tried by the other synced users too. The run fails, and the folder counts a run, only if none of them can read it.
+- A folder shared with one user on Workspace stops only that user's sync. Everyone else's files sync and their progress is saved.
+- When several folders are refused in the same run, they are counted together.
+
+**Run 5:** PipesHub moves on without the folder, and the sync logs name it and say what to check. The rest of the sync finishes and saves its progress only once every folder refused this way has reached five runs. If another refused folder is still on runs 1 to 4, that run still fails as described above. The folder already at five stays left out, and its count isn't started over.
+
+- **A folder under Folder IDs** is left out of that run's scope; your saved **Folder IDs** list isn't changed. The folder is tried again on every run. Once it can be read, new changes inside it sync again, and a full sync brings in the files it already held.
+- **A folder shared with a user** is kept as a folder, but its contents aren't synced. It isn't tried again on later runs, which stay incremental. To bring its files in, check that it is still shared with that user, then start a full sync of the connector. If Google still refuses the folder, that full sync starts the five runs again.
+
+Quota and rate-limit errors are different: they are never given up on, so no files are dropped. They fail the sync run each time until the quota refills, except on Workspace while walking a folder shared with one user, where they stop only that user's sync, the same as runs 1 to 4 above. Known permission refusals, and folders that no longer exist, are skipped straight away, as before.
 
 </Accordion>
 

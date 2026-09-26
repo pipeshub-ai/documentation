@@ -470,6 +470,10 @@ For each project, the connector:
 
 After each successful sync, the connector saves the latest issue update time as a checkpoint and saves the filter settings so it can tell when they change. It also keeps a checkpoint per project, so a failed sync can pick up where it stopped instead of starting over. Deleted-issue tracking uses its own separate checkpoint.
 
+If one issue can't be processed, the other issues in its project still sync. The project's checkpoint waits at that issue, so the next sync tries it again. After five syncs in a row fail on the same issue, the connector moves on without it, logs an error naming the issue, and picks it up again the next time the issue changes.
+
+If Jira rate-limits the issue search, the connector tries the search up to three times, waiting as long as Jira asks each time, but no more than a minute. If Jira is still rate-limiting after the third try, that project is skipped for this sync, and the next sync picks up where it stopped.
+
 </Accordion>
 
 </AccordionGroup>

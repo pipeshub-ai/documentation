@@ -642,7 +642,7 @@ Sometimes Google Drive refuses a folder with an access error (HTTP 403) that giv
 
 **Run 5:** PipesHub moves on without the folder, and the sync logs name it and say what to check. The rest of the sync finishes and saves its progress only once every folder refused this way has reached five runs. If another refused folder is still on runs 1 to 4, that run still fails as described above. The folder already at five stays left out, and its count isn't started over.
 
-- **A folder under Folder IDs** is left out of that run's scope, and nothing fails; your saved **Folder IDs** list isn't changed. The folder is tried again on every run. Once it can be read, new changes inside it sync again, and a full sync brings in the files it already held.
+- **A folder under Folder IDs** is left out of that run's scope; your saved **Folder IDs** list isn't changed. The folder is tried again on every run. Once it can be read, new changes inside it sync again, and a full sync brings in the files it already held.
 - **A folder shared with a user** is kept as a folder, but its contents aren't synced. It isn't tried again on later runs, which stay incremental. To bring its files in, check that it is still shared with that user, then start a full sync of the connector. If Google still refuses the folder, that full sync starts the five runs again.
 
 Quota and rate-limit errors are different: they are never given up on, so no files are dropped. They fail the sync run each time until the quota refills, except on Workspace while walking a folder shared with one user, where they stop only that user's sync, the same as runs 1 to 4 above. Known permission refusals, and folders that no longer exist, are skipped straight away, as before.

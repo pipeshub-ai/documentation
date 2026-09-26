@@ -57,7 +57,7 @@ To use etcd, set `KV_STORE_TYPE=etcd` and enable the Compose profile `kv-etcd`.
 
 ### etcd settings
 
-These environment variables tell PipesHub how to reach etcd. The Compose files already set the first three for the bundled `etcd` container.
+These environment variables tell PipesHub how to reach etcd. They belong on the `pipeshub-ai` service, which runs the Python services and the Node.js API; the `etcd` service doesn't read them. The Compose files already set `ETCD_URL`, `ETCD_HOST` and `ETCD_TIMEOUT` there, pointing at the bundled `etcd` service, and leave `ETCD_PORT` at its default.
 
 | Variable | Used by | Default | Meaning |
 |---|---|---|---|
@@ -69,7 +69,7 @@ These environment variables tell PipesHub how to reach etcd. The Compose files a
 When etcd authentication is in use, the Python services renew their login by themselves when etcd's login token expires (after 5 minutes by default), so they keep working without a restart. The password is never written to the logs.
 
 <Warning>
-  The Compose files don't pass `ETCD_USERNAME` or `ETCD_PASSWORD` to the container, so add them to its `environment` if you use them. Wrong values, or values set against an etcd that doesn't have authentication turned on, now stop the Python services from connecting at start-up; before, they were silently ignored.
+  The Compose files don't set `ETCD_USERNAME` or `ETCD_PASSWORD`, so add them to the `pipeshub-ai` service's `environment` if you use them. They only give PipesHub a login; turning authentication on in etcd itself is a separate step, done with `etcdctl`. Wrong values, or values set against an etcd that doesn't have authentication turned on, stop the Python services from connecting at start-up; before this release, they were silently ignored.
 
   The Node.js API does not log in to etcd. Don't turn on etcd authentication while the Node.js API uses etcd as its configuration store (`KV_STORE_TYPE=etcd`), or it won't be able to reach etcd.
 </Warning>

@@ -202,15 +202,18 @@ Retrieve the status of a scheduled crawling job for a specific connector.
 <Tab title="Success Response">
 **Status:** `200 OK`
 
+A scheduled, repeating job that is running now:
+
 ```json
 {
   "success": true,
-  "message": "Job status retrieved successfully", 
+  "message": "Job status retrieved successfully",
   "data": {
-    "id": "bull:crawling-scheduler:123",
-    "name": "crawl-box",
+    "id": "repeat:9b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e:1705392000000",
+    "name": "crawl-box-66a0c1d2e3f4a5b6c7d8e9f0",
     "data": {
       "connector": "box",
+      "connectorId": "66a0c1d2e3f4a5b6c7d8e9f0",
       "scheduleConfig": {
         "scheduleType": "daily",
         "hour": 9,
@@ -220,28 +223,32 @@ Retrieve the status of a scheduled crawling job for a specific connector.
       },
       "orgId": "64f1a2b3c4d5e6f7a8b9c0d1",
       "userId": "64f1a2b3c4d5e6f7a8b9c0d2",
-      "timestamp": "2024-01-15T09:00:00.000Z",
-      "metadata": {}
+      "timestamp": "2024-01-15T09:00:00.000Z"
     },
-    "progress": 75,
-    "delay": null,
+    "progress": 20,
+    "delay": 0,
     "timestamp": 1705392000000,
-    "attemptsMade": 1,
-    "finishedOn": null,
-    "processedOn": 1705392060000,
-    "failedReason": null,
+    "attemptsMade": 0,
+    "processedOn": 1705392000500,
     "state": "active"
   }
 }
 ```
 
+- `id` is the ID the job queue (BullMQ) gave this run; repeating runs look like `repeat:<key>:<time in ms>`. A one-time (`once`) job's `id` is `crawl-{connector}-{connectorId}-{orgId}`, and so is a paused schedule's.
+- `name` is `crawl-{connector}-{connectorId}`.
+- Fields with no value, such as `finishedOn` or `failedReason` on a job that hasn't finished, are left out.
+
+A paused schedule is reported from memory, with `"state": "paused"`, `"progress": 0`, `"attemptsMade": 0`, and `timestamp` set to when it was paused.
+
 **Job States:**
-- `waiting` - Job is waiting to be processed
-- `active` - Job is currently being processed  
-- `completed` - Job completed successfully
-- `failed` - Job failed with errors
-- `delayed` - Job is delayed for future execution
-- `paused` - Job is paused
+- `waiting` or `prioritized` - Queued, waiting for a worker
+- `delayed` - Due later (the next repeating run, or a one-time run's scheduled time)
+- `active` - Being processed now
+- `failed` - The last run failed after its retries
+- `paused` - Paused through this API
+
+Finished runs (`completed`) aren't reported. If a connector's only jobs have finished, this endpoint answers `404` "No scheduled job found for this connector".
 
 **Progress Tracking:** Jobs report progress at key stages: 10% (start), 20% (task service obtained), 100% (completion). Failed jobs may show partial progress.
 </Tab>
@@ -276,69 +283,63 @@ Retrieve all scheduled crawling jobs for the organization.
 <Tab title="Success Response">
 **Status:** `200 OK`
 
+The list holds, for each connector, up to its 10 most recent queued, delayed, active or failed jobs, followed by every paused schedule in the organization. Finished runs aren't listed. Each entry has the same fields as **Get Job Status**; this example shortens `scheduleConfig`.
+
 ```json
 {
   "success": true,
   "message": "All job statuses retrieved successfully",
   "data": [
     {
-      "id": "bull:crawling-scheduler:123",
-      "name": "crawl-github", 
+      "id": "repeat:4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b:1705478400000",
+      "name": "crawl-github-66a0c1d2e3f4a5b6c7d8e9f1",
       "data": {
         "connector": "github",
-        "scheduleConfig": {
-          "scheduleType": "daily",
-          "hour": 9,
-          "minute": 0,
-          "isEnabled": true,
-          "timezone": "UTC"
-        },
+        "connectorId": "66a0c1d2e3f4a5b6c7d8e9f1",
+        "scheduleConfig": { "scheduleType": "daily", "hour": 9, "minute": 0, "isEnabled": true, "timezone": "UTC" },
         "orgId": "64f1a2b3c4d5e6f7a8b9c0d1",
         "userId": "64f1a2b3c4d5e6f7a8b9c0d2",
         "timestamp": "2024-01-15T09:00:00.000Z"
       },
-      "progress": 100,
-      "state": "completed",
-      "finishedOn": 1705392120000
+      "progress": 0,
+      "delay": 86400000,
+      "timestamp": 1705392000000,
+      "attemptsMade": 0,
+      "state": "delayed"
     },
     {
-      "id": "crawl-zendesk-64f1a2b3c4d5e6f7a8b9c0d1",
-      "name": "crawl-zendesk",
+      "id": "repeat:0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d:1705397400000",
+      "name": "crawl-linear-66a0c1d2e3f4a5b6c7d8e9f3",
       "data": {
-        "connector": "zendesk", 
-        "scheduleConfig": {
-          "scheduleType": "weekly",
-          "daysOfWeek": [1, 3, 5],
-          "hour": 10,
-          "minute": 0,
-          "isEnabled": true,
-          "timezone": "UTC"
-        },
+        "connector": "linear",
+        "connectorId": "66a0c1d2e3f4a5b6c7d8e9f3",
+        "scheduleConfig": { "scheduleType": "hourly", "minute": 30, "interval": 2, "isEnabled": true, "timezone": "UTC" },
         "orgId": "64f1a2b3c4d5e6f7a8b9c0d1",
-        "userId": "64f1a2b3c4d5e6f7a8b9c0d2", 
+        "userId": "64f1a2b3c4d5e6f7a8b9c0d2",
+        "timestamp": "2024-01-15T09:30:00.000Z"
+      },
+      "progress": 10,
+      "delay": 0,
+      "timestamp": 1705390200000,
+      "attemptsMade": 0,
+      "processedOn": 1705397400300,
+      "state": "active"
+    },
+    {
+      "id": "crawl-zendesk-66a0c1d2e3f4a5b6c7d8e9f2-64f1a2b3c4d5e6f7a8b9c0d1",
+      "name": "crawl-zendesk-66a0c1d2e3f4a5b6c7d8e9f2",
+      "data": {
+        "connector": "zendesk",
+        "connectorId": "66a0c1d2e3f4a5b6c7d8e9f2",
+        "scheduleConfig": { "scheduleType": "weekly", "daysOfWeek": [1, 3, 5], "hour": 10, "minute": 0, "isEnabled": true, "timezone": "UTC" },
+        "orgId": "64f1a2b3c4d5e6f7a8b9c0d1",
+        "userId": "64f1a2b3c4d5e6f7a8b9c0d2",
         "timestamp": "2024-01-15T08:00:00.000Z"
       },
       "progress": 0,
+      "timestamp": 1705305600000,
+      "attemptsMade": 0,
       "state": "paused"
-    },
-    {
-      "id": "crawl-linear-64f1a2b3c4d5e6f7a8b9c0d1",
-      "name": "crawl-linear",
-      "data": {
-        "connector": "linear",
-        "scheduleConfig": {
-          "scheduleType": "hourly",
-          "minute": 30,
-          "interval": 2,
-          "isEnabled": true,
-          "timezone": "UTC"
-        },
-        "orgId": "64f1a2b3c4d5e6f7a8b9c0d1",
-        "userId": "64f1a2b3c4d5e6f7a8b9c0d2",
-        "timestamp": "2024-01-15T10:30:00.000Z"
-      },
-      "progress": 45,
-      "state": "active"
     }
   ]
 }
@@ -493,11 +494,16 @@ Resume a paused crawling job for a specific connector.
 Errors use the standard error shape (see [Error Handling](#error-handling)):
 
 - `400 Bad Request` — `HTTP_BAD_REQUEST` "No paused job found to resume".
+- `400 Bad Request` — `HTTP_BAD_REQUEST` "Scheduled time must be in the future": a paused `once` schedule whose time has already passed. This is checked before anything changes, and the schedule stays paused.
 - `401 Unauthorized` — no valid sign-in token, for example `HTTP_UNAUTHORIZED` "No token provided" or "Session expired, please login again".
 - `403 Forbidden` — an OAuth token without the `crawl:write` scope: `HTTP_FORBIDDEN` "Insufficient scope. Required: crawl:write".
 - `403 Forbidden` — the caller may not manage this connector: `HTTP_FORBIDDEN` "You are not authorized to schedule this connector" (a team connector needs an admin; a personal one, the person who created it).
 - `404 Not Found` — no connector instance with that `connectorId` is visible to the caller.
 - `500 Internal Server Error` — the job queue couldn't be reached: `INTERNAL_ERROR` "Something went wrong on PipesHub's side. Please try again; if it keeps happening, ask your admin for help."
+- `500 Internal Server Error` — resuming schedules the job again, and that replaces what's in the queue. If part of that removal fails after the queue answered: `HTTP_INTERNAL_SERVER_ERROR` with one of these messages, which say what may still be in place:
+  - "This connector's sync schedule could not be removed, so it may keep running. Try again in a moment; if this keeps happening, ask your admin to check the job queue."
+  - "A sync already queued for this connector could not be cancelled, so it may still run. Try again in a moment; if this keeps happening, ask your admin to check the job queue."
+  - "The previous one-time sync for this connector could not be cleared, so a new one can't be scheduled yet. If it is still running, wait for it to finish; otherwise try again in a moment." (a `once` schedule)
 </Tab>
 </Tabs>
 </Accordion>
@@ -572,6 +578,7 @@ enum CrawlingScheduleType {
 ```typescript
 interface CrawlingJobData {
   connector: string;
+  connectorId: string;
   scheduleConfig: ICrawlingSchedule;
   orgId: string;
   userId: string;
@@ -597,7 +604,7 @@ interface JobStatus {
   finishedOn: number | undefined;
   processedOn: number | undefined; 
   failedReason: string | undefined;
-  state: string;            // waiting, active, completed, failed, delayed, paused
+  state: string;            // waiting, prioritized, delayed, active, failed, or paused
 }
 ```
 </Tab>

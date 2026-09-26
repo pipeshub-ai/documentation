@@ -139,7 +139,7 @@ After you finish configuring connector settings, click **Save Configuration**. T
 - **Structure:** Builds a **record group** for the configured root URL and **file records** per URL, with parent links so paths appear hierarchically where applicable. URLs are **normalized** to avoid duplicate records: trailing slashes on “directory” pages, `#section` parts of links, and the order of query-string parameters (`?a=1&b=2` and `?b=2&a=1` are one page) don't create separate records.
 - **Redirects:** A page that redirects is stored once, under the address it lands on. A redirect that leaves the site is treated as an external link.
 - **Changes:** On later syncs, the connector sends back the site's `ETag` and `Last-Modified` values for documents and for pages at the crawl's depth limit. When the site answers that nothing changed, nothing is downloaded or re-indexed. Pages whose links still have to be read are always fetched in full, and sites that don't send these headers are compared by content, as before.
-- **Pages that are gone:** When a page answers **404 Not Found** or **410 Gone** on **two syncs in a row**, its indexed copy and stored file are deleted, so it drops out of search. Two strikes allow for a site that briefly answers 404 during a deploy. The address then stays in **All Records** as a failed page with nothing indexed. It stays there even after the site stops linking to it, because the crawler only removes pages it visits, and a page that is no longer linked is kept as it is. An old address that now redirects to another stored page is handled differently: on the second sync that sees the same redirect, the old address is removed completely, with no failed page left behind, even if the site still links to it. The page itself is kept under the address it lands on. Temporary problems (a 5xx error, a 429, a 403, a timeout, or the whole site being down) never remove anything, and nothing is removed in a sync where the start page itself is gone.
+- **Pages that are gone:** When a page answers **404 Not Found** or **410 Gone** on **two syncs in a row**, its indexed copy and stored file are deleted, so it drops out of search. Two strikes allow for a site that briefly answers 404 during a deploy. The address then stays in **All Records** as a failed page with nothing indexed. It stays there even after the site stops linking to it, because the crawler only removes pages it visits, and a page that is no longer linked is kept as it is. An old address that now redirects to another stored page is handled differently: on the second sync that sees the same redirect, the old address is removed completely, with no failed page left behind, even if the site still links to it. The page itself is kept under the address it lands on. Temporary problems (a 5xx error, a 429, a 403, a timeout, or the whole site being down) never remove anything, and nothing is removed in a sync where the start page itself is gone, whether it answers 404 or 410 directly or after a redirect. When a page that other links redirect to is removed, an older record stored under one of those redirecting links is removed with it.
 - **Sync:** Supports **scheduled** sync (default daily) and connector **filters** (manual sync selection, file extensions, and indexing toggles in the product UI). **Team** vs **personal** scope controls who receives permissions on synced records.
 
 ### Key limitations
@@ -158,7 +158,7 @@ With **Respect robots.txt** on (the default), the connector reads each site's `r
 
 - Rules written for **PipesHub** by name (`User-agent: PipesHub`) apply if the site has them. Otherwise the rules for all crawlers (`User-agent: *`) apply. The requests themselves still carry a browser-like `User-Agent` header, so a site's server logs won't show the name PipesHub.
 - The most specific (longest) matching rule decides, and `Allow` wins a tie. The `*` and `$` wildcards are understood.
-- A `robots.txt` that is missing, or that the site refuses with a 4xx error, allows everything.
+- A `robots.txt` that is missing, or that the site refuses with a 4xx error other than 429, allows everything.
 - A `robots.txt` that can't be read (a 5xx error, a 429, or no answer within 10 seconds) means that site isn't crawled in this sync. Its stored pages are left as they are, and it is tried again on the next sync.
 - A group for **PipesHub** that lists no rules allows everything, even if the `*` group disallows pages.
 - The rules also apply to where a redirect lands. A page that redirects to an address `robots.txt` disallows is skipped: it isn't stored or indexed, and it counts toward the skipped pages in the summary.
@@ -189,7 +189,7 @@ Common reasons include: **maximum pages** or **depth** reached, **URL should con
 
 <Accordion title="Why do some pages show as failed?">
 
-A page that can't be synced is listed as a failed record in **All Records**, with the reason and what to do next. A site with many broken links will therefore show many failed pages. When a link redirects before failing, the failed record is filed under the address that gave the error, not under the link that pointed to it. The reasons you may see:
+A page that can't be synced is listed as a failed record in **All Records**, with the reason and what to do next. A site with many broken links will therefore show many failed pages. When a link redirects before failing with a 404, 410 or 401, or to a file over the size limit, the failed record is filed under the address that gave that answer. A 403, 408, 429, 5xx or a connection failure after a redirect stays filed under the link that was crawled. The reasons you may see:
 
 | Reason shown | What it means |
 |---|---|
@@ -202,7 +202,7 @@ A page that can't be synced is listed as a failed record in **All Records**, wit
 | The site didn't respond properly (503 Service Unavailable). PipesHub will try again on the next sync. | A temporary problem on the site's side. The same message is used, with the status filled in, for 408 Request Timeout, 429 Too Many Requests and every 5xx status. |
 | The page returned an error (418 I'm a Teapot). Check the URL is correct and publicly reachable, then sync again. | Any other error status. The status and its name are filled in; 418 is only an example. |
 
-The status shown is the one the site actually sent, in Robust Mode too. For a 401, 403, 408, 429, 5xx or a timeout, a page that synced before keeps its record and indexed copy; the failure never replaces it. A 404 or 410 is different: on the second sync in a row, the synced copy is deleted, and the failed page takes its place while the site still links to it (see **Pages that are gone** above).
+The status shown is the one the site actually sent, in Robust Mode too. For a 401, 403, 408, 429, 5xx or a timeout, a page that synced before keeps its record and indexed copy; the failure never replaces it. A 404 or 410 is different: on the second sync in a row, the synced copy is deleted and the failed page takes its place (see **Pages that are gone** above).
 
 </Accordion>
 

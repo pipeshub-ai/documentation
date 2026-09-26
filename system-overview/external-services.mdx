@@ -54,3 +54,24 @@ In a larger deployment, Kafka takes over the event bus. Redis continues to provi
 etcd is the other place to keep encrypted configuration. A default install uses Redis for this.
 
 To use etcd, set `KV_STORE_TYPE=etcd` and enable the Compose profile `kv-etcd`.
+
+### etcd settings
+
+These environment variables tell PipesHub how to reach etcd. They belong on the `pipeshub-ai` service, which runs the Python services and the Node.js API; the `etcd` service doesn't read them. The Compose files already set `ETCD_URL`, `ETCD_HOST` and `ETCD_TIMEOUT` there, pointing at the bundled `etcd` service, and leave `ETCD_PORT` at its default.
+
+| Variable | Used by | Default | Meaning |
+|---|---|---|---|
+| `ETCD_URL` | Python services | none (required) | etcd's address, for example `http://etcd:2379`. If the address has no port, `2379` is used. |
+| `ETCD_HOST` / `ETCD_PORT` | Node.js API | `http://localhost` / `2379` | The same etcd, as a host and a port. |
+| `ETCD_TIMEOUT` | Python services | `5000` | How long to wait for etcd, in **milliseconds**. `5000` is 5 seconds; a value written in seconds, such as `5`, means 5 milliseconds. |
+| `ETCD_USERNAME` / `ETCD_PASSWORD` | Python services | unset | The etcd login. The Python services log in only when **both** are set. An empty value counts as unset. If only one is set, a warning is logged and they connect without logging in. |
+
+When etcd authentication is in use, the Python services renew their login by themselves when etcd's login token expires (after 5 minutes by default), so they keep working without a restart. The password is never written to the logs.
+
+<Warning>
+  The Compose files don't set `ETCD_USERNAME` or `ETCD_PASSWORD`, so add them to the `pipeshub-ai` service's `environment` if you use them. They only give PipesHub a login; turning authentication on in etcd itself is a separate step, done with `etcdctl`. Wrong values, or values set against an etcd that doesn't have authentication turned on, stop the Python services from connecting at start-up; before this release, they were silently ignored.
+
+  The Node.js API does not log in to etcd. Don't turn on etcd authentication while the Node.js API uses etcd as its configuration store (`KV_STORE_TYPE=etcd`), or it won't be able to reach etcd.
+</Warning>
+
+If the configuration store is down when a service starts and saves its vector collection setting, the service stops with *"Could not persist the initial collection strategy to the config store"*. The message ends with the next step: check that the config store (Redis or etcd, whichever `KV_STORE_TYPE` selects) is running and reachable, then restart the service.

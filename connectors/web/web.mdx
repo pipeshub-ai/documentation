@@ -161,9 +161,9 @@ With **Respect robots.txt** on (the default), the connector reads each site's `r
 - A `robots.txt` that is missing, or that the site refuses with a 4xx error other than 429, allows everything.
 - A `robots.txt` that can't be read (a 5xx error, a 429, or no answer within 10 seconds) means that site isn't crawled in this sync. Its stored pages are left as they are, and it is tried again on the next sync.
 - A group for **PipesHub** that lists no rules allows everything, even if the `*` group disallows pages.
-- The rules also apply to redirects. In a normal crawl (with Robust Mode off), each redirect is checked against the crawl's scope and `robots.txt` before it is followed, so an address that is disallowed, or outside the crawl, isn't requested at all. It isn't stored or indexed, and a disallowed one counts toward the skipped pages in the summary. Two limits:
-  - If the site refuses or doesn't answer header-only (`HEAD`) requests, the redirect is followed as before: the target is requested and then discarded, but still never stored.
-  - In Robust Mode, the browser has already loaded the page by the time its address can be checked, so a disallowed page is loaded but never stored.
+- The rules also apply to redirects. Each redirect is checked against the crawl's scope and `robots.txt` before it is followed, so an address that is disallowed, or outside the crawl, isn't requested at all. It isn't stored or indexed, and a disallowed one counts toward the skipped pages in the summary. This covers documents in Robust Mode too. Two limits:
+  - If the site refuses or doesn't answer header-only (`HEAD`) requests, the check before the redirect is skipped and the redirect is followed as before. A disallowed or out-of-scope target is then requested and dropped, never stored; an allowed target is stored as usual.
+  - In Robust Mode, when a web page redirects to another web page, the browser has already followed the redirect by the time its address can be checked. A disallowed target page is therefore loaded, but it is never stored.
 
 The summary at the end of each sync says how many pages robots.txt caused to be skipped, and names any site whose `robots.txt` couldn't be read. To include the skipped pages, turn off **Respect robots.txt** in the connector settings, if the site's terms allow it.
 

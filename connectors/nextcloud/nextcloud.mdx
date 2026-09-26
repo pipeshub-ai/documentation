@@ -316,11 +316,8 @@ The connector doesn't move the cursor past changes it couldn't apply:
 - **Activity feed unavailable:** If Nextcloud's activity feed can't be read (an outage, or a rate limit that outlasts the retries), the cursor stays where it was. The next sync reads the same changes again, deletions included.
 - **A file that is already gone:** If Nextcloud answers "not found" (HTTP 404) for a changed file, the connector treats the file as already deleted or moved, and the cursor moves on as usual. The deletion or move is in the activity feed too.
 - **A file or deletion that fails another way:** If fetching or saving a changed file fails for another reason (a server error such as HTTP 503, a listing that can't be read, or a network error), or a deletion can't be applied, the cursor stays where it was. The next sync reads that page of changes again.
-- **The limit:** A page is held for at most 5 syncs. On syncs 1 to 4 the cursor stays where it was. On the 5th, the connector moves the cursor on, so one broken file can't hold up later changes, and logs an error. That error doesn't name the file. After that, a failed change is read again only when that file next changes in Nextcloud.
-
-<Warning>
-  **A deletion that fails 5 times is not applied.** A deleted file never changes again, so nothing brings the deletion back. The file stays searchable in PipesHub.
-</Warning>
+- **The limit:** A page is held for at most 5 syncs. On syncs 1 to 4 the cursor stays where it was. On the 5th, the connector moves the cursor on, so one broken file can't hold up later changes. The warning on each held sync and the error on the 5th name what failed and why: the path of each changed file, and the path and ID of each deletion (up to 20 names, then a count of the rest). After that, a changed file that failed is read again only when it next changes in Nextcloud.
+- **Deletions keep being retried:** A deleted file never changes again, so a deletion that still fails on the 5th sync goes into a list of pending deletions, saved together with the cursor. Every sync retries that list first, before reading new changes. A deletion leaves the list once it's applied, or when the file's record is already gone from PipesHub. Until then, the file stays searchable.
 
 ---
 

@@ -378,7 +378,11 @@ Once a cursor is established, incremental sync processes only new events:
 
 3. **Update State:** Saves the new cursor position for next sync cycle.
 
-4. **Reconciliation:** Periodically validates that all Box groups exist in the database and removes orphaned entries.
+4. **Reconciliation:** Periodically validates that all Box groups exist in the database and removes orphaned entries. Groups are only removed after a group listing that reached its last page, so a listing that fails partway never deletes groups.
+
+<Note>
+  If Box can't return a group's member list during a sync, that group keeps the members PipesHub already has, and the next sync tries again. A failed read never empties a group. Groups and member lists of any size are read page by page to the end.
+</Note>
 
 ---
 
@@ -475,7 +479,7 @@ Box uses a **global Enterprise Event Stream** with a single `stream_position` cu
 
 6. **Deletion Handling:** Processes deletion events by marking records as deleted in the database.
 
-7. **Stream Position Update:** After processing all events, saves the new `stream_position` cursor for the next incremental sync cycle. This single cursor tracks the state of the entire enterprise event stream, not individual folders.
+7. **Stream Position Update:** After processing all events, saves the new `stream_position` cursor for the next incremental sync cycle. This single cursor tracks the state of the entire enterprise event stream, not individual folders. If part of a batch of events couldn't be read, the cursor stays where it was and the same batch is read again on the next run. After five attempts the batch is passed over, with an error in the sync logs, so one item Box keeps failing can't hold back every later change.
 
 ---
 
@@ -517,6 +521,23 @@ Box permissions are managed through **collaborations** - explicit grants that gi
    - Recursively removes permissions from all descendant files and folders
    - Ensures access control consistency
 
+6. **Complete collaborator lists:** An item's collaborators are read page by page to the end. If a page fails with a temporary error, the item keeps the access it already has in PipesHub and the next sync fills in the rest. If Box answers a later page with 403 or 404, the pages already read are saved and the rest are not requested again; Box treats that answer as final.
+
+### Share history
+
+A full sync also replays past sharing events from Box's enterprise event history (Box keeps up to a year of it), so each person's **Shared with me** is complete. The replay saves its place after each page it reads and applies:
+
+- On a large enterprise, it reads up to 200 pages per sync. When it hits that limit, it saves its place and marks the sync incomplete, so the next full sync carries on from there. The whole history is applied within a few syncs of connecting.
+- Later full syncs resume from the saved place instead of starting again, so only newer history is read.
+
+The place is saved only while nothing else in that full sync has failed to read. If something has, the replay still reads its pages but doesn't save its place, so the next full sync replays the same history.
+
+When a page of history fails:
+
+- **A temporary error**, while fetching the page or applying its events, marks the sync incomplete and stops the replay there. The next full sync reads that page again, and pages saved earlier in the run stay saved.
+- **A 403 or 404 while fetching a page** stops the replay without marking the sync incomplete, so the sync can still finish and switch to incremental runs. Incremental runs don't replay history, so the rest of it waits for a later full sync.
+- **A 403 or 404 while applying a page's events** is treated as Box's final answer for that item. The replay carries on, and its place is saved past that page.
+
 </Accordion>
 
 <Accordion title="File Filtering & Sync Optimization" icon="filter">
@@ -546,6 +567,11 @@ The connector automatically determines the optimal sync approach:
 1. **No Cursor:** Performs full sync
 2. **Has Cursor:** Performs incremental sync using event stream
 3. **Cursor Expired:** Falls back to full sync and establishes new cursor
+4. **Previous full sync incomplete:** If a full sync couldn't read everything (for example, a folder listing or a user's files failed after retries), the cursor isn't saved, and the next run is a full sync again. This keeps changes from being skipped. A 403 or 404 from Box is usually its final answer and doesn't count as incomplete. The exception is a 403 when listing users: without the user list, nobody's files can be walked, so that run is incomplete.
+
+### One sync at a time
+
+Scheduled syncs, manual syncs and Box webhooks never run two syncs of the same connector at once. A webhook that arrives while a sync is running queues one follow-up sync, and any more webhooks before it starts are folded into that same run.
 
 </Accordion>
 
@@ -579,6 +605,15 @@ The connector automatically determines the optimal sync approach:
 - Check that App Access Level is set to "App + Enterprise Access"
 - Re-authorize the application if scopes were changed
 
+### No files sync, or group access isn't updated
+
+**Problem:** The sync logs say *"Box refused to list users (403), so no one's files can be synced"* or *"Box refused to list groups (403), so group access in PipesHub is not being updated"*.
+
+**Solutions:**
+- For users, turn on the app's **Manage users** scope. For groups, turn on **Manage groups**. Both are under **Administrative Actions** in the Box Developer Console (see Step 2 of **Create Box App**).
+- Have a Box admin re-authorize the app in the Box Admin Console. Scope changes only take effect after re-authorizing.
+- Until **Manage users** is fixed, a connector that hasn't finished its first full sync repeats the full sync on every run. No files can be listed, but each run still refreshes groups and replays the same share history (up to 200 pages), because the missing user list keeps the replay from saving its place. A connector that already syncs incrementally keeps its place in the event stream and applies no changes until the user list can be read. If the scope is fixed within 14 days, the first run after the fix applies every change from the gap. After 14 days, Box no longer keeps those events, so the connector runs a full sync instead. That brings in what exists in Box now, and its share-history replay (which reads up to a year back) also applies shares added or removed in the gap, possibly over more than one full sync. Deletions from the gap aren't applied: the full sync doesn't remove records for items that are gone from Box.
+
 ### Sync Issues
 
 **Problem:** Files not appearing or sync taking too long
@@ -595,7 +630,8 @@ The connector automatically determines the optimal sync approach:
 **Problem:** "Rate limit exceeded" errors
 
 **Solutions:**
-- The connector has built-in rate limiting (50 req/s)
+- The connector has built-in rate limiting (50 req/s), and retries a rate-limited request after the wait Box asks for
+- When a file can't be opened because Box keeps rate-limiting, the person sees *"Too many requests to …. Please try again shortly."*, with the connector's name filled in. The wait Box asked for is passed on in the response's `Retry-After` header
 - Increase sync interval for scheduled syncs
 - Contact Box support to request higher rate limits for your enterprise
 

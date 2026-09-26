@@ -48,7 +48,7 @@ This connector uses the **Nextcloud WebDAV API** for file operations. WebDAV (We
 A **cursor** (activity ID) is used to track changes between syncs.
 
 1. When you first sync, the connector fetches all files and folders using WebDAV PROPFIND.
-2. After the sync completes, the connector saves the latest activity ID as a cursor.
+2. After the sync completes, the connector saves the latest activity ID as a cursor. If the first sync can't list the drive, or any file or folder in it can't be read or saved, no cursor is saved, and the next sync starts over with a full sync. Files that did sync stay synced.
 3. Instead of re-downloading the entire file list to check for changes, the connector queries the Activity API with this cursor.
 4. The API returns only the files and folders that have been added, modified, or deleted since the last sync.
 
@@ -129,7 +129,7 @@ On the **Authenticate** tab, enter:
   **Email must match.** Use a Nextcloud account whose email matches the email on your PipesHub account. A mismatch breaks permission resolution and you will not see your synced records in search.
 </Warning>
 
-Click **Save** to store the credentials. PipesHub validates the connection against Nextcloud before persisting.
+Click **Save** to store the credentials. Saving doesn't contact Nextcloud. The app password is checked when you turn the connector on. If Nextcloud rejects it, turning the connector on fails with a message telling you to create a new app password (see **Invalid Credentials** under Troubleshooting below).
 
 </Accordion>
 
@@ -232,6 +232,8 @@ The sync begins by authenticating with the provided username and app password. T
 2. Retrieves user email from Nextcloud (if available)
 3. Uses username as the primary identifier
 
+If the Nextcloud profile can't be read (for example, during a brief server outage), the sync saves nothing and tries again next time, rather than guessing who owns your files. A profile that loads but has no email address is different: the connector then uses `{username}@nextcloud.local` as the owner's email.
+
 ### Drive Creation
 
 Once the user is identified, the system creates a "Record Group":
@@ -303,9 +305,28 @@ Nextcloud uses the **Activity API** to track changes:
    - Re-processes permissions
    - Updates database records
 
-4. **Deletion Handling:** Processes deletion events by marking records as deleted in the database.
+4. **Deletion Handling:** Removes deleted files from PipesHub. Deleting a folder removes everything that was inside it too, and restoring a folder from the Nextcloud trash brings everything it held back into PipesHub.
 
 5. **Activity Cursor Update:** After processing all events, saves the latest activity ID for the next incremental sync cycle.
+
+#### When Something Fails
+
+The connector doesn't move the cursor past changes it couldn't apply:
+
+- **Activity feed unavailable:** If Nextcloud's activity feed can't be read (an outage, or a rate limit that outlasts the retries), the cursor stays where it was. The next sync reads the same changes again, deletions included.
+- **A file that is already gone:** If Nextcloud answers "not found" (HTTP 404) for a changed file, the connector treats the file as already deleted or moved, and the cursor moves on as usual. The deletion or move is in the activity feed too.
+- **A file or deletion that fails another way:** If fetching or saving a changed file fails for another reason (a server error such as HTTP 503, a listing that can't be read, or a network error), or a deletion can't be applied, the cursor stays where it was. The next sync reads that page of changes again.
+- **The limit:** A page is held for at most 5 syncs. On syncs 1 to 4 the cursor stays where it was. On the 5th, the connector moves the cursor on, so one broken file can't hold up later changes. The warning on each held sync and the error on the 5th name what failed and why: the path of each changed file, and the path and ID of each deletion (up to 20 names, then a count of the rest). After that, a changed file that failed is read again only when it next changes in Nextcloud.
+- **Deletions keep being retried:** A deleted file never changes again, so a deletion that still fails on the 5th sync goes into a list of pending deletions, saved together with the cursor. A file that Nextcloud lists again during that sync (because it was restored or recreated) isn't queued. Every sync retries that list first, before reading new changes, and looks the file up in Nextcloud by its ID before deleting, so a file or folder that was moved is still found:
+  - if Nextcloud no longer has it (or it's in the trash), the deletion is applied;
+  - if Nextcloud still has it, anywhere in your files, the deletion is dropped and it stays. For a folder that still has files indexed inside it (including one whose own record is already gone), the folder is first saved where it is now, whether it moved or is back where it was, and those files are linked back under it. The deletion is dropped only once that save works; if any part of it fails, the deletion stays on the list and the next sync tries again;
+  - if the lookup can't be made right now, or its answer can't be read, the connector falls back to the file's saved location in PipesHub, but only while PipesHub still has a record for it:
+    - if that saved location is the file's full path, it is checked: the same file there drops the deletion. "Not found" there, or a different file in its place, applies it, unless it's a folder with files still indexed inside it: then it stays on the list, since a folder that was moved looks the same as one that was deleted;
+    - if the saved location can't be read, or is only the file's name while the file sits in a folder, nothing is checked and the deletion stays on the list for the next sync.
+
+    A folder whose own record is already gone, while files from inside it are still indexed, also waits for a lookup by ID.
+
+  A deletion also leaves the list when nothing from that file or folder is left in PipesHub. Until a deletion is applied, the file stays searchable.
 
 ---
 
@@ -348,7 +369,7 @@ The incremental sync uses Nextcloud's Activity API to efficiently detect changes
 
 * **Path Cache:** Maintains in-memory map of paths to record IDs
 * **Batch Processing:** Groups updates into configurable batch sizes
-* **Rate Limiting:** Respects API rate limits (50 requests/second default)
+* **Rate Limiting:** Sends at most 50 requests per second. When Nextcloud answers with a rate limit (HTTP 429), a temporary server error, or the connection fails, the request is retried up to 3 times. The wait before each retry is a random delay that grows with each attempt: up to 1 second, then 2, then 4, never more than 60 seconds. If Nextcloud sends a `Retry-After` header with a number of seconds, the connector waits that long instead, up to 60 seconds. A `Retry-After` given as a date, or no header at all (usual for server errors), uses the growing delay.
 * **Concurrent Batches:** Processes up to 5 batches simultaneously
 
 </Accordion>
@@ -397,13 +418,22 @@ The connector provides authenticated file downloads:
 
 ### Invalid Credentials
 
-**Symptom:** Authentication fails with 401 error
+**Symptom:** Turning the connector on fails with this message:
+
+> Nextcloud rejected the app password, so nothing could be synced. Create a new app password in Nextcloud (Personal settings > Security > Devices & sessions). Then turn this connector off, enter the new password in its settings, save, and turn it back on.
+
+You also get a notification titled **Nextcloud app password rejected** with the same message. If the password is revoked while the connector is on, syncs stop and you get the same notification. Files already synced and the sync position stay as they are.
 
 **Solutions:**
 1. Verify your username is correct
 2. Ensure you're using an **App Password**, not your main password
 3. Check that the app password hasn't been revoked in Nextcloud Security settings
 4. Verify the Base URL is correct (should not end with `/`)
+5. If the password was revoked or expired:
+   1. Create a new one in Nextcloud under **Personal settings > Security > Devices & sessions**.
+   2. Turn the connector off. PipesHub doesn't accept new credentials while it's on.
+   3. Enter the new app password in the connector's settings and click **Save**.
+   4. Turn the connector back on. This is when the password is checked, and syncing starts again.
 
 ### Base URL Incorrect
 

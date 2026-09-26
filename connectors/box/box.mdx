@@ -477,7 +477,7 @@ Box uses a **global Enterprise Event Stream** with a single `stream_position` cu
    - Re-processes permissions
    - Updates database records
 
-6. **Deletion Handling:** Processes deletion events by marking records as deleted in the database.
+6. **Deletion Handling:** A file or folder that is deleted, or moved to the trash, in Box is removed from PipesHub on the next incremental sync. Deleting a folder also removes everything stored under it. Restoring an item from the Box trash syncs it again. If a delete can't be applied, the cursor stays where it was and the delete is retried on the next runs, up to five attempts in all. After the fifth, the batch is passed over with an error in the sync logs, and that item's record stays in PipesHub: a later full sync only walks items that still exist in Box, so it won't remove it.
 
 7. **Stream Position Update:** After processing all events, saves the new `stream_position` cursor for the next incremental sync cycle. This single cursor tracks the state of the entire enterprise event stream, not individual folders. If part of a batch of events couldn't be read, the cursor stays where it was and the same batch is read again on the next run. After five attempts the batch is passed over, with an error in the sync logs, so one item Box keeps failing can't hold back every later change.
 
@@ -496,6 +496,10 @@ Box permissions are managed through **collaborations** - explicit grants that gi
 3. **Group Memberships:** Users inherit permissions through group collaborations.
 
 4. **Public/Company Links:** Shared links can grant broader access.
+
+<Note>
+  Sharing never moves a file. A file or folder owned by someone in your Box enterprise stays in its owner's drive, in its place in the owner's folders, and the colleagues it is shared with see it under **Shared with me**. A folder owned by someone outside your enterprise and shared with a colleague is brought in when a full sync finds it in that colleague's folders, and appears only under the colleague's **Shared with me**. A share whose owner is outside the enterprise isn't added any other way: incremental sync and the share-history replay skip it without asking Box for the item, since Box doesn't return such items to a colleague. A single file shared this way never shows up in the colleague's folders, so it isn't brought in at all.
+</Note>
 
 ### Sync Process
 

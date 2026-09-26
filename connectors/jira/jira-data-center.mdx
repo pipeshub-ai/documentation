@@ -392,9 +392,9 @@ The Jira Data Center connector syncs:
 - On Jira 10 and later, the bulk user list can be restricted, and the fallback search may not return everyone
 - Give the account Browse Users permission, or ask a Jira administrator to set **User email visibility** to **Public** in General Configuration
 
-**People lose a project role's access on an instance with more than 1000 groups:**
+**Project role access doesn't update for groups past the first 1000:**
 - Jira Data Center's group list returns at most 1000 groups, and it has no way to page past them. The sync logs say *"More than 1000 groups (Jira reports N): roles that include groups past the first 1000 were left unchanged."*
-- The first 1000 groups keep syncing. A project role that includes a group past the first 1000 keeps the members it already has in PipesHub, instead of losing the people who come through that group. Roles made only of users, or only of groups in the first 1000, sync as usual.
+- The first 1000 groups keep syncing. A project role that includes a group past the first 1000 keeps the members it already has in PipesHub, so nobody loses access. But that role's membership isn't updated: people who join a group past the first 1000 don't gain the role's access in PipesHub, and people who leave it keep the access they had. Roles made only of users, or only of groups in the first 1000, sync as usual.
 
 **Deleted issues still show up in search:**
 - Deleted issues are found through the audit log, which needs Jira administrator access

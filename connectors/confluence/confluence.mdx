@@ -683,7 +683,7 @@ The Confluence connector syncs the following data from your Confluence Cloud wor
 ### Incremental sync
 - Uses timestamp-based synchronization to detect changes
 - Only syncs new or modified content since last sync
-- Syncs every attachment of a page or blog post, however many it has. If a later part of the attachment list can't be read, the attachments already read are kept, and the space's page or blog post checkpoint doesn't move, so the next sync reads that time window again. If even the first part can't be read, the connector uses the attachments that came with the page listing, and the checkpoint moves on as usual
+- Syncs every attachment of a page or blog post, however many it has. If the attachment list can't be read in full, the attachments already read are kept, and the space's page or blog post checkpoint doesn't move, so the next sync reads that time window again. That includes a temporary failure (such as a timeout or rate limit) on the list's first request, in which case the connector uses the attachments that came with the page or blog post in the search results. If the first request fails for a lasting reason, such as the list not being found, the connector uses those search-result attachments and the checkpoint moves on as usual
 - Efficiently handles additions, updates, and deletions
 - Reduces API calls and sync duration
 

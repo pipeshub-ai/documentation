@@ -78,7 +78,7 @@ PIPESHUB_MCP_TOKEN=phpat_eyJhbGciOiJIUzI1NiIs...
 
 ## Using a Personal Access Token
 
-Send it as a standard bearer token on any authenticated PipesHub API request, including the [MCP endpoint](/mcp/overview):
+Send it as a standard bearer token on PipesHub API requests, including the [MCP endpoint](/mcp/overview). A few account-security actions are the exception (see below):
 
 ```bash
 curl -X POST https://your-pipeshub-instance.com/mcp \
@@ -95,7 +95,11 @@ npx -y @pipeshub-ai/mcp start \
   --bearer-auth phpat_YOUR_TOKEN
 ```
 
-A PAT reaches the same endpoints as a session token, and is verified the same way — just with a longer lifetime and no OAuth flow to obtain it.
+A PAT is verified the same way as a session token, just with a longer lifetime and no OAuth flow to obtain it.
+
+<Note>
+  **Some actions need you signed in yourself.** A PAT, or an access token issued to an OAuth app, is refused with **403 Forbidden** when it tries to manage personal access tokens, create or change OAuth apps, or approve an OAuth or device sign-in request. Do these in the PipesHub web app while signed in. This stops a token that was granted a few scopes from creating a new token or app with more.
+</Note>
 
 It is **not** equivalent to being logged in. Session tokens skip scope checks entirely; PATs are enforced against the scopes you granted. A PAT can only do what you selected when you created it, which is why granting fewer scopes is worth the extra moment.
 

@@ -98,7 +98,7 @@ npx -y @pipeshub-ai/mcp start \
 A PAT is verified the same way as a session token, just with a longer lifetime and no OAuth flow to obtain it.
 
 <Note>
-  **Some actions need you signed in yourself.** A PAT, or an access token issued to an OAuth app, is refused with **403 Forbidden** when it tries to manage personal access tokens, create or change OAuth apps, or approve an OAuth or device sign-in request. Do these in the PipesHub web app while signed in. This stops a token that was granted a few scopes from creating a new token or app with more.
+  **Some actions need you signed in yourself.** A PAT, or an access token issued to an OAuth app, is refused with **403 Forbidden** on every personal access token and OAuth app endpoint, including listing, reading, deleting and regenerating a client secret, and on the requests that approve or look up an OAuth or device sign-in. Use a signed-in session for these: the PipesHub web app, or a session token on these APIs, as in the [admin examples](#admin-visibility-and-revocation) below. This stops a token that was granted a few scopes from reading secrets or creating a new token or app with more.
 </Note>
 
 It is **not** equivalent to being logged in. Session tokens skip scope checks entirely; PATs are enforced against the scopes you granted. A PAT can only do what you selected when you created it, which is why granting fewer scopes is worth the extra moment.
@@ -181,6 +181,8 @@ Both endpoints require organization-admin privileges and return `400` for non-ad
 | `/api/v1/personal-access-tokens/scopes` | `GET` | List the scopes available to grant, grouped by category |
 | `/api/v1/personal-access-tokens/admin` | `GET` | **Admin only.** List every active token in the org, paginated |
 | `/api/v1/personal-access-tokens/admin/{tokenId}` | `DELETE` | **Admin only.** Revoke any user's token by id |
+
+Every endpoint in this table needs a signed-in session token. A PAT or OAuth access token gets **403 Forbidden**.
 
 ### Request Bodies
 

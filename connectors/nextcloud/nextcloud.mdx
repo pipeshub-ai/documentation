@@ -171,6 +171,8 @@ Filters split into two categories:
 | **Created Date** | No restriction | Filter files and folders by creation date. Same operators as Modified Date. |
 | **File Extensions** | All extensions | Include or exclude specific file types (e.g., `pdf`, `docx`). Folders are always traversed regardless of this filter so the hierarchy stays intact. |
 
+**Changing the filters later.** Saving narrower sync filters starts a full sync. Once that sync has read your whole drive, it removes from PipesHub the files the new filters leave out, together with their search results. If the drive can't be read in full, nothing is removed, and the next sync (again a full one) finishes the job.
+
 <img
   src="/images/connectors/nextcloud/nc2.png"
   alt="Nextcloud connector sync filters: modified date, created date, and file extensions"
@@ -286,7 +288,8 @@ Once the user is identified, the system creates a "Record Group":
    - `data_entities_processor.on_record_content_update` - For content modifications
    - `data_entities_processor.on_record_metadata_update` - For metadata changes
 
-5. **Cursor Initialization:** After successful full sync, saves the latest activity ID as cursor for future incremental syncs.
+5. **Removing what is no longer listed:** Once every file and folder has been read and saved, records of files and folders the listing no longer returns are removed. These are files deleted in Nextcloud, and files the sync filters now leave out. A listing that fails, or a file that can't be read or saved, stops this step, so nothing is removed on that sync.
+6. **Cursor Initialization:** After successful full sync, saves the latest activity ID as cursor for future incremental syncs.
 
 #### Incremental Sync
 

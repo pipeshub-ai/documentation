@@ -547,8 +547,15 @@ Sync settings allow you to control how the connector syncs data from Google Driv
 **Sync Interval:**
 In what interval the connector will sync data (default: 60 minutes).
 
+### Deleted and trashed files
+On Workspace, a file that is deleted or moved to the trash in Google Drive is removed from PipesHub on the next sync, for everyone: it no longer shows up in search, and its indexed content is deleted too. Trashing a folder removes the files inside it as well.
+
+When a file only disappears for one person, because it was unshared with them, just that person loses access in PipesHub. To tell the two cases apart, the connector asks the file's owner whether the file still exists. If Google can't answer because of an outage or a rate limit, nothing is removed and the change is checked again on the next sync. If the owner is outside your Workspace, the connector can't ask, so it only removes the access of the person who lost it.
+
 ### Sync Filters
 Sync filters control which files are fetched from Google Drive. Files that don't match are skipped entirely. The **Created Date**, **Modified Date** and **Sync Files with Extensions** filters always let folders through, so the folder structure is kept. **Folder IDs** works the other way: see below.
+
+On Workspace, narrowing a sync filter also removes what it now leaves out. After you save, the next sync deletes the files the new filters exclude from PipesHub, along with their indexed content. A folder that sits above a folder you listed is kept, so the tree still leads to it. If one of the listed folders can't be read on that sync, nothing is removed yet: the connector can't tell what is inside that folder, so it waits for a sync that can read every listed folder.
 
 ### Folder IDs
 

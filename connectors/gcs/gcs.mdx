@@ -225,6 +225,8 @@ Click **+ Add filter** and pick one or more:
 
 Each filter has an operator — usually **In** ("only these") or **Not In** ("everything except these").
 
+You can change filters later. Files that a changed filter now leaves out are removed from PipesHub on the next sync, search results included.
+
 There's also an **Enable Manual Indexing** toggle. Leave it off unless someone on your team has told you otherwise — with it off, synced files become searchable automatically.
 
 When you're happy, click **Save Configuration**.
@@ -339,7 +341,7 @@ This is the slow one. A few thousand files takes minutes. A few million takes ho
 
 ### Every sync after that
 
-Once the initial sync is done, the connector only asks Google Cloud: *"what's changed since last time?"* So scheduled syncs usually finish in 5–15 minutes no matter how big the bucket is.
+Once the initial sync is done, each sync lists the bucket again but only processes files that changed since last time, so scheduled syncs usually finish in 5–15 minutes no matter how big the bucket is. Files you deleted from the bucket are removed from PipesHub. A file is only removed after the whole bucket (or folder) was listed without an error, so a failed sync never removes anything.
 
 ### Who can see the synced files?
 

@@ -256,7 +256,7 @@ Still on the same tab, scroll down to **Indexing & sync filters**. Filters let y
 3. Click **Save Configuration** (bottom right) when you're done.
 
 <Info>
-  You can change filters any time later. New filters take effect on the next sync.
+  You can change filters any time later. New filters take effect on the next sync, and files a filter now leaves out are removed from PipesHub, search results included.
 </Info>
 
 ### Step 8: Turn on sync
@@ -436,7 +436,8 @@ After the initial sync, subsequent syncs are much faster:
 - **Sync Point Tracking**: Stores the last sync timestamp per bucket in sync points
 - **Change Detection**: Only fetches objects modified since the last sync timestamp
 - **Pagination Resume**: Uses continuation tokens to resume interrupted syncs
-- **Efficient Updates**: Processes only new, modified, or deleted objects
+- **Efficient Updates**: Processes only new or modified objects, and removes files you deleted from the bucket
+- **Safe Removal**: A file is removed only after a sync has listed the whole bucket (or folder) without an error, so a failed or interrupted sync never removes anything
 - **API Optimization**: Reduces API calls by 90%+ compared to full syncs
 
 **How It Works:**

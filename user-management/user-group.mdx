@@ -121,12 +121,12 @@ Skipped adding the unique user group name index: some active user groups in the 
 
 The log entry's `duplicates` field lists each clash as the organization ID (`orgId`), the shared `name`, and the IDs of the groups that use it (`groupIds`).
 
-Nothing is renamed or deleted automatically. Until the duplicates are fixed, the rule that blocks new duplicates stays off. To fix it:
+Nothing is renamed or deleted automatically. PipesHub still refuses a duplicate name when groups are created or renamed one at a time. Until the duplicates are fixed, only the database safeguard stays off: two requests arriving at the same moment could both save the same name. To fix it:
 
 1. Rename all but one group in each listed set so that every active group in the organization has its own name
 2. Restart PipesHub
 
-On the next start the check finds no duplicates, turns the rule on, and stops logging the error.
+On the next start the check finds no duplicates, turns the safeguard on, and stops logging the error.
 
 ### Conclusion
 

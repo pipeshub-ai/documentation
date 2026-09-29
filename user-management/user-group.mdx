@@ -51,7 +51,7 @@ The page shows a table of all groups with columns for **Name**, **Description**,
 </div>
 
 <Note>
-  Group names must be unique within your organization. If another group already has the name (including one created a moment earlier by someone else), PipesHub refuses it with **Group already exists**; choose a different name. The name of a deleted group can be reused. The same rule applies when you rename a group.
+  Group names must be unique within your organization. If another group already has the name, including one someone else created a moment earlier, the save is refused with the message **Failed to create group** and the detail *Group already exists*. Choose a different name and try again. The name of a deleted group can be reused. Renaming follows the same rule, and a refused rename shows **Failed to update group** with the same detail.
 </Note>
 
 <Tip>
@@ -113,7 +113,20 @@ While inviting a user from the **Users** page, use the **Add to a User Group** f
 
 ### Duplicate Group Names from Older Versions
 
-Older versions could, rarely, save two groups with the same name in one organization. If your workspace has any, the PipesHub server logs an error at startup listing each organization, group name and group ID involved, and the database rule that blocks new duplicates stays off until they are fixed. Nothing is renamed or deleted automatically. To fix it, rename all but one group in each listed set, then restart PipesHub.
+Older versions could, rarely, save two active groups with the same name in one organization. PipesHub checks for these each time the server starts. If it finds any, it logs one error:
+
+```text
+Skipped adding the unique user group name index: some active user groups in the same organization share a name. Rename the user groups listed in "duplicates" so that no two active groups in one organization share a name, then restart the service. Nothing was renamed or deleted. Until then, two requests arriving at the same moment can still create user groups with the same name.
+```
+
+The log entry's `duplicates` field lists each clash as the organization ID (`orgId`), the shared `name`, and the IDs of the groups that use it (`groupIds`).
+
+Nothing is renamed or deleted automatically. Until the duplicates are fixed, the rule that blocks new duplicates stays off. To fix it:
+
+1. Rename all but one group in each listed set so that every active group in the organization has its own name
+2. Restart PipesHub
+
+On the next start the check finds no duplicates, turns the rule on, and stops logging the error.
 
 ### Conclusion
 

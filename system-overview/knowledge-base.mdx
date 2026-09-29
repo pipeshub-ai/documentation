@@ -252,7 +252,7 @@ Update knowledge base properties.
 </Accordion>
 
 <Accordion title="DELETE /:kbId - Delete Knowledge Base">
-Delete a knowledge base and everything in it: its folders and records, their search index (embeddings), and their stored files. Content that a record elsewhere still shares, an identical file uploaded somewhere else, is kept until the last copy is deleted.
+Delete a knowledge base and everything in it. A `200` means its folders and records are gone from the graph. Their search index (embeddings) and stored files are removed afterwards by the indexing service, which retries on failure. Before anything is deleted, PipesHub lists the knowledge base's uploaded files and schedules their removal; if either step fails, nothing is deleted and the request returns `503`, so you can try again. Content that a record elsewhere still shares, an identical file uploaded somewhere else, is kept until the last copy is deleted.
 
 <Tabs>
 <Tab title="Request">
@@ -536,7 +536,7 @@ curl -X PUT \
 </Accordion>
 
 <Accordion title="DELETE /record/:recordId - Delete Record">
-Delete a record: it is removed from the graph and the search index, and its uploaded file is removed from storage. If another record holds identical content, the shared search index and processed content stay until the last copy is deleted.
+Delete a record. A `200` means the record is gone from the graph. Its search index (embeddings) and its uploaded file are removed afterwards by the indexing service, which retries on failure. If another record holds identical content, the shared search index and processed content stay until the last copy is deleted.
 
 <Tabs>
 <Tab title="Request">
@@ -904,7 +904,7 @@ Update folder properties such as name.
 </Accordion>
 
 <Accordion title="DELETE /:kbId/folder/:folderId - Delete Folder">
-Delete a folder and all its contents, including sub-folders, the same way a record is deleted. Nothing outside the folder is touched.
+Delete a folder and all its contents, including sub-folders, the same way a record is deleted: a `200` means they are gone from the graph, and their embeddings and stored files are removed afterwards. Nothing outside the folder is touched.
 
 <Tabs>
 <Tab title="Request">
@@ -1150,7 +1150,7 @@ The Knowledge Base Service broadcasts events through Kafka to notify other servi
 }
 ```
 
-`uploadDocumentId` is set for an uploaded file: the storage document holding its original bytes, removed together with the record.
+`uploadDocumentId` is set for an uploaded file: the storage document holding its original bytes. The indexing service removes it when it handles this event, after the record is gone from the graph, and retries on failure.
 </Accordion>
 
 </AccordionGroup>

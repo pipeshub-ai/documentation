@@ -183,15 +183,18 @@ After saving, your model appears under the **Configured** tab. Each row has the 
 - **Delete** — permanently remove the configuration. You will be asked to type the model's name to confirm.
 
 <Note>
-The **embedding model in use** is the default one, or the first configured model if none is marked default. The first embedding model you add becomes the model in use even if you don't mark it as default, and the vector store is sized for it.
+The **embedding model in use** is the default one, or the first configured model if none is marked default. With no embedding model configured, the built-in `BAAI/bge-large-en-v1.5` embeds your content.
 
-While vectors are stored, PipesHub refuses any change of the model in use, even to a model that produces vectors of the same size. That covers setting another default, removing the default from it, and deleting it. To change or delete the model in use:
+While vectors are stored, PipesHub refuses any change of the model in use, even to a model that produces vectors of the same size. That covers adding your first embedding model when content is already embedded with the built-in model, setting another default, removing the default from it, and deleting it. The first model you add sizes the vector store only when the store is empty.
 
-1. Delete the embeddings in **Labs → Vector Store**.
-2. Set another default, or delete the model.
-3. Re-embed your content from **Labs → Vector Store**.
+To change or delete the model in use:
 
-If you try to delete it while vectors are stored, PipesHub refuses with: "This model is embedding your indexed content. Delete the embeddings in Labs first, then change or delete the model and re-embed."
+1. Under **Labs → Feature flags**, turn on **Enable Vector Store Rebuild** and click **Save**. The **Vector Store** section appears in **Labs**.
+2. In **Labs → Vector Store**, click **Clean up** and confirm with **Delete embeddings**.
+3. Add, set as default, or delete the embedding model.
+4. In **Labs → Vector Store**, click **Reindex** and confirm with **Start reindex**.
+
+If you try to delete the model in use while vectors are stored, PipesHub refuses with: "This model is embedding your indexed content. Delete the embeddings in Labs first, then change or delete the model and re-embed."
 
 Adding, editing or deleting any other embedding model does not touch the vector store.
 </Note>

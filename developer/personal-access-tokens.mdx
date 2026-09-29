@@ -137,7 +137,7 @@ curl -X DELETE https://your-pipeshub-instance.com/api/v1/personal-access-tokens/
 ```
 </CodeGroup>
 
-Both endpoints require organization-admin privileges and return `400` for non-admins. The list is paginated (`page`, `limit`, up to 100 per page) and includes each token's owner — including tokens whose owner has since been removed from the org, which still appear so they can be cleaned up.
+Both endpoints require organization-admin privileges and return `403` for non-admins, with the message "You need admin access to do this. Ask an admin in your organisation." The list is paginated (`page`, `limit`, up to 100 per page) and includes each token's owner — including tokens whose owner has since been removed from the org, which still appear so they can be cleaned up.
 
 <Note>
   **Response shape:** the admin list is **not** the same shape as your own token list. It's wrapped in `data`/`pagination`, and each item carries owner fields the self-service list doesn't:

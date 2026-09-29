@@ -183,6 +183,12 @@ After saving, your model appears under the **Configured** tab. Each row has the 
 - **Delete** — permanently remove the configuration. You will be asked to type the model's name to confirm.
 
 <Note>
+The embedding model in use (the default one) can't be deleted while your indexed content is embedded with it, because the model that would take over produces different vectors. PipesHub refuses with: "This model is embedding your indexed content. Set another default model and re-embed, or delete the embeddings in Labs first." Other embedding models can be deleted at any time.
+
+Adding an embedding model that is not the default does not change your vector store. Only the model in use decides its size.
+</Note>
+
+<Note>
 Changing the default embedding model does not automatically re-index existing documents.
 Documents indexed with the old model and queries run with the new model use different vector spaces, which will degrade search quality. Re-index your documents after switching embedding models.
 </Note>

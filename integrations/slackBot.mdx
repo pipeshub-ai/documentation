@@ -200,7 +200,8 @@ Users can attach files to a direct message or an `@bot` mention, and the bot pas
 | CSV and TSV | `.csv`, `.tsv` |
 
 - Each file can be up to **5 MB**.
-- Text files must be saved as UTF-8. The bot skips a text file whose content is not readable text, such as a binary file renamed to `.txt`, and asks the user to save it as UTF-8 and send it again.
+- Plain-text and Markdown files must be saved as UTF-8. The bot skips one whose content is not readable text, such as a binary file renamed to `.txt`, and asks the user to save it as UTF-8 and send it again.
+- CSV and TSV files can be UTF-8 or a Western European encoding such as Windows-1252, which Excel uses when it saves a CSV. The bot skips only a CSV or TSV that contains binary data.
 - The bot skips any other type, such as Word, Excel or JSON files, and any file over the size limit. It replies in the thread with the files it skipped and the list of accepted types, whether or not the bot is linked to an agent. If some attachments were accepted, it answers using those. If the message also has a question, it still answers the question. If the message had only attachments and none were accepted, that reply is the whole answer.
 
 ## End-To-End Verification Checklist

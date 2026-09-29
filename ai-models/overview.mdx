@@ -90,7 +90,13 @@ After saving, your model appears under the **Configured** tab. Each row has the 
 ## Troubleshooting
 
 <Note>
-If the health check fails when saving, the message names the setting the provider refused, for example "The API key for Team GPT was rejected by Azure OpenAI", or says that the model or the endpoint couldn't be found. Double-check:
+If the health check fails when saving, it names the setting the provider refused in one of these messages:
+- A rejected key: "The API key for &lt;model name&gt; was rejected by &lt;provider&gt;. Check the key in Workspace > AI Models, then try again."
+- A missing model: "&lt;provider&gt; couldn't find the model "&lt;name&gt;". Check the model name (or deployment name) in Workspace > AI Models, then try again."
+- An unreachable endpoint: "Couldn't reach &lt;provider&gt; at the endpoint in these settings. Check the endpoint address and that PipesHub can connect to it, then try again."
+- Any other request the provider refused: "&lt;provider&gt; refused these &lt;model type&gt; settings. Check the model name and its options (such as reasoning effort or context length), then try again."
+
+Only these cases come back as named messages. Anything else is a server error ("Couldn't connect to &lt;provider&gt; with these &lt;model type&gt; settings…"), and the details are in the AI service's logs. Double-check:
 - The API key is correct and has not expired.
 - For Azure providers, the endpoint URL matches the correct region and resource.
 - For Ollama, the server is running and the Docker internal hostname resolves correctly.

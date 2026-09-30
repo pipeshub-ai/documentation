@@ -554,9 +554,8 @@ When a file only disappears for one person, because it was unshared with them, j
 
 For a file in a shared drive, one person's change never removes it for everyone on its own. What happens to a file that was really deleted depends on the drive:
 
-- **A shared drive that PipesHub syncs** (the **Drive IDs** filter includes it and at least one synced user is a member): the file is removed by that drive's own sync.
-- **A shared drive the Drive IDs filter leaves out:** the connector asks the other synced users who had access whether they can still open the file. If one can, only the person who lost it loses access. If none can, the file is removed for everyone.
-- **A shared drive that no synced user is a member of:** only the person who lost the file loses access. The file itself isn't removed, even when it was really deleted, so anyone who can still reach it another way, for example through a group, keeps finding it in search.
+- **A shared drive that PipesHub syncs** (the **Drive IDs** filter includes it and at least one synced user is a member, directly or through a group): the file is removed by that drive's own sync.
+- **A shared drive the Drive IDs filter leaves out, or one no synced user is a member of:** the connector asks the other synced users who had access whether they can still open the file. If one can, only the person who lost it loses access. If none can, the file is removed for everyone, including from search for anyone who reached it another way, such as through a group.
 
 If Google can't answer because of an outage or a rate limit, nothing is removed and the change is checked again on the next sync.
 

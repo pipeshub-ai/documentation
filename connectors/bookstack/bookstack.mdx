@@ -172,7 +172,7 @@ The integration requires three pieces of information:
 <Accordion title="What happens to pages I delete in BookStack, or leave out with a filter?">
   A page deleted in BookStack is removed from PipesHub on the next sync, including its search results. A page restored from BookStack's recycle bin before that sync is kept.
 
-  When you narrow the sync filters (for example, remove a book from **Book Name**), the next sync is a full one, and it removes the pages the filters now leave out. If BookStack can't be reached or returns an error while that full sync lists the pages, nothing is removed. The syncs after it are incremental and don't remove filtered-out pages, so those pages stay in PipesHub until the next full sync that reads the whole page list, for example after saving the filters again.
+  When you narrow the sync filters (for example, remove a book from **Book Name**), the next sync is a full one, and it removes the pages the filters now leave out. If BookStack can't be reached, returns an error, or stops listing before the end while that full sync lists the pages, nothing is removed and the sync's progress isn't saved. So the next sync is a full one again, and it removes those pages once it has read the whole page list. You don't need to save the filters again.
 </Accordion>
 
 <Accordion title="Facing issues not mentioned here?">
@@ -331,7 +331,7 @@ The full sync processes all pages using paginated API calls and performs a detai
   - **Permission Changes:** Trigger `on_updated_record_permissions`.
   - **Deleted Records:** Trigger deletion via `on_record_deleted`.
 
-- **Removing pages that are no longer listed:** Once every page of the listing has been read, the connector removes the record of any page it synced before that the listing no longer returns. That covers pages deleted in BookStack and pages the sync filters now leave out (for example, a book taken out of the **Book Name** filter, or a date filter narrowed). The record and its search index entries are removed. If any part of the listing fails, nothing is removed, and the removal waits for the next full sync.
+- **Removing pages that are no longer listed:** Once every page of the listing has been read, the connector removes the record of any page it synced before that the listing no longer returns. That covers pages deleted in BookStack and pages the sync filters now leave out (for example, a book taken out of the **Book Name** filter, or a date filter narrowed). The record and its search index entries are removed. If any part of the listing fails, nothing is removed and no sync point is saved, so the next sync is a full one again and finishes the removal.
 
 #### 4.2 Incremental Records Sync
 

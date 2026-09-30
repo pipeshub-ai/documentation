@@ -168,10 +168,10 @@ Filters split into two categories:
 | Filter | Default | What it does |
 |---|---|---|
 | **Modified Date** | No restriction | Filter files and folders by last-modified date. Use a preset (Last 7/14/30/90/180/365 days) or a custom range (`is_after`, `is_before`, `is_between`). |
-| **Created Date** | No restriction | Filter files and folders by creation date. Same operators as Modified Date. |
+| **Created Date** | No restriction | Shown in the filter list, but not applied: Nextcloud's WebDAV listing has no creation time, so this filter has no effect. |
 | **File Extensions** | All extensions | Include or exclude specific file types (e.g., `pdf`, `docx`). Folders are always traversed regardless of this filter so the hierarchy stays intact. |
 
-**Changing the filters later.** Saving narrower sync filters starts a full sync. Once that sync has read your whole drive, it removes from PipesHub the files the new filters leave out, together with their search results. If the drive can't be read in full, nothing is removed, and the next sync (again a full one) finishes the job.
+**Changing the filters later.** Sync filters can only be edited while the connector is turned off. Saving them doesn't start a sync. Instead, the next sync (after you turn the connector back on, or when you start one by hand) is a full one. That full sync lists your whole drive and saves every file the filters keep. Then it removes from PipesHub the files the new filters leave out, together with their search results. Until that sync finishes, those files stay searchable. If the drive can't be read in full, or a file can't be saved or removed, nothing more is removed on that sync, and the next sync is a full one again that finishes the job. Changing the Created Date filter removes nothing, because the connector doesn't apply it.
 
 <img
   src="/images/connectors/nextcloud/nc2.png"
@@ -288,8 +288,8 @@ Once the user is identified, the system creates a "Record Group":
    - `data_entities_processor.on_record_content_update` - For content modifications
    - `data_entities_processor.on_record_metadata_update` - For metadata changes
 
-5. **Removing what is no longer listed:** Once every file and folder has been read and saved, records of files and folders the listing no longer returns are removed. These are files deleted in Nextcloud, and files the sync filters now leave out. A listing that fails, or a file that can't be read or saved, stops this step, so nothing is removed on that sync.
-6. **Cursor Initialization:** After successful full sync, saves the latest activity ID as cursor for future incremental syncs.
+5. **Removing what the sync no longer keeps:** Once the whole drive has been listed and every kept file and folder has been saved, the connector removes the records of anything it didn't keep. That covers files deleted in Nextcloud. It also covers files the sync filters now leave out: the WebDAV listing still returns them, but they are dropped before they count as kept and are never saved. A listing that fails, or a kept file that can't be read or saved, stops this step, so nothing is removed on that sync.
+6. **Cursor Initialization:** Only after the listing and the removal have both finished does the connector save the latest activity ID as the cursor for future incremental syncs. If either one is incomplete, no cursor is saved, so the next sync is a full one again.
 
 #### Incremental Sync
 

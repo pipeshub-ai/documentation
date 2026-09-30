@@ -261,15 +261,16 @@ The very first time, PipesHub reads **everything** in the containers you chose. 
 
 Tip: using filters (e.g. PDFs only) makes the first sync much faster.
 
-### Later syncs (just what's new)
+### Later syncs
 
-After the first sync, PipesHub only looks at **what changed**:
+After the first sync, PipesHub still lists every blob in the container (or in each chosen folder), but it only downloads and indexes what changed:
 
 - New files — added.
 - Updated files — refreshed.
-- Deleted files — removed from search. This only happens after the whole container (or folder) was listed without an error, so a failed sync never removes anything.
+- Unchanged files — counted as still there and skipped.
+- Deleted files — their records are deleted from PipesHub and they leave search. This only happens after every folder of the container was listed without an error. If a listing fails, nothing is removed on that sync; the next complete listing removes it.
 
-These later syncs are usually quick, even for big accounts.
+Later syncs are faster than the first one because unchanged files aren't downloaded again, but the listing still grows with the number of blobs.
 
 ### Who can see the synced files?
 

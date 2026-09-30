@@ -276,7 +276,7 @@ Click the instance card to open the **Overview** panel. This is where you'll com
 
 **Buttons you'll use here:**
 
-- **Sync** — run an extra sync right now (only grabs what's changed)
+- **Sync** — run an extra sync right now (lists the bucket again and only processes what changed)
 - **Full sync** — re-scan everything from scratch (use sparingly, it's slow)
 - **Manage Configuration** — re-opens the two tabs from Steps 5–7 so you can change credentials or filters later
 
@@ -341,7 +341,9 @@ This is the slow one. A few thousand files takes minutes. A few million takes ho
 
 ### Every sync after that
 
-Once the initial sync is done, each sync lists the bucket again but only processes files that changed since last time, so scheduled syncs usually finish in 5–15 minutes no matter how big the bucket is. Files you deleted from the bucket are removed from PipesHub. A file is only removed after the whole bucket (or folder) was listed without an error, so a failed sync never removes anything.
+Once the initial sync is done, each sync lists the whole bucket (or each chosen folder) again, but it only downloads and indexes files that changed since last time. Unchanged files are counted as still present and skipped. So a later sync is faster than the first one, but its time still grows with the number of files, because they are all listed.
+
+Files you deleted from the bucket are removed from PipesHub, record and search results both. This only happens after every folder of the bucket was listed without an error. If a listing fails, nothing is removed on that sync; the next complete listing removes it.
 
 ### Who can see the synced files?
 
@@ -520,7 +522,7 @@ Most often, the service account key was rotated or deleted in Google Cloud.
 </Accordion>
 
 <Accordion title="How does the incremental sync know what's new?">
-  Every file in GCS has an `updated` timestamp. After each sync, the connector remembers the most recent timestamp it saw. Next time it runs, it just asks Google Cloud for files with a newer timestamp than that. Fast and efficient.
+  Every file in GCS has an `updated` timestamp. After each sync, the connector remembers the most recent timestamp it saw. Next time it runs, it lists the bucket again and only processes files with a newer timestamp than that. The others are counted as still present and skipped.
 </Accordion>
 
 <Accordion title="Will it sync Archive and Coldline files?">
@@ -528,9 +530,9 @@ Most often, the service account key was rotated or deleted in Google Cloud.
 </Accordion>
 
 <Accordion title="What happens when I delete a file from GCS?">
-  On the next sync, the connector notices it's gone and removes it from PipesHub too — including from search results.
+  On the next sync that lists the whole bucket without an error, the connector notices it's gone and deletes its record from PipesHub, including from search results.
   
-  If you use **object versioning** in GCS, older versions may still appear until they're also deleted.
+  **Object versioning** in GCS doesn't keep a deleted file visible: the connector lists only live objects, so once the live version is gone the file is removed.
 </Accordion>
 
 <Accordion title="Does it work with encrypted buckets?">

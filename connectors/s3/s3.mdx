@@ -430,26 +430,25 @@ The first sync performs a complete scan of your configured S3 buckets:
 
 ### Incremental Sync
 
-After the initial sync, subsequent syncs are much faster:
+After the initial sync, later syncs still list every object in the bucket (or in each chosen folder), but they only download and index the ones that changed:
 
-- **Timestamp-Based Detection**: Uses `LastModified` timestamps to identify changed objects
-- **Sync Point Tracking**: Stores the last sync timestamp per bucket in sync points
-- **Change Detection**: Only fetches objects modified since the last sync timestamp
-- **Pagination Resume**: Uses continuation tokens to resume interrupted syncs
-- **Efficient Updates**: Processes only new or modified objects, and removes files you deleted from the bucket
-- **Safe Removal**: A file is removed only after a sync has listed the whole bucket (or folder) without an error, so a failed or interrupted sync never removes anything
-- **API Optimization**: Reduces API calls by 90%+ compared to full syncs
+- **Full Listing**: Every sync lists the whole bucket or folder, page by page. Listing is much cheaper than downloading, but it still grows with the number of objects.
+- **Change Detection**: Objects whose `LastModified` is older than the last sync are counted as still present and skipped; new and changed objects are processed.
+- **Sync Point Tracking**: Stores the last sync timestamp per bucket and folder.
+- **Pagination Resume**: Uses continuation tokens to resume an interrupted listing.
+- **Deletions**: Once every folder of the bucket has been listed completely, files that are no longer there (or that a filter now excludes) are removed from PipesHub.
+- **Safe Removal**: If any listing failed or was resumed partway, nothing in that bucket is removed on that sync; removal waits for the next complete listing.
 
 **How It Works:**
 
-1. Connector reads the sync point for each bucket (stored in our database)
-2. Retrieves the `last_sync_time` timestamp
-3. Queries S3 for objects with `LastModified >= last_sync_time`
-4. Processes only the changed objects
-5. Updates the sync point with the new maximum timestamp
+1. The connector reads the sync point for each bucket and folder (stored in our database).
+2. It lists every object with `ListObjectsV2`, following continuation tokens to the last page.
+3. It processes objects that are new or changed since `last_sync_time`, and skips the rest.
+4. It saves the newest timestamp it saw as the next sync point.
+5. After a complete listing, it removes the records of objects the listing no longer returned.
 
 <Info>
-  Incremental syncs typically take 5-15 minutes for most buckets, regardless of total bucket size, as they only process changes.
+  How long a sync takes depends on how many objects the bucket holds (they are all listed) and how many have changed (only those are downloaded and indexed).
 </Info>
 
 ### Permission Handling
@@ -714,14 +713,15 @@ This connector is designed for **Amazon S3** and uses the AWS S3 API. It support
 </Accordion>
 
 <Accordion title="How does incremental sync work?">
-  After the initial sync, the connector uses timestamp-based incremental sync:
+  After the initial sync, each sync works like this:
   
-  1. **Stores Sync Point**: Saves the last sync timestamp for each bucket
-  2. **Queries Changes**: On next sync, queries S3 for objects modified since that timestamp
-  3. **Processes Only Changes**: Downloads and indexes only new or modified objects
-  4. **Updates Timestamp**: Saves the new maximum timestamp for the next sync
+  1. **Lists Everything**: Lists every object in the bucket (or in each chosen folder)
+  2. **Skips Unchanged Objects**: Objects not modified since the last sync timestamp are counted as present but not downloaded again
+  3. **Processes Changes**: Downloads and indexes only new or modified objects
+  4. **Removes Deletions**: After a complete listing, removes files that are no longer in the bucket
+  5. **Updates Timestamp**: Saves the newest timestamp for the next sync
   
-  This makes subsequent syncs 90%+ faster than full syncs, typically completing in 5-15 minutes regardless of bucket size.
+  Skipping unchanged objects is what makes later syncs faster than the first one. The listing itself still covers the whole bucket.
 </Accordion>
 
 <Accordion title="Can I sync S3 Glacier files?">
@@ -738,12 +738,13 @@ This connector is designed for **Amazon S3** and uses the AWS S3 API. It support
 <Accordion title="What happens if I delete a file in S3?">
   When a file is deleted from S3:
   
-  - The deletion is detected during the next incremental sync
-  - The file record is marked as deleted in PipesHub
-  - The file is removed from search results
-  - Historical access to the file may still be available depending on your retention settings
+  - The next sync that lists the whole bucket (or folder) without an error notices it's gone
+  - The file's record is deleted from PipesHub, along with its search index entries
+  - The file no longer appears in search results
   
-  **Note**: If you use S3 versioning, deleted files may still appear if previous versions exist.
+  If a listing fails or is interrupted, nothing is removed on that sync; the next complete listing removes it.
+  
+  **Note**: S3 versioning doesn't keep a deleted file visible. Once the current version is a delete marker, the listing no longer returns the key, so it is removed.
 </Accordion>
 
 <Accordion title="Can I sync encrypted S3 buckets?">

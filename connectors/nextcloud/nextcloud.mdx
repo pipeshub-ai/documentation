@@ -288,7 +288,7 @@ Once the user is identified, the system creates a "Record Group":
    - `data_entities_processor.on_record_content_update` - For content modifications
    - `data_entities_processor.on_record_metadata_update` - For metadata changes
 
-5. **Removing what the sync no longer keeps:** Once the whole drive has been listed and every kept file and folder has been saved, the connector removes the records of anything it didn't keep. That covers files deleted in Nextcloud. It also covers files the sync filters now leave out: the WebDAV listing still returns them, but they are dropped before they count as kept and are never saved. A listing that fails, or a kept file that can't be read or saved, stops this step, so nothing is removed on that sync.
+5. **Removing what the sync no longer keeps:** Once the whole drive has been listed and every kept file and folder has been saved, the connector removes the records of anything it didn't keep. That covers files deleted in Nextcloud. It also covers files the sync filters now leave out: the WebDAV listing still returns them, but they are dropped before they count as kept and are never saved. A listing that fails, a kept file that can't be read or saved, or a failed read of the stored records stops this step, so nothing is removed on that sync. If one record can't be removed, the others still are.
 6. **Cursor Initialization:** Only after the listing and the removal have both finished does the connector save the latest activity ID as the cursor for future incremental syncs. If either one is incomplete, no cursor is saved, so the next sync is a full one again.
 
 #### Incremental Sync

@@ -48,7 +48,7 @@ This connector uses the **Nextcloud WebDAV API** for file operations. WebDAV (We
 A **cursor** (activity ID) is used to track changes between syncs.
 
 1. When you first sync, the connector fetches all files and folders using WebDAV PROPFIND.
-2. After the sync completes, the connector saves the latest activity ID as a cursor. If the first sync can't list the drive, or any file or folder in it can't be read or saved, no cursor is saved, and the next sync starts over with a full sync. Files that did sync stay synced.
+2. After the sync completes, the connector saves the latest activity ID as a cursor. No cursor is saved if the sync can't list the drive, a file or folder in it can't be read or saved, or a file the sync no longer keeps can't be removed. In that case the next sync starts over with a full sync. Files that did sync stay synced.
 3. Instead of re-downloading the entire file list to check for changes, the connector queries the Activity API with this cursor.
 4. The API returns only the files and folders that have been added, modified, or deleted since the last sync.
 
@@ -171,7 +171,7 @@ Filters split into two categories:
 | **Created Date** | No restriction | Shown in the filter list, but not applied: Nextcloud's WebDAV listing has no creation time, so this filter has no effect. |
 | **File Extensions** | All extensions | Include or exclude specific file types (e.g., `pdf`, `docx`). Folders are always traversed regardless of this filter so the hierarchy stays intact. |
 
-**Changing the filters later.** Sync filters can only be edited while the connector is turned off. Saving them doesn't start a sync. Instead, the next sync (after you turn the connector back on, or when you start one by hand) is a full one. That full sync lists your whole drive and saves every file the filters keep. Then it removes from PipesHub the files the new filters leave out, together with their search results. Until that sync finishes, those files stay searchable. If the drive can't be read in full, or a file can't be saved or removed, nothing more is removed on that sync, and the next sync is a full one again that finishes the job. Changing the Created Date filter removes nothing, because the connector doesn't apply it.
+**Changing the filters later.** Sync filters can only be edited while the connector is turned off. Saving them doesn't start a sync. Instead, the next sync (after you turn the connector back on, or when you start one by hand) is a full one. That full sync lists your whole drive and saves every file the filters keep. Then it removes from PipesHub the files the new filters leave out, together with their search results. Until that sync finishes, those files stay searchable. If the drive can't be read in full, a kept file can't be saved, or the stored records can't be read, nothing is removed on that sync. If one file can't be removed, the others are still removed. Either way no cursor is saved, so the next sync is a full one again and finishes the job. Changing the Created Date filter removes nothing, because the connector doesn't apply it.
 
 <img
   src="/images/connectors/nextcloud/nc2.png"
@@ -401,7 +401,7 @@ The connector provides authenticated file downloads:
 | Folder Sync | ✅ | Hierarchical structure maintained |
 | Incremental Sync | ✅ | Activity API-based |
 | File Extension Filters | ✅ | Include/exclude by extension |
-| Date Filters | ✅ | Modified and created date filters |
+| Date Filters | ✅ | Modified date only; the Created Date filter isn't applied |
 | Permission Sync | ✅ | Personal account ownership |
 | File Download | ✅ | Authenticated streaming |
 | Webhook Support | ❌ | Use scheduled sync instead |

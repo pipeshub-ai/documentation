@@ -344,7 +344,7 @@ This is the slow one. A few thousand files takes minutes. A few million takes ho
 
 Once the initial sync is done, each sync lists the whole bucket again (or, with a **Folders** filter, each included folder), but it only downloads and indexes files that changed since last time. Unchanged files are counted as still present and skipped. So a later sync is faster than the first one, but its time still grows with the number of files, because they are all listed.
 
-Files you deleted from the bucket are removed from PipesHub, record and search results both. This only happens after the bucket was listed completely, without an error. If a listing fails, or resumes partway from an earlier interrupted sync, nothing is removed on that sync; the next complete listing removes it.
+Files you deleted from the bucket are removed from PipesHub, record and search results both. This only happens after the bucket was listed completely, without an error. If a listing fails, or resumes partway from an earlier interrupted sync, nothing is removed on that sync, even if the listing reaches the last page; the next complete listing removes it. Files outside a narrowed **Folders** filter don't wait for this: they're removed on the next sync.
 
 ### Who can see the synced files?
 
@@ -544,9 +544,8 @@ Most often, the service account key was rotated or deleted in Google Cloud.
 
 <Accordion title="Can I sync just one folder inside a bucket?">
   Yes. Add a **Folders** filter with the folder's path from the bucket root, for example `reports`, and set it to **In**. Subfolders are included. Set it to **Not In** to sync everything except that folder.
-  - Use a **Modified Date** filter if the folder you care about has freshly-changed files
   
-  Folder-level filtering is on our roadmap.
+  If you narrow the folders later, files outside them are removed from PipesHub on the next sync.
 </Accordion>
 
 </AccordionGroup>

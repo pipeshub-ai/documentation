@@ -113,7 +113,7 @@ While inviting a user from the **Users** page, use the **Add to a User Group** f
 
 ### Duplicate Group Names from Older Versions
 
-Older versions could, rarely, save two active groups with the same name in one organization. PipesHub checks for these each time the server starts. If it finds any, it logs one error:
+Older versions let two active groups in one organization end up with the same name: renaming a group didn't check whether another group already used the new name, and two create requests arriving at the same moment could both be saved. PipesHub checks for these each time the server starts. If it finds any, it logs one error:
 
 ```text
 Skipped adding the unique user group name index: some active user groups in the same organization share a name. Rename the user groups listed in "duplicates" so that no two active groups in one organization share a name, then restart the service. Nothing was renamed or deleted. Until then, two requests arriving at the same moment can still create user groups with the same name.

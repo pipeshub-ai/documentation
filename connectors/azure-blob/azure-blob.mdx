@@ -170,6 +170,7 @@ A small menu opens with the fields you can filter by:
 </div>
 
 - **Container Names** — pick specific containers
+- **Folders** — include or exclude folders inside a container, as paths from the container root (e.g. `reports`, which covers `reports/2026/q1.pdf` too)
 - **File Extensions** — pick file types (e.g. PDFs only)
 - **Modified Date** — only files changed after / before / between dates
 - **Created Date** — only files created after / before / between dates
@@ -187,7 +188,7 @@ Common examples:
 - **Only one container** — field: *Container Names* · operator: *In* · pick the container
 
 <Info>
-  If you don't add any filters, PipesHub will sync every file it can read. That's fine for small accounts. If you change filters later, files they now leave out are removed from PipesHub on the next sync.
+  If you don't add any filters, PipesHub will sync every file it can read. That's fine for small accounts. If you change filters later, files that an extension, date or **Folders** filter now leaves out are removed from PipesHub, search results included. Folders exclusions are removed on the next sync. Extension and date exclusions are removed once the next sync has listed the container completely. Taking a container off **Container Names** stops syncing it, but the files already synced from it stay in PipesHub.
 </Info>
 
 When you're done, click **Save Configuration** at the bottom of the panel.
@@ -263,12 +264,12 @@ Tip: using filters (e.g. PDFs only) makes the first sync much faster.
 
 ### Later syncs
 
-After the first sync, PipesHub still lists every blob in the container (or in each chosen folder), but it only downloads and indexes what changed:
+After the first sync, PipesHub still lists every blob in the container (or, with a **Folders** filter, in each included folder), but it only downloads and indexes what changed:
 
 - New files — added.
 - Updated files — refreshed.
 - Unchanged files — counted as still there and skipped.
-- Deleted files — their records are deleted from PipesHub and they leave search. This only happens after every folder of the container was listed without an error. If a listing fails, nothing is removed on that sync; the next complete listing removes it.
+- Deleted files — their records are deleted from PipesHub and they leave search. This only happens after the container was listed completely, without an error. If a listing fails, nothing is removed on that sync; the next complete listing removes it.
 
 Later syncs are faster than the first one because unchanged files aren't downloaded again, but the listing still grows with the number of blobs.
 
@@ -388,11 +389,11 @@ Usually this means the Azure access keys were changed.
 </Accordion>
 
 <Accordion title="What happens if I delete a file in Azure?">
-  On the next sync, PipesHub notices it's gone and removes it from search.
+  On the next sync that lists the whole container without an error, PipesHub deletes the file's record and it leaves search. If a listing fails, nothing is removed on that sync; the next complete listing removes it.
 </Accordion>
 
 <Accordion title="Can I sync just one folder inside a container?">
-  Not directly. The easiest workaround is to filter by **file extensions** or split content into separate containers.
+  Yes. Add a **Folders** filter with the folder's path from the container root, for example `reports`, and set it to **In**. Subfolders are included. Set it to **Not In** to sync everything except that folder.
 </Accordion>
 
 <Accordion title="Is the connection string encrypted?">

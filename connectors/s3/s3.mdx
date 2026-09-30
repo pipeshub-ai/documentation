@@ -248,15 +248,16 @@ You're now on the **Configure Records** tab. The top part is called **Sync setti
 Still on the same tab, scroll down to **Indexing & sync filters**. Filters let you limit what PipesHub pulls from S3. **If you don't add any filters, everything will be synced.**
 
 1. **Enable Manual Indexing** — leave this **off**. (Turning it on stops PipesHub from automatically indexing new files for search.)
-2. Click **+ Add filter** to add a filter. You'll see four options:
+2. Click **+ Add filter** to add a filter. You'll see these options:
    - **Bucket Names** — pick which S3 buckets to include or exclude. PipesHub loads your bucket list automatically — just select from the dropdown.
+   - **Folders** — include or exclude folders inside a bucket, as paths from the bucket root, e.g. `reports` (which covers `reports/2026/q1.pdf` too).
    - **File Extensions** — include or exclude specific file types. Type them comma-separated, e.g. `pdf, docx, txt`.
    - **Modified Date** — only sync files changed after / before / between the dates you choose.
    - **Created Date** — same idea, but based on when the file was first uploaded to S3.
 3. Click **Save Configuration** (bottom right) when you're done.
 
 <Info>
-  You can change filters any time later. New filters take effect on the next sync, and files a filter now leaves out are removed from PipesHub, search results included.
+  You can change filters any time later. New filters take effect on the next sync. Files that an extension, date or **Folders** filter now leaves out are removed from PipesHub, search results included. Folders exclusions are removed on the next sync. Extension and date exclusions are removed once the next sync has listed the bucket completely. Taking a bucket off **Bucket Names** stops syncing it, but the files already synced from it stay in PipesHub.
 </Info>
 
 ### Step 8: Turn on sync
@@ -445,7 +446,7 @@ After the initial sync, later syncs still list every object in the bucket (or in
 2. It lists every object with `ListObjectsV2`, following continuation tokens to the last page.
 3. It processes objects that are new or changed since `last_sync_time`, and skips the rest.
 4. It saves the newest timestamp it saw as the next sync point.
-5. After a complete listing, it removes the records of objects the listing no longer returned.
+5. After a complete listing, it removes the records of objects the listing no longer returned, and of objects a filter now leaves out. (Those are still listed, but they're skipped before they count as kept.)
 
 <Info>
   How long a sync takes depends on how many objects the bucket holds (they are all listed) and how many have changed (only those are downloaded and indexed).

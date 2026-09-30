@@ -550,7 +550,15 @@ In what interval the connector will sync data (default: 60 minutes).
 ### Deleted and trashed files
 On Workspace, a file that is deleted or moved to the trash in Google Drive is removed from PipesHub on the next sync, for everyone: it no longer shows up in search, and its indexed content is deleted too. Trashing a folder removes the files inside it as well.
 
-When a file only disappears for one person, because it was unshared with them, just that person loses access in PipesHub. For a file in a shared drive, one person's change never removes it for everyone on its own. A file deleted from a shared drive that PipesHub syncs is removed by that drive's own sync. For a shared drive the **Drive IDs** filter leaves out, or one no synced user belongs to, the connector asks the other synced users who had access whether they can still open the file: if one can, only the person who lost it loses access; if none can, the file is removed for everyone. To tell the two cases apart, the connector asks the file's owner whether the file still exists. If Google can't answer because of an outage or a rate limit, nothing is removed and the change is checked again on the next sync. If the owner is outside your Workspace, the connector can't ask, so it only removes the access of the person who lost it.
+When a file only disappears for one person, because it was unshared with them, just that person loses access in PipesHub. For a file in My Drive, the connector tells this apart from a real delete by asking the file's owner whether the file still exists. If it's gone or in the trash, it is removed for everyone. If the owner is outside your Workspace, the connector can't ask, so it only removes the access of the person who lost it.
+
+For a file in a shared drive, one person's change never removes it for everyone on its own. What happens to a file that was really deleted depends on the drive:
+
+- **A shared drive that PipesHub syncs** (the **Drive IDs** filter includes it and at least one synced user is a member): the file is removed by that drive's own sync.
+- **A shared drive the Drive IDs filter leaves out:** the connector asks the other synced users who had access whether they can still open the file. If one can, only the person who lost it loses access. If none can, the file is removed for everyone.
+- **A shared drive that no synced user is a member of:** only the person who lost the file loses access. The file itself isn't removed, even when it was really deleted, so anyone who can still reach it another way, for example through a group, keeps finding it in search.
+
+If Google can't answer because of an outage or a rate limit, nothing is removed and the change is checked again on the next sync.
 
 ### Sync Filters
 Sync filters control which files are fetched from Google Drive. Files that don't match are skipped entirely. The **Created Date**, **Modified Date** and **Sync Files with Extensions** filters always let folders through, so the folder structure is kept. **Folder IDs** works the other way: see below.

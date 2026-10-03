@@ -706,7 +706,7 @@ Upload files directly to a knowledge base, creating records and folder structure
 - Maximum file size: 30MB per file
 - Supported MIME types: Based on extensionToMimeType mapping
 - File paths must be unique and not contain invalid characters
-- A file whose name (ignoring case) and type match a file already in the target folder, or another file in the same upload, isn't added. It's reported as a failed file with `reason: "DUPLICATE_NAME"` and the message `A file named "<name>" already exists in this location; it was skipped.` The other files in the upload still go ahead.
+- A file isn't added when its name (ignoring case) and type match a file already in the folder it's going to, or another file in the same upload that's going to the same folder. Files with the same name going to different folders, such as `docs/Report.pdf` and `archive/Report.pdf`, are both created. In the upload's event stream (`text/event-stream`), a skipped file gets a `file:failed` event with `reason: "DUPLICATE_NAME"`, `stage: "index"` and `errors: ["A file named \"<name>\" already exists in this location; it was skipped."]`. The other files in the upload still go ahead, each with its own event (`file:succeeded` when it's added), and the stream ends with `done`.
 
 ```bash
 curl -X POST \
@@ -1380,7 +1380,7 @@ All endpoints return structured error responses with specific HTTP status codes:
 - Unsupported MIME types
 - File size exceeds 30MB limit
 - Invalid file path characters
-- A file with the same name and type as one already in the target folder, or as another file in the same upload, is skipped with reason `DUPLICATE_NAME` (the rest of the upload goes ahead)
+- A file with the same name and type as one already in its destination folder, or as another file in the same upload going to that folder, is skipped: it gets a `file:failed` stream event with reason `DUPLICATE_NAME` (the rest of the upload goes ahead)
 
 ## Integration with AI Indexing
 

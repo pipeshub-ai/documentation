@@ -120,13 +120,13 @@ Retrieve all knowledge bases accessible to the user with filtering and paginatio
 |-----------|------|---------|-------------|
 | page | number | 1 | Page number for pagination |
 | limit | number | 20 | Number of items per page (1-100) |
-| search | string | - | Search term for filtering knowledge bases (max 100 characters) |
-| permissions | string | - | Comma-separated list of permissions to filter by |
-| sortBy | string | createdAt | Field to sort by (createdAt, updatedAt, name) |
-| sortOrder | string | desc | Sort order (asc, desc) |
+| search | string | - | Search term for filtering knowledge bases (max 1000 characters) |
+| permissions | string | - | Comma-separated list of your roles to filter by: `OWNER`, `WRITER` or `READER`. Any other value is refused with `400 Bad Request`. |
+| sortBy | string | name | Field to sort by (`name`, `createdAtTimestamp`, `updatedAtTimestamp`, `userRole`) |
+| sortOrder | string | asc | Sort order (asc, desc) |
 
 ```http
-GET /api/v1/knowledgeBase/?page=1&limit=10&search=documents&permissions=OWNER,ADMIN&sortBy=name&sortOrder=asc
+GET /api/v1/knowledgeBase/?page=1&limit=10&search=documents&permissions=OWNER,WRITER&sortBy=updatedAtTimestamp&sortOrder=desc
 ```
 </Tab>
 
@@ -675,9 +675,9 @@ Delete a folder and all its contents.
 <Accordion title="Administrative Operations">
 Connector statistics, reindexing and resync are not part of the Knowledge Base API. They are in the Connectors API, under `/api/v1/connectors`, and take a connector instance ID:
 
-- `GET /api/v1/connectors/:connectorId/stats` - Indexing statistics for a connector
-- `POST /api/v1/connectors/:connectorId/reindex` - Reindex a connector's records, optionally only those with certain indexing statuses
-- `POST /api/v1/connectors/:connectorId/resync` - Resync a connector's records
+- `GET /api/v1/connectors/:connectorId/stats` - Indexing statistics for a connector. Needs only the ID.
+- `POST /api/v1/connectors/:connectorId/reindex` - Reindex a connector's records. The body is optional: send `{ "statusFilters": [...] }` to reindex only the records with those indexing statuses.
+- `POST /api/v1/connectors/:connectorId/resync` - Resync a connector's records. The body must include `connectorName` (the connector's name), and may include `fullSync: true` for a full resync. A request without `connectorName` is refused.
 
 The Knowledge Base API's old `stats/:connector`, `reindex-all/connector` and `resync/connector` endpoints no longer exist.
 </Accordion>

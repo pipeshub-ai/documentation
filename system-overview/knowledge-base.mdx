@@ -502,6 +502,8 @@ Update a record with new metadata or file content.
 - Supported MIME types: Based on extensionToMimeType mapping
 - File extension must match existing record's extension for versioned updates
 
+**Duplicate names:** within one folder (or the knowledge base root), a file can't have the same name as another file of the same type. Names are compared without regard to case, so `Report.pdf` and `report.pdf` count as the same name. Renaming a file to a name that another file of the same type already uses there is refused with `409 Conflict`, and the file keeps its old name. A file of a different type may use the same name.
+
 ```bash
 curl -X PUT \
   -H "Authorization: Bearer YOUR_TOKEN" \
@@ -529,6 +531,48 @@ curl -X PUT \
     "requestId": "req-101112",
     "timestamp": "2025-04-27T12:15:00.000Z"
   }
+}
+```
+</Tab>
+</Tabs>
+</Accordion>
+
+<Accordion title="PUT /:kbId/record/:recordId/move - Move Record">
+Move a file or folder to another folder in the same knowledge base, or to the knowledge base root.
+
+<Tabs>
+<Tab title="Request">
+**Endpoint:** `PUT /api/v1/kb/:kbId/record/:recordId/move`
+
+**Path Parameters:**
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| kbId | string | Yes | Knowledge base UUID |
+| recordId | string | Yes | Record ID of the file or folder to move |
+
+**Request Body Parameters:**
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| newParentId | string \| null | Yes | Target folder ID, or `null` to move to the knowledge base root |
+
+```json
+{
+  "newParentId": "folder456"
+}
+```
+
+**Duplicate names:** a file can't be moved into a folder (or the knowledge base root) that already holds a file with the same name, ignoring case, and the same type. A folder can't be moved next to another folder with the same name. Such a move is refused with `409 Conflict`, and the record stays where it was. A file of a different type may share the name.
+</Tab>
+
+<Tab title="Response">
+**Status:** `200 OK`
+
+```json
+{
+  "success": true,
+  "message": "Record moved successfully"
 }
 ```
 </Tab>
@@ -662,6 +706,7 @@ Upload files directly to a knowledge base, creating records and folder structure
 - Maximum file size: 30MB per file
 - Supported MIME types: Based on extensionToMimeType mapping
 - File paths must be unique and not contain invalid characters
+- A file whose name (ignoring case) and type match a file already in the target folder, or another file in the same upload, isn't added. It's reported as a failed file with `reason: "DUPLICATE_NAME"` and the message `A file named "<name>" already exists in this location; it was skipped.` The other files in the upload still go ahead.
 
 ```bash
 curl -X POST \
@@ -1325,6 +1370,7 @@ All endpoints return structured error responses with specific HTTP status codes:
 - `401 Unauthorized` - Missing or invalid authentication
 - `403 Forbidden` - Insufficient permissions
 - `404 Not Found` - Resource not found
+- `409 Conflict` - Name already in use: a file of the same type, or a folder, already has that name in that location
 - `413 Payload Too Large` - File size exceeds limit
 - `422 Unprocessable Entity` - Validation errors
 - `500 Internal Server Error` - Server errors, backend service failures
@@ -1334,7 +1380,7 @@ All endpoints return structured error responses with specific HTTP status codes:
 - Unsupported MIME types
 - File size exceeds 30MB limit
 - Invalid file path characters
-- Duplicate file paths in upload
+- A file with the same name and type as one already in the target folder, or as another file in the same upload, is skipped with reason `DUPLICATE_NAME` (the rest of the upload goes ahead)
 
 ## Integration with AI Indexing
 

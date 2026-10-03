@@ -971,7 +971,7 @@ The Authentication Service implements several security measures:
 ### Password Security
 - Passwords are validated for complexity requirements (minimum 8 characters with at least one uppercase, one lowercase, one number, and one special character)
 - Passwords are hashed using bcrypt with salt rounds
-- Password reset links have limited validity
+- Forgot-password links work once and expire after 20 minutes. Self-hosted deployments can change that lifetime with the `PASSWORD_RESET_LINK_EXPIRY` environment variable (for example `30m`). Invitation links are separate: they last 48 hours and ignore that setting
 
 ### Brute Force Protection
 - Failed login attempts are tracked per user account

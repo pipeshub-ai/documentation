@@ -264,7 +264,7 @@ The response does not include the knowledge base. Call `GET /:kbId` to read the 
 </Accordion>
 
 <Accordion title="DELETE /:kbId - Delete Knowledge Base">
-Soft-delete a knowledge base and all its contents.
+Delete a knowledge base, with all its folders and records. Only the knowledge base's owner can delete it, and it can't be undone.
 
 <Tabs>
 <Tab title="Request">
@@ -318,12 +318,14 @@ Retrieve a specific record by its ID with full metadata.
 ```json
 {
   "record": {
-    "_key": "rec789012",
+    "id": "rec789012",
     "orgId": "org123456",
     "recordName": "Company Policy.pdf",
     "externalRecordId": "doc123456",
     "recordType": "FILE",
     "origin": "UPLOAD",
+    "connectorName": "KB",
+    "connectorId": "kb123456",
     "createdAtTimestamp": 1714208400000,
     "updatedAtTimestamp": 1714208400000,
     "sourceCreatedAtTimestamp": 1714208400000,
@@ -341,21 +343,38 @@ Retrieve a specific record by its ID with full metadata.
       "sizeInBytes": 2048576,
       "isFile": true,
       "webUrl": "/record/rec789012"
-    }
+    },
+    "mailRecord": null,
+    "ticketRecord": null
   },
   "knowledgeBase": {
     "id": "kb123456",
     "name": "Company Documents",
     "orgId": "org123456"
   },
-  "permissions": "OWNER",
-  "relatedRecords": [],
-  "meta": {
-    "requestId": "req-789",
-    "timestamp": "2025-04-27T12:10:00.000Z"
-  }
+  "folder": null,
+  "metadata": {
+    "departments": [],
+    "categories": [],
+    "subcategories1": [],
+    "subcategories2": [],
+    "subcategories3": [],
+    "topics": [],
+    "languages": []
+  },
+  "permissions": [
+    {
+      "id": "rec789012",
+      "name": "Company Policy.pdf",
+      "type": "FILE",
+      "relationship": "OWNER",
+      "accessType": "KNOWLEDGE_BASE"
+    }
+  ]
 }
 ```
+
+`permissions` holds one entry describing your access to the record: `relationship` is your role, and `accessType` is how you have it (here, through the knowledge base). `metadata` lists the departments, categories, topics and languages found for the record. `folder` is often `null`, even for a file that is inside a folder. With ArangoDB as the graph database, the record's ID comes back as `_key` instead of `id`.
 </Tab>
 </Tabs>
 </Accordion>
@@ -377,7 +396,7 @@ Update a record with new metadata or file content.
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-| recordName | string | No | New name for the record |
+| recordName | string | No | New name for the record. Ignored when you attach a file (see below). |
 | file | file | No | New file content (creates a new version) |
 
 **Content-Type:** `multipart/form-data` (when uploading file)
@@ -390,10 +409,11 @@ Update a record with new metadata or file content.
 ```bash
 curl -X PUT \
   -H "Authorization: Bearer YOUR_TOKEN" \
-  -F "recordName=Updated Company Policy.pdf" \
   -F "file=@updated_policy.pdf" \
   /api/v1/knowledgeBase/record/rec789012
 ```
+
+When you attach a file, the record is renamed after that file, without its extension: uploading `updated_policy.pdf` names the record `updated_policy`, and any `recordName` you send with the file is ignored. To rename a record, send `recordName` on its own, without a file.
 </Tab>
 
 <Tab title="Response">
@@ -404,24 +424,25 @@ curl -X PUT \
   "message": "Record updated with new file version",
   "record": {
     "_key": "rec789012",
-    "recordName": "Updated Company Policy.pdf",
+    "recordName": "updated_policy",
     "externalRecordId": "doc123456",
-    "version": 2,
-    "updatedAtTimestamp": 1714294800000,
-    "indexingStatus": "NOT_STARTED"
+    "updatedAtTimestamp": 1714294800000
   },
+  "fileUploaded": true,
   "meta": {
-    "requestId": "req-101112",
+    "requestId": "anon-9d4e2b7c1a8f4c3e9b6d0a5f2e7c1b8d",
     "timestamp": "2025-04-27T12:15:00.000Z"
   }
 }
 ```
+
+`record` is the stored record after the update, shortened here. When you only rename the record, `message` is `Record updated successfully` and `fileUploaded` is `false`.
 </Tab>
 </Tabs>
 </Accordion>
 
 <Accordion title="DELETE /record/:recordId - Delete Record">
-Soft-delete a record by setting its deleted flag.
+Delete a file from a knowledge base. The record is removed from the graph database and can't be restored, and its stored file is cleaned up in the background. Only files uploaded to a knowledge base can be deleted here: a record synced from a connector is refused with `403 Forbidden`, and is removed by deleting the item in the source app.
 
 <Tabs>
 <Tab title="Request">
@@ -439,13 +460,15 @@ Soft-delete a record by setting its deleted flag.
 
 ```json
 {
-  "message": "Record deleted successfully",
-  "meta": {
-    "requestId": "req-131415",
-    "timestamp": "2025-04-27T12:20:00.000Z"
-  }
+  "success": true,
+  "message": "Record rec789012 deleted successfully",
+  "recordId": "rec789012",
+  "connector": null,
+  "timestamp": null
 }
 ```
+
+`connector` and `timestamp` are often `null`, so don't rely on them. If the search index couldn't be told about the deletion, the response also has `vectorCleanupPending: true` and `vectorCleanupFailedRecordIds`, the records whose search entries are still waiting to be removed.
 </Tab>
 </Tabs>
 </Accordion>
@@ -496,14 +519,14 @@ Force reindexing of a record by the AI backend.
 
 ```json
 {
-  "reindexResponse": {
-    "success": true,
-    "recordId": "rec789012"
-  },
-  "meta": {
-    "requestId": "req-161718",
-    "timestamp": "2025-04-27T12:25:00.000Z"
-  }
+  "success": true,
+  "message": "Reindex initiated for record rec789012",
+  "recordId": "rec789012",
+  "recordName": "Company Policy.pdf",
+  "connector": "KB",
+  "eventPublished": true,
+  "userRole": "OWNER",
+  "depth": 0
 }
 ```
 </Tab>
@@ -636,11 +659,8 @@ Update folder properties such as name.
 
 ```json
 {
-  "message": "Folder updated successfully",
-  "meta": {
-    "requestId": "req-282930",
-    "timestamp": "2025-04-27T12:45:00.000Z"
-  }
+  "success": true,
+  "message": "Folder updated successfully"
 }
 ```
 </Tab>
@@ -667,11 +687,8 @@ Delete a folder and all its contents.
 
 ```json
 {
-  "message": "Folder deleted successfully",
-  "meta": {
-    "requestId": "req-313233",
-    "timestamp": "2025-04-27T12:50:00.000Z"
-  }
+  "success": true,
+  "message": "Folder deleted successfully"
 }
 ```
 </Tab>
@@ -913,18 +930,13 @@ All endpoints return structured error responses with specific HTTP status codes:
 {
   "error": {
     "code": "VALIDATION_ERROR",
-    "message": "Invalid request parameters",
-    "details": {
-      "field": "kbName",
-      "issue": "Knowledge base name is required"
-    }
-  },
-  "meta": {
-    "requestId": "req-error-123",
-    "timestamp": "2025-04-27T13:20:00.000Z"
+    "message": "Kb name is required.",
+    "requestId": "anon-3f2c9a7e1b6d4e0f8a5c2d9b7e4f1a6c"
   }
 }
 ```
+
+`requestId` identifies the request in the server's logs, so include it when you report a problem.
 
 **Common Error Codes:**
 - `400 Bad Request` - Invalid request parameters, file validation errors

@@ -4,7 +4,7 @@ The Knowledge Base Service provides a centralized repository for managing and ac
 
 ## Base URL
 
-All endpoints are prefixed with `/api/v1/kb`
+All endpoints are prefixed with `/api/v1/knowledgeBase`
 
 ## Authentication
 
@@ -73,7 +73,7 @@ Create a new knowledge base for organizing documents.
 
 <Tabs>
 <Tab title="Request">
-**Endpoint:** `POST /api/v1/kb/`
+**Endpoint:** `POST /api/v1/knowledgeBase/`
 
 **Request Body Parameters:**
 
@@ -112,7 +112,7 @@ Retrieve all knowledge bases accessible to the user with filtering and paginatio
 
 <Tabs>
 <Tab title="Request">
-**Endpoint:** `GET /api/v1/kb/`
+**Endpoint:** `GET /api/v1/knowledgeBase/`
 
 **Query Parameters:**
 
@@ -126,7 +126,7 @@ Retrieve all knowledge bases accessible to the user with filtering and paginatio
 | sortOrder | string | desc | Sort order (asc, desc) |
 
 ```http
-GET /api/v1/kb/?page=1&limit=10&search=documents&permissions=OWNER,ADMIN&sortBy=name&sortOrder=asc
+GET /api/v1/knowledgeBase/?page=1&limit=10&search=documents&permissions=OWNER,ADMIN&sortBy=name&sortOrder=asc
 ```
 </Tab>
 
@@ -169,7 +169,7 @@ Retrieve a specific knowledge base by its ID.
 
 <Tabs>
 <Tab title="Request">
-**Endpoint:** `GET /api/v1/kb/:kbId`
+**Endpoint:** `GET /api/v1/knowledgeBase/:kbId`
 
 **Path Parameters:**
 
@@ -209,7 +209,7 @@ Update knowledge base properties.
 
 <Tabs>
 <Tab title="Request">
-**Endpoint:** `PUT /api/v1/kb/:kbId`
+**Endpoint:** `PUT /api/v1/knowledgeBase/:kbId`
 
 **Path Parameters:**
 
@@ -221,11 +221,11 @@ Update knowledge base properties.
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-| name | string | No | New name for the knowledge base |
+| kbName | string | No | New name for the knowledge base (1-255 characters) |
 
 ```json
 {
-  "name": "Updated Company Documents"
+  "kbName": "Updated Company Documents"
 }
 ```
 </Tab>
@@ -256,7 +256,7 @@ Soft-delete a knowledge base and all its contents.
 
 <Tabs>
 <Tab title="Request">
-**Endpoint:** `DELETE /api/v1/kb/:kbId`
+**Endpoint:** `DELETE /api/v1/knowledgeBase/:kbId`
 
 **Path Parameters:**
 
@@ -289,136 +289,12 @@ Manage individual records within knowledge bases including creation, retrieval, 
 
 <AccordionGroup>
 
-<Accordion title="GET /records - Get All Records">
-Retrieve all records accessible to the user across all knowledge bases.
-
-<Tabs>
-<Tab title="Request">
-**Endpoint:** `GET /api/v1/kb/records`
-
-**Query Parameters:**
-
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| page | number | 1 | Page number for pagination |
-| limit | number | 20 | Number of items per page (1-100) |
-| search | string | - | Search term for filtering records (max 100 characters) |
-| recordTypes | string | - | Comma-separated list of record types (FILE, EMAIL, WEBPAGE, MESSAGE, OTHERS) |
-| origins | string | - | Comma-separated list of origins (UPLOAD, CONNECTOR) |
-| connectors | string | - | Comma-separated list of connector names |
-| indexingStatus | string | - | Comma-separated list of indexing statuses (NOT_STARTED, IN_PROGRESS, FAILED, COMPLETED) |
-| permissions | string | - | Comma-separated list of permissions to filter by |
-| dateFrom | number | - | Filter by creation timestamp (milliseconds) |
-| dateTo | number | - | Filter by creation timestamp (milliseconds) |
-| sortBy | string | createdAtTimestamp | Field to sort by |
-| sortOrder | string | desc | Sort order (asc, desc) |
-| source | string | all | Source filter (all, local, connector) |
-
-```http
-GET /api/v1/kb/records?page=1&limit=20&recordTypes=FILE&origins=UPLOAD&indexingStatus=COMPLETED&sortBy=createdAtTimestamp&sortOrder=desc
-```
-</Tab>
-
-<Tab title="Response">
-**Status:** `200 OK`
-
-```json
-{
-  "records": [
-    {
-      "id": "rec789012",
-      "externalRecordId": "doc123456",
-      "recordName": "Company Policy.pdf",
-      "recordType": "FILE",
-      "origin": "UPLOAD",
-      "indexingStatus": "COMPLETED",
-      "createdAtTimestamp": 1714208400000,
-      "updatedAtTimestamp": 1714208400000,
-      "version": 1,
-      "isDeleted": false,
-      "isArchived": false,
-      "fileRecord": {
-        "name": "Company Policy.pdf",
-        "extension": "pdf",
-        "mimeType": "application/pdf",
-        "sizeInBytes": 2048576,
-        "isFile": true,
-        "webUrl": "/record/rec789012"
-      },
-      "knowledgeBase": {
-        "id": "kb123456",
-        "name": "Company Documents"
-      }
-    }
-  ],
-  "pagination": {
-    "page": 1,
-    "limit": 20,
-    "totalCount": 45,
-    "totalPages": 3
-  },
-  "filters": {
-    "applied": {
-      "recordTypes": ["FILE"],
-      "origins": ["UPLOAD"],
-      "indexingStatus": ["COMPLETED"]
-    },
-    "available": {
-      "recordTypes": [
-        { "value": "FILE", "count": 40 },
-        { "value": "EMAIL", "count": 5 }
-      ],
-      "origins": [
-        { "value": "UPLOAD", "count": 30 },
-        { "value": "CONNECTOR", "count": 15 }
-      ],
-      "indexingStatus": [
-        { "value": "COMPLETED", "count": 42 },
-        { "value": "IN_PROGRESS", "count": 2 },
-        { "value": "FAILED", "count": 1 }
-      ]
-    }
-  },
-  "meta": {
-    "requestId": "req-456",
-    "timestamp": "2025-04-27T12:05:00.000Z"
-  }
-}
-```
-</Tab>
-</Tabs>
-</Accordion>
-
-<Accordion title="GET /:kbId/records - Get KB Records">
-Retrieve all records within a specific knowledge base.
-
-<Tabs>
-<Tab title="Request">
-**Endpoint:** `GET /api/v1/kb/:kbId/records`
-
-**Path Parameters:**
-
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| kbId | string | Yes | Knowledge base UUID |
-
-**Query Parameters:** Same as "Get All Records" endpoint
-</Tab>
-
-<Tab title="Response">
-**Status:** `200 OK`
-
-Same response structure as "Get All Records" but filtered to the specific knowledge base.
-</Tab>
-</Tabs>
-</Accordion>
-
 <Accordion title="GET /record/:recordId - Get Record By ID">
 Retrieve a specific record by its ID with full metadata.
 
 <Tabs>
 <Tab title="Request">
-**Endpoint:** `GET /api/v1/kb/record/:recordId`
+**Endpoint:** `GET /api/v1/knowledgeBase/record/:recordId`
 
 **Path Parameters:**
 
@@ -480,7 +356,7 @@ Update a record with new metadata or file content.
 
 <Tabs>
 <Tab title="Request">
-**Endpoint:** `PUT /api/v1/kb/record/:recordId`
+**Endpoint:** `PUT /api/v1/knowledgeBase/record/:recordId`
 
 **Path Parameters:**
 
@@ -507,7 +383,7 @@ curl -X PUT \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -F "recordName=Updated Company Policy.pdf" \
   -F "file=@updated_policy.pdf" \
-  /api/v1/kb/record/rec789012
+  /api/v1/knowledgeBase/record/rec789012
 ```
 </Tab>
 
@@ -540,7 +416,7 @@ Soft-delete a record by setting its deleted flag.
 
 <Tabs>
 <Tab title="Request">
-**Endpoint:** `DELETE /api/v1/kb/record/:recordId`
+**Endpoint:** `DELETE /api/v1/knowledgeBase/record/:recordId`
 
 **Path Parameters:**
 
@@ -570,7 +446,7 @@ Stream the actual file content of a record for download.
 
 <Tabs>
 <Tab title="Request">
-**Endpoint:** `GET /api/v1/kb/stream/record/:recordId`
+**Endpoint:** `GET /api/v1/knowledgeBase/stream/record/:recordId`
 
 **Path Parameters:**
 
@@ -597,7 +473,7 @@ Force reindexing of a record by the AI backend.
 
 <Tabs>
 <Tab title="Request">
-**Endpoint:** `POST /api/v1/kb/reindex/record/:recordId`
+**Endpoint:** `POST /api/v1/knowledgeBase/reindex/record/:recordId`
 
 **Path Parameters:**
 
@@ -633,12 +509,12 @@ Upload files and folders to knowledge bases with support for bulk operations and
 
 <AccordionGroup>
 
-<Accordion title="POST /:kbId/upload - Upload to Knowledge Base">
-Upload files directly to a knowledge base, creating records and folder structures as needed.
+<Accordion title="POST /:kbId/upload - Upload to Knowledge Base or Folder">
+Upload files to the root of a knowledge base, or into one of its folders, creating records and folder structures as needed.
 
 <Tabs>
 <Tab title="Request">
-**Endpoint:** `POST /api/v1/kb/:kbId/upload`
+**Endpoint:** `POST /api/v1/knowledgeBase/:kbId/upload`
 
 **Path Parameters:**
 
@@ -646,13 +522,18 @@ Upload files directly to a knowledge base, creating records and folder structure
 |-----------|------|----------|-------------|
 | kbId | string | Yes | Knowledge base UUID |
 
+**Query Parameters:**
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| folderId | string | No | Folder to upload into. Leave it out to upload to the knowledge base root. |
+
 **Request Body Parameters:**
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-| files | file[] | Yes | Array of files to upload (max 1000 files, 30MB per file) |
-| file_paths | string[] | Yes | Array of file paths corresponding to files |
-| last_modified | number[] | Yes | Array of last modified timestamps (milliseconds) |
+| files | file[] | Yes | Files to upload (max 1000 files, 30MB per file by default) |
+| files_metadata | string | No | A JSON array with one `{ "file_path": string, "last_modified": number }` entry per file, in the same order as `files`. `file_path` places the file in folders (for example `folder/report.pdf`), and `last_modified` is in milliseconds. Without it, each file is placed directly in the target under its own name. |
 | isVersioned | boolean | No | Whether files should be versioned (default: true) |
 
 **Content-Type:** `multipart/form-data`
@@ -668,116 +549,40 @@ curl -X POST \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -F "files=@document1.pdf" \
   -F "files=@folder/document2.docx" \
-  -F "file_paths=document1.pdf" \
-  -F "file_paths=folder/document2.docx" \
-  -F "last_modified=1714208400000" \
-  -F "last_modified=1714208500000" \
+  -F 'files_metadata=[{"file_path":"document1.pdf","last_modified":1714208400000},{"file_path":"folder/document2.docx","last_modified":1714208500000}]' \
   -F "isVersioned=true" \
-  /api/v1/kb/kb123456/upload
+  /api/v1/knowledgeBase/kb123456/upload
 ```
+
+To upload into a folder instead, add its ID as a query parameter: `/api/v1/knowledgeBase/kb123456/upload?folderId=folder456`.
 </Tab>
 
 <Tab title="Response">
-**Status:** `201 Created`
+**Status:** `200 OK`
 
-```json
-{
-  "message": "Upload completed successfully",
-  "data": {
-    "total_created": 2,
-    "folders_created": 1,
-    "records_created": 2,
-    "knowledgeBase": {
-      "id": "kb123456",
-      "name": "Company Documents"
-    },
-    "createdRecords": [
-      {
-        "id": "rec789012",
-        "name": "document1.pdf",
-        "type": "FILE",
-        "folderId": null
-      },
-      {
-        "id": "rec789013",
-        "name": "document2.docx",
-        "type": "FILE",
-        "folderId": "folder456"
-      }
-    ],
-    "createdFolders": [
-      {
-        "id": "folder456",
-        "name": "folder",
-        "path": "folder"
-      }
-    ]
-  },
-  "meta": {
-    "requestId": "req-192021",
-    "timestamp": "2025-04-27T12:30:00.000Z"
-  }
-}
+**Content-Type:** `text/event-stream`
+
+The response is a stream of [Server-Sent Events](https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events/Using_server-sent_events). The server sends one `file:succeeded` or `file:failed` event for each file as soon as that file is settled, then a final `done` event with a summary, and then closes the stream.
+
+| Event | When it's sent | Fields in `data` |
+|-------|----------------|------------------|
+| `file:succeeded` | The file was stored and its record was created. Indexing carries on in the background. | `recordId`, `fileName`, `filePath`, `extension` |
+| `file:failed` | The file wasn't added. The other files in the upload still go ahead. | `fileName`, `filePath`, `extension`, `errors` (a list of messages), `stage` (`upload` or `index`), plus `recordId` once one was assigned and `reason` when there is one (`EXCEEDS_SIZE_LIMIT`, `UNSUPPORTED_TYPE` or `DUPLICATE_NAME`) |
+| `done` | The last event, once every file has its own event. | `summary` with `total`, `succeeded` and `failed` counts |
+| `error` | Something went wrong after the stream had started. The stream closes right after it, so treat any file that didn't get its own event as failed. | `message` |
+
+```text
+event: file:succeeded
+data: {"recordId":"rec789012","fileName":"document1.pdf","filePath":"document1.pdf","extension":"pdf"}
+
+event: file:failed
+data: {"fileName":"document2.docx","filePath":"folder/document2.docx","extension":"docx","errors":["This file is larger than the 30 MB limit. Make it smaller or split it, then upload it again."],"reason":"EXCEEDS_SIZE_LIMIT","stage":"upload"}
+
+event: done
+data: {"summary":{"total":2,"succeeded":1,"failed":1}}
 ```
-</Tab>
-</Tabs>
-</Accordion>
 
-<Accordion title="POST /:kbId/folder/:folderId/upload - Upload to Folder">
-Upload files to a specific folder within a knowledge base.
-
-<Tabs>
-<Tab title="Request">
-**Endpoint:** `POST /api/v1/kb/:kbId/folder/:folderId/upload`
-
-**Path Parameters:**
-
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| kbId | string | Yes | Knowledge base UUID |
-| folderId | string | Yes | Target folder UUID |
-
-**Request Body Parameters:** Same as "Upload to Knowledge Base"
-
-```bash
-curl -X POST \
-  -H "Authorization: Bearer YOUR_TOKEN" \
-  -F "files=@document.pdf" \
-  -F "file_paths=document.pdf" \
-  -F "last_modified=1714208400000" \
-  /api/v1/kb/kb123456/folder/folder456/upload
-```
-</Tab>
-
-<Tab title="Response">
-**Status:** `201 Created`
-
-```json
-{
-  "message": "Folder upload completed successfully",
-  "data": {
-    "total_created": 1,
-    "folders_created": 0,
-    "records_created": 1,
-    "targetFolder": {
-      "id": "folder456",
-      "name": "Target Folder"
-    },
-    "createdRecords": [
-      {
-        "id": "rec789014",
-        "name": "document.pdf",
-        "type": "FILE",
-        "folderId": "folder456"
-      }
-    ]
-  },
-  "meta": {
-    "requestId": "req-222324",
-    "timestamp": "2025-04-27T12:35:00.000Z"
-  }
-}
-```
+Lines that start with a colon, such as `: keepalive` (sent about once a second while work is in progress), only keep the connection open and can be ignored. Problems found before the stream starts, such as a missing token, no permission to write to the knowledge base, or a knowledge base or folder that doesn't exist, come back as an ordinary JSON error with a `4xx` status instead of a stream.
 </Tab>
 </Tabs>
 </Accordion>
@@ -786,86 +591,16 @@ curl -X POST \
 </Accordion>
 
 <Accordion title="Folder Operations">
-Manage folder structures within knowledge bases including content retrieval, updates, and deletion.
+Manage folder structures within knowledge bases including updates and deletion.
 
 <AccordionGroup>
-
-<Accordion title="GET /:kbId/folder/:folderId/records - Get Folder Contents">
-Retrieve all records and subfolders within a specific folder.
-
-<Tabs>
-<Tab title="Request">
-**Endpoint:** `GET /api/v1/kb/:kbId/folder/:folderId/records`
-
-**Path Parameters:**
-
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| kbId | string | Yes | Knowledge base UUID |
-| folderId | string | Yes | Folder UUID |
-
-**Query Parameters:** Same filtering and pagination parameters as record endpoints
-</Tab>
-
-<Tab title="Response">
-**Status:** `200 OK`
-
-```json
-{
-  "folder": {
-    "id": "folder456",
-    "name": "Documents Folder",
-    "path": "documents",
-    "parentId": null,
-    "createdAt": "2025-04-27T12:00:00.000Z",
-    "updatedAt": "2025-04-27T12:00:00.000Z"
-  },
-  "contents": {
-    "records": [
-      {
-        "id": "rec789012",
-        "recordName": "Company Policy.pdf",
-        "recordType": "FILE",
-        "createdAtTimestamp": 1714208400000,
-        "fileRecord": {
-          "name": "Company Policy.pdf",
-          "extension": "pdf",
-          "mimeType": "application/pdf",
-          "sizeInBytes": 2048576
-        }
-      }
-    ],
-    "folders": [
-      {
-        "id": "subfolder789",
-        "name": "Policies",
-        "path": "documents/policies",
-        "recordCount": 5
-      }
-    ]
-  },
-  "pagination": {
-    "page": 1,
-    "limit": 20,
-    "totalCount": 6,
-    "totalPages": 1
-  },
-  "meta": {
-    "requestId": "req-252627",
-    "timestamp": "2025-04-27T12:40:00.000Z"
-  }
-}
-```
-</Tab>
-</Tabs>
-</Accordion>
 
 <Accordion title="PUT /:kbId/folder/:folderId - Update Folder">
 Update folder properties such as name.
 
 <Tabs>
 <Tab title="Request">
-**Endpoint:** `PUT /api/v1/kb/:kbId/folder/:folderId`
+**Endpoint:** `PUT /api/v1/knowledgeBase/:kbId/folder/:folderId`
 
 **Path Parameters:**
 
@@ -908,7 +643,7 @@ Delete a folder and all its contents.
 
 <Tabs>
 <Tab title="Request">
-**Endpoint:** `DELETE /api/v1/kb/:kbId/folder/:folderId`
+**Endpoint:** `DELETE /api/v1/knowledgeBase/:kbId/folder/:folderId`
 
 **Path Parameters:**
 
@@ -938,152 +673,13 @@ Delete a folder and all its contents.
 </Accordion>
 
 <Accordion title="Administrative Operations">
-Administrative endpoints for managing connectors, bulk operations, and system maintenance.
+Connector statistics, reindexing and resync are not part of the Knowledge Base API. They are in the Connectors API, under `/api/v1/connectors`, and take a connector instance ID:
 
-<AccordionGroup>
+- `GET /api/v1/connectors/:connectorId/stats` - Indexing statistics for a connector
+- `POST /api/v1/connectors/:connectorId/reindex` - Reindex a connector's records, optionally only those with certain indexing statuses
+- `POST /api/v1/connectors/:connectorId/resync` - Resync a connector's records
 
-<Accordion title="GET /stats/:connector - Get Connector Stats">
-Retrieve statistics for a specific connector.
-
-**Access Control:** Admin users only
-
-<Tabs>
-<Tab title="Request">
-**Endpoint:** `GET /api/v1/kb/stats/:connector`
-
-**Path Parameters:**
-
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| connector | string | Yes | Connector name (onedrive, google_drive, confluence, slack, etc.) |
-</Tab>
-
-<Tab title="Response">
-**Status:** `200 OK`
-
-```json
-{
-  "connector": "google_drive",
-  "stats": {
-    "totalRecords": 1250,
-    "indexedRecords": 1200,
-    "failedRecords": 50,
-    "lastSyncTimestamp": 1714208400000,
-    "indexingStatus": {
-      "NOT_STARTED": 10,
-      "IN_PROGRESS": 5,
-      "COMPLETED": 1200,
-      "FAILED": 35
-    },
-    "recordTypes": {
-      "FILE": 1200,
-      "EMAIL": 50
-    }
-  },
-  "meta": {
-    "requestId": "req-343536",
-    "timestamp": "2025-04-27T12:55:00.000Z"
-  }
-}
-```
-</Tab>
-</Tabs>
-</Accordion>
-
-<Accordion title="POST /reindex-all/connector - Reindex All Failed Records">
-Force reindexing of all failed records for a specific connector.
-
-**Access Control:** Admin users only
-
-<Tabs>
-<Tab title="Request">
-**Endpoint:** `POST /api/v1/kb/reindex-all/connector`
-
-**Request Body Parameters:**
-
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| connector | string | Yes | Connector name to reindex |
-| orgId | string | No | Organization ID (defaults to user's org) |
-
-```json
-{
-  "connector": "google_drive",
-  "orgId": "org123456"
-}
-```
-</Tab>
-
-<Tab title="Response">
-**Status:** `200 OK`
-
-```json
-{
-  "message": "Reindexing initiated for all failed records",
-  "data": {
-    "connector": "google_drive",
-    "recordsToReindex": 35,
-    "batchId": "batch-789012"
-  },
-  "meta": {
-    "requestId": "req-373839",
-    "timestamp": "2025-04-27T13:00:00.000Z"
-  }
-}
-```
-</Tab>
-</Tabs>
-</Accordion>
-
-<Accordion title="POST /resync/connector - Resync Connector Records">
-Force resynchronization of all records for a specific connector.
-
-**Access Control:** Admin users only
-
-<Tabs>
-<Tab title="Request">
-**Endpoint:** `POST /api/v1/kb/resync/connector`
-
-**Request Body Parameters:**
-
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| connector | string | Yes | Connector name to resync |
-| orgId | string | No | Organization ID (defaults to user's org) |
-| fullResync | boolean | No | Whether to perform full resync (default: false) |
-
-```json
-{
-  "connector": "google_drive",
-  "orgId": "org123456",
-  "fullResync": true
-}
-```
-</Tab>
-
-<Tab title="Response">
-**Status:** `200 OK`
-
-```json
-{
-  "message": "Connector resync initiated successfully",
-  "data": {
-    "connector": "google_drive",
-    "syncType": "full",
-    "estimatedRecords": 1250,
-    "syncId": "sync-404142"
-  },
-  "meta": {
-    "requestId": "req-404142",
-    "timestamp": "2025-04-27T13:05:00.000Z"
-  }
-}
-```
-</Tab>
-</Tabs>
-</Accordion>
-
-</AccordionGroup>
+The Knowledge Base API's old `stats/:connector`, `reindex-all/connector` and `resync/connector` endpoints no longer exist.
 </Accordion>
 
 </AccordionGroup>
@@ -1256,44 +852,45 @@ interface IKnowledgeBase {
 <Accordion title="Upload Schema">
 ```typescript
 interface UploadRecordsRequest {
-  // File upload arrays (must have same length)
+  // Multipart form fields
   files: Express.Multer.File[];
-  file_paths: string[];
-  last_modified: number[];
-  
+  // JSON array, one entry per file, in the same order as files
+  files_metadata?: string; // [{ "file_path": string, "last_modified": number }]
+
   // Optional parameters
   isVersioned?: boolean;
   recordType?: string;
   origin?: string;
 }
 
-interface UploadRecordsResponse {
-  message: string;
-  data: {
-    total_created: number;
-    folders_created: number;
-    records_created: number;
-    knowledgeBase: {
-      id: string;
-      name: string;
-    };
-    createdRecords: Array<{
-      id: string;
-      name: string;
-      type: string;
-      folderId?: string;
-    }>;
-    createdFolders?: Array<{
-      id: string;
-      name: string;
-      path: string;
-    }>;
-  };
-  meta: {
-    requestId: string;
-    timestamp: string;
-  };
-}
+// Each event in the text/event-stream response
+type UploadStreamEvent =
+  | {
+      event: 'file:succeeded';
+      data: {
+        recordId: string;
+        fileName: string;
+        filePath: string;
+        extension?: string;
+      };
+    }
+  | {
+      event: 'file:failed';
+      data: {
+        recordId?: string;
+        fileName: string;
+        filePath: string;
+        extension?: string;
+        errors: string[];
+        stage: 'upload' | 'index';
+        reason?: 'EXCEEDS_SIZE_LIMIT' | 'UNSUPPORTED_TYPE' | 'DUPLICATE_NAME';
+      };
+    }
+  | {
+      event: 'done';
+      data: { summary: { total: number; succeeded: number; failed: number } };
+    }
+  | { event: 'error'; data: { message: string } };
 ```
 </Accordion>
 
@@ -1362,7 +959,7 @@ This integration enables Enterprise Search to provide intelligent search capabil
 
 ## Rate Limits and Constraints
 
-- **File Upload**: Maximum 30MB per file, 1000 files per upload
+- **File Upload**: Maximum 30MB per file by default (set in platform settings), 1000 files per upload
 - **Pagination**: Maximum 100 items per page
 - **Search Terms**: Maximum 100 characters
 - **Knowledge Base Names**: 1-255 characters

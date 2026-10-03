@@ -393,7 +393,7 @@ Errors use the standard error shape (see [Error Handling](#error-handling)):
 </Accordion>
 
 <Accordion title="DELETE /schedule/all - Remove All Jobs">
-Remove all scheduled crawling jobs for the organization. Admins only: any other caller is refused with `400` "Admin access required", and nothing is removed.
+Remove all scheduled crawling jobs for the organization. Admins only: any other caller is refused with `403` and the message "You need admin access to do this. Ask an admin in your organisation." Nothing is removed.
 
 **Endpoint:** `DELETE /api/v1/crawlingManager/schedule/all`
 
@@ -412,8 +412,8 @@ Remove all scheduled crawling jobs for the organization. Admins only: any other 
 <Tab title="Error Responses">
 Errors use the standard error shape (see [Error Handling](#error-handling)):
 
-- `400 Bad Request` — the caller isn't an admin: `HTTP_BAD_REQUEST` "Admin access required". Nothing is removed.
 - `401 Unauthorized` — no valid sign-in token, for example `HTTP_UNAUTHORIZED` "No token provided" or "Session expired, please login again".
+- `403 Forbidden` — the caller isn't an admin: `HTTP_FORBIDDEN` "You need admin access to do this. Ask an admin in your organisation." Nothing is removed.
 - `403 Forbidden` — an OAuth token without the `crawl:delete` scope: `HTTP_FORBIDDEN` "Insufficient scope. Required: crawl:delete".
 - `500 Internal Server Error` — the job queue couldn't be reached: `INTERNAL_ERROR` "Something went wrong on PipesHub's side. Please try again; if it keeps happening, ask your admin for help."
 - `500 Internal Server Error` — the queue answered, but part of the removal failed: `HTTP_INTERNAL_SERVER_ERROR` with one of these messages, which say what may still be in place:
@@ -663,8 +663,8 @@ Errors raised by these endpoints use the API's standard error shape:
 **Common HTTP Status Codes:**
 - `200` - Success
 - `201` - Created (for scheduling jobs)
-- `400` - Bad Request (validation errors, invalid configuration, or a non-admin calling Remove All)
+- `400` - Bad Request (validation errors or invalid configuration)
 - `401` - Unauthorized (missing or invalid authentication)
-- `403` - Forbidden (not allowed to manage this connector, or an OAuth token missing the scope)
+- `403` - Forbidden (not allowed to manage this connector, a non-admin calling Remove All, or an OAuth token missing the scope)
 - `404` - Not Found (connector instance not found, or no scheduled job)
 - `500` - Internal Server Error

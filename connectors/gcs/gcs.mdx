@@ -219,11 +219,14 @@ Click **+ Add filter** and pick one or more:
 | Filter | What it does | When to use it |
 |---|---|---|
 | **Bucket Names** | Only sync specific buckets. The list is auto-filled from your Google Cloud project. | You only care about one or two buckets out of many |
+| **Folders** | Include or exclude folders inside a bucket, as paths from the bucket root, like `reports` (which covers `reports/2026/q1.pdf` too). | You only need part of a bucket |
 | **File Extensions** | Only sync certain file types. Enter extensions separated by commas, like `pdf, docx, txt`. | You only want documents, not images or videos |
 | **Modified Date** | Only sync files changed after/before/between certain dates. | You want to skip very old files |
 | **Created Date** | Like Modified Date, but based on when the file was first uploaded. | Same idea, different timestamp |
 
 Each filter has an operator — usually **In** ("only these") or **Not In** ("everything except these").
+
+You can change filters later. Files that an extension, date or **Folders** filter now leaves out are removed from PipesHub, search results included. Folders exclusions are removed on the next sync. Extension and date exclusions are removed once the next sync has listed the bucket completely. **Bucket Names** with *In* syncs only the buckets you pick; with *Not in* it syncs every bucket except those. A bucket the filter newly leaves out stops syncing, and the files already synced from it are removed on the next sync.
 
 There's also an **Enable Manual Indexing** toggle. Leave it off unless someone on your team has told you otherwise — with it off, synced files become searchable automatically.
 
@@ -274,7 +277,7 @@ Click the instance card to open the **Overview** panel. This is where you'll com
 
 **Buttons you'll use here:**
 
-- **Sync** — run an extra sync right now (only grabs what's changed)
+- **Sync** — run an extra sync right now (lists the bucket again and only processes what changed)
 - **Full sync** — re-scan everything from scratch (use sparingly, it's slow)
 - **Manage Configuration** — re-opens the two tabs from Steps 5–7 so you can change credentials or filters later
 
@@ -339,7 +342,9 @@ This is the slow one. A few thousand files takes minutes. A few million takes ho
 
 ### Every sync after that
 
-Once the initial sync is done, the connector only asks Google Cloud: *"what's changed since last time?"* So scheduled syncs usually finish in 5–15 minutes no matter how big the bucket is.
+Once the initial sync is done, each sync lists the whole bucket again (or, with a **Folders** filter, each included folder), but it only downloads and indexes files that changed since last time. Unchanged files are counted as still present and skipped. So a later sync is faster than the first one, but its time still grows with the number of files, because they are all listed.
+
+Files you deleted from the bucket are removed from PipesHub, record and search results both. This only happens after the bucket was listed completely, without an error. If a listing fails, or resumes partway from an earlier interrupted sync, nothing is removed on that sync, even if the listing reaches the last page; the next complete listing removes it. Files outside a narrowed **Folders** filter don't wait for this: they're removed on the next sync.
 
 ### Who can see the synced files?
 
@@ -518,7 +523,7 @@ Most often, the service account key was rotated or deleted in Google Cloud.
 </Accordion>
 
 <Accordion title="How does the incremental sync know what's new?">
-  Every file in GCS has an `updated` timestamp. After each sync, the connector remembers the most recent timestamp it saw. Next time it runs, it just asks Google Cloud for files with a newer timestamp than that. Fast and efficient.
+  Every file in GCS has an `updated` timestamp. After each sync, the connector remembers the most recent timestamp it saw. Next time it runs, it lists the bucket again and only processes files with a newer timestamp than that. The others are counted as still present and skipped.
 </Accordion>
 
 <Accordion title="Will it sync Archive and Coldline files?">
@@ -526,9 +531,9 @@ Most often, the service account key was rotated or deleted in Google Cloud.
 </Accordion>
 
 <Accordion title="What happens when I delete a file from GCS?">
-  On the next sync, the connector notices it's gone and removes it from PipesHub too — including from search results.
+  On the next sync that lists the whole bucket without an error, the connector notices it's gone and deletes its record from PipesHub, including from search results.
   
-  If you use **object versioning** in GCS, older versions may still appear until they're also deleted.
+  **Object versioning** in GCS doesn't keep a deleted file visible: the connector lists only live objects, so once the live version is gone the file is removed.
 </Accordion>
 
 <Accordion title="Does it work with encrypted buckets?">
@@ -538,13 +543,9 @@ Most often, the service account key was rotated or deleted in Google Cloud.
 </Accordion>
 
 <Accordion title="Can I sync just one folder inside a bucket?">
-  Not directly — filters work at the bucket level, not the folder level. A few workarounds:
+  Yes. Add a **Folders** filter with the folder's path from the bucket root, for example `reports`, and set it to **In**. Subfolders are included. Set it to **Not In** to sync everything except that folder.
   
-  - Split content into separate buckets so you can pick the right one
-  - Use a **File Extensions** filter if the folder you care about has a distinct file type
-  - Use a **Modified Date** filter if the folder you care about has freshly-changed files
-  
-  Folder-level filtering is on our roadmap.
+  If you narrow the folders later, files outside them are removed from PipesHub on the next sync.
 </Accordion>
 
 </AccordionGroup>

@@ -89,20 +89,19 @@ Create a new knowledge base for organizing documents.
 </Tab>
 
 <Tab title="Response">
-**Status:** `201 Created`
+**Status:** `200 OK`
 
 ```json
 {
   "id": "kb123456",
   "name": "Company Documents",
-  "orgId": "org123456",
-  "createdAt": "2025-04-27T12:00:00.000Z",
-  "updatedAt": "2025-04-27T12:00:00.000Z",
-  "isDeleted": false,
-  "isArchived": false,
-  "permissions": "OWNER"
+  "createdAtTimestamp": 1745755200000,
+  "updatedAtTimestamp": 1745755200000,
+  "userRole": "OWNER"
 }
 ```
+
+The timestamps are milliseconds since 1 January 1970 (UTC). You own the knowledge base you create, so `userRole` is always `OWNER` here.
 </Tab>
 </Tabs>
 </Accordion>
@@ -122,7 +121,7 @@ Retrieve all knowledge bases accessible to the user with filtering and paginatio
 | limit | number | 20 | Number of items per page (1-100) |
 | search | string | - | Search term for filtering knowledge bases (max 1000 characters) |
 | permissions | string | - | Comma-separated list of your roles to filter by: `OWNER`, `WRITER` or `READER`. Any other value is refused with `400 Bad Request`. |
-| sortBy | string | name | Field to sort by (`name`, `createdAtTimestamp`, `updatedAtTimestamp`, `userRole`) |
+| sortBy | string | name | Field to sort by: `name`, `updatedAtTimestamp` or `userRole`. `createdAtTimestamp` is also accepted, but the list then comes back sorted by name. |
 | sortOrder | string | asc | Sort order (asc, desc) |
 
 ```http
@@ -139,27 +138,45 @@ GET /api/v1/knowledgeBase/?page=1&limit=10&search=documents&permissions=OWNER,WR
     {
       "id": "kb123456",
       "name": "Company Documents",
-      "orgId": "org123456",
-      "createdAt": "2025-04-27T12:00:00.000Z",
-      "updatedAt": "2025-04-27T12:00:00.000Z",
-      "isDeleted": false,
-      "isArchived": false,
-      "permissions": "OWNER",
-      "recordCount": 45
+      "connectorId": null,
+      "createdAtTimestamp": 1745755200000,
+      "updatedAtTimestamp": 1745756100000,
+      "createdBy": "user123456",
+      "userRole": "OWNER",
+      "folders": [
+        {
+          "id": "folder123",
+          "name": "Policies",
+          "createdAtTimestamp": 1745755500000
+        }
+      ]
     }
   ],
   "pagination": {
     "page": 1,
     "limit": 10,
     "totalCount": 1,
-    "totalPages": 1
+    "totalPages": 1,
+    "hasNext": false,
+    "hasPrev": false
   },
-  "meta": {
-    "requestId": "req-123",
-    "timestamp": "2025-04-27T12:05:00.000Z"
+  "filters": {
+    "applied": {
+      "search": "documents",
+      "permissions": ["OWNER", "WRITER"],
+      "sort_by": "updatedAtTimestamp",
+      "sort_order": "desc"
+    },
+    "available": {
+      "permissions": ["OWNER", "WRITER"],
+      "sortFields": ["name", "createdAtTimestamp", "updatedAtTimestamp", "userRole"],
+      "sortOrders": ["asc", "desc"]
+    }
   }
 }
 ```
+
+`folders` lists the folders in each knowledge base. `filters.applied` repeats the search, roles and sort you asked for, leaving out the default sort (`name`, `asc`). `filters.available` lists the roles you hold across your knowledge bases, and the sort options.
 </Tab>
 </Tabs>
 </Accordion>
@@ -183,23 +200,24 @@ Retrieve a specific knowledge base by its ID.
 
 ```json
 {
-  "knowledgeBase": {
-    "id": "kb123456",
-    "name": "Company Documents",
-    "orgId": "org123456",
-    "createdAt": "2025-04-27T12:00:00.000Z",
-    "updatedAt": "2025-04-27T12:00:00.000Z",
-    "isDeleted": false,
-    "isArchived": false,
-    "permissions": "OWNER",
-    "recordCount": 45
-  },
-  "meta": {
-    "requestId": "req-456",
-    "timestamp": "2025-04-27T12:10:00.000Z"
-  }
+  "id": "kb123456",
+  "name": "Company Documents",
+  "connectorId": null,
+  "createdAtTimestamp": 1745755200000,
+  "updatedAtTimestamp": 1745756100000,
+  "createdBy": "user123456",
+  "userRole": "OWNER",
+  "folders": [
+    {
+      "id": "folder123",
+      "name": "Policies",
+      "createdAtTimestamp": 1745755500000
+    }
+  ]
 }
 ```
+
+The knowledge base comes back as a plain object, the same shape as one item in the list above.
 </Tab>
 </Tabs>
 </Accordion>
@@ -235,18 +253,12 @@ Update knowledge base properties.
 
 ```json
 {
-  "message": "Knowledge base updated successfully",
-  "knowledgeBase": {
-    "id": "kb123456",
-    "name": "Updated Company Documents",
-    "updatedAt": "2025-04-27T12:15:00.000Z"
-  },
-  "meta": {
-    "requestId": "req-789",
-    "timestamp": "2025-04-27T12:15:00.000Z"
-  }
+  "success": true,
+  "message": "Knowledge base updated successfully"
 }
 ```
+
+The response does not include the knowledge base. Call `GET /:kbId` to read the new name.
 </Tab>
 </Tabs>
 </Accordion>
@@ -270,11 +282,8 @@ Soft-delete a knowledge base and all its contents.
 
 ```json
 {
-  "message": "Knowledge base deleted successfully",
-  "meta": {
-    "requestId": "req-101112",
-    "timestamp": "2025-04-27T12:20:00.000Z"
-  }
+  "success": true,
+  "message": "Knowledge base deleted successfully"
 }
 ```
 </Tab>

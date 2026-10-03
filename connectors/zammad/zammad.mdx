@@ -201,6 +201,10 @@ On the **Configure Records** tab, control how the connector syncs and what gets 
 
 **Sync filters** — determine which content is downloaded from Zammad. Data excluded by sync filters is never downloaded.
 
+<Note>
+  Narrowing a filter after tickets have synced removes the tickets it now leaves out, together with their attachments, from PipesHub search on the next sync. What PipesHub can't read from Zammad during that sync stays and is tried again on the following sync: if the group list can't be read, no group's tickets are removed for leaving the group filter; if one group's tickets can't be listed, that group's tickets stay while other groups are still cleaned up; and if one ticket can't be read back, only that ticket stays.
+</Note>
+
 <div className="text-center">
   <img
     src="/images/connectors/zammad/sync_filters.png"
@@ -345,6 +349,8 @@ The connector syncs data in the following order:
 - Previous sync completed successfully
 - Only fetches content modified since last sync
 - Uses `updated_at` timestamps for change detection
+
+**Deleted tickets**: each sync also compares the tickets PipesHub holds for a group with the tickets that group has in Zammad. A ticket that Zammad confirms is deleted, or that has moved outside your sync filters, is removed from PipesHub along with its attachments. A ticket that is only missing from Zammad's search results (for example, while Zammad rebuilds its search index) is kept. The comparison asks Zammad in small ticket-id ranges, so large groups are covered in full: a range that can't be read keeps only its own tickets, and the rest of the group is still compared. Zammad's search can page through only about 10,000 results at once; PipesHub reads a group with more than that in date ranges, and when many tickets share the same update time (for example after a bulk edit), in ticket-id ranges, so no group is too large to sync.
 
 ### What Gets Processed
 

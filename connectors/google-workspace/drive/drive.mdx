@@ -547,8 +547,22 @@ Sync settings allow you to control how the connector syncs data from Google Driv
 **Sync Interval:**
 In what interval the connector will sync data (default: 60 minutes).
 
+### Deleted and trashed files
+On Workspace, a file that is deleted or moved to the trash in Google Drive is removed from PipesHub on the next sync, for everyone: it no longer shows up in search, and its indexed content is deleted too. Trashing a folder removes the files inside it as well.
+
+When a file only disappears for one person, because it was unshared with them, just that person loses access in PipesHub. For a file in My Drive, the connector tells this apart from a real delete by asking the file's owner whether the file still exists. If it's gone or in the trash, it is removed for everyone. If the owner is outside your Workspace, the connector can't ask, so it only removes the access of the person who lost it.
+
+For a file in a shared drive, one person's change never removes it for everyone on its own. What happens to a file that was really deleted depends on the drive:
+
+- **A shared drive that PipesHub syncs** (the **Drive IDs** filter includes it and at least one synced user is a member, directly or through a group): the file is removed by that drive's own sync.
+- **A shared drive the Drive IDs filter leaves out, or one no synced user is a member of:** the connector asks the other synced users who had access whether they can still open the file. If one can, only the person who lost it loses access. If none can, the file is removed for everyone, including from search for anyone who reached it another way, such as through a group.
+
+If Google can't answer because of an outage or a rate limit, nothing is removed and the change is checked again on the next sync.
+
 ### Sync Filters
 Sync filters control which files are fetched from Google Drive. Files that don't match are skipped entirely. The **Created Date**, **Modified Date** and **Sync Files with Extensions** filters always let folders through, so the folder structure is kept. **Folder IDs** works the other way: see below.
+
+On Workspace, narrowing a sync filter also removes what it now leaves out. After you save, the next sync deletes the files the new filters exclude from PipesHub, along with their indexed content. A folder that sits above a folder you listed is kept, so the tree still leads to it. Removal waits while a listed folder's contents are unknown: the folder can be seen but nobody could list what is inside it, or Google refuses it with an access error PipesHub doesn't recognise. For that unrecognised error, removal keeps waiting on every sync for as long as the folder stays in **Folder IDs**, including after the fifth run, when the rest of the sync goes on without it (see below). A listed folder that is known to be gone or out of reach (deleted, not visible to any synced user, or refused with a known permission error) doesn't hold removal back: the files the new filters exclude are removed on that sync. For such a folder, files directly inside it are kept, and files in its subfolders are removed.
 
 ### Folder IDs
 

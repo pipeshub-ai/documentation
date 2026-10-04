@@ -104,12 +104,11 @@ Copy the "Application (client) ID" NOT the "Object ID". These are different valu
 - Select **Microsoft Graph**
 - Choose **Application permissions** (not Delegated permissions) and add the following:
   - `User.Read.All`
-  - `GroupMember.Read.All`
   - `Group.Read.All`
-  - `Files.ReadWrite.All`
-  - `Reports.Read.All`
-  - `Sites.FullControl.All`
   - `Member.Read.Hidden`
+  - `Files.ReadWrite.All`
+  - `Sites.Read.All`
+  - `Sites.FullControl.All`
 
 **Configure SharePoint Permissions:**
 - Click **Add a permission** and select **SharePoint**
@@ -120,6 +119,7 @@ Copy the "Application (client) ID" NOT the "Object ID". These are different valu
 <Note>
   **Permission Requirements:**
   * `Sites.FullControl.All` is strictly required by the SharePoint API to fetch granular site group permissions.
+  * `Sites.Read.All` is required explicitly by Graph Search API to search through sites (even if `Sites.FullControl.All` is already provided, Search API still requires this permission).
   * `Files.ReadWrite.All` is required by the Microsoft Graph API to establish and renew webhook subscriptions for document libraries.
 </Note>
 

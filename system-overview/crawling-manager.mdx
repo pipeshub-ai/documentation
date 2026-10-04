@@ -10,7 +10,7 @@ All endpoints are prefixed with `/api/v1/crawlingManager`
 
 All endpoints require **authentication** via `Authorization` header with valid JWT token. In addition:
 - **Endpoints for one connector** check that the caller may manage it: a team connector's schedule only by an admin, and a personal connector's only by the person who created it
-- **Admin privileges** for `DELETE /schedule/all`, because it removes the schedules of every connector in the organization, including other members' personal connectors
+- **Admin privileges** for `GET /schedule/all` and `DELETE /schedule/all`, because they list or remove the schedules of every connector in the organization, including other members' personal connectors. Any other caller gets `403` with the message "You need admin access to do this. Ask an admin in your organisation."
 
 **Headers:**
 ```
@@ -275,7 +275,7 @@ Other errors use the standard error shape (see [Error Handling](#error-handling)
 </Accordion>
 
 <Accordion title="GET /schedule/all - Get All Job Statuses">
-Retrieve all scheduled crawling jobs for the organization.
+Retrieve all scheduled crawling jobs for the organization. Admins only: any other caller is refused with `403` and the message "You need admin access to do this. Ask an admin in your organisation."
 
 **Endpoint:** `GET /api/v1/crawlingManager/schedule/all`
 
@@ -350,6 +350,7 @@ The list holds, for each connector type (the `connector` value, such as `drive`,
 Errors use the standard error shape (see [Error Handling](#error-handling)):
 
 - `401 Unauthorized` — no valid sign-in token, for example `HTTP_UNAUTHORIZED` "No token provided" or "Session expired, please login again".
+- `403 Forbidden` — the caller isn't an admin: `HTTP_FORBIDDEN` "You need admin access to do this. Ask an admin in your organisation."
 - `403 Forbidden` — an OAuth token without the `crawl:read` scope: `HTTP_FORBIDDEN` "Insufficient scope. Required: crawl:read".
 - `500 Internal Server Error` — the job queue couldn't be reached: `INTERNAL_ERROR` "Something went wrong on PipesHub's side. Please try again; if it keeps happening, ask your admin for help."
 </Tab>
@@ -665,6 +666,6 @@ Errors raised by these endpoints use the API's standard error shape:
 - `201` - Created (for scheduling jobs)
 - `400` - Bad Request (validation errors or invalid configuration)
 - `401` - Unauthorized (missing or invalid authentication)
-- `403` - Forbidden (not allowed to manage this connector, a non-admin calling Remove All, or an OAuth token missing the scope)
+- `403` - Forbidden (not allowed to manage this connector, a non-admin calling Get All or Remove All, or an OAuth token missing the scope)
 - `404` - Not Found (connector instance not found, or no scheduled job)
 - `500` - Internal Server Error

@@ -98,12 +98,16 @@ If the health check fails when saving, the dialog shows the message the check re
 
 The check also answers these before or instead of asking the provider:
 - No model name (400): "No valid model names found in configuration"
-- An endpoint this deployment won't call (400). This is checked before anything else is sent to the provider:
-  - A link-local or cloud metadata address, which is never allowed: "Model endpoint '&lt;endpoint&gt;' is a link-local or cloud metadata address, which is never allowed."
+- An endpoint this deployment won't call (400). This is checked before every other answer on this page and before anything is sent to the provider. The endpoint's text is checked first, with no lookup:
   - An endpoint that isn't an http or https URL: "Model endpoint '&lt;endpoint&gt;' must be an http(s) URL."
-  - When `PIPESHUB_BLOCK_PRIVATE_ADDRESSES` is on, a private or internal address, such as `localhost`, a private IP address, a one-word service name or a name ending in `.internal` (for example `host.docker.internal`): "Model endpoint '&lt;endpoint&gt;' is a private or internal address, which this deployment does not allow (PIPESHUB_BLOCK_PRIVATE_ADDRESSES)." The Ollama address the deployment itself sets in `OLLAMA_API_URL` is allowed.
+  - A link-local or cloud metadata IP address (such as `169.254.169.254`), or the name `metadata.google.internal`: "Model endpoint '&lt;endpoint&gt;' is a link-local or cloud metadata address, which is never allowed."
+  - Only when `PIPESHUB_BLOCK_PRIVATE_ADDRESSES` is on: a private IP address, `localhost`, a one-word service name, or a name ending in `.internal`, `.local`, `.localhost` or `.svc` (for example `host.docker.internal`): "Model endpoint '&lt;endpoint&gt;' is a private or internal address, which this deployment does not allow (PIPESHUB_BLOCK_PRIVATE_ADDRESSES)."
 
-  When the endpoint is a name that points to one of these addresses, the message says "resolves to" instead of "is".
+  A name that passes the text check is then looked up, and the message says "resolves to" when the lookup returns a blocked address:
+  - A link-local or cloud metadata address: "Model endpoint '&lt;endpoint&gt;' resolves to a link-local or cloud metadata address, which is never allowed."
+  - Only when `PIPESHUB_BLOCK_PRIVATE_ADDRESSES` is on, a private address: "Model endpoint '&lt;endpoint&gt;' resolves to a private or internal address, which this deployment does not allow (PIPESHUB_BLOCK_PRIVATE_ADDRESSES)."
+
+  The Ollama address the deployment itself sets in `OLLAMA_API_URL` is exempt from the private-address check and is not looked up.
 - A context length outside 1,024 to 20,000,000 tokens (400): "Context length &lt;value&gt; is not a usable window. Set it to the model's context window in tokens (between 1,024 and 20,000,000), or leave it empty to assume 128,000."
 - PipesHub has no internet access for a cloud provider (500): "Cannot reach cloud LLM providers from PipesHub. The container may not have outbound internet access. Cloud LLMs and external connectors require container egress; air-gapped installs should use local models (Ollama, LM Studio). See deployment/docker-compose/ADVANCED_DEPLOYMENT.md#container-outbound-connectivity."
 - The provider took too long (504): "LLM health check timed out. For cloud providers, verify your API key and that PipesHub containers can reach the internet. See deployment/docker-compose/ADVANCED_DEPLOYMENT.md#container-outbound-connectivity." If the dialog's own request times out before any response arrives, it shows its own message instead: "Request timed out while validating the model. Cloud providers need outbound internet from the PipesHub container — see deployment/docker-compose/ADVANCED_DEPLOYMENT.md#container-outbound-connectivity."
@@ -115,7 +119,7 @@ After the provider answers, the check can still refuse a chat model (400):
 
 For either image message, turn off **Multimodal** for this model, or choose a model that can read images.
 
-Anything else is a server error (500) with a fixed message, "Couldn't connect to &lt;provider&gt; with these chat model settings. Check the API key, model name and endpoint, then try again.", and the details are in the AI service's logs. The other model types use the same messages with their own name in place of "chat model": "embedding model", "image model", "speech model" and "speech-to-text model". Double-check:
+Any failure that none of the answers above covers is a server error (500) with a fixed message, "Couldn't connect to &lt;provider&gt; with these chat model settings. Check the API key, model name and endpoint, then try again.", and the details are in the AI service's logs. An endpoint this deployment won't call never reaches this message: it gets one of the endpoint messages above, which are checked first. The other model types use the same messages with their own name in place of "chat model": "embedding model", "image model", "speech model" and "speech-to-text model". Double-check:
 - The API key is correct and has not expired.
 - For Azure providers, the endpoint URL matches the correct region and resource.
 - For Ollama, the server is running and the Docker internal hostname resolves correctly.

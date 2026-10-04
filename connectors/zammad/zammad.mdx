@@ -304,7 +304,7 @@ The connector preserves these permissions:
 - Review sync logs for specific error messages
 
 **Missing knowledge base answers:**
-- Check that the API token has the **knowledge_base.editor** permission. With only **knowledge_base.reader**, drafts and archived answers are not synced.
+- Check what the API token's user can see in Zammad. Drafts and archived answers are synced only from categories where that user is an editor: with the **knowledge_base.reader** permission, or a **reader** grant on a category, only internal and published answers come through.
 - If an answer could not be saved, the sync logs a warning and the next sync tries it again.
 - Earlier PipesHub releases synced no knowledge base answers from Zammad 6.0 to 6.4. After updating PipesHub, the first sync reads the whole knowledge base, so no extra step is needed.
 
@@ -357,10 +357,10 @@ The connector syncs data in the following order:
 
 **Knowledge Base**: Categories hierarchy, answers/articles with full content and translations, associated attachments
 
-The connector reads the whole knowledge base listing on each sync and writes only the answers changed since the last one. This works on Zammad 6.0 and later. Which answers it can see depends on the API token's knowledge base permission:
+The connector reads the whole knowledge base listing on each sync and writes only the answers changed since the last one. This works on Zammad 6.0 and later. It syncs the answers the API token's user can see in Zammad:
 
-- **knowledge_base.editor** — every answer, including drafts and archived answers
-- **knowledge_base.reader** — internal and published answers only
+- With no category permissions set in Zammad, **knowledge_base.editor** sees every answer, including drafts and archived answers, and **knowledge_base.reader** sees internal and published answers only.
+- Once any category has its own permissions, Zammad decides per category: where the user is an editor, every answer in that category; where the user is a reader, internal and published answers only; elsewhere, published answers only. A **reader** grant on a category limits an editor to what a reader sees there.
 
 **Attachments**: Files attached to ticket articles and knowledge base answers
 

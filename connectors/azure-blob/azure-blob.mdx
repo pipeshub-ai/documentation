@@ -188,7 +188,7 @@ Common examples:
 - **Only one container** — field: *Container Names* · operator: *In* · pick the container
 
 <Info>
-  If you don't add any filters, PipesHub will sync every file it can read. That's fine for small accounts. If you change filters later, files that an extension, date or **Folders** filter now leaves out are removed from PipesHub, search results included. Folders exclusions are removed on the next sync. Extension and date exclusions are removed once the next sync has listed the container completely. **Container Names** with *In* syncs only the containers you pick; with *Not In* it syncs every container except those. A container the filter newly leaves out stops syncing, and the files already synced from it are removed on the next sync.
+  If you don't add any filters, PipesHub will sync every file it can read. That's fine for small accounts. If you change filters later, files that an extension, date or **Folders** filter now leaves out are removed from PipesHub, search results included. Folders exclusions are removed on the next sync. Extension and date exclusions are removed once a sync has listed everything in scope from start to finish: each included folder when **Folders** is set to **In**, otherwise the whole container. **Container Names** with *In* syncs only the containers you pick; with *Not In* it syncs every container except those. A container the filter newly leaves out stops syncing, and the files already synced from it are removed on the next sync.
 </Info>
 
 When you're done, click **Save Configuration** at the bottom of the panel.
@@ -251,7 +251,7 @@ That's it! 🎉 Your Azure Blob files are now searchable in PipesHub.
 
 ### First sync (full scan)
 
-The very first time, PipesHub reads **everything** in the containers you chose. Big accounts take longer:
+The very first time, PipesHub reads **everything** in the containers you chose (with a **Folders** filter set to **In**, everything in the included folders). Big accounts take longer:
 
 | Number of files | Roughly how long |
 |-----------------|------------------|
@@ -264,14 +264,14 @@ Tip: using filters (e.g. PDFs only) makes the first sync much faster.
 
 ### Later syncs
 
-After the first sync, PipesHub still lists every blob in the container (with a **Folders** filter set to **In**, it lists each included folder instead; set to **Not In**, it still lists the whole container and skips the excluded folders), but it only downloads and indexes what changed:
+After the first sync, PipesHub still lists everything in scope: each included folder when a **Folders** filter is set to **In**, otherwise the whole container (with **Not In**, the excluded folders are skipped as it goes). It only downloads and indexes what changed:
 
 - New files — added.
 - Updated files — refreshed.
 - Unchanged files — counted as still there and skipped.
-- Deleted files — their records are deleted from PipesHub and they leave search. This only happens after the container was listed completely, without an error. If a listing fails, nothing is removed on that sync; the next complete listing removes it. Files outside a narrowed **Folders** filter don't wait for this: they're removed on the next sync.
+- Deleted files — their records are deleted from PipesHub and they leave search. This only happens after everything in scope was listed from start to finish without an error: each included folder with **Folders** set to **In**, otherwise the whole container. If a listing fails, nothing is removed on that sync; the next complete listing removes it. Files outside a narrowed **Folders** filter don't wait for this: they're removed on the next sync.
 
-Later syncs are faster than the first one because unchanged files aren't downloaded again, but the listing still grows with the number of blobs.
+Later syncs are faster than the first one because unchanged files aren't downloaded again, but the listing still grows with the number of blobs it lists.
 
 ### Who can see the synced files?
 
@@ -389,7 +389,7 @@ Usually this means the Azure access keys were changed.
 </Accordion>
 
 <Accordion title="What happens if I delete a file in Azure?">
-  On the next sync that lists the whole container (or, with a **Folders** filter set to **In**, every included folder) without an error, PipesHub deletes the file's record and it leaves search. If a listing fails, nothing is removed on that sync; the next complete listing removes it.
+  On the next sync that lists everything in scope from start to finish without an error (each included folder with a **Folders** filter set to **In**, otherwise the whole container), PipesHub deletes the file's record and it leaves search. If a listing fails, nothing is removed on that sync; the next complete listing removes it.
 </Accordion>
 
 <Accordion title="Can I sync just one folder inside a container?">

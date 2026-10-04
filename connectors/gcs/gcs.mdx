@@ -226,7 +226,7 @@ Click **+ Add filter** and pick one or more:
 
 Each filter has an operator — usually **In** ("only these") or **Not In** ("everything except these").
 
-You can change filters later. Files that an extension, date or **Folders** filter now leaves out are removed from PipesHub, search results included. Folders exclusions are removed on the next sync. Extension and date exclusions are removed once the next sync has listed the bucket completely. **Bucket Names** with *In* syncs only the buckets you pick; with *Not In* it syncs every bucket except those. A bucket the filter newly leaves out stops syncing, and the files already synced from it are removed on the next sync.
+You can change filters later. Files that an extension, date or **Folders** filter now leaves out are removed from PipesHub, search results included. Folders exclusions are removed on the next sync. Extension and date exclusions are removed once a sync has listed everything in scope from start to finish: each included folder when **Folders** is set to **In**, otherwise the whole bucket. **Bucket Names** with *In* syncs only the buckets you pick; with *Not In* it syncs every bucket except those. A bucket the filter newly leaves out stops syncing, and the files already synced from it are removed on the next sync.
 
 There's also an **Enable Manual Indexing** toggle. Leave it off unless someone on your team has told you otherwise — with it off, synced files become searchable automatically.
 
@@ -277,7 +277,7 @@ Click the instance card to open the **Overview** panel. This is where you'll com
 
 **Buttons you'll use here:**
 
-- **Sync** — run an extra sync right now (lists the bucket again and only processes what changed)
+- **Sync** — run an extra sync right now (lists the bucket, or its included folders, again and only processes what changed)
 - **Full sync** — re-scan everything from scratch (use sparingly, it's slow)
 - **Manage Configuration** — re-opens the two tabs from Steps 5–7 so you can change credentials or filters later
 
@@ -331,7 +331,7 @@ includedPermissions:
 When you turn the connector on, it does a full scan:
 
 1. Lists every bucket you gave it access to (or just the ones in your filter)
-2. Walks through every object (file) inside
+2. Walks through every object (file) inside, or only the included folders when a **Folders** filter is set to **In**
 3. Extracts supported file content so you can search it
 
 This is the slow one. A few thousand files takes minutes. A few million takes hours.
@@ -342,9 +342,9 @@ This is the slow one. A few thousand files takes minutes. A few million takes ho
 
 ### Every sync after that
 
-Once the initial sync is done, each sync lists the whole bucket again (with a **Folders** filter set to **In**, it lists each included folder instead; set to **Not In**, it still lists the whole bucket and skips the excluded folders), but it only downloads and indexes files that changed since last time. Unchanged files are counted as still present and skipped. So a later sync is faster than the first one, but its time still grows with the number of files, because they are all listed.
+Once the initial sync is done, each sync lists everything in scope again: each included folder when a **Folders** filter is set to **In**, otherwise the whole bucket (with **Not In**, the excluded folders are skipped as it goes). It only downloads and indexes files that changed since last time. Unchanged files are counted as still present and skipped. So a later sync is faster than the first one, but its time still grows with the number of files it lists.
 
-Files you deleted from the bucket are removed from PipesHub, record and search results both. This only happens after the bucket was listed completely, without an error. If a listing fails, or resumes partway from an earlier interrupted sync, nothing is removed on that sync, even if the listing reaches the last page; the next complete listing removes it. Files outside a narrowed **Folders** filter don't wait for this: they're removed on the next sync.
+Files you deleted from the bucket are removed from PipesHub, record and search results both. This only happens after everything in scope was listed from start to finish without an error: each included folder with **Folders** set to **In**, otherwise the whole bucket. If a listing fails, or resumes partway from an earlier interrupted sync, nothing is removed on that sync, even if the listing reaches the last page; the next complete listing removes it. Files outside a narrowed **Folders** filter don't wait for this: they're removed on the next sync.
 
 ### Who can see the synced files?
 
@@ -523,7 +523,7 @@ Most often, the service account key was rotated or deleted in Google Cloud.
 </Accordion>
 
 <Accordion title="How does the incremental sync know what's new?">
-  Every file in GCS has an `updated` timestamp. After each sync, the connector remembers the most recent timestamp it saw. Next time it runs, it lists the bucket again and only processes files with a newer timestamp than that. The others are counted as still present and skipped.
+  Every file in GCS has an `updated` timestamp. After each sync, the connector remembers the most recent timestamp it saw. Next time it runs, it lists the bucket (or its included folders) again and only processes files with a newer timestamp than that. The others are counted as still present and skipped.
 </Accordion>
 
 <Accordion title="Will it sync Archive and Coldline files?">
@@ -531,7 +531,7 @@ Most often, the service account key was rotated or deleted in Google Cloud.
 </Accordion>
 
 <Accordion title="What happens when I delete a file from GCS?">
-  On the next sync that lists the whole bucket (or, with a **Folders** filter set to **In**, every included folder) from start to finish without an error, the connector notices it's gone and deletes its record from PipesHub, including from search results. A sync that resumes partway from an earlier interrupted sync removes nothing, even if it reaches the last page.
+  On the next sync that lists everything in scope from start to finish without an error (each included folder with a **Folders** filter set to **In**, otherwise the whole bucket), the connector notices it's gone and deletes its record from PipesHub, including from search results. A sync that resumes partway from an earlier interrupted sync removes nothing, even if it reaches the last page.
   
   **Object versioning** in GCS doesn't keep a deleted file visible: the connector lists only live objects, so once the live version is gone the file is removed.
 </Accordion>

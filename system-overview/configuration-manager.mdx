@@ -953,7 +953,7 @@ CRUD operations for individual AI model providers.
 }
 ```
 
-**Default reasoning effort.** To set or change a reasoning model's default effort, send `configuration.defaultReasoningEffort` with `low`, `medium`, `high` or `max` (see the add endpoint above for how it's used). If you leave the field out, the saved value is kept. To clear it and go back to the platform default (`high`), send an empty string. Send `isReasoning: true` as well, because a missing `isReasoning` is saved as `false`.
+**Default reasoning effort.** To set or change a reasoning model's default effort, send `configuration.defaultReasoningEffort` with `low`, `medium`, `high` or `max` (see the add endpoint above for how it's used). If you leave the field out, the saved value is kept. To clear it and go back to the platform default (`high`), send an empty string. The rest of the body is not merged the same way: it replaces the model's settings, so a missing `isReasoning`, `isMultimodal` or `isDefault` is saved as `false`, and a missing `contextLength` is cleared. Send each of them with the model's current value, as in the example.
 
 ```json
 {
@@ -964,7 +964,10 @@ CRUD operations for individual AI model providers.
     "apiKey": "your-key",
     "defaultReasoningEffort": "medium"
   },
-  "isReasoning": true
+  "isReasoning": true,
+  "isMultimodal": false,
+  "isDefault": false,
+  "contextLength": 131072
 }
 ```
 </Tab>

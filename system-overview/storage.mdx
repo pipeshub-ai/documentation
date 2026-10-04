@@ -370,10 +370,13 @@ Internal endpoint for deleting documents.
 **Endpoint:** `DELETE /api/v1/document/internal/:documentId/`
 
 **Authentication:** Requires scoped token with `STORAGE_TOKEN` scope.
+
+**Query Parameters:**
+- `hard` (optional): `true` removes the document instead of marking it deleted. Its stored files are removed first; if that fails, the failure is logged and the document is removed anyway.
 </Tab>
 
 <Tab title="Response">
-Same response structure as public delete endpoint.
+Same response structure as public delete endpoint. With `hard=true` the response is `{ "deleted": true }`, also when the document was already gone.
 </Tab>
 </Tabs>
 </Accordion>
@@ -402,7 +405,7 @@ Removes a document for good: every stored copy of its file (the current file and
 </Accordion>
 
 <Accordion title="DELETE /internal/records/:virtualRecordId/purge - Internal Purge Processed Record">
-Removes every document filed under `records/{virtualRecordId}`, where indexing keeps the processed version of a record. Records with identical content share one virtual record id, so PipesHub calls this only once no record uses it.
+Removes the processed version of a record that indexing stored: the `record_{virtualRecordId}` and `metadata_{virtualRecordId}` documents, wherever they are filed (under the record's folder path, or under `records/{virtualRecordId}` for older records), with their files. Records with identical content share one virtual record id, so PipesHub calls this only once no record uses it.
 
 <Tabs>
 <Tab title="Request">
@@ -411,7 +414,7 @@ Removes every document filed under `records/{virtualRecordId}`, where indexing k
 **Authentication:** Requires scoped token with `STORAGE_TOKEN` scope.
 
 **Path Parameters:**
-- `virtualRecordId`: letters, digits, `-` and `_` only. It is matched against the exact path, never as a prefix.
+- `virtualRecordId`: 1 to 128 letters, digits, `-` and `_`. It is matched against exact document names and the exact `records/{virtualRecordId}` path, never as a prefix.
 </Tab>
 
 <Tab title="Response">
@@ -1378,7 +1381,7 @@ Storage configuration is maintained in etcd under `/services/storage` path:
 
 5. **Organization Isolation**: All documents are organization-scoped (`orgId`) for secure multi-tenancy.
 
-6. **Deletion**: The delete endpoints mark a document as deleted (`isDeleted: true`). When a record, folder or knowledge base is deleted in PipesHub, its stored files and their documents are removed with the internal purge endpoints instead, asynchronously: the delete request finishes once the records are gone from the graph, and the indexing service removes the stored content afterwards. An uploaded file's removal is scheduled before its record is deleted; if it cannot be scheduled, nothing is deleted and the request returns `503`. While the record still lists the file, the indexing service re-schedules the removal, for up to a day after the delete; a file a record still lists after that belongs to a record that was never deleted, so it is kept. A file whose record is gone but that storage cannot remove, or whose record could not be checked, is re-scheduled with a delay of up to 5 minutes, with no time limit, until the removal succeeds. A record's processed content is removed by its delete event, and if that event is lost, by the indexing service's periodic orphan sweep.
+6. **Deletion**: The delete endpoints mark a document as deleted (`isDeleted: true`), unless the internal delete is called with `?hard=true`, which removes the document itself and makes one attempt to remove its stored files. When a record, folder or knowledge base is deleted in PipesHub, its stored files and their documents are removed with the internal purge endpoints instead, asynchronously: the delete request finishes once the records are gone from the graph, and the indexing service removes the stored content afterwards. An uploaded file's removal is scheduled before its record is deleted; if it cannot be scheduled, nothing is deleted and the request returns `503`. While the record still lists the file, the indexing service re-schedules the removal, for up to a day after the delete; a file a record still lists after that belongs to a record that was never deleted, so it is kept. A file whose record is gone but that storage cannot remove, or whose record could not be checked, is re-scheduled with a delay of up to 5 minutes, with no time limit, until the removal succeeds. A record's processed content is removed by its delete event, and if that event is lost, by the indexing service's periodic orphan sweep.
 
 7. **Direct Upload**: Large files bypass API server for optimal performance, using vendor-specific presigned URLs.
 

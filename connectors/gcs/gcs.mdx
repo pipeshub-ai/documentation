@@ -342,7 +342,7 @@ This is the slow one. A few thousand files takes minutes. A few million takes ho
 
 ### Every sync after that
 
-Once the initial sync is done, each sync lists the whole bucket again (or, with a **Folders** filter, each included folder), but it only downloads and indexes files that changed since last time. Unchanged files are counted as still present and skipped. So a later sync is faster than the first one, but its time still grows with the number of files, because they are all listed.
+Once the initial sync is done, each sync lists the whole bucket again (with a **Folders** filter set to **In**, it lists each included folder instead; set to **Not In**, it still lists the whole bucket and skips the excluded folders), but it only downloads and indexes files that changed since last time. Unchanged files are counted as still present and skipped. So a later sync is faster than the first one, but its time still grows with the number of files, because they are all listed.
 
 Files you deleted from the bucket are removed from PipesHub, record and search results both. This only happens after the bucket was listed completely, without an error. If a listing fails, or resumes partway from an earlier interrupted sync, nothing is removed on that sync, even if the listing reaches the last page; the next complete listing removes it. Files outside a narrowed **Folders** filter don't wait for this: they're removed on the next sync.
 
@@ -531,7 +531,7 @@ Most often, the service account key was rotated or deleted in Google Cloud.
 </Accordion>
 
 <Accordion title="What happens when I delete a file from GCS?">
-  On the next sync that lists the whole bucket without an error, the connector notices it's gone and deletes its record from PipesHub, including from search results.
+  On the next sync that lists the whole bucket from start to finish without an error, the connector notices it's gone and deletes its record from PipesHub, including from search results. A sync that resumes partway from an earlier interrupted sync removes nothing, even if it reaches the last page.
   
   **Object versioning** in GCS doesn't keep a deleted file visible: the connector lists only live objects, so once the live version is gone the file is removed.
 </Accordion>

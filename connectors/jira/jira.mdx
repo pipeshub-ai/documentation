@@ -647,6 +647,11 @@ The Jira connector syncs the following data from your Jira Cloud workspace:
 - Check project permissions in Jira
 - Review issue security schemes that may limit access
 
+**Deleted issues still appear in PipesHub:**
+- PipesHub finds deleted issues through Jira's audit log. Jira only provides that log when at least one Jira product on the site is on a paid plan, and only to an account allowed to read it.
+- If every Jira product on your site is on a Free plan, the connector sends one notice, "can't detect deleted issues on Jira's Free plan". Issues deleted in Jira stay in PipesHub. To have deletions picked up, move one Jira product on the site to a paid plan. To clear issues that were already deleted, remove the connector and add it again. A full resync does not remove them.
+- If the notice says the connector "is missing the audit log permission", ask a Jira admin to give the connector's account the Jira Administrator permission, which reading the audit log needs.
+
 **Missing comments or attachments:**
 - Verify indexing filters are enabled for issues and attachments
 - Check that the user has permission to view comments/attachments
@@ -738,6 +743,10 @@ The connector uses Jira's **Audit Log API** to detect deleted issues:
 2. Identifies deleted issue keys from audit records
 3. Removes issue records from the index
 4. Comments are automatically deleted with the issue (stored as Blocks within the issue)
+
+<Note>
+  Jira only provides the audit log when at least one Jira product on the site is on a paid plan. On a site where every Jira product is on a Free plan, deleted issues can't be detected and stay in PipesHub. The connector says so once in a notification. See [Troubleshooting](#troubleshooting).
+</Note>
 
 ### Checkpoint management
 

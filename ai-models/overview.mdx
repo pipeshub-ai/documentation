@@ -98,6 +98,12 @@ If the health check fails when saving, the dialog shows the message the check re
 
 The check also answers these before or instead of asking the provider:
 - No model name (400): "No valid model names found in configuration"
+- An endpoint this deployment won't call (400). This is checked before anything else is sent to the provider:
+  - A link-local or cloud metadata address, which is never allowed: "Model endpoint '&lt;endpoint&gt;' is a link-local or cloud metadata address, which is never allowed."
+  - An endpoint that isn't an http or https URL: "Model endpoint '&lt;endpoint&gt;' must be an http(s) URL."
+  - When `PIPESHUB_BLOCK_PRIVATE_ADDRESSES` is on, a private or internal address, such as `localhost`, a private IP address, a one-word service name or a name ending in `.internal` (for example `host.docker.internal`): "Model endpoint '&lt;endpoint&gt;' is a private or internal address, which this deployment does not allow (PIPESHUB_BLOCK_PRIVATE_ADDRESSES)." The Ollama address the deployment itself sets in `OLLAMA_API_URL` is allowed.
+
+  When the endpoint is a name that points to one of these addresses, the message says "resolves to" instead of "is".
 - A context length outside 1,024 to 20,000,000 tokens (400): "Context length &lt;value&gt; is not a usable window. Set it to the model's context window in tokens (between 1,024 and 20,000,000), or leave it empty to assume 128,000."
 - PipesHub has no internet access for a cloud provider (500): "Cannot reach cloud LLM providers from PipesHub. The container may not have outbound internet access. Cloud LLMs and external connectors require container egress; air-gapped installs should use local models (Ollama, LM Studio). See deployment/docker-compose/ADVANCED_DEPLOYMENT.md#container-outbound-connectivity."
 - The provider took too long (504): "LLM health check timed out. For cloud providers, verify your API key and that PipesHub containers can reach the internet. See deployment/docker-compose/ADVANCED_DEPLOYMENT.md#container-outbound-connectivity." If the dialog's own request times out before any response arrives, it shows its own message instead: "Request timed out while validating the model. Cloud providers need outbound internet from the PipesHub container — see deployment/docker-compose/ADVANCED_DEPLOYMENT.md#container-outbound-connectivity."

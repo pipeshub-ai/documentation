@@ -34,7 +34,9 @@ As soon as an item is in the trash, it disappears from search, chat, citations, 
 
 ## How long items stay
 
-An item stays in the trash for **at least 14 days**. A cleanup runs every 14 days (at 03:00 UTC by default) and removes everything that has been in the trash for at least 14 days, with its files. So an item can be restored for 14 to 28 days after it was deleted, depending on when the next cleanup runs.
+By default, an item stays in the trash for **at least 14 days**. A cleanup runs every 14 days (at 03:00 UTC) and removes everything that has been in the trash for at least 14 days, with its files. So, with the defaults, an item can be restored for 14 to 28 days after it was deleted, depending on when the next cleanup runs.
+
+These are defaults. They come from `softDeletePurge` in the platform settings: `minAgeDays` (how long an item stays at least), `intervalDays` (how often the cleanup runs) and `runHourUtc` (the hour it starts). Lowering the first two shortens the window, down to a minimum of one day each: a value below one counts as one day, and a missing or invalid value uses the default of 14. The Recently deleted page works out each item's date from the setting in use.
 
 <Warning>
   Once the cleanup has removed an item, it can't be restored. PipesHub keeps no other copy of files uploaded to a collection.
@@ -43,7 +45,7 @@ An item stays in the trash for **at least 14 days**. A cleanup runs every 14 day
 ## Restore from Recently deleted
 
 1. Open the collection.
-2. Click **Recently deleted** in the collection's header.
+2. Click **Recently deleted** in the collection's header. The button is there while the trash is on, for the roles listed under [Who can see and restore what](#who-can-see-and-restore-what).
 3. Find the item. Each row shows its name and type, where it was, when it was deleted and by whom, and the date after which the cleanup may remove it for good.
 4. Click **Restore** on the row, or select several rows and click **Restore** above the list.
 
@@ -52,17 +54,18 @@ A message tells you what came back, and why anything didn't:
 - **A folder comes back whole.** A folder deleted with its contents is one row. Restoring it brings back everything that was inside it.
 - **Its folder comes first.** If you deleted a file and later deleted the folder it was in, the file's row says the folder is deleted too. Restore the folder first, then the file. When you select both, PipesHub restores the folder first for you.
 - **Names that are taken.** If another item now has the same name in the same place, the restored one comes back as `name (restored)`. A file keeps its extension, for example `report (restored).pdf`.
-- **Search catches up shortly.** A restored item is back in its folder straight away. Its files are indexed again, so they show up in search and chat again once indexing finishes ("Restored; it will be searchable again shortly").
+- **Search catches up after indexing.** A restored item is back in its folder straight away. Its files are queued for indexing again, and the message says so: "Restored items are back where they were, and show up in search again once indexing finishes."
+- **If indexing couldn't be queued.** Rarely, a restore can't queue some files for indexing. The message then says "Restored; it will be searchable again shortly." The files are back, but not yet searchable. The indexing service's background recovery queues them on its own after about an hour. To do it sooner, open the file's menu and choose **Start indexing**.
 
 ### Who can see and restore what
 
-The Recently deleted page shows only what you're allowed to restore. It uses the same rules as deleting:
+The **Recently deleted** button and page are for the roles that may restore, and the page lists only what your role may restore:
 
-| Your role on the collection | You see and can restore |
+| Your role on the collection | Recently deleted |
 | --- | --- |
-| Owner or Writer | Everything deleted from the collection, by anyone |
-| File organizer | Single files only |
-| Reader or Commenter | Nothing; the page asks you to request edit access from the collection's owner |
+| Owner or Writer | Shown. Lists everything deleted from the collection, by anyone, and you can restore all of it |
+| File organizer | Shown. Lists single deleted files only, and you can restore those; deleted folders and multi-item deletes need an owner or writer |
+| Reader or Commenter | Not shown. Ask the collection's owner to restore an item, or to give you edit access |
 
 ## What can't be restored
 

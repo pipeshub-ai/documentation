@@ -570,7 +570,11 @@ Needs **Move Deleted Records to the Trash** on in Labs, and the role the delete 
 - Restored files are indexed again and return to search once that finishes. `reindexPending: true` lists in `reindexPendingRecordIds` any that couldn't be queued yet.
 - A record that isn't in the trash answers `200` with nothing restored.
 
-**Errors** say in plain words what to do: `403` when the trash is off, the caller lacks edit access, or the record comes from a connected app (restore it in that app; it returns at the next sync); `404` for a record that doesn't exist in this workspace or was removed for good; `409` when the folder it was in is also in the trash (restore the folder first) or the item changed meanwhile (refresh and try again).
+**Errors** say in plain words what to do: `403` when the trash is off, the caller lacks edit access, or the record comes from a connected app (restore it in that app; it returns at the next sync); `404` for a record that doesn't exist in this workspace or was removed for good; `409`, with nothing restored, in three cases:
+
+- the folder it was in is also in the trash: restore the folder first;
+- another item has taken its place, because the same item was added again after this one was deleted, and that item now holds its source id: "'report.pdf' can't be restored because 'report (1).pdf' has taken its place. … To restore this one, delete 'report (1).pdf' first, then try again." Refreshing doesn't help; the other item has to go first;
+- the item changed while it was being restored, for example a second restore or the cleanup ran at the same time: refresh and try again.
 </Tab>
 </Tabs>
 </Accordion>

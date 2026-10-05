@@ -56,7 +56,7 @@ The connectors service decides access from the caller's role in the organization
 |--------|----------------|--------------------|
 | See it in the connector lists | Every member | Its creator |
 | Read it, its configuration or filters | An admin (or its creator) | Its creator only. An admin gets `404`. |
-| Read its stats | An admin (or its creator). Anyone else gets `403`. | Its creator only. Anyone else, an admin included, gets `403`. |
+| Read its stats | An admin (or its creator). Anyone else gets `404`. | Its creator only. Anyone else, an admin included, gets `404`. |
 | Create it | An admin | Anyone |
 | Change its configuration, name or filters, sign it in, turn it on or off | An admin | Its creator only |
 | Delete it | An admin or its creator. Anyone else gets `404`. | Its creator or an admin. Anyone else gets `404`. |
@@ -1053,7 +1053,7 @@ Get record counts by indexing status for a connector.
 
 **Scope:** `connector:read` or `kb:read`
 
-**Access Control:** for a personal connector, its creator only; for a team connector, an admin or its creator; for a knowledge base, anyone with a role on it.
+**Access Control:** for a personal connector, its creator only; for a team connector, an admin or its creator; for a knowledge base, its owners, writers and readers.
 </Tab>
 
 <Tab title="Response">
@@ -1066,7 +1066,7 @@ Get record counts by indexing status for a connector.
 }
 ```
 
-**Errors:** `403` for anyone else, an admin included on a personal connector ("Insufficient permissions to access stats for connector ..."). Unlike the other reads, which answer `404`, this confirms that the connector exists. `404` when the connector doesn't exist.
+**Errors:** `404` when the connector doesn't exist or you can't see it: a personal connector you didn't create (admins included), a team connector you didn't create when you aren't an admin, or a knowledge base you have no role on. The answer is the same as for a connector that doesn't exist, so the API doesn't confirm that it exists. `403` for a knowledge base where your role is other than owner, writer or reader ("Insufficient KB permissions for connector ...").
 </Tab>
 </Tabs>
 </Accordion>

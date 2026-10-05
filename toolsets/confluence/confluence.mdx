@@ -246,6 +246,7 @@ Before configuring the Callback URL in Atlassian, copy the Redirect URI from Pip
    - **Instance Name** (e.g., `Confluence Production`)
    - **Client ID** — from Step 6
    - **Client Secret** — from Step 6
+   - **Grant Jira user access** — leave it at **No** unless you need it (see note below).
 4. Click **Create**.
 
 <div className="text-center">
@@ -258,6 +259,10 @@ Before configuring the Callback URL in Atlassian, copy the Redirect URI from Pip
 
 <Info>
   Client ID and Client Secret are the org's OAuth app credentials. Atlassian issues per-user tokens when each user authenticates in the next step.
+</Info>
+
+<Info>
+  **Grant Jira user access.** This starts at **No**, and the toolset then asks Atlassian for the same permissions as before. Choose **Yes** only if your Atlassian OAuth app includes Jira and you've added the `read:jira-user` scope: PipesHub will then also request that scope when each user authenticates. If you choose **Yes** without adding the scope, Atlassian refuses the sign-in.
 </Info>
 
 #### Step 8: Authenticate the toolset
@@ -415,7 +420,7 @@ The Confluence tile in **Your actions** now shows **Authenticated**. The toolset
 | | OAuth 2.0 | API Token |
 |---|-----------|-----------|
 | **Best for** | Multi-user / org-wide rollouts | Cases where OAuth app registration is blocked |
-| **Org-level setup** | Client ID, Client Secret | Atlassian Site URL only |
+| **Org-level setup** | Client ID, Client Secret, Grant Jira user access | Atlassian Site URL only |
 | **Per-user setup** | OAuth popup (one click) | Each user pastes Email + API Token |
 | **Prerequisites** | Atlassian Developer Console admin access | Any Atlassian account |
 

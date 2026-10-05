@@ -44,7 +44,7 @@ The token can be a signed-in session token, an OAuth access token or a personal 
 |-------|--------|
 | `connector:read` | Reading connectors, the registry, filters and OAuth apps |
 | `connector:write` | Creating and changing connectors and OAuth apps, and OAuth sign-in |
-| `connector:sync` | Turning sync on and off, reindexing, and the vector store jobs |
+| `connector:sync` | Turning sync on and off, stopping a sync, reindexing, and the vector store jobs |
 | `connector:delete` | Deleting connectors and OAuth apps |
 | `kb:read`, `kb:write` | Accepted instead of the `connector:*` scope on a few endpoints: `kb:read` for stats, navigate and lookup, `kb:write` for reindex and resync |
 
@@ -70,6 +70,8 @@ When beta connectors are turned off in the platform settings, the registry leave
 ### Locked connectors
 
 While a sync or another operation runs, a connector is locked. Requests that change it (configuration, name, filters, toggle, reindex, resync and delete) are refused with `409 Conflict` until the sync finishes. The message says what is running, for example "A sync is already in progress. Please wait and try again."
+
+To end a sync early instead of waiting, call `POST /:connectorId/sync/stop` (under Sync and indexing below). It is allowed while the connector is locked, and it also clears a lock or a syncing status left behind when no sync is running.
 
 ## API Endpoints
 
@@ -966,6 +968,46 @@ If the sync request can't be queued, the answer is still `200`, with `resyncConn
 </Tabs>
 </Accordion>
 
+<Accordion title="POST /:connectorId/sync/stop - Stop a running sync">
+Ask the sync running for a connector to stop. The call returns at once and the sync halts shortly after. This request is allowed while the connector is locked.
+
+When no sync is running but the connector still shows a syncing status or is locked, for example after a crash, the call puts it back to idle and unlocked, as long as PipesHub can tell that no sync is running anywhere.
+
+<Tabs>
+<Tab title="Request">
+**Endpoint:** `POST /api/v1/connectors/:connectorId/sync/stop`
+
+**Scope:** `connector:sync`
+
+No request body.
+</Tab>
+
+<Tab title="Response">
+**Status:** `200 OK`
+
+```json
+{
+  "success": true,
+  "stopped": true,
+  "status": "SYNCING",
+  "message": "Stop requested. The sync will halt shortly."
+}
+```
+
+`stopped` is `true` when a running sync was asked to stop. It is `false` when nothing was stopped, and `message` says why:
+
+- "No sync is currently running."
+- "No sync was running; stale status repaired." `status` is then `IDLE`.
+- "Connector is being deleted; nothing to stop."
+- A message that the stop could not be recorded or that PipesHub could not tell whether a sync is running. Nothing was changed; try again shortly.
+
+`status` is the connector's sync status after the call.
+
+**Errors:** `404` when the connector doesn't exist or you can't see it; `403` for a team connector when you aren't an admin, for a personal connector you didn't create, or for a beta connector while beta connectors are turned off.
+</Tab>
+</Tabs>
+</Accordion>
+
 <Accordion title="POST /:connectorId/reindex - Reindex a connector's records">
 Index a connector's records again from their stored content. A knowledge base is a connector instance too, so this also reindexes a knowledge base.
 
@@ -1477,7 +1519,11 @@ An `appDisabled` event from the toggle has the same payload.
 
 ## Error Handling
 
-Most errors share this shape. Two answers differ: [Local FS refusals](#local-fs-refusals) put `code` and `details` at the top level, and a failed OAuth callback answers `200` with `success: false` and a top-level `error` string.
+Most errors share this shape. Three answers differ:
+
+- [Local FS refusals](#local-fs-refusals) put `code` and `details` at the top level.
+- A failed OAuth callback answers `200` with `success: false` and a top-level `error` string.
+- A resync that can't be queued answers `200` with `resyncConnectorResponse` set to `{ "success": false, "error": "..." }`.
 
 ```json
 {

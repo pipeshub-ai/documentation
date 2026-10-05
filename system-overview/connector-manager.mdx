@@ -59,7 +59,7 @@ The connectors service decides access from the caller's role in the organization
 | Read its stats | An admin (or its creator). Anyone else gets `403`. | Its creator only. Anyone else, an admin included, gets `403`. |
 | Create it | An admin | Anyone |
 | Change its configuration, name or filters, sign it in, turn it on or off | An admin | Its creator only |
-| Delete it | An admin or its creator | Its creator or an admin |
+| Delete it | An admin or its creator. Anyone else gets `404`. | Its creator or an admin. Anyone else gets `404`. |
 | Create, update or delete an OAuth app | An admin | An admin |
 | Start a vector store cleanup or reindex | An admin | An admin |
 
@@ -498,8 +498,8 @@ Delete a connector and everything synced from it. The request returns as soon as
 ```
 
 **Errors:**
-- `403` when the caller is neither the creator nor an admin.
-- `404` when the connector doesn't exist.
+- `403` for an OAuth or personal access token without the `connector:delete` scope, or for a beta connector while beta connectors are turned off.
+- `404` when the connector doesn't exist, or when the caller is neither its creator nor an admin. Both get the same answer, so the API doesn't confirm that the connector exists.
 - `409` when a deletion is already in progress ("Connector deletion is already in progress"), when the connector is locked by a running sync, or when an agent uses the connector as a knowledge source. The message names the agents; remove the connector from them first.
 </Tab>
 </Tabs>

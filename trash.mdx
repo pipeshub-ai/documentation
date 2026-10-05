@@ -25,7 +25,7 @@ The setting takes effect straight away; nothing needs a restart. If you turn it 
 | --- | --- |
 | A file in a collection | The file goes to the trash, with its attachments. |
 | A folder in a collection | The folder goes to the trash with everything inside it, as one item. |
-| Several items at once | Each one goes to the trash. Restoring any of them brings back all of them. |
+| Several items at once | They go to the trash together, and show as one row on Recently deleted, for example "a.pdf and 2 more". Restoring it brings back all of them. |
 | An item in a connected app (Drive, Confluence, Slack and others) | At the next sync, PipesHub puts its copy in the trash. |
 | A whole collection | Removed for good straight away. It doesn't go to the trash. |
 | A connector | Removed for good straight away, with everything it synced, including anything of its in the trash. |
@@ -51,11 +51,11 @@ These are defaults. They come from `softDeletePurge` in the platform settings: `
 
 A message tells you what came back, and why anything didn't:
 
-- **A folder comes back whole.** A folder deleted with its contents is one row. Restoring it brings back everything that was inside it.
+- **A delete comes back whole.** Each row is one delete. A folder deleted with its contents is one row, and so are several items deleted together, which the row names ("a.pdf and 2 more", "With b.pdf, Docs"). Restoring a row brings back everything that delete removed.
 - **Its folder comes first.** If you deleted a file and later deleted the folder it was in, the file's row says the folder is deleted too. Restore the folder first, then the file. When you select both, PipesHub restores the folder first for you.
 - **Names that are taken.** If another item now has the same name in the same place, the restored one comes back as `name (restored)`. A file keeps its extension, for example `report (restored).pdf`.
 - **Search catches up after indexing.** A restored item is back in its folder straight away. Its files are queued for indexing again, and the message says so: "Restored items are back where they were, and show up in search again once indexing finishes."
-- **If indexing couldn't be queued.** Rarely, a restore can't queue some files for indexing. The message then says "Restored; it will be searchable again shortly." The files are back, but not yet searchable. The indexing service's background recovery queues them on its own after about an hour. To do it sooner, open the file's menu and choose **Start indexing**.
+- **If indexing couldn't be queued.** Rarely, a restore can't queue some files for indexing. The files are back, but not yet searchable, and the message says so: "Restored, but some files aren't searchable yet because they couldn't be queued for indexing. PipesHub queues them again on its own within about an hour. To do it sooner, open each file's menu and choose Start indexing."
 
 ### Who can see and restore what
 

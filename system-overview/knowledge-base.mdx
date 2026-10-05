@@ -479,7 +479,7 @@ What happens next depends on the Labs setting **Move Deleted Records to the Tras
 </Accordion>
 
 <Accordion title="GET /:kbId/trash - List Recently Deleted Items">
-One page of what was deleted from a collection and can still be restored, newest first. Each item is what one delete removed: a folder deleted with its contents is one item, and `itemCount` says how many records it holds. Restore an item with `POST /record/:recordId/restore`, using its `id`.
+One page of what was deleted from a collection and can still be restored, newest first. Each item is what one delete removed, as a restore brings it back whole: a folder deleted with its contents is one item, and so is a multi-select delete, which has `rootCount` items selected and names up to three of the others in `otherRootNames`. `itemCount` says how many records it holds. Restore an item with `POST /record/:recordId/restore`, using its `id`.
 
 Needs **Move Deleted Records to the Trash** on in Labs. The list holds what the caller may restore: owners and writers see every item, file organizers see single files only, and other roles get `403 Forbidden`. OAuth apps need the `kb:delete` scope.
 
@@ -519,6 +519,8 @@ Needs **Move Deleted Records to the Trash** on in Labs. The list holds what the 
       "parentName": null,
       "parentInTrash": false,
       "itemCount": 4,
+      "rootCount": 1,
+      "otherRootNames": [],
       "deletedAtTimestamp": 1790000000000,
       "deletedBy": { "name": "Ada Admin", "email": "ada@example.com" },
       "removableAfterTimestamp": 1791209600000
@@ -567,7 +569,7 @@ Needs **Move Deleted Records to the Trash** on in Labs, and the role the delete 
 ```
 
 - An item whose name another item next to it now uses comes back as `name (restored)`; `renamedFrom` gives its old name.
-- Restored files are indexed again and return to search once that finishes. `reindexPending: true` lists in `reindexPendingRecordIds` any that couldn't be queued yet.
+- Restored files are indexed again and return to search once that finishes. `reindexPending: true` lists in `reindexPendingRecordIds` any that couldn't be queued yet; PipesHub queues them again on its own within about an hour, or choose **Start indexing** in each file's menu to do it sooner.
 - A record that isn't in the trash answers `200` with nothing restored.
 
 **Errors** say in plain words what to do: `403` when the trash is off, the caller lacks edit access, or the record comes from a connected app (restore it in that app; it returns at the next sync); `404` for a record that doesn't exist in this workspace or was removed for good; `409`, with nothing restored, in three cases:

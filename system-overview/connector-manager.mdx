@@ -963,7 +963,7 @@ Start a sync of a connector that has sync turned on.
 
 If the sync request can't be queued, the answer is still `200`, with `resyncConnectorResponse.success` set to `false` and an `error`.
 
-**Errors:** `400` when `connectorName` is missing or sync is off for the connector ("Connector ... not allowed"); `409` while a sync is already running, or for a Local FS connector whose desktop device is offline.
+**Errors:** `400` when `connectorName` is missing or sync is off for the connector ("Connector ... not allowed"); `409` while a sync is already running, or for a Local FS connector whose desktop device can't sync (see [Local FS refusals](#local-fs-refusals)).
 </Tab>
 </Tabs>
 </Accordion>
@@ -1003,7 +1003,7 @@ No request body.
 
 `status` is the connector's sync status after the call.
 
-**Errors:** `404` when the connector doesn't exist or you can't see it; `403` for a team connector when you aren't an admin, for a personal connector you didn't create, or for a beta connector while beta connectors are turned off.
+**Errors:** `404` when the connector doesn't exist or you can't see it: a personal connector you didn't create (admins included), or a team connector you didn't create when you aren't an admin; `403` for a team connector you created when you aren't an admin, or for a beta connector while beta connectors are turned off.
 </Tab>
 </Tabs>
 </Accordion>

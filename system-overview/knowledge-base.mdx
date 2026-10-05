@@ -447,7 +447,7 @@ Delete a file from a knowledge base. Only files uploaded to a knowledge base can
 What happens next depends on the Labs setting **Move Deleted Records to the Trash**:
 
 - **Off (the default):** the record is removed from the graph database and can't be restored, and its stored file is cleaned up in the background.
-- **On:** the record goes to the trash. It disappears from search, chat and listings at once, but it can be restored for at least 14 days with `POST /record/:recordId/restore` or from the collection's **Recently deleted** page. The response then has `softDeleted: true` and the `batchId` of the delete. See [Trash and Recently deleted](/trash).
+- **On:** the record goes to the trash. It disappears from search, chat and listings at once, but it can be restored until the scheduled cleanup removes it, with `POST /record/:recordId/restore` or from the collection's **Recently deleted** page. How long that is depends on the workspace's cleanup settings; see [How long items stay](/trash#how-long-items-stay). The response then has `softDeleted: true` and the `batchId` of the delete. See [Trash and Recently deleted](/trash).
 
 <Tabs>
 <Tab title="Request">
@@ -530,7 +530,7 @@ Needs **Move Deleted Records to the Trash** on in Labs. The list holds what the 
 ```
 
 - `parentInTrash: true` means the folder the item was in is deleted too; restore that folder first.
-- `removableAfterTimestamp` is the earliest time the scheduled cleanup may remove the item for good. It and `retention` are `null` when the retention settings can't be read; the default is 14 days.
+- `removableAfterTimestamp` is the earliest time the scheduled cleanup may remove the item for good. It and `retention` are `null` when the retention settings can't be read. See [How long items stay](/trash#how-long-items-stay) for the default and the settings that change it.
 </Tab>
 </Tabs>
 </Accordion>

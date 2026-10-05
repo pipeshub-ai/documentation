@@ -1,945 +1,505 @@
 # Connector Manager API
 
-The Connector Manager Service provides centralized management of authentication tokens and connector configurations for third-party integrations. This service handles OAuth flows, token lifecycle management, and connector configurations for various external services like Google Workspace, OneDrive, SharePoint, Confluence, and more.
+The Connector Manager API is how PipesHub creates, configures, signs in, turns on and deletes connectors, and how admins manage the OAuth apps that connectors sign in with. The Node.js API receives each request, checks who is calling, validates the request and forwards it to the Python connectors service, which holds the connector logic and does the work.
 
-## Base URL
+## Base URLs
 
-All endpoints are prefixed with `/api/v1/connectors`
+- Connector endpoints are under `/api/v1/connectors`.
+- OAuth app endpoints are under `/api/v1/oauth`.
+- Health endpoints are under `/api/v1/health`.
+
+## Connector types and connector instances
+
+A **connector type** is a kind of source PipesHub can sync from, such as `Confluence`, `Drive` or `OneDrive`. The **registry** lists the types and the setup form each one needs.
+
+A **connector instance** (usually just "connector") is one configured copy of a type. An organization can have several instances of the same type. Every instance has its own ID, the `connectorId`, which the instance endpoints take in the path. A `connectorId` is 1 to 64 letters, digits, underscores or hyphens; anything else is refused with `400`.
+
+Each instance has a **scope**:
+
+- `team`: set up by an admin for the whole organization. Every member sees team connectors in the connector lists.
+- `personal`: set up by one person for their own data. Only that person sees it.
+
+An instance moves through these states, which the responses report as fields:
+
+| Field | Meaning |
+|-------|---------|
+| `isConfigured` | Its settings have been saved. |
+| `isAuthenticated` | Its OAuth sign-in has completed. |
+| `isActive` | Syncing is turned on. |
+| `isAgentActive` | Agent use is turned on, for connectors that support agents. |
+| `isLocked` | A sync or another operation is running, so changes are refused for now (see [Locked connectors](#locked-connectors)). |
+| `status` | `SYNCING`, `FULL_SYNCING`, `DELETING` and so on, when something is in progress. |
 
 ## Authentication
 
-All endpoints require authentication via Bearer token:
+Every endpoint except the health checks needs a bearer token:
 
 ```http
 Authorization: Bearer YOUR_TOKEN
 ```
 
-**Internal endpoints** use scoped token authentication for service-to-service communication with specific scopes:
-- `FETCH_CONFIG` - For configuration updates and token refresh operations
+The token can be a signed-in session token, an OAuth access token or a personal access token. OAuth access tokens and personal access tokens must also carry at least one of the scopes listed for the endpoint (for example `connector:read`); without one, the request is refused with `403`. Session tokens are not checked for scopes.
 
-## Architecture Overview
+| Scope | Allows |
+|-------|--------|
+| `connector:read` | Reading connectors, the registry, filters and OAuth apps |
+| `connector:write` | Creating and changing connectors and OAuth apps, and OAuth sign-in |
+| `connector:sync` | Turning sync on and off, reindexing, and the vector store jobs |
+| `connector:delete` | Deleting connectors and OAuth apps |
+| `kb:read`, `kb:write` | Accepted instead of the `connector:*` scope on a few endpoints: `kb:read` for stats, navigate and lookup, `kb:write` for reindex and resync |
 
-The Connector Manager Service is built on a Node.js backend with MongoDB for data persistence, Redis for caching, and ETCD for secure configuration storage. The service consists of several key components:
+## Who can do what
 
-- **Token Management** - Handles OAuth token lifecycle including creation, refresh, and revocation
-- **Connector Configuration** - Manages connector settings and credentials
-- **Event Broadcasting** - Kafka-based events for system integration
-- **Health Monitoring** - Service health checks and dependency monitoring
+The connectors service decides access from the caller's role in the organization. A refusal for lack of permission is `403`. A connector the caller may not see at all is reported as `404`, so the API doesn't confirm that it exists.
 
-The service integrates with these components:
+| Action | Team connector | Personal connector |
+|--------|----------------|--------------------|
+| See it in the connector lists | Every member | Its creator |
+| Read it, its configuration, filters or stats | An admin (or its creator) | Its creator only. An admin gets `404`. |
+| Create it | An admin | Anyone |
+| Change its configuration, name or filters, sign it in, turn it on or off | An admin | Its creator only |
+| Delete it | An admin or its creator | Its creator or an admin |
+| Create, update or delete an OAuth app | An admin | An admin |
+| Start a vector store cleanup or reindex | An admin | An admin |
 
-- **Configuration Manager** - Manages encrypted configuration storage
-- **IAM Service** - Handles user authentication and authorization
-- **Kafka** - Event streaming for token and connector state changes
-- **ETCD** - Encrypted key-value storage for sensitive configurations
-- **Backend Connector Service** - Python service that handles actual connector implementations
+Only its creator can read a personal connector's configuration, because the configuration carries the creator's credentials.
 
-## Data Models
+When beta connectors are turned off in the platform settings, the registry leaves beta connector types out, and requests for a beta connector are refused with `403`. Enterprise and business accounts also can't create a beta connector with team scope (`403`).
 
-### Connectors
-Connector configurations that define enabled/disabled state and metadata for third-party integrations.
+### Locked connectors
 
-### Token Events
-Events broadcast when tokens are created, refreshed, revoked, or expired.
-
-### Entity Events
-Events broadcast when connectors are enabled or disabled, triggering synchronization workflows.
-
-### Configuration
-Encrypted storage of OAuth credentials, API keys, and service endpoints.
+While a sync or another operation runs, a connector is locked. Requests that change it (configuration, name, filters, toggle, reindex, resync and delete) are refused with `409 Conflict` until the sync finishes. The message says what is running, for example "A sync is already in progress. Please wait and try again."
 
 ## API Endpoints
 
-<AccordionGroup>
-
-<Accordion title="Connector Management">
-Manage connector configurations including retrieval, updates, OAuth flows, and filtering options.
+The paths below are relative to `/api/v1/connectors` unless they start with `/api/v1/`.
 
 <AccordionGroup>
 
-<Accordion title="GET / - Get All Connectors">
-Retrieve all connectors for the organization (admin access required).
+<Accordion title="Registry">
+
+<AccordionGroup>
+
+<Accordion title="GET /registry - List connector types">
+List the connector types that can be set up. Beta types are left out when beta connectors are turned off.
 
 <Tabs>
 <Tab title="Request">
-**Endpoint:** `GET /api/v1/connectors/`
+**Endpoint:** `GET /api/v1/connectors/registry`
 
-**Access Control:** Admin privileges required
+**Scope:** `connector:read`
 
-**Authentication:** Bearer token required
+**Query Parameters:**
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| scope | string | No | `team` or `personal`. Defaults to `team`. |
+| page | integer | No | Page number, from 1. Defaults to 1. |
+| limit | integer | No | Items per page, 1 to 200. Defaults to 20. |
+| search | string | No | Matches the name, group and description. |
 </Tab>
 
 <Tab title="Response">
 **Status:** `200 OK`
 
-**Note:** Response format depends on the backend connector service implementation.
+```json
+{
+  "success": true,
+  "connectors": [
+    {
+      "name": "Confluence",
+      "type": "Confluence",
+      "appGroup": "Atlassian",
+      "supportedAuthTypes": ["OAUTH", "API_TOKEN"],
+      "appDescription": "Sync pages, folders, spaces, and users from Confluence Cloud",
+      "appCategories": ["Knowledge Management", "Collaboration"],
+      "iconPath": "/icons/connectors/confluence.svg",
+      "supportsRealtime": false,
+      "supportsSync": true,
+      "supportsAgent": true,
+      "scope": "team"
+    }
+  ],
+  "pagination": {
+    "page": 1,
+    "limit": 20,
+    "search": null,
+    "totalCount": 1,
+    "totalPages": 1,
+    "hasPrev": false,
+    "hasNext": false,
+    "prevPage": null,
+    "nextPage": null
+  },
+  "registryCountsByScope": { "personal": 0, "team": 1 }
+}
+```
+
+Only types that support the requested scope are listed. The example is shortened; each type carries more display fields. `registryCountsByScope` counts all the types available for each scope, before `search` is applied.
+</Tab>
+</Tabs>
+</Accordion>
+
+<Accordion title="GET /registry/:connectorType/schema - Get a connector type's setup form">
+Get the form definition for one connector type: its sign-in fields for each supported auth type, its sync settings and its filters.
+
+<Tabs>
+<Tab title="Request">
+**Endpoint:** `GET /api/v1/connectors/registry/:connectorType/schema`
+
+**Scope:** `connector:read`
+
+**Path Parameters:**
+- `connectorType`: Connector type name, for example `Confluence` (string, required)
+</Tab>
+
+<Tab title="Response">
+**Status:** `200 OK`
 
 ```json
 {
+  "success": true,
+  "schema": {
+    "auth": { "...": "sign-in fields for each supported auth type" },
+    "sync": { "...": "supported sync strategies and their settings" },
+    "filters": { "...": "sync and indexing filter definitions" },
+    "documentationLinks": [
+      { "title": "Setup guide", "url": "https://docs.pipeshub.com/...", "type": "setup" }
+    ]
+  }
+}
+```
+
+OAuth endpoints and scopes are not part of the schema; they come from the connector's OAuth app.
+
+**Errors:** `404` when the type doesn't exist.
+</Tab>
+</Tabs>
+</Accordion>
+
+</AccordionGroup>
+</Accordion>
+
+<Accordion title="Connector instances">
+
+<AccordionGroup>
+
+<Accordion title="GET / - List connectors">
+List the connectors the caller can see: their own personal connectors and the organization's team connectors.
+
+<Tabs>
+<Tab title="Request">
+**Endpoint:** `GET /api/v1/connectors`
+
+**Scope:** `connector:read`
+
+**Query Parameters:**
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| scope | string | No | `team` or `personal`. Defaults to `team`. |
+| page | integer | No | Page number, from 1. Defaults to 1. |
+| limit | integer | No | Items per page, 1 to 200. Defaults to 20. |
+| search | string | No | Matches the instance name, type and group. |
+| isAuthenticated | boolean | No | `true` for signed-in connectors only, `false` for the rest. |
+| isActive | boolean | No | `true` for connectors with sync on, `false` for the rest. |
+| connectorType | string | No | Only connectors of this exact type, for example `Confluence`. |
+</Tab>
+
+<Tab title="Response">
+**Status:** `200 OK`
+
+```json
+{
+  "success": true,
   "connectors": [
     {
-      "name": "google_workspace",
-      "isEnabled": true,
-      "lastUpdated": "2025-04-27T12:00:00.000Z"
+      "_key": "3f1c9a52-7d0e-4b8a-9c1e-2a6b5d4e7f80",
+      "name": "Engineering wiki",
+      "type": "Confluence",
+      "appGroup": "Atlassian",
+      "authType": "OAUTH",
+      "scope": "team",
+      "createdBy": "6650f1c2a9b4e3d2c1b0a998",
+      "isConfigured": true,
+      "isAuthenticated": true,
+      "isActive": true,
+      "isAgentActive": false,
+      "isLocked": false,
+      "status": null,
+      "createdAtTimestamp": 1759184704366,
+      "updatedAtTimestamp": 1759184917316
+    }
+  ],
+  "pagination": {
+    "page": 1,
+    "limit": 20,
+    "totalCount": 1,
+    "totalPages": 1,
+    "hasPrev": false,
+    "hasNext": false,
+    "prevPage": null,
+    "nextPage": null
+  }
+}
+```
+
+The `_key` field is the `connectorId`. List items leave out the type's full setup form; use `GET /registry/:connectorType/schema` for that.
+</Tab>
+</Tabs>
+</Accordion>
+
+<Accordion title="POST / - Create a connector">
+Create a connector instance. It starts out not authenticated and with sync off.
+
+<Tabs>
+<Tab title="Request">
+**Endpoint:** `POST /api/v1/connectors`
+
+**Scope:** `connector:write`
+
+**Request Body Parameters:**
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| connectorType | string | Yes | A type from the registry, for example `Confluence`. |
+| instanceName | string | Yes | A name for this connector. |
+| scope | string | Yes | `team` (admins only) or `personal`. The type must support the scope. |
+| authType | string | No | One of the type's `supportedAuthTypes`. Defaults to the first one. Needed for types with more than one. |
+| config | object | No | Initial `auth`, `sync` and `filters` settings. |
+| baseUrl | string | No | The address of your PipesHub web app, used to build the OAuth redirect address. |
+
+```json
+{
+  "connectorType": "Confluence",
+  "instanceName": "Engineering wiki",
+  "scope": "team",
+  "authType": "OAUTH",
+  "config": {
+    "auth": { "oauthConfigId": "a1b2c3d4" }
+  },
+  "baseUrl": "https://pipeshub.example.com"
+}
+```
+
+**OAuth connectors:** an admin can either pick an existing OAuth app with `config.auth.oauthConfigId` or pass the OAuth credentials in `config.auth`, which creates an OAuth app. A member must pick an existing OAuth app; a member who sends OAuth credentials is refused with `403`, and one who picks no app is refused with `400`.
+</Tab>
+
+<Tab title="Response">
+**Status:** `200 OK`
+
+```json
+{
+  "success": true,
+  "connector": {
+    "connectorId": "3f1c9a52-7d0e-4b8a-9c1e-2a6b5d4e7f80",
+    "connectorType": "Confluence",
+    "instanceName": "Engineering wiki",
+    "created": true,
+    "scope": "team",
+    "createdBy": "6650f1c2a9b4e3d2c1b0a998",
+    "isAuthenticated": false,
+    "isConfigured": true
+  },
+  "message": "Connector instance created successfully."
+}
+```
+
+**Errors:** `400` for a missing field, an unsupported scope or auth type, or a name another connector already uses; `403` for a team connector created by a member; `404` when the type doesn't exist.
+</Tab>
+</Tabs>
+</Accordion>
+
+<Accordion title="GET /active and GET /inactive - List connectors by sync state">
+List the caller's visible connectors that have sync turned on (`/active`) or off (`/inactive`). These two endpoints take no query parameters and don't paginate.
+
+<Tabs>
+<Tab title="Request">
+**Endpoints:** `GET /api/v1/connectors/active`, `GET /api/v1/connectors/inactive`
+
+**Scope:** `connector:read`
+</Tab>
+
+<Tab title="Response">
+**Status:** `200 OK`
+
+```json
+{
+  "success": true,
+  "connectors": [
+    {
+      "_key": "3f1c9a52-7d0e-4b8a-9c1e-2a6b5d4e7f80",
+      "name": "Engineering wiki",
+      "type": "Confluence",
+      "scope": "team",
+      "isActive": true
     }
   ]
 }
 ```
+
+Each item has the same fields as an item from `GET /`.
 </Tab>
 </Tabs>
 </Accordion>
 
-<Accordion title="GET /active - Get Active Connectors">
-Retrieve all currently active/enabled connectors.
+<Accordion title="GET /configured - List configured connectors">
+List the caller's visible connectors whose settings have been saved.
 
 <Tabs>
 <Tab title="Request">
-**Endpoint:** `GET /api/v1/connectors/active`
+**Endpoint:** `GET /api/v1/connectors/configured`
 
-**Authentication:** Bearer token required
+**Scope:** `connector:read`
+
+**Query Parameters:** `scope` (defaults to `team`), `page`, `limit` and `search`, as for `GET /`.
 </Tab>
 
 <Tab title="Response">
 **Status:** `200 OK`
 
-**Note:** Response format depends on the backend connector service implementation.
+The list and its pagination are nested one level down, under `connectors`:
 
 ```json
 {
-    "success": true,
+  "success": true,
+  "connectors": {
     "connectors": [
-        {
-            "name": "OneDrive",
-            "appGroup": "Microsoft 365",
-            "authType": "OAUTH_ADMIN_CONSENT",
-            "appDescription": "Sync files and folders from OneDrive",
-            "appCategories": [
-                "Storage"
-            ],
-            "iconPath": "/assets/icons/connectors/onedrive.svg",
-            "supportsRealtime": false,
-            "supportsSync": true,
-            "config": {
-                "iconPath": "/assets/icons/connectors/onedrive.svg",
-                "supportsRealtime": false,
-                "supportsSync": true,
-                "documentationLinks": [
-                    {
-                        "title": "Azure AD App Registration Setup",
-                        "url": "https://docs.microsoft.com/en-us/azure/active-directory/develop/quickstart-register-app",
-                        "type": "setup"
-                    }
-                ],
-                "auth": {
-                    "type": "OAUTH",
-                    "displayRedirectUri": false,
-                    "redirectUri": "http://localhost:3000/OneDrive/oauth/callback",
-                    "schema": {
-                        "fields": [
-                            {
-                                "name": "clientId",
-                                "displayName": "Application (Client) ID",
-                                "placeholder": "Enter your Azure AD Application ID",
-                                "description": "The Application (Client) ID from Azure AD App Registration",
-                                "fieldType": "TEXT",
-                                "required": true,
-                                "defaultValue": "",
-                                "validation": {
-                                    "minLength": 10,
-                                    "maxLength": 1000
-                                },
-                                "isSecret": false
-                            },
-                            {
-                                "name": "clientSecret",
-                                "displayName": "Client Secret",
-                                "placeholder": "Enter your Azure AD Client Secret",
-                                "description": "The Client Secret from Azure AD App Registration",
-                                "fieldType": "PASSWORD",
-                                "required": true,
-                                "defaultValue": "",
-                                "validation": {
-                                    "minLength": 10,
-                                    "maxLength": 1000
-                                },
-                                "isSecret": true
-                            },
-                            {
-                                "name": "tenantId",
-                                "displayName": "Directory (Tenant) ID",
-                                "placeholder": "Enter your Azure AD Tenant ID",
-                                "description": "The Directory (Tenant) ID from Azure AD",
-                                "fieldType": "TEXT",
-                                "required": true,
-                                "defaultValue": "",
-                                "validation": {
-                                    "minLength": 10,
-                                    "maxLength": 1000
-                                },
-                                "isSecret": false
-                            },
-                            {
-                                "name": "hasAdminConsent",
-                                "displayName": "Has Admin Consent",
-                                "placeholder": "",
-                                "description": "Check if admin consent has been granted for the application",
-                                "fieldType": "CHECKBOX",
-                                "required": true,
-                                "defaultValue": false,
-                                "validation": {
-                                    "minLength": 10,
-                                    "maxLength": 1000
-                                },
-                                "isSecret": false
-                            },
-                            {
-                                "name": "redirectUri",
-                                "displayName": "Redirect URI",
-                                "placeholder": "http://localhost:3000/OneDrive/oauth/callback",
-                                "description": "The redirect URI for OAuth authentication",
-                                "fieldType": "URL",
-                                "required": false,
-                                "defaultValue": "",
-                                "validation": {
-                                    "minLength": 10,
-                                    "maxLength": 2000
-                                },
-                                "isSecret": false
-                            }
-                        ]
-                    },
-                    "values": {},
-                    "customFields": [],
-                    "customValues": {},
-                    "conditionalDisplay": {
-                        "redirectUri": {
-                            "showWhen": {
-                                "field": "hasAdminConsent",
-                                "operator": "equals",
-                                "value": false
-                            }
-                        }
-                    }
-                },
-                "sync": {
-                    "supportedStrategies": [
-                        "SCHEDULED",
-                        "MANUAL"
-                    ],
-                    "selectedStrategy": "MANUAL",
-                    "webhookConfig": {
-                        "supported": false,
-                        "webhookUrl": "",
-                        "events": [],
-                        "verificationToken": "",
-                        "secretKey": ""
-                    },
-                    "scheduledConfig": {
-                        "intervalMinutes": 60,
-                        "cronExpression": "",
-                        "timezone": "UTC",
-                        "startTime": 0,
-                        "nextTime": 0,
-                        "endTime": 0,
-                        "maxRepetitions": 0,
-                        "repetitionCount": 0
-                    },
-                    "realtimeConfig": {
-                        "supported": false,
-                        "connectionType": "WEBSOCKET"
-                    },
-                    "customFields": [],
-                    "customValues": {},
-                    "values": {}
-                },
-                "filters": {
-                    "schema": {
-                        "fields": [
-                            {
-                                "name": "fileTypes",
-                                "displayName": "File Types",
-                                "description": "Select the types of files to sync",
-                                "fieldType": "MULTISELECT",
-                                "required": false,
-                                "defaultValue": [],
-                                "options": [
-                                    "document",
-                                    "spreadsheet",
-                                    "presentation",
-                                    "pdf",
-                                    "image",
-                                    "video"
-                                ],
-                                "operators": [
-                                    "IN",
-                                    "NOT_IN"
-                                ]
-                            },
-                            {
-                                "name": "folders",
-                                "displayName": "Folders",
-                                "description": "Select folders to sync from",
-                                "fieldType": "MULTISELECT",
-                                "required": false,
-                                "defaultValue": [],
-                                "options": [],
-                                "operators": [
-                                    "IN",
-                                    "NOT_IN"
-                                ]
-                            }
-                        ]
-                    },
-                    "values": {},
-                    "customFields": [],
-                    "customValues": {},
-                    "endpoints": {
-                        "fileTypes": "static",
-                        "folders": "https://graph.microsoft.com/v1.0/me/drive/root/children"
-                    }
-                }
-            },
-            "isActive": true,
-            "isConfigured": true,
-            "createdAtTimestamp": 1759184704366,
-            "updatedAtTimestamp": 1759184917316
-        }
-    ]
+      { "_key": "3f1c9a52-7d0e-4b8a-9c1e-2a6b5d4e7f80", "name": "Engineering wiki", "isConfigured": true }
+    ],
+    "pagination": { "page": 1, "limit": 20, "totalCount": 1, "totalPages": 1, "hasPrev": false, "hasNext": false }
+  }
 }
 ```
 </Tab>
 </Tabs>
 </Accordion>
 
-<Accordion title="GET /inactive - Get Inactive Connectors">
-Retrieve all currently inactive/disabled connectors.
+<Accordion title="GET /agents/active - List connectors available to agents">
+List the caller's visible connectors that have agent use turned on.
 
 <Tabs>
 <Tab title="Request">
-**Endpoint:** `GET /api/v1/connectors/inactive`
+**Endpoint:** `GET /api/v1/connectors/agents/active`
 
-**Authentication:** Bearer token required
+**Scope:** `connector:read`
+
+**Query Parameters:** `scope` (defaults to `team`), `page`, `limit` and `search`, as for `GET /`.
 </Tab>
 
 <Tab title="Response">
 **Status:** `200 OK`
 
-**Note:** Response format depends on the backend connector service implementation.
-
 ```json
 {
-    "success": true,
-    "connectors": [
-        {
-            "name": "Linear",
-            "appGroup": "Linear",
-            "authType": "OAUTH_ADMIN_CONSENT",
-            "appDescription": "Modern issue tracking and project management",
-            "appCategories": [
-                "Ticket Management"
-            ],
-            "iconPath": "/assets/icons/connectors/linear.svg",
-            "supportsRealtime": false,
-            "supportsSync": true,
-            "config": {
-                "iconPath": "/assets/icons/connectors/linear.svg",
-                "supportsRealtime": false,
-                "supportsSync": true,
-                "documentationLinks": [
-                    {
-                        "title": "Linear Registration Setup",
-                        "url": "https://linear.app/developers",
-                        "type": "setup"
-                    }
-                ],
-                "auth": {
-                    "type": "OAUTH",
-                    "displayRedirectUri": false,
-                    "redirectUri": "http://localhost:3000/linear/oauth/callback",
-                    "schema": {
-                        "fields": [
-                            // fields for auth
-                        ]
-                    },
-                    "values": {},
-                    "customFields": [],
-                    "customValues": {},
-                    "conditionalDisplay": {
-                        "redirectUri": {
-                            "showWhen": {
-                                "field": "hasAdminConsent",
-                                "operator": "equals",
-                                "value": false
-                            }
-                        }
-                    }
-                },
-                "sync": {
-                    "supportedStrategies": [
-                        "SCHEDULED",
-                        "MANUAL"
-                    ],
-                    "selectedStrategy": "MANUAL",
-                    "webhookConfig": {
-                        "supported": false,
-                        "webhookUrl": "",
-                        "events": [],
-                        "verificationToken": "",
-                        "secretKey": ""
-                    },
-                    "scheduledConfig": {
-                        "intervalMinutes": 60,
-                        "cronExpression": "",
-                        "timezone": "UTC",
-                        "startTime": 0,
-                        "nextTime": 0,
-                        "endTime": 0,
-                        "maxRepetitions": 0,
-                        "repetitionCount": 0
-                    },
-                    "realtimeConfig": {
-                        "supported": false,
-                        "connectionType": "WEBSOCKET"
-                    },
-                    "customFields": [],
-                    "customValues": {},
-                    "values": {}
-                },
-                "filters": {
-                    "schema": {
-                        "fields": [
-                            {
-                              // types of documents to fetch
-                            }
-                        ]
-                    },
-                    "values": {},
-                    "customFields": [],
-                    "customValues": {},
-                    "endpoints": {
-                        "fileTypes": "static",
-                        "folders": "https://api.linear.app/graphql"
-                    }
-                }
-            },
-            "isActive": false,
-            "isConfigured": true,
-            "createdAtTimestamp": 1759184704366,
-            "updatedAtTimestamp": 1759184917316
-        }
-    ]
+  "success": true,
+  "connectors": [
+    { "_key": "3f1c9a52-7d0e-4b8a-9c1e-2a6b5d4e7f80", "name": "Engineering wiki", "isAgentActive": true }
+  ],
+  "pagination": { "page": 1, "limit": 20, "totalCount": 1, "totalPages": 1, "hasPrev": false, "hasNext": false }
 }
 ```
 </Tab>
 </Tabs>
 </Accordion>
 
-<Accordion title="GET /config/:connectorName - Get Connector Config">
-Retrieve configuration for a specific connector.
+<Accordion title="GET /:connectorId - Get a connector">
+Get one connector with its state and the type's display metadata.
 
 <Tabs>
 <Tab title="Request">
-**Endpoint:** `GET /api/v1/connectors/config/:connectorName`
+**Endpoint:** `GET /api/v1/connectors/:connectorId`
+
+**Scope:** `connector:read`
 
 **Path Parameters:**
-- `connectorName`: Connector name (string, required)
-
-**Access Control:** Admin privileges required
-
-```http
-GET /api/v1/connectors/config/OneDrive
-```
+- `connectorId`: Connector instance ID (string, required)
 </Tab>
 
 <Tab title="Response">
 **Status:** `200 OK`
 
-**Note:** Response format depends on the backend connector service implementation.
-
 ```json
 {
-    "success": true,
-    "config": {
-        "name": "OneDrive",
-        "appGroupId": null,
-        "appGroup": "Microsoft 365",
-        "authType": "OAUTH_ADMIN_CONSENT",
-        "appDescription": "Sync files and folders from OneDrive",
-        "appCategories": [
-            "Storage"
-        ],
-        "supportsRealtime": false,
-        "supportsSync": true,
-        "iconPath": "/assets/icons/connectors/onedrive.svg",
-        "config": {
-            "auth": {},
-            "sync": {},
-            "filters": {}
-        },
-        "isActive": false,
-        "isConfigured": false
-    }
-}
-```
-</Tab>
-</Tabs>
-</Accordion>
-
-<Accordion title="PUT /config/:connectorName - Update Connector Config">
-Update configuration for a specific connector.
-
-<Tabs>
-<Tab title="Request">
-**Endpoint:** `PUT /api/v1/connectors/config/:connectorName`
-
-**Path Parameters:**
-- `connectorName`: Connector name (string, required)
-
-**Access Control:** Admin privileges required
-
-**Request Body Parameters:**
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| auth | object | No | Authentication configuration |
-| sync | object | No | Synchronization settings |
-| filters | object | No | Filter configurations |
-| baseUrl | string | Yes | Base URL for the connector |
-
-```json
-{
-    "auth": {
-        "clientId": "xxxxxxx",
-        "clientSecret": "xxxxxxxx",
-        "tenantId": "xxxxxxx",
-        "hasAdminConsent": true,
-        "redirectUri": ""
-    },
-    "sync": {
-        "selectedStrategy": "SCHEDULED",
-        "scheduledConfig": {}
-    },
-    "filters": {}
-}
-```
-</Tab>
-
-<Tab title="Response">
-**Status:** `200 OK`
-
-**Note:** Response format depends on the backend connector service implementation.
-
-```json
-{
-    "success": true,
-    "config": {
-        "auth": {
-            "clientId": ".....",
-            "clientSecret": "your-oauth-secret",
-            "hasAdminConsent": true,
-            "redirectUri": ""
-        },
-        "sync": {
-            "selectedStrategy": "SCHEDULED",
-            "scheduledConfig": {}
-        },
-        "filters": {},
-        "credentials": null,
-        "oauth": null
-    }
-}
-```
-</Tab>
-</Tabs>
-</Accordion>
-
-<Accordion title="GET /schema/:connectorName - Get Connector Schema">
-Retrieve the configuration schema for a specific connector type.
-
-<Tabs>
-<Tab title="Request">
-**Endpoint:** `GET /api/v1/connectors/schema/:connectorName`
-
-**Path Parameters:**
-- `connectorName`: Connector name (string, required)
-
-**Access Control:** Admin privileges required
-</Tab>
-
-<Tab title="Response">
-**Status:** `200 OK`
-
-**Note:** Response format depends on the backend connector service implementation.
-
-```json
-{
-    "success": true,
-    "schema": {
-        "iconPath": "/assets/icons/connectors/onedrive.svg",
-        "supportsRealtime": false,
-        "supportsSync": true,
-        "documentationLinks": [
-            {
-                "title": "Azure AD App Registration Setup",
-                "url": "https://docs.microsoft.com/en-us/azure/active-directory/develop/quickstart-register-app",
-                "type": "setup"
-            }
-        ],
-        "auth": {
-            "type": "OAUTH",
-            "displayRedirectUri": false,
-            "redirectUri": "http://localhost:3000/OneDrive/oauth/callback",
-            "schema": {
-                "fields": [
-                    {
-                        "name": "clientId",
-                        "displayName": "Application (Client) ID",
-                        "placeholder": "Enter your Azure AD Application ID",
-                        "description": "The Application (Client) ID from Azure AD App Registration",
-                        "fieldType": "TEXT",
-                        "required": true,
-                        "defaultValue": "",
-                        "validation": {
-                            "minLength": 10,
-                            "maxLength": 1000
-                        },
-                        "isSecret": false
-                    },
-                    {
-                        "name": "clientSecret",
-                        "displayName": "Client Secret",
-                        "placeholder": "Enter your Azure AD Client Secret",
-                        "description": "The Client Secret from Azure AD App Registration",
-                        "fieldType": "PASSWORD",
-                        "required": true,
-                        "defaultValue": "",
-                        "validation": {
-                            "minLength": 10,
-                            "maxLength": 1000
-                        },
-                        "isSecret": true
-                    },
-                    {
-                        "name": "tenantId",
-                        "displayName": "Directory (Tenant) ID",
-                        "placeholder": "Enter your Azure AD Tenant ID",
-                        "description": "The Directory (Tenant) ID from Azure AD",
-                        "fieldType": "TEXT",
-                        "required": true,
-                        "defaultValue": "",
-                        "validation": {
-                            "minLength": 10,
-                            "maxLength": 1000
-                        },
-                        "isSecret": false
-                    },
-                    {
-                        "name": "hasAdminConsent",
-                        "displayName": "Has Admin Consent",
-                        "placeholder": "",
-                        "description": "Check if admin consent has been granted for the application",
-                        "fieldType": "CHECKBOX",
-                        "required": true,
-                        "defaultValue": false,
-                        "validation": {
-                            "minLength": 10,
-                            "maxLength": 1000
-                        },
-                        "isSecret": false
-                    },
-                    {
-                        "name": "redirectUri",
-                        "displayName": "Redirect URI",
-                        "placeholder": "http://localhost:3000/OneDrive/oauth/callback",
-                        "description": "The redirect URI for OAuth authentication",
-                        "fieldType": "URL",
-                        "required": false,
-                        "defaultValue": "",
-                        "validation": {
-                            "minLength": 10,
-                            "maxLength": 2000
-                        },
-                        "isSecret": false
-                    }
-                ]
-            },
-            "values": {},
-            "customFields": [],
-            "customValues": {},
-            "conditionalDisplay": {
-                "redirectUri": {
-                    "showWhen": {
-                        "field": "hasAdminConsent",
-                        "operator": "equals",
-                        "value": false
-                    }
-                }
-            }
-        },
-        "sync": {
-            "supportedStrategies": [
-                "SCHEDULED",
-                "MANUAL"
-            ],
-            "selectedStrategy": "MANUAL",
-            "webhookConfig": {
-                "supported": false,
-                "webhookUrl": "",
-                "events": [],
-                "verificationToken": "",
-                "secretKey": ""
-            },
-            "scheduledConfig": {
-                "intervalMinutes": 60,
-                "cronExpression": "",
-                "timezone": "UTC",
-                "startTime": 0,
-                "nextTime": 0,
-                "endTime": 0,
-                "maxRepetitions": 0,
-                "repetitionCount": 0
-            },
-            "realtimeConfig": {
-                "supported": false,
-                "connectionType": "WEBSOCKET"
-            },
-            "customFields": [],
-            "customValues": {},
-            "values": {}
-        },
-        "filters": {
-            "schema": {
-                "fields": [
-                    {
-                        "name": "fileTypes",
-                        "displayName": "File Types",
-                        "description": "Select the types of files to sync",
-                        "fieldType": "MULTISELECT",
-                        "required": false,
-                        "defaultValue": [],
-                        "options": [
-                            "document",
-                            "spreadsheet",
-                            "presentation",
-                            "pdf",
-                            "image",
-                            "video"
-                        ],
-                        "operators": [
-                            "IN",
-                            "NOT_IN"
-                        ]
-                    },
-                    {
-                        "name": "folders",
-                        "displayName": "Folders",
-                        "description": "Select folders to sync from",
-                        "fieldType": "MULTISELECT",
-                        "required": false,
-                        "defaultValue": [],
-                        "options": [],
-                        "operators": [
-                            "IN",
-                            "NOT_IN"
-                        ]
-                    }
-                ]
-            },
-            "values": {},
-            "customFields": [],
-            "customValues": {},
-            "endpoints": {
-                "fileTypes": "static",
-                "folders": "https://graph.microsoft.com/v1.0/me/drive/root/children"
-            }
-        }
-    }
-}
-```
-</Tab>
-</Tabs>
-</Accordion>
-
-<Accordion title="POST /toggle/:connectorName - Toggle Connector">
-Enable or disable a specific connector.
-
-<Tabs>
-<Tab title="Request">
-**Endpoint:** `POST /api/v1/connectors/toggle/:connectorName`
-
-**Path Parameters:**
-- `connectorName`: Connector name (string, required)
-
-**Access Control:** Admin privileges required
-</Tab>
-
-<Tab title="Response">
-**Status:** `200 OK`
-
-**Note:** Response format depends on the backend connector service implementation.
-
-```json
-{
-  "success":true,
-  "message":"Connector OneDrive toggled successfully"
-}
-```
-</Tab>
-</Tabs>
-</Accordion>
-
-</AccordionGroup>
-</Accordion>
-
-<Accordion title="OAuth Management">
-Handle OAuth authorization flows for connector authentication.
-
-<AccordionGroup>
-
-<Accordion title="GET /:connectorName/oauth/authorize - Get OAuth Authorization URL">
-Generate OAuth authorization URL for a connector.
-
-<Tabs>
-<Tab title="Request">
-**Endpoint:** `GET /api/v1/connectors/:connectorName/oauth/authorize`
-
-**Path Parameters:**
-- `connectorName`: Connector name (string, required)
-
-**Query Parameters:**
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| baseUrl | string | Yes | Base URL for the connector service |
-
-**Access Control:** Admin privileges required
-
-```http
-GET /api/v1/connectors/google_workspace/oauth/authorize?baseUrl=https://api.example.com
-```
-</Tab>
-
-<Tab title="Response">
-**Status:** `200 OK`
-
-**Note:** Response format depends on the backend connector service implementation.
-
-```json
-{
-  "authorizationUrl": "https://accounts.google.com/oauth/authorize?client_id=CLIENT_ID&redirect_uri=REDIRECT_URI&scope=SCOPES&response_type=code&state=STATE"
-}
-```
-</Tab>
-</Tabs>
-</Accordion>
-
-<Accordion title="GET /:connectorName/oauth/callback - Handle OAuth Callback">
-Handle OAuth callback after user authorization.
-
-<Tabs>
-<Tab title="Request">
-**Endpoint:** `GET /api/v1/connectors/:connectorName/oauth/callback`
-
-**Path Parameters:**
-- `connectorName`: Connector name (string, required)
-
-**Query Parameters:**
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| code | string | No | Authorization code from OAuth provider |
-| state | string | No | State parameter for CSRF protection |
-| error | string | No | Error code if authorization failed |
-| baseUrl | string | Yes | Base URL for the connector service |
-
-**Access Control:** Admin privileges required
-
-```http
-GET /api/v1/connectors/google_workspace/oauth/callback?code=AUTH_CODE&state=STATE&baseUrl=https://api.example.com
-```
-</Tab>
-
-<Tab title="Response">
-**Status:** `200 OK`
-
-**Success Response:**
-```json
-{
-  "redirectUrl": "https://app.example.com/connectors/success?connector=google_workspace"
-}
-```
-
-**Error Response:**
-```json
-{
-  "redirectUrl": "https://app.example.com/connectors/error?error=access_denied"
-}
-```
-
-**Note:** The backend service may return a 302 redirect, which is converted to a JSON response with `redirectUrl` to avoid CORS issues.
-</Tab>
-</Tabs>
-</Accordion>
-
-<Accordion title="POST /getTokenFromCode - Exchange OAuth Code (Legacy)">
-Exchange OAuth authorization code for access and refresh tokens (Google Workspace specific).
-
-<Tabs>
-<Tab title="Request">
-**Endpoint:** `POST /api/v1/connectors/getTokenFromCode`
-
-**Access Control:** Admin privileges required
-
-**Request Body Parameters:**
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| tempCode | string | Yes | OAuth authorization code from Google |
-
-```json
-{
-  "tempCode": "4/0AX4XfWjYX3Z9X8Y7W6V5U4T3S2R1Q0P"
-}
-```
-
-**Process:**
-1. Retrieves Google Workspace configuration from Configuration Manager
-2. Exchanges authorization code for access and refresh tokens via Google's token endpoint
-3. Verifies the ID token matches the authenticated user's email
-4. Stores credentials securely via Configuration Manager
-5. Creates or updates connector in MongoDB
-6. Publishes connector enabled event to Kafka
-7. Determines enabled apps based on OAuth scopes received
-</Tab>
-
-<Tab title="Response">
-**Status:** `200 OK` (Existing Connector)
-
-```json
-{
-  "message": "Connector is now enabled",
+  "success": true,
   "connector": {
-    "_id": "60d21b4667d0d8992e610c85",
-    "name": "Google Workspace",
-    "isEnabled": true,
-    "lastUpdatedBy": "user456",
-    "orgId": "org123",
-    "updatedAt": "2025-04-27T12:25:00.000Z"
+    "_key": "3f1c9a52-7d0e-4b8a-9c1e-2a6b5d4e7f80",
+    "name": "Engineering wiki",
+    "type": "Confluence",
+    "authType": "OAUTH",
+    "scope": "team",
+    "isConfigured": true,
+    "isAuthenticated": true,
+    "isActive": true,
+    "isLocked": false,
+    "status": null,
+    "config": { "...": "the type's setup form" }
   }
 }
 ```
 
-**Status:** `201 Created` (New Connector)
+**Errors:** `404` when the connector doesn't exist or the caller may not read it (see [Who can do what](#who-can-do-what)).
+</Tab>
+</Tabs>
+</Accordion>
+
+<Accordion title="PUT /:connectorId/name - Rename a connector">
+<Tabs>
+<Tab title="Request">
+**Endpoint:** `PUT /api/v1/connectors/:connectorId/name`
+
+**Scope:** `connector:write`
 
 ```json
 {
-  "message": "Connector Google Workspace created and enabled",
+  "instanceName": "Engineering wiki (archive)"
+}
+```
+</Tab>
+
+<Tab title="Response">
+**Status:** `200 OK`
+
+```json
+{
+  "success": true,
   "connector": {
-    "_id": "60d21b4667d0d8992e610c86",
-    "name": "Google Workspace",
-    "isEnabled": true,
-    "lastUpdatedBy": "user456",
-    "orgId": "org123",
-    "createdAt": "2025-04-27T12:25:00.000Z"
+    "_key": "3f1c9a52-7d0e-4b8a-9c1e-2a6b5d4e7f80",
+    "name": "Engineering wiki (archive)"
   }
 }
 ```
+
+**Errors:** `400` when the name is empty or another connector already uses it ("That name is already used by another connector. Pick a different name."); `403` and `404` as in [Who can do what](#who-can-do-what); `409` while the connector is locked.
+</Tab>
+</Tabs>
+</Accordion>
+
+<Accordion title="DELETE /:connectorId - Delete a connector">
+Delete a connector and everything synced from it. The request returns as soon as the deletion has started; the deletion itself runs in the background. See [Deleting a connector](#deleting-a-connector) for what is removed.
+
+<Tabs>
+<Tab title="Request">
+**Endpoint:** `DELETE /api/v1/connectors/:connectorId`
+
+**Scope:** `connector:delete`
+
+**Access Control:** the connector's creator or an admin, for either scope.
+</Tab>
+
+<Tab title="Response">
+**Status:** `202 Accepted`
+
+```json
+{
+  "success": true,
+  "message": "Connector deletion initiated",
+  "connectorId": "3f1c9a52-7d0e-4b8a-9c1e-2a6b5d4e7f80",
+  "status": "DELETING"
+}
+```
+
+**Errors:**
+- `403` when the caller is neither the creator nor an admin.
+- `404` when the connector doesn't exist.
+- `409` when a deletion is already in progress ("Connector deletion is already in progress"), when the connector is locked by a running sync, or when an agent uses the connector as a knowledge source. The message names the agents; remove the connector from them first.
 </Tab>
 </Tabs>
 </Accordion>
@@ -947,120 +507,19 @@ Exchange OAuth authorization code for access and refresh tokens (Google Workspac
 </AccordionGroup>
 </Accordion>
 
-<Accordion title="Filter Management">
-Manage connector-specific filtering options and configurations.
+<Accordion title="Configuration">
+A connector's configuration has three sections: `auth` (how it signs in), `sync` (when it syncs) and `filters` (what it syncs and indexes). It is stored encrypted, and credentials and OAuth tokens are never returned.
 
 <AccordionGroup>
 
-<Accordion title="GET /filters/:connectorName - Get Filter Options">
-Retrieve filter options for a specific connector.
-
+<Accordion title="GET /:connectorId/config - Get a connector's configuration">
 <Tabs>
 <Tab title="Request">
-**Endpoint:** `GET /api/v1/connectors/filters/:connectorName`
+**Endpoint:** `GET /api/v1/connectors/:connectorId/config`
 
-**Path Parameters:**
-- `connectorName`: Connector name (string, required)
+**Scope:** `connector:read`
 
-**Access Control:** Admin privileges required
-</Tab>
-
-<Tab title="Response">
-**Status:** `200 OK`
-
-**Note:** Response format depends on the backend connector service implementation.
-
-```json
-{
-  "connectorName": "google_workspace",
-  "filters": {
-    "fileTypes": ["pdf", "docx", "txt"],
-    "folders": {
-      "includeSharedDrives": true,
-      "excludedFolders": ["/Archive"]
-    }
-  }
-}
-```
-</Tab>
-</Tabs>
-</Accordion>
-
-<Accordion title="POST /filters/:connectorName - Save Filter Options">
-Save or update filter options for a specific connector.
-
-<Tabs>
-<Tab title="Request">
-**Endpoint:** `POST /api/v1/connectors/filters/:connectorName`
-
-**Path Parameters:**
-- `connectorName`: Connector name (string, required)
-
-**Access Control:** Admin privileges required
-
-**Request Body Parameters:**
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| filterOptions | object | Yes | Filter configuration object |
-
-```json
-{
-  "filterOptions": {
-    "fileTypes": ["pdf", "docx"],
-    "folders": {
-      "includeSharedDrives": false,
-      "excludedFolders": ["/Archive", "/Personal"]
-    },
-    "dateRange": {
-      "enabled": true,
-      "from": "2024-01-01",
-      "to": "2024-12-31"
-    }
-  }
-}
-```
-</Tab>
-
-<Tab title="Response">
-**Status:** `200 OK`
-
-**Note:** Response format depends on the backend connector service implementation.
-
-```json
-{
-  "message": "Filter options saved successfully",
-  "connectorName": "google_workspace"
-}
-```
-</Tab>
-</Tabs>
-</Accordion>
-
-</AccordionGroup>
-</Accordion>
-
-<Accordion title="Internal Operations">
-Internal endpoints for service-to-service communication and system maintenance.
-
-<AccordionGroup>
-
-<Accordion title="POST /internal/refreshIndividualConnectorToken - Refresh Token">
-Refresh an expired access token using a refresh token (Google Workspace specific).
-
-<Tabs>
-<Tab title="Request">
-**Endpoint:** `POST /api/v1/connectors/internal/refreshIndividualConnectorToken`
-
-**Authentication:** Requires scoped token with `FETCH_CONFIG` scope
-
-**Process:**
-1. Retrieves refresh token from Configuration Manager
-2. Exchanges refresh token for new access token via Google's token endpoint
-3. Implements retry logic with exponential backoff (3 attempts)
-4. Updates stored credentials via Configuration Manager
-5. Maintains existing refresh token and expiry times
-
-**Note:** This endpoint automatically retrieves the refresh token from secure storage and exchanges it for a new access token.
+**Access Control:** as for `GET /:connectorId`. For a personal connector, only its creator; anyone else is refused.
 </Tab>
 
 <Tab title="Response">
@@ -1068,41 +527,153 @@ Refresh an expired access token using a refresh token (Google Workspace specific
 
 ```json
 {
-  "message": "accesstoken updated Successfully"
-}
-```
-</Tab>
-</Tabs>
-</Accordion>
-
-<Accordion title="POST /updateAppConfig - Update Application Config">
-Update the application configuration for the connector manager service.
-
-<Tabs>
-<Tab title="Request">
-**Endpoint:** `POST /api/v1/connectors/updateAppConfig`
-
-**Authentication:** Requires scoped token with `FETCH_CONFIG` scope
-
-**Note:** This endpoint reloads the application configuration from the configuration manager and updates the dependency injection container.
-</Tab>
-
-<Tab title="Response">
-**Status:** `200 OK`
-
-```json
-{
-  "message": "Connectors configuration updated successfully",
+  "success": true,
   "config": {
-    "jwtSecret": "[REDACTED]",
-    "scopedJwtSecret": "[REDACTED]",
-    "frontendUrl": "https://app.example.com",
-    "connectorBackend": "https://connectors.example.com"
+    "connector_id": "3f1c9a52-7d0e-4b8a-9c1e-2a6b5d4e7f80",
+    "name": "Engineering wiki",
+    "type": "Confluence",
+    "appGroup": "Atlassian",
+    "authType": "OAUTH",
+    "scope": "team",
+    "createdBy": "6650f1c2a9b4e3d2c1b0a998",
+    "updatedBy": "6650f1c2a9b4e3d2c1b0a998",
+    "supportsRealtime": false,
+    "supportsSync": true,
+    "supportsAgent": true,
+    "config": {
+      "auth": { "oauthConfigId": "a1b2c3d4" },
+      "sync": { "selectedStrategy": "SCHEDULED", "scheduledConfig": { "intervalMinutes": 60 } },
+      "filters": { "sync": { "values": {} }, "indexing": { "values": {} } }
+    },
+    "isActive": true,
+    "isConfigured": true,
+    "isAuthenticated": true,
+    "createdAtTimestamp": 1759184704366,
+    "updatedAtTimestamp": 1759184917316
   }
 }
 ```
 
-**Note:** Sensitive configuration values are redacted in the response.
+The `credentials` and `oauth` sections, and the OAuth endpoints and scopes, are removed from `config.config`.
+</Tab>
+</Tabs>
+</Accordion>
+
+<Accordion title="PUT /:connectorId/config - Update the whole configuration">
+<Tabs>
+<Tab title="Request">
+**Endpoint:** `PUT /api/v1/connectors/:connectorId/config`
+
+**Scope:** `connector:write`
+
+**Request Body Parameters:**
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| auth | object | No | Sign-in settings |
+| sync | object | No | Sync settings |
+| filters | object | No | Filter settings |
+| baseUrl | string | No | The address of your PipesHub web app, for the OAuth redirect address |
+
+```json
+{
+  "sync": {
+    "selectedStrategy": "SCHEDULED",
+    "scheduledConfig": { "intervalMinutes": 60 }
+  }
+}
+```
+
+Turn sync off first: the connector must not be active. Changing the credentials in `auth` signs the connector out (`isAuthenticated` becomes `false`), and its auth type can't be changed after creation.
+</Tab>
+
+<Tab title="Response">
+**Status:** `200 OK`
+
+```json
+{
+  "success": true,
+  "config": { "auth": {}, "sync": {}, "filters": {} },
+  "message": "Configuration saved successfully."
+}
+```
+
+**Errors:** `400` when the connector is active ("Cannot update configuration while connector is active. Please disable the connector first.") or the auth type would change; `404` when a chosen OAuth app doesn't exist; `409` while the connector is locked.
+</Tab>
+</Tabs>
+</Accordion>
+
+<Accordion title="PUT /:connectorId/config/auth - Update sign-in settings">
+Save the `auth` section only. The connector is then marked configured but not authenticated, and sync is turned off, so it has to be signed in and turned on again.
+
+<Tabs>
+<Tab title="Request">
+**Endpoint:** `PUT /api/v1/connectors/:connectorId/config/auth`
+
+**Scope:** `connector:write`
+
+```json
+{
+  "auth": { "oauthConfigId": "a1b2c3d4" },
+  "baseUrl": "https://pipeshub.example.com"
+}
+```
+</Tab>
+
+<Tab title="Response">
+**Status:** `200 OK`
+
+```json
+{
+  "success": true,
+  "config": { "auth": { "oauthConfigId": "a1b2c3d4" } },
+  "message": "Authentication configuration saved successfully."
+}
+```
+
+**Errors:** `400` when `auth` is missing or the connector is active; `409` while the connector is locked.
+</Tab>
+</Tabs>
+</Accordion>
+
+<Accordion title="PUT /:connectorId/config/filters-sync - Update sync and filter settings">
+Save the `sync` section, the `filters` section, or both. Each `filters.sync` and `filters.indexing` object you send replaces the stored one. Changing the sync filters makes the next sync a full sync.
+
+<Tabs>
+<Tab title="Request">
+**Endpoint:** `PUT /api/v1/connectors/:connectorId/config/filters-sync`
+
+**Scope:** `connector:write`
+
+```json
+{
+  "sync": { "selectedStrategy": "MANUAL" },
+  "filters": {
+    "sync": {
+      "values": {
+        "space_keys": { "operator": "in", "value": ["ENG"] }
+      }
+    },
+    "indexing": { "values": {} }
+  }
+}
+```
+
+The filter names and operators depend on the connector type; read them from its schema.
+</Tab>
+
+<Tab title="Response">
+**Status:** `200 OK`
+
+```json
+{
+  "success": true,
+  "config": { "sync": {}, "filters": {} },
+  "message": "Filters and sync configuration saved successfully.",
+  "syncFiltersChanged": true
+}
+```
+
+**Errors:** `400` when neither section is sent, `filters.sync` or `filters.indexing` isn't an object, a filter selection isn't valid, or the connector is active; `409` while the connector is locked.
 </Tab>
 </Tabs>
 </Accordion>
@@ -1110,65 +681,735 @@ Update the application configuration for the connector manager service.
 </AccordionGroup>
 </Accordion>
 
-<Accordion title="Health Monitoring">
-Monitor the health and status of the Connector Manager Service and its dependencies.
+<Accordion title="OAuth sign-in">
 
 <AccordionGroup>
 
-<Accordion title="GET /health - Get Health Status">
-Retrieve the health status of the service and all its dependencies.
+<Accordion title="GET /:connectorId/oauth/authorize - Start OAuth sign-in">
+Get the provider's authorization URL for a connector that signs in with OAuth. Send the user's browser there.
 
+<Tabs>
+<Tab title="Request">
+**Endpoint:** `GET /api/v1/connectors/:connectorId/oauth/authorize`
+
+**Scope:** `connector:write`
+
+**Query Parameters:**
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| baseUrl | string | No | The address of your PipesHub web app, for the redirect address |
+
+```http
+GET /api/v1/connectors/3f1c9a52-7d0e-4b8a-9c1e-2a6b5d4e7f80/oauth/authorize?baseUrl=https://pipeshub.example.com
+```
+</Tab>
+
+<Tab title="Response">
+**Status:** `200 OK`
+
+```json
+{
+  "success": true,
+  "authorizationUrl": "https://auth.atlassian.com/authorize?client_id=...&redirect_uri=...&state=eyJzdGF0ZSI6...",
+  "state": "eyJzdGF0ZSI6..."
+}
+```
+
+`state` carries the connector ID, so the callback knows which connector is signing in.
+
+**Errors:** `400` when the connector doesn't use OAuth or has no OAuth app configured; `403` for a team connector and a member caller.
+</Tab>
+</Tabs>
+</Accordion>
+
+<Accordion title="GET /oauth/callback - Finish OAuth sign-in">
+Exchange the code the provider returned for tokens and mark the connector authenticated. The web app calls this from its callback page with the query parameters the provider added.
+
+<Tabs>
+<Tab title="Request">
+**Endpoint:** `GET /api/v1/connectors/oauth/callback`
+
+**Scope:** `connector:write`
+
+**Query Parameters:**
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| code | string | Yes | Authorization code from the provider |
+| state | string | Yes | The `state` from the authorize step |
+| error | string | No | Error code from the provider |
+| baseUrl | string | No | The address of your PipesHub web app |
+
+A request without `code` or `state` is refused with `400` ("Code and state are required").
+</Tab>
+
+<Tab title="Response">
+**Status:** `200 OK`, whether the sign-in worked or not. Read `success`.
+
+```json
+{
+  "redirectUrl": "https://pipeshub.example.com/account/company-settings/settings/connector/3f1c9a52-7d0e-4b8a-9c1e-2a6b5d4e7f80",
+  "success": true
+}
+```
+
+When the sign-in fails, `success` is `false`, `error` names the reason and `redirectUrl` points to the web app's callback page with `oauth_error` set:
+
+```json
+{
+  "redirectUrl": "https://pipeshub.example.com/connectors/oauth/callback?oauth_error=invalid_state",
+  "success": false,
+  "error": "invalid_state"
+}
+```
+
+Possible `error` values: `invalid_state`, `instance_not_found`, `config_not_found`, `oauth_config_fetch_error`, `invalid_token`, `server_error` (with an `errorMessage`), or the provider's own error code.
+</Tab>
+</Tabs>
+</Accordion>
+
+</AccordionGroup>
+</Accordion>
+
+<Accordion title="Filters">
+
+<AccordionGroup>
+
+<Accordion title="GET /:connectorId/filters - Get filter options">
+Get the filter options the connector type offers, read with the connector's own credentials where needed.
+
+<Tabs>
+<Tab title="Request">
+**Endpoint:** `GET /api/v1/connectors/:connectorId/filters`
+
+**Scope:** `connector:read`
+</Tab>
+
+<Tab title="Response">
+**Status:** `200 OK`
+
+```json
+{
+  "success": true,
+  "filterOptions": { "...": "options for each filter field" }
+}
+```
+
+**Errors:** `400` when the connector hasn't been configured or signed in yet.
+</Tab>
+</Tabs>
+</Accordion>
+
+<Accordion title="GET /:connectorId/filters/:filterKey/options - Search one filter's options">
+Page through the options for one filter field whose options are fetched from the source, such as the spaces of a Confluence site.
+
+<Tabs>
+<Tab title="Request">
+**Endpoint:** `GET /api/v1/connectors/:connectorId/filters/:filterKey/options`
+
+**Scope:** `connector:read`
+
+**Query Parameters:**
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| page | integer | No | Page number, from 1. Defaults to 1. |
+| limit | integer | No | Items per page, 1 to 100. Defaults to 20. |
+| search | string | No | Text to match |
+| cursor | string | No | Cursor from the previous page, for sources that page by cursor |
+| contextGroupPath | string, repeatable | No | Limit the options to these groups, for filters that depend on another (for example GitLab projects within groups) |
+| excludeContextGroupPath | string, repeatable | No | Leave out the options under these groups |
+</Tab>
+
+<Tab title="Response">
+**Status:** `200 OK`
+
+```json
+{
+  "success": true,
+  "options": [
+    { "id": "98304", "label": "Engineering" }
+  ],
+  "page": 1,
+  "limit": 20,
+  "hasMore": true,
+  "cursor": "next-page-token"
+}
+```
+
+**Errors:** `400` when the connector isn't signed in or the filter's options aren't fetched from the source; `404` when the filter doesn't exist for the type.
+</Tab>
+</Tabs>
+</Accordion>
+
+<Accordion title="POST /:connectorId/filters - Save filter selections">
+<Tabs>
+<Tab title="Request">
+**Endpoint:** `POST /api/v1/connectors/:connectorId/filters`
+
+**Scope:** `connector:write`
+
+```json
+{
+  "filters": {
+    "space_keys": ["ENG", "OPS"]
+  }
+}
+```
+
+The selections are stored under the connector's `filters.values`. Syncs read their filters from `filters.sync.values` and `filters.indexing.values`, which `PUT /:connectorId/config/filters-sync` sets, so use that endpoint to change what a connector syncs and indexes.
+</Tab>
+
+<Tab title="Response">
+**Status:** `200 OK`
+
+```json
+{
+  "success": true,
+  "message": "Filter selections saved successfully"
+}
+```
+
+**Errors:** `400` when `filters` is missing or empty; `409` while the connector is locked.
+</Tab>
+</Tabs>
+</Accordion>
+
+</AccordionGroup>
+</Accordion>
+
+<Accordion title="Sync and indexing">
+
+<AccordionGroup>
+
+<Accordion title="POST /:connectorId/toggle - Turn sync or agent use on or off">
+Switch sync, or agent use, to the opposite of its current state. Turning sync on or off also updates the connector's sync schedule.
+
+<Tabs>
+<Tab title="Request">
+**Endpoint:** `POST /api/v1/connectors/:connectorId/toggle`
+
+**Scope:** `connector:sync`
+
+**Request Body Parameters:**
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| type | string | Yes | `sync` or `agent` |
+| fullSync | boolean | No | When turning sync on, run a full sync instead of an incremental one |
+| deviceId | string | No | Local FS connectors only: the desktop device turning sync on |
+| deviceName | string | No | Local FS connectors only: that device's name |
+
+```json
+{
+  "type": "sync",
+  "fullSync": false
+}
+```
+
+Before sync is turned on, the connector must be configured, and an OAuth connector must be signed in. Before agent use is turned on, the type must support agents and the connector must be configured.
+</Tab>
+
+<Tab title="Response">
+**Status:** `200 OK`
+
+```json
+{
+  "success": true,
+  "message": "Connector instance 3f1c9a52-7d0e-4b8a-9c1e-2a6b5d4e7f80 sync toggled successfully"
+}
+```
+
+**Errors:**
+- `400` when `type` is missing or invalid, the connector isn't configured or signed in, or the type doesn't support agents.
+- `403` and `404` as in [Who can do what](#who-can-do-what).
+- `409` while the connector is locked, or for a Local FS connector whose desktop device can't serve the sync (see [Local FS refusals](#local-fs-refusals)).
+- `500` when the sync event can't be published. The change is undone, so the connector stays as it was.
+</Tab>
+</Tabs>
+</Accordion>
+
+<Accordion title="POST /:connectorId/resync - Sync again now">
+Start a sync of a connector that has sync turned on.
+
+<Tabs>
+<Tab title="Request">
+**Endpoint:** `POST /api/v1/connectors/:connectorId/resync`
+
+**Scope:** `connector:write` or `kb:write`
+
+**Request Body Parameters:**
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| connectorName | string | Yes | The connector's type name, for example `Confluence` |
+| fullSync | boolean | No | Run a full sync. Defaults to `false`. |
+
+```json
+{
+  "connectorName": "Confluence",
+  "fullSync": true
+}
+```
+</Tab>
+
+<Tab title="Response">
+**Status:** `200 OK`
+
+```json
+{
+  "resyncConnectorResponse": { "success": true }
+}
+```
+
+If the sync request can't be queued, the answer is still `200`, with `resyncConnectorResponse.success` set to `false` and an `error`.
+
+**Errors:** `400` when `connectorName` is missing or sync is off for the connector ("Connector ... not allowed"); `409` while a sync is already running, or for a Local FS connector whose desktop device is offline.
+</Tab>
+</Tabs>
+</Accordion>
+
+<Accordion title="POST /:connectorId/reindex - Reindex a connector's records">
+Index a connector's records again from their stored content. A knowledge base is a connector instance too, so this also reindexes a knowledge base.
+
+<Tabs>
+<Tab title="Request">
+**Endpoint:** `POST /api/v1/connectors/:connectorId/reindex`
+
+**Scope:** `connector:sync` or `kb:write`
+
+The body is optional. Send `statusFilters` to reindex only the records with those indexing statuses:
+
+```json
+{
+  "statusFilters": ["FAILED"]
+}
+```
+
+For a knowledge base, the caller needs a role on it (owner, writer or reader).
+</Tab>
+
+<Tab title="Response">
+**Status:** `200 OK`
+
+```json
+{
+  "success": true,
+  "message": "Reindex initiated for connector 3f1c9a52-7d0e-4b8a-9c1e-2a6b5d4e7f80",
+  "connectorId": "3f1c9a52-7d0e-4b8a-9c1e-2a6b5d4e7f80"
+}
+```
+
+**Errors:** `403` without a role on the knowledge base; `404` when the connector doesn't exist; `409` when sync is off for the connector ("Enable it and try again") or it is locked.
+</Tab>
+</Tabs>
+</Accordion>
+
+<Accordion title="GET /:connectorId/stats - Get indexing stats">
+Get record counts by indexing status for a connector.
+
+<Tabs>
+<Tab title="Request">
+**Endpoint:** `GET /api/v1/connectors/:connectorId/stats`
+
+**Scope:** `connector:read` or `kb:read`
+
+**Access Control:** the connector's creator or, for a team connector, an admin. For a knowledge base, anyone with a role on it.
+</Tab>
+
+<Tab title="Response">
+**Status:** `200 OK`
+
+```json
+{
+  "success": true,
+  "data": { "...": "counts by indexing status" }
+}
+```
+</Tab>
+</Tabs>
+</Accordion>
+
+<Accordion title="POST /vector-store/cleanup and POST /vector-store/reindex - Rebuild the vector store">
+Admin-only jobs for the whole organization. `cleanup` drops and recreates the shared vector collection; `reindex` embeds every connector's records again from stored content without dropping it. Both are available only when vector store rebuild is turned on in the platform settings.
+
+<Tabs>
+<Tab title="Request">
+**Endpoints:** `POST /api/v1/connectors/vector-store/cleanup`, `POST /api/v1/connectors/vector-store/reindex`
+
+**Scope:** `connector:sync`
+
+**Access Control:** admins only. A member is refused with `403` ("You need admin access to do this. Ask an admin in your organisation.").
+</Tab>
+
+<Tab title="Response">
+**Status:** `202 Accepted`
+
+```json
+{
+  "accepted": true,
+  "operation": "cleanup"
+}
+```
+
+**Errors:** `403` when rebuild is turned off or unavailable in this edition; `409` when a cleanup or reindex is already running.
+</Tab>
+</Tabs>
+</Accordion>
+
+</AccordionGroup>
+</Accordion>
+
+<Accordion title="Records and the knowledge graph">
+These read-only endpoints are under the same prefix and are used by agents and the web app.
+
+- `GET /api/v1/connectors/record/:recordId/content` - A record's full parsed content and metadata. Scope `connector:read`.
+- `GET /api/v1/connectors/navigate` - Walk the knowledge graph from a connector to its record groups, records and children. Query parameters: `nodeId` (a record ID, URL or issue key), `page`, `limit` (50 to 200), `depth` (1 to 3), `nodeTypes`, and `createdAfter`, `createdBefore`, `modifiedAfter`, `modifiedBefore`. Scope `kb:read` or `connector:read`.
+- `GET /api/v1/connectors/record/lookup` - Turn URLs, issue keys or external IDs into record IDs. Query parameters: `identifiers` (1 to 10, repeatable) and optionally `connectorName`. Scope `kb:read` or `connector:read`.
+</Accordion>
+
+<Accordion title="OAuth apps">
+An OAuth app holds the client ID, client secret and other OAuth settings for one connector type, so that several connectors can sign in through the same app. Admins create and manage OAuth apps; members pick one when they create an OAuth connector. These endpoints are under `/api/v1/oauth`.
+
+<AccordionGroup>
+
+<Accordion title="GET /api/v1/oauth/registry - List types that sign in with OAuth">
+List the connector and toolset types that have an OAuth registration, with the fields an OAuth app for them needs.
+
+<Tabs>
+<Tab title="Request">
+**Endpoint:** `GET /api/v1/oauth/registry`
+
+**Scope:** `connector:read`
+
+**Query Parameters:** `page` (defaults to 1), `limit` (1 to 200, defaults to 20) and `search`.
+</Tab>
+
+<Tab title="Response">
+**Status:** `200 OK`
+
+```json
+{
+  "success": true,
+  "connectors": [
+    {
+      "name": "Confluence",
+      "type": "Confluence",
+      "appGroup": "Atlassian",
+      "authType": "OAUTH",
+      "appDescription": "OAuth application for accessing Confluence Cloud API and collaboration features",
+      "appCategories": ["Knowledge Management", "Collaboration"],
+      "iconPath": "/icons/connectors/confluence.svg",
+      "oauthScopes": { "personalSync": [], "teamSync": ["..."], "agent": ["..."] },
+      "redirectUri": "connectors/oauth/callback/Confluence",
+      "authorizeUrl": "https://auth.atlassian.com/authorize",
+      "tokenUrl": "https://auth.atlassian.com/oauth/token",
+      "authFields": [ { "name": "clientId", "...": "..." }, { "name": "clientSecret", "...": "..." } ],
+      "documentationLinks": [ { "title": "Setup guide", "url": "https://...", "type": "setup" } ]
+    }
+  ],
+  "pagination": { "page": 1, "limit": 20, "search": null, "totalCount": 1, "totalPages": 1, "hasPrev": false, "hasNext": false, "prevPage": null, "nextPage": null }
+}
+```
+
+Some names, such as Confluence, Drive, Gmail, Jira and Slack, are registered both by a connector and by an agent toolset, with different redirect addresses, scopes and fields. Each name is listed once, with the connector's registration.
+</Tab>
+</Tabs>
+</Accordion>
+
+<Accordion title="GET /api/v1/oauth/registry/:connectorType - Get one type's OAuth registration">
+<Tabs>
+<Tab title="Request">
+**Endpoint:** `GET /api/v1/oauth/registry/:connectorType`
+
+**Scope:** `connector:read`
+</Tab>
+
+<Tab title="Response">
+**Status:** `200 OK`
+
+```json
+{
+  "success": true,
+  "connector": { "name": "Confluence", "type": "Confluence", "authType": "OAUTH", "...": "the same fields as a registry item" }
+}
+```
+
+For a name both a connector and a toolset register, this returns the connector's registration. For a name only a toolset registers, it returns the toolset's.
+
+**Errors:** `404` when no OAuth registration exists for the type.
+</Tab>
+</Tabs>
+</Accordion>
+
+<Accordion title="GET /api/v1/oauth - List all OAuth apps">
+List the organization's OAuth apps across all types, newest first.
+
+<Tabs>
+<Tab title="Request">
+**Endpoint:** `GET /api/v1/oauth`
+
+**Scope:** `connector:read`
+
+**Query Parameters:** `page`, `limit` (1 to 200) and `search` (matches the app name, group, description, type and categories).
+</Tab>
+
+<Tab title="Response">
+**Status:** `200 OK`
+
+```json
+{
+  "success": true,
+  "oauthConfigs": [
+    {
+      "_id": "a1b2c3d4",
+      "oauthInstanceName": "Atlassian company app",
+      "connectorType": "Confluence",
+      "appGroup": "Atlassian",
+      "iconPath": "/icons/connectors/confluence.svg",
+      "createdAtTimestamp": 1759184704366,
+      "updatedAtTimestamp": 1759184917316
+    }
+  ],
+  "pagination": { "page": 1, "limit": 20, "search": null, "totalItems": 1, "totalPages": 1, "hasNext": false, "hasPrev": false }
+}
+```
+</Tab>
+</Tabs>
+</Accordion>
+
+<Accordion title="GET /api/v1/oauth/:connectorType - List one type's OAuth apps">
+<Tabs>
+<Tab title="Request">
+**Endpoint:** `GET /api/v1/oauth/:connectorType`
+
+**Scope:** `connector:read`
+
+**Query Parameters:** `page`, `limit` (1 to 200) and `search`. A `scope` parameter (`team` or `personal`) is accepted; the open-source edition ignores it.
+</Tab>
+
+<Tab title="Response">
+**Status:** `200 OK`
+
+```json
+{
+  "success": true,
+  "oauthConfigs": [
+    { "_id": "a1b2c3d4", "oauthInstanceName": "Atlassian company app", "connectorType": "Confluence" }
+  ],
+  "pagination": { "page": 1, "limit": 20, "totalCount": 1, "totalPages": 1, "hasPrev": false, "hasNext": false }
+}
+```
+
+Admins get each app's full record, including its `config` with the client secret. Members get only the name and display fields.
+</Tab>
+</Tabs>
+</Accordion>
+
+<Accordion title="POST /api/v1/oauth/:connectorType - Create an OAuth app">
+<Tabs>
+<Tab title="Request">
+**Endpoint:** `POST /api/v1/oauth/:connectorType`
+
+**Scope:** `connector:write`
+
+**Access Control:** admins only (`403` for members).
+
+**Request Body Parameters:**
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| oauthInstanceName | string | Yes | A name for the app |
+| config | object | Yes | The fields from the type's `authFields`, such as `clientId` and `clientSecret` |
+| baseUrl | string | No | The address of your PipesHub web app, for the redirect address |
+
+```json
+{
+  "oauthInstanceName": "Atlassian company app",
+  "config": {
+    "clientId": "your-client-id",
+    "clientSecret": "your-client-secret"
+  },
+  "baseUrl": "https://pipeshub.example.com"
+}
+```
+</Tab>
+
+<Tab title="Response">
+**Status:** `200 OK`
+
+```json
+{
+  "success": true,
+  "oauthConfig": { "_id": "a1b2c3d4", "oauthInstanceName": "Atlassian company app", "connectorType": "Confluence" },
+  "message": "OAuth configuration created successfully"
+}
+```
+
+**Errors:** `400` when `oauthInstanceName` or `config` is missing; `409` when another OAuth app of the type already has the name.
+</Tab>
+</Tabs>
+</Accordion>
+
+<Accordion title="GET /api/v1/oauth/:connectorType/:configId - Get an OAuth app">
+<Tabs>
+<Tab title="Request">
+**Endpoint:** `GET /api/v1/oauth/:connectorType/:configId`
+
+**Scope:** `connector:read`
+</Tab>
+
+<Tab title="Response">
+**Status:** `200 OK`
+
+```json
+{
+  "success": true,
+  "oauthConfig": {
+    "_id": "a1b2c3d4",
+    "oauthInstanceName": "Atlassian company app",
+    "connectorType": "Confluence",
+    "config": { "clientId": "your-client-id", "clientSecret": "your-client-secret" }
+  }
+}
+```
+
+Only admins get `config`. Members get the app's name and display fields.
+
+**Errors:** `404` when the app doesn't exist in the caller's organization.
+</Tab>
+</Tabs>
+</Accordion>
+
+<Accordion title="PUT /api/v1/oauth/:connectorType/:configId - Update an OAuth app">
+<Tabs>
+<Tab title="Request">
+**Endpoint:** `PUT /api/v1/oauth/:connectorType/:configId`
+
+**Scope:** `connector:write`
+
+**Access Control:** admins only (`403` for members).
+
+Send `oauthInstanceName`, `config`, or both, and optionally `baseUrl`.
+</Tab>
+
+<Tab title="Response">
+**Status:** `200 OK`
+
+```json
+{
+  "success": true,
+  "oauthConfig": { "_id": "a1b2c3d4", "oauthInstanceName": "Atlassian company app" },
+  "message": "OAuth configuration updated successfully"
+}
+```
+</Tab>
+</Tabs>
+</Accordion>
+
+<Accordion title="DELETE /api/v1/oauth/:connectorType/:configId - Delete an OAuth app">
+<Tabs>
+<Tab title="Request">
+**Endpoint:** `DELETE /api/v1/oauth/:connectorType/:configId`
+
+**Scope:** `connector:delete`
+
+**Access Control:** admins only (`403` for members).
+</Tab>
+
+<Tab title="Response">
+**Status:** `200 OK`
+
+```json
+{
+  "success": true,
+  "message": "OAuth configuration a1b2c3d4 deleted successfully"
+}
+```
+</Tab>
+</Tabs>
+</Accordion>
+
+</AccordionGroup>
+</Accordion>
+
+<Accordion title="Legacy endpoints">
+These endpoints remain for backward compatibility and are deprecated. New integrations should use the endpoints above.
+
+- `POST /api/v1/connectors/getTokenFromCode` - The old Google Workspace sign-in for individual accounts. Body: `{ "tempCode": "..." }`. Admins only: a member is refused with `403`. Answers `200` when the connector existed and `201` when it was created.
+- `POST /api/v1/connectors/internal/refreshIndividualConnectorToken` - Service-to-service only (a scoped token with `FETCH_CONFIG`). Refreshes the old Google Workspace individual token, trying up to three times. Answers `{ "message": "Access token updated successfully" }`.
+- `POST /api/v1/connectors/updateAppConfig` - Service-to-service only (a scoped token with `FETCH_CONFIG`). Reloads the connector module's settings after the configuration changes. Answers `{ "message": "Connectors configuration updated successfully" }`.
+</Accordion>
+
+<Accordion title="Health">
+
+<AccordionGroup>
+
+<Accordion title="GET /api/v1/health - Check the stores PipesHub depends on">
 <Tabs>
 <Tab title="Request">
 **Endpoint:** `GET /api/v1/health`
 
-**Authentication:** No authentication required for health checks
+**Authentication:** none.
+</Tab>
+
+<Tab title="Response">
+**Status:** `200 OK`, whether healthy or not. Read `status`.
+
+```json
+{
+  "status": "healthy",
+  "timestamp": "2026-10-05T12:00:00.000Z",
+  "services": {
+    "redis": "healthy",
+    "messageBroker": "healthy",
+    "mongodb": "healthy",
+    "graphDb": "healthy",
+    "vectorDb": "healthy"
+  },
+  "serviceNames": {
+    "redis": "Redis",
+    "messageBroker": "Kafka",
+    "mongodb": "MongoDB",
+    "graphDb": "Neo4j",
+    "vectorDb": "Qdrant"
+  },
+  "deployment": {
+    "kvStoreType": "redis",
+    "messageBrokerType": "kafka",
+    "graphDbType": "neo4j",
+    "vectorDbType": "qdrant",
+    "redisMode": "standalone"
+  }
+}
+```
+
+`serviceNames` gives the product actually deployed for each role, since the message broker, graph database and vector database can each be one of several. When the key-value store is etcd, `services` also has `KVStoreservice`. Each service is `healthy`, `unhealthy`, `unknown`, or `pending` while the connectors service hasn't yet reported which graph or vector database is in use.
+</Tab>
+</Tabs>
+</Accordion>
+
+<Accordion title="GET /api/v1/health/services - Check the PipesHub services">
+<Tabs>
+<Tab title="Request">
+**Endpoint:** `GET /api/v1/health/services`
+
+**Authentication:** none.
 </Tab>
 
 <Tab title="Response">
 **Status:** `200 OK`
 
-**Healthy Response:**
 ```json
 {
   "status": "healthy",
-  "timestamp": "2025-04-27T12:00:00.000Z",
+  "timestamp": "2026-10-05T12:00:00.000Z",
   "services": {
-    "redis": "healthy",
-    "kafka": "healthy",
-    "mongodb": "healthy",
-    "arangodb": "healthy",
-    "KVStoreservice": "healthy"
+    "query": "healthy",
+    "connector": "healthy",
+    "indexing": "healthy",
+    "docling": "healthy",
+    "embedding": "healthy"
   }
 }
 ```
 
-**Unhealthy Response:**
-```json
-{
-  "status": "unhealthy",
-  "timestamp": "2025-04-27T12:00:00.000Z",
-  "services": {
-    "redis": "healthy",
-    "kafka": "unhealthy",
-    "mongodb": "healthy",
-    "arangodb": "healthy",
-    "KVStoreservice": "unhealthy"
-  }
-}
-```
-
-**Service Status Values:**
-- `healthy` - Service is operational
-- `unhealthy` - Service is down or experiencing issues
-- `unknown` - Service status could not be determined
-
-**Dependencies Checked:**
-- **Redis** - Cache and session storage
-- **Kafka** - Event streaming for token and connector events
-- **MongoDB** - Connector configuration and metadata storage
-- **ArangoDB** - Knowledge base service dependency
-- **KVStoreservice** - ETCD key-value store for encrypted configuration
+`status` is `healthy` when the query and connector services are; the others are reported but don't change it. With the parsing services turned on, `parsing` and `extraction` are listed too.
 </Tab>
 </Tabs>
 </Accordion>
@@ -1178,418 +1419,106 @@ Retrieve the health status of the service and all its dependencies.
 
 </AccordionGroup>
 
-## Event System
+## Deleting a connector
 
-The Connector Manager Service broadcasts events through Kafka to notify other services about token and connector state changes. These events trigger actions like connector synchronization, indexing updates, and audit logging.
+Deleting a connector is permanent. Its records don't go to the trash, even when the trash is turned on, and they can't be restored.
 
-### Event Topics
+1. The request is checked: the caller must be the creator or an admin, no deletion may already be running, no sync may be running, and no agent may use the connector as a knowledge source.
+2. The connector is marked `DELETING` before any event is published, so a deletion that finishes quickly can't race the request that started it.
+3. An `appDisabled` event stops any running sync, and a `<type>.delete` event (for example `confluence.delete`) starts the deletion. If that event can't be published, the `DELETING` mark is cleared, nothing is deleted, and the request fails.
+4. The request answers `202 Accepted`. The connectors service then deletes, in the background, the connector and its records, record groups, permissions and relations from the graph database; asks the indexing service to remove its embeddings; deletes its stored configuration and credentials; and deletes its stored files, keeping any content another connector still uses.
+5. If the deletion fails, the `DELETING` mark is cleared and the connector's sync setting is put back to what it was, so the connector can be deleted again.
 
-| Topic | Description |
-|-------|-------------|
-| `token-events` | Token lifecycle events (creation, refresh, revocation, expiration) |
-| `entity-events` | Connector state change events (enabled, disabled) |
+## Events
 
-### Event Types
+The connector endpoints publish these events on the message broker (Kafka or Redis Streams):
 
-| Event Type | Description |
-|------------|-------------|
-| `TOKEN_CREATED` | Triggered when a new token is acquired |
-| `TOKEN_REFRESHED` | Triggered when a token is refreshed |
-| `TOKEN_REVOKED` | Triggered when a token is revoked |
-| `TOKEN_EXPIRED` | Triggered when a token expires |
-| `appEnabled` | Triggered when a connector is enabled |
-| `appDisabled` | Triggered when a connector is disabled |
+| Topic | Event type | Sent when |
+|-------|------------|-----------|
+| `entity-events` | `appEnabled` | Sync is turned on |
+| `entity-events` | `appDisabled` | Sync is turned off, or a deletion starts |
+| `sync-events` | `<type>.resync` | A resync is requested |
+| `sync-events` | `<type>.reindex` | A reindex is requested |
+| `sync-events` | `<type>.delete` | A deletion starts |
 
-### Event Payload Structures
+`<type>` is the connector type in lowercase with spaces removed, for example `confluence` or `onedrive`.
 
-<AccordionGroup>
-
-<Accordion title="Token Events">
-```json
-{
-  "eventId": "event_123456",
-  "eventType": "TOKEN_REFRESHED",
-  "tokenReferenceId": "token_ref_789",
-  "serviceType": "GOOGLE_DRIVE",
-  "accountId": "user@example.com",
-  "timestamp": 1714208400000
-}
-```
-
-**Service Types:**
-- `ONEDRIVE`
-- `GOOGLE_DRIVE` 
-- `CONFLUENCE`
-- `JIRA`
-</Accordion>
-
-<Accordion title="App Enabled Event">
+<Accordion title="appEnabled event">
 ```json
 {
   "eventType": "appEnabled",
-  "timestamp": 1714208400000,
+  "timestamp": 1759184917316,
   "payload": {
-    "orgId": "org123456",
-    "appGroup": "Google Workspace",
-    "appGroupId": "connector_123",
-    "credentialsRoute": "https://cm.example.com/api/v1/configurationManager/internal/connectors/googleWorkspaceCredentials",
-    "refreshTokenRoute": "https://cm.example.com/api/v1/connectors/internal/refreshIndividualConnectorToken",
-    "apps": ["DRIVE", "GMAIL", "CALENDAR"],
-    "syncAction": "immediate"
+    "orgId": "6650f1c2a9b4e3d2c1b0a001",
+    "appGroup": "Atlassian",
+    "appGroupId": null,
+    "credentialsRoute": "api/v1/configurationManager/internal/connectors/3f1c9a52-7d0e-4b8a-9c1e-2a6b5d4e7f80/config",
+    "apps": ["confluence"],
+    "connectorId": "3f1c9a52-7d0e-4b8a-9c1e-2a6b5d4e7f80",
+    "syncAction": "immediate",
+    "scope": "team",
+    "fullSync": false,
+    "syncedBy": "6650f1c2a9b4e3d2c1b0a998"
   }
 }
 ```
 
-**Sync Actions:**
-- `none` - No synchronization required
-- `immediate` - Start synchronization immediately
-- `scheduled` - Schedule synchronization for later
+An `appDisabled` event from the toggle has the same payload.
 </Accordion>
 
-<Accordion title="App Disabled Event">
-```json
-{
-  "eventType": "appDisabled",
-  "timestamp": 1714208400000,
-  "payload": {
-    "orgId": "org123456",
-    "appGroup": "Google Workspace",
-    "appGroupId": "connector_123",
-    "apps": ["DRIVE", "GMAIL", "CALENDAR"]
-  }
-}
-```
-</Accordion>
+## Where connector data is kept
 
-</AccordionGroup>
-
-## Schema Definitions
-
-<AccordionGroup>
-
-<Accordion title="Application Configuration">
-```typescript
-interface AppConfig {
-  // Authentication secrets
-  jwtSecret: string;
-  scopedJwtSecret: string;
-  cookieSecret: string;
-  rsAvailable: string;
-
-  // Service endpoints
-  communicationBackend: string;
-  frontendUrl: string;
-  iamBackend: string;
-  authBackend: string;
-  cmBackend: string;
-  kbBackend: string;
-  esBackend: string;
-  storageBackend: string;
-  tokenBackend: string;
-  aiBackend: string;
-  connectorBackend: string;
-  connectorPublicUrl: string;
-  indexingBackend: string;
-
-  // Infrastructure configuration
-  kafka: {
-    brokers: string[];
-    sasl?: {
-      mechanism: 'plain' | 'scram-sha-256' | 'scram-sha-512';
-      username: string;
-      password: string;
-    };
-  };
-  redis: {
-    host: string;
-    port: number;
-    password?: string;
-    db?: number;
-  };
-  mongo: {
-    uri: string;
-    db: string;
-  };
-  qdrant: {
-    port: number;
-    apiKey: string;
-    host: string;
-    grpcPort: number;
-  };
-  arango: {
-    url: string;
-    db: string;
-    username: string;
-    password: string;
-  };
-  etcd: {
-    host: string;
-    port: number;
-    dialTimeout: number;
-  };
-  smtp: {
-    host: string;
-    port: number;
-    username?: string;
-    password?: string;
-    fromEmail: string;
-  } | null;
-  storage: {
-    storageType: string;
-    endpoint: string;
-  };
-}
-```
-</Accordion>
-
-<Accordion title="Token Event Schema">
-```typescript
-enum ServiceType {
-  ONEDRIVE = 'ONEDRIVE',
-  GOOGLE_DRIVE = 'GOOGLE_DRIVE',
-  CONFLUENCE = 'CONFLUENCE',
-  JIRA = 'JIRA',
-}
-
-enum TokenEventType {
-  TOKEN_CREATED = 'TOKEN_CREATED',
-  TOKEN_REFRESHED = 'TOKEN_REFRESHED',
-  TOKEN_REVOKED = 'TOKEN_REVOKED',
-  TOKEN_EXPIRED = 'TOKEN_EXPIRED',
-}
-
-interface ITokenEvent {
-  eventId: string;
-  eventType: TokenEventType;
-  tokenReferenceId: string;
-  serviceType: ServiceType;
-  accountId: string;
-  timestamp: Number;
-}
-```
-</Accordion>
-
-<Accordion title="Entity Event Schema">
-```typescript
-enum SyncAction {
-  None = 'none',
-  Immediate = 'immediate',
-  Scheduled = 'scheduled',
-}
-
-enum EventType {
-  AppEnabledEvent = 'appEnabled',
-  AppDisabledEvent = 'appDisabled',
-}
-
-interface Event {
-  eventType: EventType;
-  timestamp: number;
-  payload: AppEnabledEvent | AppDisabledEvent;
-}
-
-interface AppEnabledEvent {
-  orgId: string;
-  appGroup: string;
-  appGroupId: string;
-  credentialsRoute?: string;
-  refreshTokenRoute?: string;
-  apps: string[];
-  syncAction: SyncAction;
-}
-
-interface AppDisabledEvent {
-  orgId: string;
-  appGroup: string;
-  appGroupId: string;
-  apps: string[];
-}
-```
-</Accordion>
-
-<Accordion title="Google Workspace Types">
-```typescript
-enum GoogleWorkspaceApp {
-  Drive = 'DRIVE',
-  Gmail = 'GMAIL',
-  Calendar = 'CALENDAR',
-}
-
-interface GoogleWorkspaceApps {
-  apps: GoogleWorkspaceApp[];
-}
-
-const scopeToAppMap: { [key: string]: GoogleWorkspaceApp } = {
-  'https://www.googleapis.com/auth/gmail.readonly': GoogleWorkspaceApp.Gmail,
-  'https://www.googleapis.com/auth/calendar.readonly': GoogleWorkspaceApp.Calendar,
-  'https://www.googleapis.com/auth/drive.readonly': GoogleWorkspaceApp.Drive,
-};
-```
-</Accordion>
-
-<Accordion title="Health Status Schema">
-```typescript
-interface HealthStatus {
-  status: 'healthy' | 'unhealthy';
-  timestamp: string;
-  services: {
-    redis: string;
-    kafka: string;
-    mongodb: string;
-    arangodb: string;
-    KVStoreservice: string;
-  };
-}
-```
-</Accordion>
-
-<Accordion title="Validation Schemas">
-```typescript
-// Update connector config validation
-const updateConnectorConfigSchema = z.object({
-  body: z.object({
-    auth: z.any(),
-    sync: z.any(),
-    filters: z.any(),
-    baseUrl: z.string(),
-  }),
-  params: z.object({
-    connectorName: z.string(),
-  }),
-});
-
-// OAuth authorization URL validation
-const getOAuthAuthorizationUrlSchema = z.object({
-  params: z.object({
-    connectorName: z.string(),
-  }),
-  query: z.object({
-    baseUrl: z.string(),
-  }),
-});
-
-// OAuth callback validation
-const handleOAuthCallbackSchema = z.object({
-  params: z.object({
-    connectorName: z.string(),
-  }),
-  query: z.object({
-    baseUrl: z.string(),
-    code: z.string().optional(),
-    state: z.string().optional(),
-    error: z.string().optional(),
-  }),
-});
-```
-</Accordion>
-
-</AccordionGroup>
-
-## Configuration Management
-
-The Connector Manager Service uses ETCD as a key-value store for managing configurations securely. All sensitive information, such as OAuth client IDs/secrets and access tokens, are encrypted using AES-256 before storage.
-
-### Configuration Types
-
-The service manages several types of configurations:
-
-1. **Service Connection Information**
-   - Database connection strings (MongoDB, ArangoDB)
-   - Message broker details (Kafka brokers, authentication)
-   - Cache settings (Redis host, port, credentials)
-
-2. **Service Discovery**
-   - Backend service endpoints (IAM, Auth, Configuration Manager, etc.)
-   - Frontend URL for OAuth redirects
-
-3. **Authentication Secrets**
-   - JWT signing keys
-   - Scoped JWT secrets for service-to-service communication
-   - Cookie encryption secrets
-
-4. **Connector Credentials**
-   - OAuth client IDs and secrets
-   - Access tokens and refresh tokens
-   - Token expiration timestamps
-
-### Security Measures
-
-- All sensitive configuration data is encrypted using AES-256 before storage in ETCD
-- Encryption keys are securely managed and not stored in plaintext
-- Scoped JWT tokens are used for internal service communication
-- Token refresh operations include retry logic with exponential backoff
+- **Connector instances** are nodes in the graph database (Neo4j or ArangoDB).
+- **Configuration and credentials** are in the key-value store (Redis or etcd) at `/services/connectors/{connectorId}/config`, encrypted with AES-256-GCM. OAuth apps are stored there too, per connector type.
+- **Sync schedules** are jobs in the crawling manager's queue. See the [Crawling Manager API](/system-overview/crawling-manager).
 
 ## Error Handling
 
-All endpoints return structured error responses with specific HTTP status codes:
+Errors share one shape:
 
 ```json
 {
   "error": {
-    "code": "VALIDATION_ERROR",
-    "message": "Invalid request parameters",
-    "details": "Connector name is required"
-  },
-  "meta": {
-    "requestId": "req-error-123",
-    "timestamp": "2025-04-27T13:20:00.000Z"
+    "code": "FORBIDDEN",
+    "message": "Only the creator or an administrator can toggle this connector",
+    "requestId": "req-1234"
   }
 }
 ```
 
+A request that fails validation has the code `VALIDATION_ERROR` and status `400`. A refusal from the connectors service keeps its own message, and its status is passed on: `400`, `401`, `403`, `404`, `409`, `422` and `429` as they are. A server failure in the connectors service becomes `500` with a plain message naming what failed, without internal details.
+
 **Common HTTP Status Codes:**
 - `200` - Success
-- `201` - Created (for new resources)
-- `400` - Bad Request (validation errors, missing parameters)
-- `401` - Unauthorized (missing or invalid authentication)
-- `403` - Forbidden (insufficient privileges, admin required)
-- `404` - Not Found (connector or resource not found)
-- `500` - Internal Server Error (backend service failures)
+- `202` - Accepted: a deletion or vector store job has started
+- `400` - Bad request: a missing or invalid field, or a change the connector's state doesn't allow
+- `401` - Missing or invalid token
+- `403` - Not allowed: permission, beta connectors turned off, or a missing token scope
+- `404` - The connector, type or OAuth app doesn't exist, or the caller may not see it
+- `409` - Conflict: the connector is locked, already being deleted, or in use by an agent
+- `500` - Server failure
+- `503` - PipesHub couldn't reach the connectors service: "PipesHub is having trouble reaching one of its services. Try again in a minute; if it continues, ask your admin to check the services page."
 
-**Backend Service Error Handling:**
-- Connection refused → "Connector Service is currently unavailable. Please check your network connection or try again later."
-- Service-specific errors → Mapped to appropriate HTTP status codes with detailed error messages
-- Automatic retry logic with exponential backoff for failed requests (3 retries)
+When the connectors service can't be reached, the request is tried up to three times, with a growing wait between tries, before it fails.
 
-## Integration Architecture
+### Local FS refusals
 
-### Backend Connector Service Integration
+A Local FS connector syncs a folder on one desktop device. When a sync can't start because of that device, the answer is `409` with a code to branch on:
 
-The Connector Manager Service acts as a proxy to a Python-based Backend Connector Service that handles the actual connector implementations. Most endpoints forward requests to this backend service and return the responses.
+```json
+{
+  "success": false,
+  "code": "DESKTOP_OFFLINE",
+  "message": "...",
+  "details": {
+    "code": "DESKTOP_OFFLINE",
+    "connectorId": "3f1c9a52-7d0e-4b8a-9c1e-2a6b5d4e7f80",
+    "retryable": true,
+    "ownerDeviceName": "Work laptop"
+  }
+}
+```
 
-**Request Flow:**
-1. Client sends request to Connector Manager Service
-2. Connector Manager validates authentication and authorization
-3. Request is forwarded to Backend Connector Service
-4. Backend Connector Service processes the request
-5. Response is returned through Connector Manager to client
-
-### Configuration Manager Integration
-
-The Connector Manager Service integrates closely with the Configuration Manager for:
-
-1. **Secure Credential Storage** - OAuth client IDs, secrets, and tokens
-2. **Service Discovery** - Endpoint URLs for backend services
-3. **Configuration Management** - Connector settings and preferences
-4. **Encrypted Data Handling** - All sensitive data is encrypted before storage
-
-### Google Workspace OAuth Flow
-
-For Google Workspace connectors, the service implements a complete OAuth 2.0 flow:
-
-1. **Authorization Request** - Generate authorization URL with appropriate scopes
-2. **Code Exchange** - Exchange authorization code for access and refresh tokens
-3. **Token Verification** - Verify ID token matches authenticated user
-4. **Credential Storage** - Securely store tokens via Configuration Manager
-5. **Connector Activation** - Enable connector and publish events
-6. **Scope Mapping** - Map OAuth scopes to enabled applications (Drive, Gmail, Calendar)
-
-### Token Lifecycle Management
-
-The service provides automatic token management with the following features:
-
-1. **Token Acquisition** - OAuth flow handling and token exchange
-2. **Token Refresh** - Automatic refresh before expiration with retry logic
-3. **Token Revocation** - Secure token deletion and cleanup
-4. **Event Broadcasting** - Kafka events for token state changes
-5. **Error Handling** - Retry logic and fallback mechanisms
+- `DESKTOP_OFFLINE` - The owner device isn't connected.
+- `DESKTOP_UNCLAIMED` - No device owns the connector yet. Turn sync on from the PipesHub desktop app on the device that has the folder.
+- `DESKTOP_OWNED_BY_OTHER_DEVICE` - Another device owns the connector; `ownerDeviceName` names it.

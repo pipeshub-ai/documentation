@@ -55,7 +55,8 @@ The connectors service decides access from the caller's role in the organization
 | Action | Team connector | Personal connector |
 |--------|----------------|--------------------|
 | See it in the connector lists | Every member | Its creator |
-| Read it, its configuration, filters or stats | An admin (or its creator) | Its creator only. An admin gets `404`. |
+| Read it, its configuration or filters | An admin (or its creator) | Its creator only. An admin gets `404`. |
+| Read its stats | An admin (or its creator). Anyone else gets `403`. | Its creator only. Anyone else, an admin included, gets `403`. |
 | Create it | An admin | Anyone |
 | Change its configuration, name or filters, sign it in, turn it on or off | An admin | Its creator only |
 | Delete it | An admin or its creator | Its creator or an admin |
@@ -739,11 +740,11 @@ Exchange the code the provider returned for tokens and mark the connector authen
 | error | string | No | Error code from the provider |
 | baseUrl | string | No | The address of your PipesHub web app |
 
-A request without `code` or `state` is refused with `400` ("Code and state are required").
+A request without `code` or `state` is refused with `400` ("Code and state are required") in the standard [error shape](#error-handling), before it reaches the connectors service. That includes a sign-in the user declined at the provider: the provider then sends `error` and `state` but no `code`.
 </Tab>
 
 <Tab title="Response">
-**Status:** `200 OK`, whether the sign-in worked or not. Read `success`.
+**Status:** `200 OK` once `code` and `state` are present, whether the sign-in then worked or not. Read `success`.
 
 ```json
 {
@@ -762,7 +763,7 @@ When the sign-in fails, `success` is `false`, `error` names the reason and `redi
 }
 ```
 
-Possible `error` values: `invalid_state`, `instance_not_found`, `config_not_found`, `oauth_config_fetch_error`, `invalid_token`, `server_error` (with an `errorMessage`), or the provider's own error code.
+Possible `error` values: `invalid_state`, `instance_not_found`, `config_not_found`, `oauth_config_fetch_error`, `invalid_token` and `server_error` (with an `errorMessage`).
 </Tab>
 </Tabs>
 </Accordion>
@@ -1010,7 +1011,7 @@ Get record counts by indexing status for a connector.
 
 **Scope:** `connector:read` or `kb:read`
 
-**Access Control:** the connector's creator or, for a team connector, an admin. For a knowledge base, anyone with a role on it.
+**Access Control:** for a personal connector, its creator only; for a team connector, an admin or its creator; for a knowledge base, anyone with a role on it.
 </Tab>
 
 <Tab title="Response">
@@ -1022,6 +1023,8 @@ Get record counts by indexing status for a connector.
   "data": { "...": "counts by indexing status" }
 }
 ```
+
+**Errors:** `403` for anyone else, an admin included on a personal connector ("Insufficient permissions to access stats for connector ..."). Unlike the other reads, which answer `404`, this confirms that the connector exists. `404` when the connector doesn't exist.
 </Tab>
 </Tabs>
 </Accordion>

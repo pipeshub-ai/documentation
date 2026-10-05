@@ -959,9 +959,7 @@ Start a sync of a connector that has sync turned on.
 }
 ```
 
-If the sync request can't be queued, the answer is still `200`, with `resyncConnectorResponse.success` set to `false` and an `error`.
-
-**Errors:** `400` when `connectorName` is missing or sync is off for the connector ("Connector ... not allowed"); `409` while a sync is already running, or for a Local FS connector whose desktop device is offline.
+**Errors:** `400` when `connectorName` is missing or sync is off for the connector ("Connector ... not allowed"); `409` while a sync is already running, or for a Local FS connector whose desktop device is offline; `503` when the sync request can't be queued, in which case nothing was synced and you can try again in a minute.
 </Tab>
 </Tabs>
 </Accordion>

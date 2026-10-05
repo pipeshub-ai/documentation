@@ -442,7 +442,12 @@ When you attach a file, the record is renamed after that file, without its exten
 </Accordion>
 
 <Accordion title="DELETE /record/:recordId - Delete Record">
-Delete a file from a knowledge base. The record is removed from the graph database and can't be restored, and its stored file is cleaned up in the background. Only files uploaded to a knowledge base can be deleted here: a record synced from a connector is refused with `403 Forbidden`, and is removed by deleting the item in the source app.
+Delete a file from a knowledge base. Only files uploaded to a knowledge base can be deleted here: a record synced from a connector is refused with `403 Forbidden`, and is removed by deleting the item in the source app.
+
+What happens next depends on the Labs setting **Move Deleted Records to the Trash**:
+
+- **Off (the default):** the record is removed from the graph database and can't be restored, and its stored file is cleaned up in the background.
+- **On:** the record goes to the trash. It disappears from search, chat and listings at once, but it can be restored for at least 14 days with `POST /record/:recordId/restore` or from the collection's **Recently deleted** page. The response then has `softDeleted: true` and the `batchId` of the delete. See [Trash and Recently deleted](/trash).
 
 <Tabs>
 <Tab title="Request">
@@ -469,6 +474,139 @@ Delete a file from a knowledge base. The record is removed from the graph databa
 ```
 
 `connector` and `timestamp` are often `null`, so don't rely on them. If the search index couldn't be told about the deletion, the response also has `vectorCleanupPending: true` and `vectorCleanupFailedRecordIds`, the records whose search entries are still waiting to be removed.
+</Tab>
+</Tabs>
+</Accordion>
+
+<Accordion title="GET /:kbId/trash - List Recently Deleted Items">
+One page of what was deleted from a collection and can still be restored, newest first. Each item is what one delete removed: a folder deleted with its contents is one item, and `itemCount` says how many records it holds. Restore an item with `POST /record/:recordId/restore`, using its `id`.
+
+Needs **Move Deleted Records to the Trash** on in Labs. The list holds what the caller may restore: owners and writers see every item, file organizers see single files only, and other roles get `403 Forbidden`. OAuth apps need the `kb:delete` scope.
+
+<Tabs>
+<Tab title="Request">
+**Endpoint:** `GET /api/v1/knowledgeBase/:kbId/trash`
+
+**Path Parameters:**
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| kbId | string | Yes | Knowledge base (collection) UUID |
+
+**Query Parameters:**
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| page | integer | No | Page number, from 1 (default 1) |
+| limit | integer | No | Items per page, 1 to 100 (default 25) |
+</Tab>
+
+<Tab title="Response">
+**Status:** `200 OK`
+
+```json
+{
+  "success": true,
+  "items": [
+    {
+      "id": "rec789012",
+      "name": "Specs",
+      "recordType": "FILE",
+      "isFolder": true,
+      "mimeType": null,
+      "sizeInBytes": null,
+      "parentId": null,
+      "parentName": null,
+      "parentInTrash": false,
+      "itemCount": 4,
+      "deletedAtTimestamp": 1790000000000,
+      "deletedBy": { "name": "Ada Admin", "email": "ada@example.com" },
+      "removableAfterTimestamp": 1791209600000
+    }
+  ],
+  "pagination": { "page": 1, "limit": 25, "totalCount": 1, "totalPages": 1 },
+  "retention": { "minAgeMs": 1209600000 }
+}
+```
+
+- `parentInTrash: true` means the folder the item was in is deleted too; restore that folder first.
+- `removableAfterTimestamp` is the earliest time the scheduled cleanup may remove the item for good. It and `retention` are `null` when the retention settings can't be read; the default is 14 days.
+</Tab>
+</Tabs>
+</Accordion>
+
+<Accordion title="POST /record/:recordId/restore - Restore Deleted Record">
+Bring a record back from the trash, together with everything deleted in the same action: a folder comes back with its contents, a file with its attachments, a multi-select delete with every item it removed. Use the id of any item from that delete.
+
+Needs **Move Deleted Records to the Trash** on in Labs, and the role the delete needed: OWNER, WRITER or FILEORGANIZER for a single file, OWNER or WRITER for a folder or several items. OAuth apps need the `kb:delete` scope.
+
+<Tabs>
+<Tab title="Request">
+**Endpoint:** `POST /api/v1/knowledgeBase/record/:recordId/restore`
+
+**Path Parameters:**
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| recordId | string | Yes | Record UUID of any item in the delete |
+</Tab>
+
+<Tab title="Response">
+**Status:** `200 OK`
+
+```json
+{
+  "success": true,
+  "message": "Restored 2 item(s).",
+  "batchId": "6f1c2d3e-4b5a-4c6d-8e9f-0a1b2c3d4e5f",
+  "restoredRecords": [
+    { "recordId": "rec789012", "name": "report (restored).pdf", "renamedFrom": "report.pdf" },
+    { "recordId": "rec789013", "name": "notes.txt" }
+  ]
+}
+```
+
+- An item whose name another item next to it now uses comes back as `name (restored)`; `renamedFrom` gives its old name.
+- Restored files are indexed again and return to search once that finishes. `reindexPending: true` lists in `reindexPendingRecordIds` any that couldn't be queued yet.
+- A record that isn't in the trash answers `200` with nothing restored.
+
+**Errors** say in plain words what to do: `403` when the trash is off, the caller lacks edit access, or the record comes from a connected app (restore it in that app; it returns at the next sync); `404` for a record that doesn't exist in this workspace or was removed for good; `409` when the folder it was in is also in the trash (restore the folder first) or the item changed meanwhile (refresh and try again).
+</Tab>
+</Tabs>
+</Accordion>
+
+<Accordion title="POST /records/restore - Restore Several Deleted Records">
+Restore up to 100 records, each as `POST /record/:recordId/restore` restores it. Ids from one delete are restored once. Every id gets its own outcome in `results`, so one refusal doesn't hold the others back, and the answer is `200` whatever the outcomes.
+
+<Tabs>
+<Tab title="Request">
+**Endpoint:** `POST /api/v1/knowledgeBase/records/restore`
+
+**Request Body:**
+
+```json
+{
+  "recordIds": ["rec789012", "rec789014"]
+}
+```
+</Tab>
+
+<Tab title="Response">
+**Status:** `200 OK`
+
+```json
+{
+  "success": false,
+  "restoredCount": 2,
+  "failedCount": 1,
+  "results": [
+    { "recordId": "rec789012", "success": true, "code": 200, "message": "Restored 2 item(s).", "restoredRecords": [{ "recordId": "rec789012" }, { "recordId": "rec789013" }] },
+    { "recordId": "rec789014", "success": false, "code": 409, "reason": "'a.pdf' was in 'Docs', which is also in the trash. Restore 'Docs' first, then restore 'a.pdf'." }
+  ]
+}
+```
+
+`400 Bad Request` when `recordIds` is missing, empty, or longer than 100.
 </Tab>
 </Tabs>
 </Accordion>
@@ -668,7 +806,7 @@ Update folder properties such as name.
 </Accordion>
 
 <Accordion title="DELETE /:kbId/folder/:folderId - Delete Folder">
-Delete a folder and all its contents.
+Delete a folder and all its contents. With **Move Deleted Records to the Trash** on in Labs, the folder and everything in it go to the trash as one item, which can be restored from the collection's **Recently deleted** page; otherwise they are removed for good.
 
 <Tabs>
 <Tab title="Request">

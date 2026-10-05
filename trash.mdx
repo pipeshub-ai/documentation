@@ -17,7 +17,7 @@ An admin turns it on for the whole workspace:
 1. Go to **Workspace → Labs**.
 2. Turn on **Move Deleted Records to the Trash**.
 
-The setting takes effect straight away; nothing needs a restart. If you turn it off later, new deletes are permanent again, and the cleanup pauses, so whatever is already in the trash stays there until you turn it back on.
+The setting takes effect straight away; nothing needs a restart. If you turn it off later, new deletes are permanent again, and the cleanup pauses at the end of the batch it's working on, so apart from that batch, whatever is already in the trash stays there until you turn it back on.
 
 ## What goes to the trash
 
@@ -36,7 +36,7 @@ As soon as an item is in the trash, it disappears from search, chat, citations, 
 
 By default, an item stays in the trash for **at least 14 days**. A cleanup runs every 14 days (at 03:00 UTC) and removes everything that has been in the trash for at least 14 days, with its files. So, with the defaults, an item can be restored for 14 to 28 days after it was deleted, depending on when the next cleanup runs.
 
-These are defaults. They come from `softDeletePurge` in the platform settings: `minAgeDays` (how long an item stays at least), `intervalDays` (how often the cleanup runs) and `runHourUtc` (the hour it starts). Lowering the first two shortens the window, down to a minimum of one day each: a value below one counts as one day, and a missing or invalid value uses the default of 14. The Recently deleted page works out each item's date from the setting in use.
+These are defaults. They come from `softDeletePurge` in the platform settings: `minAgeDays` (how long an item stays at least), `intervalDays` (how often the cleanup runs) and `runHourUtc` (the hour it starts). Lowering the first two shortens the window, down to a minimum of one day each: a value below one counts as one day, and a missing or invalid value uses the default of 14. They also have upper limits: `intervalDays` is capped at 365 days and `minAgeDays` at 3650 days. The Recently deleted page works out each item's date from the setting in use.
 
 <Warning>
   Once the cleanup has removed an item, it can't be restored. PipesHub keeps no other copy of files uploaded to a collection.

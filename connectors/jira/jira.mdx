@@ -651,6 +651,11 @@ The Jira connector syncs the following data from your Jira Cloud workspace:
 - PipesHub usually finds deleted issues through Jira's audit log. Jira only provides that log when at least one Jira product on the site is on a paid plan, and only to an account allowed to read it.
 - If every Jira product on your site is on a Free plan, the connector sends one notice, "finds deleted issues more slowly on Jira's Free plan". No action is needed. On each sync, PipesHub compares the issues in each synced project with the ones it holds and removes those Jira no longer has. This takes more requests than the audit log, so syncs of large projects can take a little longer. If Jira's issue list can't be read in full, nothing is removed and the next sync tries again.
 - If the notice says the connector "is missing the audit log permission", ask a Jira admin to give the connector's account the **Administer Jira** global permission (under **Settings → System → Global permissions**). Reading the audit log requires it.
+- The **Jira Cloud Personal** connector does not use the audit log. It compares the issues in each synced project with the ones it holds on every sync, so a deleted issue goes on the next sync that reads the project's issue list in full. If it is still there, run the sync again and check that the project synced without errors. See **Deletion detection** under [Connector Workflow](#connector-workflow).
+
+**Issues or a project disappeared from the Jira Cloud Personal connector:**
+- The connector keeps only what your Jira account can see. If you lose access to an issue or a project (a permission change or an issue security level, for example), it is removed from PipesHub on the next sync, the same as if it had been deleted.
+- Ask a Jira admin to restore your access. A project you can see again is synced in full on the next sync. A single issue comes back the next time it changes in Jira, or after a full resync.
 
 **Missing comments or attachments:**
 - Verify indexing filters are enabled for issues and attachments
@@ -747,6 +752,22 @@ The connector uses Jira's **Audit Log API** to detect deleted issues:
 <Note>
   Jira only provides the audit log when at least one Jira product on the site is on a paid plan. On a site where every Jira product is on a Free plan, the connector instead lists the issue ids in each synced project on every sync and compares them with the issues PipesHub holds. An issue missing from the list is removed only after Jira confirms it no longer exists, or no longer lets the connector's account see it. If the list can't be read in full, nothing is removed and the next sync tries again. An issue your date filters leave out is not removed by this check while it still exists in Jira. The connector says once in a notification that it works this way. See [Troubleshooting](#troubleshooting).
 </Note>
+
+#### Jira Cloud Personal connector
+
+The **Jira Cloud Personal** connector syncs what your own Jira account can see. A personal account can't read the audit log, so this connector never asks for it. On every sync it finds deleted issues by comparison instead:
+
+1. For each synced project, it lists the issue ids Jira shows your account and compares them with the issues PipesHub holds
+2. It asks Jira once more about each issue missing from the list
+3. It removes the issue and its attachments only when Jira answers that the issue no longer exists, or that your account can no longer see it
+
+If a project's list can't be read to the end, nothing is removed for that project and the next sync tries again. An issue your date filters leave out is not removed by this check while it still exists in Jira. The listing takes about one request per 5,000 issues in a project, plus one request per missing issue.
+
+**When you lose access.** Jira gives the same answer for an issue that was deleted and for one your account can no longer see, so both are removed from PipesHub. An issue you can see again comes back the next time it changes in Jira, or after a full resync.
+
+**When a whole project leaves your view.** A project you synced can stop appearing in the list of projects Jira shows your account: it was deleted or archived, or you lost access to it. PipesHub then asks Jira about the project. If Jira confirms it is gone or hidden, PipesHub checks each of its issues, removes the ones Jira confirms, and removes the project once nothing is left in it. If the project comes back into view, it is synced in full again. A project you left out with the **Project Keys** filter is not touched, and neither is a project Jira still answers for.
+
+**When the sign-in stops working.** Before removing anything, the connector checks that Jira still recognises your account. If the token has expired or been revoked, nothing is removed until you reconnect.
 
 ### Checkpoint management
 

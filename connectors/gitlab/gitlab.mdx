@@ -395,7 +395,9 @@ The GitLab connector syncs the following data from your GitLab projects:
 - Verify the OAuth application includes the `read_repository` scope — without it the connector
   can read issues and merge requests but not repository contents
 - Only the **default branch** is synced; content on other branches is expected to be absent
-- Very large files still appear as records but their contents are not indexed
+- Source and text files above 5 MB still appear as records, marked **File Type Not Supported**
+  with the file's size as the reason; their contents are not indexed — see *How each file is
+  indexed* below
 
 **A user sees no records even though they have GitLab access:**
 - Their GitLab **public email** is probably not set. Ask them to set it (see the email visibility
@@ -510,6 +512,32 @@ without adding meaning:
 
 This keeps search results focused on code your team actually wrote. It also means the file count in
 PipesHub will be lower than the file count in the repository — that is expected.
+
+#### How each file is indexed
+
+The files that do become records are not all source code, so PipesHub reads each one with the
+reader that fits it:
+
+| File | How it is indexed |
+|------|-------------------|
+| Source code in a supported language | By class, function, and method, up to 5 MB |
+| `.csv`, `.tsv` | As a table, row by row, the same way as an uploaded CSV |
+| `.json`, `.yaml`, `.yml` | By its structure, the same way as an uploaded JSON or YAML file |
+| Other text files, such as shell scripts, SQL, and stylesheets | As plain text, up to 5 MB |
+| Source or text files above 5 MB | Not indexed |
+| Files that hold binary data under a text file name | Not indexed |
+
+A file that is not indexed keeps its record and stays findable by name and path. It shows
+**File Type Not Supported**, with a reason that says why — for example "This file is 12.5 MB, and
+PipesHub reads code and plain-text files up to 5 MB." Nothing is cut short: a file is either
+indexed whole or not at all.
+
+<Note>
+  On a self-hosted deployment, an admin can raise the 5 MB limit by setting the
+  `CODE_FILE_MAX_SIZE_MB` environment variable on the PipesHub container and restarting it, then
+  reindexing the file. The limit applies to source and plain-text files; CSV, JSON, and YAML files
+  are not subject to it.
+</Note>
 
 <Warning>
   **Deletion safety valve.** If a single tree walk returns a truncated or incomplete file list,

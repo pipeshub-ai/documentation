@@ -525,18 +525,31 @@ reader that fits it:
 | `.json`, `.yaml`, `.yml` | By its structure, the same way as an uploaded JSON or YAML file |
 | Other text files, such as shell scripts, SQL, and stylesheets | As plain text, up to 5 MB |
 | Source or text files above 5 MB | Not indexed |
+| Line-delimited JSON: `.ndjson`, `.jsonl` | Not indexed |
 | Files that hold binary data under a text file name | Not indexed |
 
 A file that is not indexed keeps its record and stays findable by name and path. It shows
-**File Type Not Supported**, with a reason that says why — for example "This file is 12.5 MB, and
-PipesHub reads code and plain-text files up to 5 MB." Nothing is cut short: a file is either
-indexed whole or not at all.
+**File Type Not Supported**, with a reason that says why:
+
+- Above 5 MB: "This file is 12.5 MB, and PipesHub reads code and plain-text files up to 5 MB.
+  Split it into smaller files, or ask your admin to raise the limit (CODE_FILE_MAX_SIZE_MB) and
+  then choose Reindex all on the repository."
+- `.ndjson` and `.jsonl`: "PipesHub can't read .ndjson files yet. Convert the file to PDF, DOCX or
+  TXT to make it searchable."
+- Binary data: "This file holds binary data rather than text, so PipesHub can't read it. If it is
+  meant to be text, commit it as plain text (UTF-8) and the next sync will index it."
+
+Nothing is cut short: a file is either indexed whole or not at all.
 
 <Note>
   On a self-hosted deployment, an admin can raise the 5 MB limit by setting the
-  `CODE_FILE_MAX_SIZE_MB` environment variable on the PipesHub container and restarting it, then
-  reindexing the file. The limit applies to source and plain-text files; CSV, JSON, and YAML files
-  are not subject to it.
+  `CODE_FILE_MAX_SIZE_MB` environment variable on the PipesHub container and restarting it. The
+  limit applies to source and plain-text files; CSV, JSON, and YAML files are not subject to it.
+
+  Raising the limit does not index the file by itself. A file marked **File Type Not Supported**
+  has no Reindex action of its own, and a sync skips a repository that has not changed. Open the
+  project in PipesHub and choose **Reindex all** on its **Code repository**; that sends every file
+  in it, this one included, back through indexing.
 </Note>
 
 <Warning>

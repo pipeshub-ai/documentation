@@ -430,6 +430,8 @@ The GitHub connector syncs the following data from your GitHub repositories:
 - Confirm **Index Code Files** is enabled under Indexing Filters
 - Only the **default branch** is synced; content on other branches is expected to be absent
 - Files above 5 MB appear as records but their contents are not indexed
+- Lock files, minified files, source maps, and `.ndjson` / `.jsonl` files appear as records marked
+  **File Type Not Supported**; this is expected — see *How each file is indexed* below
 
 **A user sees no records even though they have GitHub access:**
 - Their email could not be read. Either verify your organization's domain in GitHub, or ask them
@@ -535,6 +537,35 @@ this and falls back to walking directories one at a time, so coverage stays comp
 
 Every file on the default branch gets a record. Files above the 5 MB indexing ceiling still appear
 and remain name-searchable; only their contents go unindexed, with the reason recorded.
+
+#### How each file is indexed
+
+A repository holds more than source code, so PipesHub reads each file with the reader that fits it:
+
+| File | How it is indexed |
+|------|-------------------|
+| Source code in a supported language | By class, function, and method |
+| `.csv`, `.tsv` | As a table, row by row, the same way as an uploaded CSV |
+| `.json`, `.yaml`, `.yml` | By its structure, the same way as an uploaded JSON or YAML file |
+| Other text files, such as shell scripts, SQL, and stylesheets | As plain text |
+| Lock files: `package-lock.json`, `yarn.lock`, `pnpm-lock.yaml`, `poetry.lock`, `Cargo.lock`, `composer.lock`, `Gemfile.lock`, `uv.lock`, and any file ending in `.lock` | Not indexed |
+| Minified files, source maps, and test snapshots: `*.min.js`, `*.min.css`, `*.map`, `*.snap` | Not indexed |
+| Line-delimited JSON: `.ndjson`, `.jsonl` | Not indexed |
+| Files that hold binary data under a text file name | Not indexed |
+
+A file that is not indexed keeps its record and stays findable by name and path. It shows
+**File Type Not Supported**, with a reason that says why. There are two you will see most:
+
+- For `package-lock.json`, `pnpm-lock.yaml`, and minified files: "This is a generated file (a lock
+  file, minified bundle, source map or test snapshot), so PipesHub skips it to keep search results
+  useful. Nothing needs fixing."
+- For a file type PipesHub has no reader for, such as `yarn.lock`, a `.map` file, or
+  `events.ndjson`: "PipesHub can't read .ndjson files yet. Convert the file to PDF, DOCX or TXT to
+  make it searchable." (with that file's own extension). For a lock file or a source map there is
+  nothing to convert, and nothing needs fixing.
+
+Lock files, minified bundles, and source maps are left out because they are written by tools, not
+people, and their contents would crowd real results out of search.
 
 <Warning>
   **Untrusted deltas are never applied.** A force-push, a branch reset, or a comparison that hits

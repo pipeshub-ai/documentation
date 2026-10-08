@@ -409,7 +409,10 @@ On the **Configure Records** tab, control how the connector syncs and what gets 
   **Scheduled sync** runs automatically at the specified intervals. **Manual sync** requires you to trigger synchronization on-demand.
 </Note>
 
-**Sync filters** — determine which content is downloaded from Confluence. Data excluded by sync filters is never downloaded.
+**Sync filters** — determine which content is downloaded from Confluence. Data excluded by sync filters is never downloaded. When you narrow the filters, the full sync that follows removes, from search and from storage, what was synced before and is now left out:
+
+- **Spaces:** once the full list of spaces has been read, a space that is no longer listed is removed with everything in it. That covers a space the space filter now leaves out, and also one that was deleted or archived, or that the connector's account can no longer open. Its sync checkpoints are cleared, so if it is listed again later it is read in full. If the list of spaces can't be read to the end, or comes back with no spaces at all (for example, because the space filter now leaves out every space), no space is removed.
+- **Pages and blog posts:** a page or blog post is removed when a search of its space finds it without the new filters but not with them. If the search can't tell (for example, because it hasn't indexed the page yet), the page is kept and the next sync reads that space in full again.
 
 <div className="text-center">
   <img
@@ -542,7 +545,10 @@ On the **Configure Records** tab, control how the connector syncs and what gets 
   />
 </div>
 
-**Sync filters** — determine which content is downloaded from Confluence. Data excluded by sync filters is never downloaded.
+**Sync filters** — determine which content is downloaded from Confluence. Data excluded by sync filters is never downloaded. When you narrow the filters, the full sync that follows removes, from search and from storage, what was synced before and is now left out:
+
+- **Spaces:** once the full list of spaces has been read, a space that is no longer listed is removed with everything in it. That covers a space the space filter now leaves out, and also one that was deleted or archived, or that the connector's account can no longer open. Its sync checkpoints are cleared, so if it is listed again later it is read in full. If the list of spaces can't be read to the end, or comes back with no spaces at all (for example, because the space filter now leaves out every space), no space is removed.
+- **Pages and blog posts:** a page or blog post is removed when a search of its space finds it without the new filters but not with them. If the search can't tell (for example, because it hasn't indexed the page yet), the page is kept and the next sync reads that space in full again.
 
 <div className="text-center">
   <img
@@ -682,9 +688,12 @@ The Confluence connector syncs the following data from your Confluence Cloud wor
 
 ### Incremental sync
 - Uses timestamp-based synchronization to detect changes
-- Only syncs new or modified content since last sync
+- Only syncs new or modified content since last sync, plus any current page or blog post the space lists that PipesHub doesn't hold (see below)
 - Syncs every attachment of a page or blog post, however many it has. If the attachment list can't be read in full, the attachments already read are kept, and the space's page or blog post checkpoint doesn't move, so the next sync reads that time window again. That includes a temporary failure (such as a timeout or rate limit) on the list's first request, in which case the connector uses the attachments that came with the page or blog post in the search results. If the first request fails for a lasting reason, such as the list not being found, the connector uses those search-result attachments and the checkpoint moves on as usual
-- Efficiently handles additions, updates, and deletions
+- Handles additions and updates. Each sync also lists, for every synced space and separately for pages and blog posts, what the connector's account can see there: current and archived pages, and current blog posts. A stored page or blog post that isn't in that list is removed. That covers one that was deleted, moved to the trash or out of the space, or restricted so the connector's account can't see it any more, and it comes back on a later sync once the account can see it again: each sync also fetches, by ID and within your sync filters, the current pages and blog posts the list has that PipesHub doesn't hold, whatever their last modified date. Archived pages the account can see are kept
+- A removed page or blog post goes with its file attachments and its comments and replies. Folders and child pages directly under it stay, and PipesHub lists them at the top of the space
+- If a space's list can't be read to the end, or its stored records can't be read, nothing is removed for that space and content type, and its checkpoint doesn't move. A page or blog post is removed in this order: its folders and child pages are moved to the top of the space first, then its file attachments, comments and replies are deleted, and the page or blog post itself is deleted last. If a step fails, what was already done in that attempt stays done. For example, if the page itself can't be deleted, the page stays but its attachments and comments are already gone, and if one attachment can't be deleted, the attachments deleted before it stay deleted. The rest of that space's removals for that content type still go ahead, the checkpoint for that type doesn't move, and the next sync retries whatever is still stored. Other spaces and the other content type are not held back
+- A space the connector's account can no longer see, or that the space filter now leaves out, is removed with its records, and it is read in full if it comes back. A space list that can't be read to the end, or that comes back with no spaces at all, removes nothing
 - Reduces API calls and sync duration
 
 ### Permission handling

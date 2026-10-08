@@ -1,0 +1,89 @@
+---
+title: "Trash and Recently deleted"
+description: "What goes to the trash when you delete, how long it stays, how to restore it, and what can't be restored"
+icon: "trash-can-arrow-up"
+---
+
+When the trash is on, deleting a file or a folder doesn't remove it straight away. It goes to the trash, where you can restore it for a while (at least 14 days by default; see [How long items stay](#how-long-items-stay)). After that, a scheduled cleanup removes it for good.
+
+<Note>
+  The trash is a **Labs** setting and is off by default. While it's off, every delete is permanent, as before.
+</Note>
+
+## Turn the trash on
+
+An admin turns it on for the whole workspace:
+
+1. Go to **Workspace → Labs**.
+2. Turn on **Move Deleted Records to the Trash**.
+
+The setting takes effect straight away; nothing needs a restart. If you turn it off later, new deletes are permanent again, and whatever is already in the trash is still removed on schedule: the cleanup keeps running, and turning the trash off empties it in time.
+
+## What goes to the trash
+
+| You delete | What happens |
+| --- | --- |
+| A file in a collection | The file goes to the trash, with its attachments. |
+| A folder in a collection | The folder goes to the trash with everything inside it, as one item. |
+| Several items at once | They go to the trash together, and show as one row on Recently deleted, for example "a.pdf and 2 more". Restoring it brings back all of them. |
+| An item in a connected app (Drive, Confluence, Slack and others) | At the next sync, PipesHub puts its copy in the trash. |
+| A whole collection | Removed for good straight away. It doesn't go to the trash. |
+| A connector | Removed for good straight away, with everything it synced, including anything of its in the trash. |
+
+As soon as an item is in the trash, it disappears from search, chat, citations, the All Records view, collection listings and counts, for everyone it was shared with. Its search data is removed at the same time. The record itself, its file and its sharing are kept, so it can come back exactly as it was.
+
+## How long items stay
+
+By default, an item stays in the trash for **at least 14 days**. A cleanup runs every 14 days (at 03:00 UTC) and removes everything that has been in the trash for at least 14 days, with its files. So, with the defaults, an item can be restored for 14 to 28 days after it was deleted, depending on when the next cleanup runs.
+
+These are defaults. They come from `softDeletePurge` in the platform settings: `minAgeDays` (how long an item stays at least), `intervalDays` (how often the cleanup runs) and `runHourUtc` (the hour it starts). Lowering the first two shortens the window, down to a minimum of one day each: a value below one counts as one day, and a missing or invalid value uses the default of 14. They also have upper limits: `intervalDays` is capped at 365 days and `minAgeDays` at 3650 days. The Recently deleted page works out each item's date from the setting in use.
+
+<Warning>
+  Once the cleanup has removed an item, it can't be restored. PipesHub keeps no other copy of files uploaded to a collection.
+</Warning>
+
+## Restore from Recently deleted
+
+1. Open the collection.
+2. Click **Recently deleted** in the collection's header. The button is there while the trash is on, for the roles listed under [Who can see and restore what](#who-can-see-and-restore-what).
+3. Find the item. Each row shows its name and type, where it was, when it was deleted and by whom, and the date after which the cleanup may remove it for good.
+4. Click **Restore** on the row, or select several rows and click **Restore** above the list.
+
+A message tells you what came back, and why anything didn't:
+
+- **A delete comes back whole.** Each row is one delete. A folder deleted with its contents is one row, and so are several items deleted together, which the row names ("a.pdf and 2 more", "With b.pdf, Docs"). Restoring a row brings back everything that delete removed.
+- **Its folder comes first.** If you deleted a file and later deleted the folder it was in, the file's row says the folder is deleted too. Restore the folder first, then the file. When you select both, PipesHub restores the folder first for you.
+- **Names that are taken.** If another item now has the same name in the same place, the restored one comes back as `name (restored)`. A file keeps its extension, for example `report (restored).pdf`.
+- **Search catches up after indexing.** A restored item is back in its folder straight away. Its files are queued for indexing again, and the message says so: "Restored items are back where they were, and show up in search again once indexing finishes."
+- **If indexing couldn't be queued.** Rarely, a restore can't queue some files for indexing. The files are back, but not yet searchable, and the message says so: "Restored, but some files aren't searchable yet because they couldn't be queued for indexing. PipesHub queues them again on its own within about an hour. To do it sooner, open each file's menu and choose Start indexing."
+
+### Who can see and restore what
+
+The **Recently deleted** button and page are for the roles that may restore, and the page lists only what your role may restore:
+
+| Your role on the collection | Recently deleted |
+| --- | --- |
+| Owner or Writer | Shown. Lists everything deleted from the collection, by anyone, and you can restore all of it |
+| File organizer | Shown. Lists single deleted files only, and you can restore those; deleted folders and multi-item deletes need an owner or writer |
+| Reader or Commenter | Not shown. Ask the collection's owner to restore an item, or to give you edit access |
+
+## What can't be restored
+
+- **Items the cleanup removed.** Once the cleanup has removed an item, it is gone for good. With the default settings that happens 14 to 28 days after the delete; see [How long items stay](#how-long-items-stay).
+- **Whole collections and connectors.** These deletes are permanent straight away.
+- **Items from connected apps, from PipesHub.** Only files and folders uploaded to a collection can be restored in PipesHub, and only they appear on Recently deleted. You can't delete a connected app's item from PipesHub either: the record delete answers `403 Forbidden`. A connected app's item goes to the trash only when a sync finds it was deleted in its source app. To get it back:
+  - **Restore it in the source app before the cleanup.** The next sync that sees it again brings back the same record, with its links and citations, and indexes it again.
+  - **After the cleanup,** the record is gone. If the item is back in the source app, the next sync adds it as a new record, and old citations to it no longer open.
+- **Anything while the trash is off.** With the Labs setting off, the Recently deleted page is hidden and restoring is refused, while the cleanup still removes what is in the trash on its usual schedule. Turn the trash back on before the cleanup reaches an item if you want to restore it.
+
+## Use the API
+
+The same actions are available in the [Knowledge Base API](/system-overview/knowledge-base):
+
+| Endpoint | What it does |
+| --- | --- |
+| `GET /api/v1/knowledgeBase/:kbId/trash` | One page of a collection's recently deleted items, newest first (`page`, `limit` up to 100) |
+| `POST /api/v1/knowledgeBase/record/:recordId/restore` | Restore one item, with everything deleted along with it |
+| `POST /api/v1/knowledgeBase/records/restore` | Restore up to 100 items; each one gets its own outcome |
+
+They need the `kb:delete` scope for OAuth apps, and the trash turned on in Labs.

@@ -183,8 +183,21 @@ After saving, your model appears under the **Configured** tab. Each row has the 
 - **Delete** — permanently remove the configuration. You will be asked to type the model's name to confirm.
 
 <Note>
-Changing the default embedding model does not automatically re-index existing documents.
-Documents indexed with the old model and queries run with the new model use different vector spaces, which will degrade search quality. Re-index your documents after switching embedding models.
+The **embedding model in use** is the default one, or the first configured model if none is marked default. With no embedding model configured, the built-in `BAAI/bge-large-en-v1.5` embeds your content.
+
+While vectors are stored, PipesHub refuses any change of the model in use, even to a model that produces vectors of the same size. That covers adding your first embedding model when content is already embedded with the built-in model, setting another model as default, deleting the model in use, and editing the model in use to change its model name or **Output Dimensions**. The first model you add sizes the vector store only when the store is empty.
+
+To change or delete the model in use:
+
+1. Under **Labs → Feature flags**, turn on **Enable Vector Store Rebuild** and click **Save**. The **Vector Store** section appears in **Labs**.
+2. In **Labs → Vector Store**, click **Clean up**, type `DELETE` in the box, and click **Delete embeddings**. The button stays disabled until the word is typed.
+3. Wait for the cleanup to finish. It runs in the background after you confirm, and until it finishes the old vectors are still stored, so the change in step 4 is still refused.
+4. Add, edit, set as default, or delete the embedding model.
+5. In **Labs → Vector Store**, click **Reindex**, type `REINDEX` in the box, and click **Start reindex**. If the cleanup is still running, the reindex is refused with "A search index cleanup or reindex is already running. Wait for it to finish, then try again." or "Vector-store cleanup is still dropping the collection". Wait a little and try again.
+
+Each of these changes, made while vectors are stored, is refused with: "This model is embedding your indexed content. Delete the embeddings in Labs first, then change or delete the model and re-embed."
+
+Adding, editing or deleting any other embedding model does not touch the vector store.
 </Note>
 
 ### Troubleshooting

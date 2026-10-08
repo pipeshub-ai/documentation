@@ -248,15 +248,16 @@ You're now on the **Configure Records** tab. The top part is called **Sync setti
 Still on the same tab, scroll down to **Indexing & sync filters**. Filters let you limit what PipesHub pulls from S3. **If you don't add any filters, everything will be synced.**
 
 1. **Enable Manual Indexing** — leave this **off**. (Turning it on stops PipesHub from automatically indexing new files for search.)
-2. Click **+ Add filter** to add a filter. You'll see four options:
+2. Click **+ Add filter** to add a filter. You'll see these options:
    - **Bucket Names** — pick which S3 buckets to include or exclude. PipesHub loads your bucket list automatically — just select from the dropdown.
+   - **Folders** — include or exclude folders inside a bucket, as paths from the bucket root, e.g. `reports` (which covers `reports/2026/q1.pdf` too).
    - **File Extensions** — include or exclude specific file types. Type them comma-separated, e.g. `pdf, docx, txt`.
    - **Modified Date** — only sync files changed after / before / between the dates you choose.
    - **Created Date** — same idea, but based on when the file was first uploaded to S3.
 3. Click **Save Configuration** (bottom right) when you're done.
 
 <Info>
-  You can change filters any time later. New filters take effect on the next sync.
+  You can change filters any time later. New filters take effect on the next sync. Files that an extension, date or **Folders** filter now leaves out are removed from PipesHub, search results included. Folders exclusions are removed on the next sync. Extension and date exclusions are removed once a sync has listed everything in scope from start to finish: each included folder when **Folders** is set to **In**, otherwise the whole bucket. **Bucket Names** with *In* syncs only the buckets you pick; with *Not In* it syncs every bucket except those. A bucket the filter newly leaves out stops syncing, and the files already synced from it are removed on the next sync.
 </Info>
 
 ### Step 8: Turn on sync
@@ -408,7 +409,7 @@ The first sync performs a complete scan of your configured S3 buckets:
 
 - **Bucket Discovery**: Lists all accessible buckets in your AWS account (or uses configured bucket filters)
 - **Region Detection**: Automatically detects and caches the region for each bucket
-- **Full Object Listing**: Fetches all objects from selected buckets using pagination
+- **Full Object Listing**: Fetches all objects from selected buckets using pagination (with a **Folders** filter set to **In**, only the objects in the included folders)
 - **Metadata Extraction**: Extracts file names, sizes, modification dates, MIME types, and paths
 - **Folder Structure**: Creates logical folder structure from S3 object prefixes
 - **Indexing**: Indexes file content for AI-powered search (based on indexing filter settings)
@@ -430,25 +431,27 @@ The first sync performs a complete scan of your configured S3 buckets:
 
 ### Incremental Sync
 
-After the initial sync, subsequent syncs are much faster:
+After the initial sync, later syncs still list every object in scope (the whole bucket, or each included folder with a **Folders** filter set to **In**), but they only download and index the ones that changed:
 
-- **Timestamp-Based Detection**: Uses `LastModified` timestamps to identify changed objects
-- **Sync Point Tracking**: Stores the last sync timestamp per bucket in sync points
-- **Change Detection**: Only fetches objects modified since the last sync timestamp
-- **Pagination Resume**: Uses continuation tokens to resume interrupted syncs
-- **Efficient Updates**: Processes only new, modified, or deleted objects
-- **API Optimization**: Reduces API calls by 90%+ compared to full syncs
+- **Full Listing**: With no **Folders** filter, every sync makes one listing of the whole bucket, page by page. With a **Folders** filter set to **In**, it lists each included folder instead; set to **Not In**, it still lists the whole bucket and skips the excluded folders. Listing is much cheaper than downloading, but it still grows with the number of objects listed.
+- **Change Detection**: Objects whose `LastModified` is older than the last sync are counted as still present and skipped; new and changed objects are processed.
+- **Sync Point Tracking**: Stores the last sync timestamp per bucket and folder.
+- **Pagination Resume**: Uses continuation tokens to resume an interrupted listing.
+- **Deletions**: Once everything in scope has been listed from start to finish (each included folder with **Folders** set to **In**, otherwise the whole bucket), files that are no longer there, and files a **File Extensions** or date filter now leaves out, are removed from PipesHub.
+- **Safe Removal**: If a listing failed, or resumed partway from an earlier interrupted sync, those files aren't removed on that sync, even if the listing reached the last page. They're removed after the next complete listing.
+- **Narrowed Folders**: Files outside a narrowed **Folders** filter don't wait for a complete listing. They're removed on the next sync, even if its listing is incomplete.
 
 **How It Works:**
 
-1. Connector reads the sync point for each bucket (stored in our database)
-2. Retrieves the `last_sync_time` timestamp
-3. Queries S3 for objects with `LastModified >= last_sync_time`
-4. Processes only the changed objects
-5. Updates the sync point with the new maximum timestamp
+1. The connector reads the sync point for each bucket and folder (stored in our database).
+2. It lists the bucket with `ListObjectsV2` (with **Folders** set to **In**, each included folder in turn), following continuation tokens to the last page.
+3. It processes objects that are new or changed since `last_sync_time`, and skips the rest.
+4. It saves the newest timestamp it saw as the next sync point.
+5. Once everything in scope was listed from start to finish, it removes the records of objects the listing no longer returned, and of objects an extension or date filter now leaves out. (Those are still listed, but they're skipped before they count as kept.)
+6. If the **Folders** filter was narrowed, it also removes the records outside the new folders, whether or not the listing was complete.
 
 <Info>
-  Incremental syncs typically take 5-15 minutes for most buckets, regardless of total bucket size, as they only process changes.
+  How long a sync takes depends on how many objects it lists (the whole bucket, or only the included folders with **Folders** set to **In**) and how many have changed (only those are downloaded and indexed).
 </Info>
 
 ### Permission Handling
@@ -713,14 +716,15 @@ This connector is designed for **Amazon S3** and uses the AWS S3 API. It support
 </Accordion>
 
 <Accordion title="How does incremental sync work?">
-  After the initial sync, the connector uses timestamp-based incremental sync:
+  After the initial sync, each sync works like this:
   
-  1. **Stores Sync Point**: Saves the last sync timestamp for each bucket
-  2. **Queries Changes**: On next sync, queries S3 for objects modified since that timestamp
-  3. **Processes Only Changes**: Downloads and indexes only new or modified objects
-  4. **Updates Timestamp**: Saves the new maximum timestamp for the next sync
+  1. **Lists Everything in Scope**: Lists every object in the bucket, or, with a **Folders** filter set to **In**, every object in each included folder
+  2. **Skips Unchanged Objects**: Objects not modified since the last sync timestamp are counted as present but not downloaded again
+  3. **Processes Changes**: Downloads and indexes only new or modified objects
+  4. **Removes Deletions**: Once everything in scope was listed from start to finish, removes files that are no longer there
+  5. **Updates Timestamp**: Saves the newest timestamp for the next sync
   
-  This makes subsequent syncs 90%+ faster than full syncs, typically completing in 5-15 minutes regardless of bucket size.
+  Skipping unchanged objects is what makes later syncs faster than the first one. The listing itself still covers everything in scope: each included folder with a **Folders** filter set to **In**, otherwise the whole bucket.
 </Accordion>
 
 <Accordion title="Can I sync S3 Glacier files?">
@@ -737,12 +741,13 @@ This connector is designed for **Amazon S3** and uses the AWS S3 API. It support
 <Accordion title="What happens if I delete a file in S3?">
   When a file is deleted from S3:
   
-  - The deletion is detected during the next incremental sync
-  - The file record is marked as deleted in PipesHub
-  - The file is removed from search results
-  - Historical access to the file may still be available depending on your retention settings
+  - The next sync that lists everything in scope from start to finish without an error notices it's gone: each included folder with a **Folders** filter set to **In**, otherwise the whole bucket
+  - The file's record is deleted from PipesHub, along with its search index entries
+  - The file no longer appears in search results
   
-  **Note**: If you use S3 versioning, deleted files may still appear if previous versions exist.
+  If a listing fails, or resumes partway from an earlier interrupted sync, nothing is removed on that sync, even if it reaches the last page. The next complete listing removes it.
+  
+  **Note**: S3 versioning doesn't keep a deleted file visible. Once the current version is a delete marker, the listing no longer returns the key, so it is removed.
 </Accordion>
 
 <Accordion title="Can I sync encrypted S3 buckets?">
@@ -757,13 +762,9 @@ This connector is designed for **Amazon S3** and uses the AWS S3 API. It support
 </Accordion>
 
 <Accordion title="How do I sync only specific folders in a bucket?">
-  Currently, the connector syncs entire buckets. To sync only specific folders:
+  Add a **Folders** filter with the folder's path from the bucket root, for example `reports`, and set it to **In**. Subfolders are included. Set it to **Not In** to sync everything except that folder.
   
-  1. **Use Bucket Filters**: Create separate buckets for different content types
-  2. **Use File Extension Filters**: Filter to specific file types
-  3. **Use Date Filters**: Sync only recently modified files
-  
-  Folder-level filtering within a bucket is not currently supported, but may be added in future releases.
+  If you narrow the folders later, files outside them are removed from PipesHub on the next sync.
 </Accordion>
 
 </AccordionGroup>

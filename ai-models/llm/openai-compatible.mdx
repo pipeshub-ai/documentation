@@ -75,6 +75,8 @@ Enable this checkbox if your selected model has enhanced reasoning capabilities.
 
 **Note:** Reasoning models typically have different pricing and may take longer to generate responses due to their enhanced thinking process.
 
+**Default reasoning effort.** PipesHub asks a reasoning model for `high` effort unless the chat or the agent picks another level. Some providers accept only lower levels, so the model fails its check when you save it, or chats fail later. In that case, set the model's default reasoning effort to a level your provider accepts (`low`, `medium`, `high` or `max`). PipesHub then uses it whenever a chat or agent doesn't pick a level, and a level picked in the chat or on the agent still wins. When no level is picked, the chat shows the model's default: the chat input and a project's chat defaults read, for example, **Default (Low)**, and the reasoning effort picker highlights that level with the hint "Defaults to Low, this model's own default, when not set." This setting isn't in the Add Model dialog yet, so set it through the API as `configuration.defaultReasoningEffort`. See "AI Model Provider Management" in the [Configuration Manager](/system-overview/configuration-manager) API reference.
+
 ## Configuration Steps
 
 As shown in the image above:
@@ -131,6 +133,7 @@ PipesHub's OpenAI-compatible configuration works with any provider that implemen
 **Response Errors:**
 - Ensure the selected model is currently available (not deprecated)
 - Verify that multimodal/reasoning flags match the model's actual capabilities
+- If the provider says the reasoning effort isn't supported (for example, it rejects `high`), set the model's default reasoning effort to a level the provider accepts (see [Reasoning](#reasoning) above). Also check the level chosen in the chat and on the agent, because a level chosen there overrides the model's default. A level picked earlier can stay selected, and reopening a conversation brings back the level it used. If a level is selected that the provider rejects, change it to one the provider accepts
 - Check your provider's status page for any ongoing issues
 
 For additional support, refer to your provider's documentation or contact PipesHub support.

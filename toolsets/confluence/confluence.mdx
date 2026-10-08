@@ -246,18 +246,23 @@ Before configuring the Callback URL in Atlassian, copy the Redirect URI from Pip
    - **Instance Name** (e.g., `Confluence Production`)
    - **Client ID** — from Step 6
    - **Client Secret** — from Step 6
+   - **Grant Jira user access** — leave it at **No** (see note below).
 4. Click **Create**.
 
 <div className="text-center">
   <img
     src="/images/toolsets/confluence/enter-credentials.png"
-    alt="Enter Client ID and Client Secret in PipesHub"
+    alt="Enter Client ID and Client Secret in PipesHub (the dialog now also shows Grant Jira user access)"
     className="block mx-auto w-11/12"
   />
 </div>
 
 <Info>
   Client ID and Client Secret are the org's OAuth app credentials. Atlassian issues per-user tokens when each user authenticates in the next step.
+</Info>
+
+<Info>
+  **Grant Jira user access.** Leave this at **No**: the toolset then asks Atlassian only for the Confluence scopes from Step 5. The toolset doesn't use Jira, so **Yes** doesn't add anything for it; it only adds the `read:jira-user` scope to each user's sign-in request. (The email lookup through Jira that this setting's description mentions is a feature of the Confluence connector, not this toolset.) If you choose **Yes** without adding `read:jira-user` to your Atlassian app, Atlassian refuses the sign-in. The screenshot above was taken before this setting was added.
 </Info>
 
 #### Step 8: Authenticate the toolset
@@ -415,7 +420,7 @@ The Confluence tile in **Your actions** now shows **Authenticated**. The toolset
 | | OAuth 2.0 | API Token |
 |---|-----------|-----------|
 | **Best for** | Multi-user / org-wide rollouts | Cases where OAuth app registration is blocked |
-| **Org-level setup** | Client ID, Client Secret | Atlassian Site URL only |
+| **Org-level setup** | Client ID, Client Secret, Grant Jira user access | Atlassian Site URL only |
 | **Per-user setup** | OAuth popup (one click) | Each user pastes Email + API Token |
 | **Prerequisites** | Atlassian Developer Console admin access | Any Atlassian account |
 

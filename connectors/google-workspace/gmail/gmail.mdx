@@ -77,10 +77,8 @@ The Gmail connector uses OAuth 2.0 for authentication. This requires users to gr
 
 2. Search for and enable the following APIs required for Gmail sync:
    - **Gmail API** (required for email access)
-   - **Google Docs API** (required for Google Docs attachments)
-   - **Google Sheets API** (required for Google Sheets attachments)
-   - **Google Slides API** (required for Google Slides attachments)
-   - **Admin SDK API** (required for domain-wide delegation)
+   - **Google Drive API** (required for attachments that were shared as Google Drive links)
+   - **Admin SDK API** (required to list the users and groups in your domain)
 
 <div style={{ textAlign: "center", padding: "5px" }}>
   <img
@@ -136,18 +134,21 @@ The Gmail connector uses OAuth 2.0 for authentication. This requires users to gr
 4. Click **Add new** and paste the service account's client ID
 5. Add the following OAuth scopes required for Gmail sync:
 ```
-https://www.googleapis.com/auth/admin.directory.group.readonly,https://www.googleapis.com/auth/admin.reports.audit.readonly,https://www.googleapis.com/auth/admin.directory.user.readonly,https://www.googleapis.com/auth/admin.directory.domain.readonly,https://www.googleapis.com/auth/admin.directory.orgunit,https://www.googleapis.com/auth/gmail.readonly,https://www.googleapis.com/auth/documents.readonly,https://www.googleapis.com/auth/spreadsheets.readonly,https://www.googleapis.com/auth/presentations.readonly
+https://www.googleapis.com/auth/gmail.readonly,https://www.googleapis.com/auth/drive.readonly,https://www.googleapis.com/auth/admin.directory.user.readonly,https://www.googleapis.com/auth/admin.directory.group.readonly,https://www.googleapis.com/auth/admin.directory.domain.readonly,https://www.googleapis.com/auth/admin.reports.audit.readonly
 ```
 
 <Info>
 
-  These scopes are required for Gmail synchronization:
-  - `gmail.readonly`: Access to read Gmail messages
-  - `documents.readonly`: Access to Google Docs files attached to emails
-  - `spreadsheets.readonly`: Access to Google Sheets files attached to emails
-  - `presentations.readonly`: Access to Google Slides files attached to emails
-  - Admin scopes: Required for domain-wide delegation
+  PipesHub only reads. These are the only scopes the connector asks for:
+  - `gmail.readonly`: read each user's mail and attachments
+  - `drive.readonly`: open attachments that were shared as Google Drive links
+  - `admin.directory.user.readonly`, `admin.directory.group.readonly`, `admin.directory.domain.readonly`: list the users, groups and domains in your organization
+  - `admin.reports.audit.readonly`: read-only access to the admin audit log. The connector asks for it together with the directory scopes, so it must be granted even though Gmail sync does not read the log today
 </Info>
+
+<Warning>
+  Grant every scope in the list. Google refuses the whole sign-in for the service account, with an `unauthorized_client` error, if even one scope the connector asks for is missing. Extra scopes you granted earlier, such as `gmail.modify` or `gmail.send`, do no harm and can be removed.
+</Warning>
 
 6. Click **Authorize**
 

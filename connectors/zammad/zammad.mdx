@@ -65,6 +65,16 @@ The Zammad connector uses **API Access Token** authentication (HTTP Token Authen
   API operations performed with the token inherit the same permissions as the user who generated it. For full access to all tickets and data, generate the token from an **admin user account**.
 </Info>
 
+#### Before you start: Elasticsearch in Zammad
+
+<Warning>
+  **Ticket sync needs Elasticsearch configured in Zammad.** The connector finds each group's tickets through Zammad's ticket search, asking for tickets by group and by last-updated date. Without Elasticsearch, Zammad falls back to a basic database search that looks for the whole request as plain text in ticket titles and messages. That search finds no tickets, and Zammad reports no error, so the sync finishes with no tickets. We confirmed this on Zammad 6.4.1 and 6.5.2.
+</Warning>
+
+- Zammad describes Elasticsearch as optional but strongly recommended, and notes that without it search is very limited ([Zammad software requirements](https://docs.zammad.org/en/latest/prerequisites/software.html)). For this connector it is required.
+- Zammad's Docker Compose stack includes Elasticsearch by default. For a package or source install, set it up with Zammad's guide: [Connect and configure Elasticsearch](https://docs.zammad.org/en/latest/install/elasticsearch/connect-configure-elasticsearch.html).
+- Not sure whether your Zammad uses Elasticsearch? See **No tickets sync but the connection test passes** under [Troubleshooting](#troubleshooting) for a quick check.
+
 #### Step 1: Access User Profile in Zammad
 
 1. Log in to your Zammad instance with an account that has administrator privileges.
@@ -296,6 +306,18 @@ The connector preserves these permissions:
 - Use an admin user's token for full API access
 - Check that the user account is active and not locked
 - Verify the user has access to the required groups
+
+**No tickets sync but the connection test passes:**
+
+This usually means Zammad has no Elasticsearch connected. The connection test only checks the URL and API token, but ticket sync relies on Zammad's search, which finds nothing without Elasticsearch (see [Before you start](#before-you-start-elasticsearch-in-zammad)).
+
+1. Check whether Zammad has an Elasticsearch address set. Run this on the Zammad server:
+   - Package install: `zammad run rails r "p Setting.get('es_url')"`
+   - Docker Compose (from your Zammad compose folder): `docker compose run --rm zammad-railsserver bundle exec rails r "p Setting.get('es_url')"`
+
+   If it prints `nil` or `""`, Elasticsearch isn't set up, and ticket search can't find tickets.
+2. Set up Elasticsearch and build Zammad's search index by following [Connect and configure Elasticsearch](https://docs.zammad.org/en/latest/install/elasticsearch/connect-configure-elasticsearch.html). Building the index can take a long time on a large Zammad instance.
+3. When the index is built, run a sync again from **Workspace Settings** → **Connectors** in PipesHub. Tickets should now appear.
 
 **No data syncing:**
 - Verify the connector status shows "Active"

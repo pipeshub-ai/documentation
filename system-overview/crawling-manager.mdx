@@ -10,7 +10,7 @@ All endpoints are prefixed with `/api/v1/crawlingManager`
 
 All endpoints require **authentication** via `Authorization` header with valid JWT token. In addition:
 - **Endpoints for one connector** check that the caller may manage it: a team connector's schedule only by an admin, and a personal connector's only by the person who created it
-- **Admin privileges** for `DELETE /schedule/all`, because it removes the schedules of every connector in the organization, including other members' personal connectors
+- **Admin privileges** for `GET /schedule/all` and `DELETE /schedule/all`, because they list or remove the schedules of every connector in the organization, including other members' personal connectors. Any other caller gets `403` with the message "You need admin access to do this. Ask an admin in your organisation."
 
 **Headers:**
 ```
@@ -275,7 +275,7 @@ Other errors use the standard error shape (see [Error Handling](#error-handling)
 </Accordion>
 
 <Accordion title="GET /schedule/all - Get All Job Statuses">
-Retrieve all scheduled crawling jobs for the organization.
+Retrieve all scheduled crawling jobs for the organization. Admins only: any other caller is refused with `403` and the message "You need admin access to do this. Ask an admin in your organisation."
 
 **Endpoint:** `GET /api/v1/crawlingManager/schedule/all`
 
@@ -350,6 +350,7 @@ The list holds, for each connector type (the `connector` value, such as `drive`,
 Errors use the standard error shape (see [Error Handling](#error-handling)):
 
 - `401 Unauthorized` — no valid sign-in token, for example `HTTP_UNAUTHORIZED` "No token provided" or "Session expired, please login again".
+- `403 Forbidden` — the caller isn't an admin: `HTTP_FORBIDDEN` "You need admin access to do this. Ask an admin in your organisation."
 - `403 Forbidden` — an OAuth token without the `crawl:read` scope: `HTTP_FORBIDDEN` "Insufficient scope. Required: crawl:read".
 - `500 Internal Server Error` — the job queue couldn't be reached: `INTERNAL_ERROR` "Something went wrong on PipesHub's side. Please try again; if it keeps happening, ask your admin for help."
 </Tab>
@@ -393,7 +394,7 @@ Errors use the standard error shape (see [Error Handling](#error-handling)):
 </Accordion>
 
 <Accordion title="DELETE /schedule/all - Remove All Jobs">
-Remove all scheduled crawling jobs for the organization. Admins only: any other caller is refused with `400` "Admin access required", and nothing is removed.
+Remove all scheduled crawling jobs for the organization. Admins only: any other caller is refused with `403` and the message "You need admin access to do this. Ask an admin in your organisation." Nothing is removed.
 
 **Endpoint:** `DELETE /api/v1/crawlingManager/schedule/all`
 
@@ -412,8 +413,8 @@ Remove all scheduled crawling jobs for the organization. Admins only: any other 
 <Tab title="Error Responses">
 Errors use the standard error shape (see [Error Handling](#error-handling)):
 
-- `400 Bad Request` — the caller isn't an admin: `HTTP_BAD_REQUEST` "Admin access required". Nothing is removed.
 - `401 Unauthorized` — no valid sign-in token, for example `HTTP_UNAUTHORIZED` "No token provided" or "Session expired, please login again".
+- `403 Forbidden` — the caller isn't an admin: `HTTP_FORBIDDEN` "You need admin access to do this. Ask an admin in your organisation." Nothing is removed.
 - `403 Forbidden` — an OAuth token without the `crawl:delete` scope: `HTTP_FORBIDDEN` "Insufficient scope. Required: crawl:delete".
 - `500 Internal Server Error` — the job queue couldn't be reached: `INTERNAL_ERROR` "Something went wrong on PipesHub's side. Please try again; if it keeps happening, ask your admin for help."
 - `500 Internal Server Error` — the queue answered, but part of the removal failed: `HTTP_INTERNAL_SERVER_ERROR` with one of these messages, which say what may still be in place:
@@ -509,7 +510,7 @@ Errors use the standard error shape (see [Error Handling](#error-handling)):
 </Accordion>
 
 <Accordion title="GET /stats - Get Queue Statistics">
-Retrieve statistics about the crawling job queue.
+Retrieve statistics about the crawling job queue for your organization. Every count covers only your organization's jobs and schedules, never another organization's that share the same queue. Any signed-in member can call it; it isn't limited to admins.
 
 **Endpoint:** `GET /api/v1/crawlingManager/stats`
 
@@ -529,7 +530,7 @@ Retrieve statistics about the crawling job queue.
     "delayed": 1,
     "paused": 2,
     "repeatable": 8,
-    "total": 141
+    "total": 133
   }
 }
 ```
@@ -541,8 +542,8 @@ Retrieve statistics about the crawling job queue.
 - `failed` - Number of failed jobs
 - `delayed` - Number of delayed jobs
 - `paused` - Number of paused jobs  
-- `repeatable` - Number of repeatable/scheduled jobs
-- `total` - Total number of jobs across all states
+- `repeatable` - Number of schedules (repeatable jobs) the organization has
+- `total` - Sum of `waiting`, `active`, `completed`, `failed`, `delayed` and `paused`. Schedules are not runs, so `repeatable` is not part of the total
 </Tab>
 
 <Tab title="Error Responses">
@@ -619,7 +620,7 @@ The API includes built-in rate limiting and concurrency controls:
 - Jobs are automatically retried with exponential backoff (5000ms initial delay) on failure
 - Stalled jobs are detected after 30 seconds
 - Maximum 3 retry attempts for failed jobs
-- Job history retention: when a run finishes, the queue keeps at most the 10 most recent completed runs and the 10 most recent failed runs, counted across the whole queue rather than per connector. Removing or replacing a connector's schedule also trims that connector instance's finished runs to its 10 most recent. Completed runs are kept in the queue and counted by **GET /stats**, but Get Job Status and Get All leave them out; failed runs appear in all three
+- Job history retention: when a run finishes, the queue keeps at most the 10 most recent completed runs and the 10 most recent failed runs, counted across the whole queue rather than per connector. Removing or replacing a connector's schedule also trims that connector instance's finished runs to its 10 most recent. Completed runs are kept in the queue and counted by **GET /stats** (for the caller's organization), but Get Job Status and Get All leave them out; failed runs appear in all three
 - Jobs are removed and recreated when updating schedules (no job modification). The new schedule's time, cron expression and timezone are checked first, so a schedule refused for those reasons never removes the one already in place. A schedule sent with `isEnabled: false` still clears the current one
 - Removing or pausing a schedule also cancels its runs that are waiting to start, including one-time runs. If the job queue can't be reached, the request fails with `500` instead of reporting success, and a schedule is marked paused only after its runs are removed
 </Tab>
@@ -663,8 +664,8 @@ Errors raised by these endpoints use the API's standard error shape:
 **Common HTTP Status Codes:**
 - `200` - Success
 - `201` - Created (for scheduling jobs)
-- `400` - Bad Request (validation errors, invalid configuration, or a non-admin calling Remove All)
+- `400` - Bad Request (validation errors or invalid configuration)
 - `401` - Unauthorized (missing or invalid authentication)
-- `403` - Forbidden (not allowed to manage this connector, or an OAuth token missing the scope)
+- `403` - Forbidden (not allowed to manage this connector, a non-admin calling Get All or Remove All, or an OAuth token missing the scope)
 - `404` - Not Found (connector instance not found, or no scheduled job)
 - `500` - Internal Server Error

@@ -264,7 +264,7 @@ The response does not include the knowledge base. Call `GET /:kbId` to read the 
 </Accordion>
 
 <Accordion title="DELETE /:kbId - Delete Knowledge Base">
-Delete a knowledge base, with all its folders and records. Only the knowledge base's owner can delete it, and it can't be undone.
+Delete a knowledge base, with all its folders and records. Only the knowledge base's owner can delete it, and it can't be undone. Before anything is deleted, PipesHub lists the knowledge base's uploaded files and schedules their removal; if either step fails, nothing is deleted and the request returns `503`, so you can try again. A `200` means its folders and records are gone from the graph. Their search index (embeddings) and stored files are then removed by the indexing service. If storage cannot remove a file, the removal is retried until it succeeds, with no time limit, and so is a removal whose record can't be checked. If a record still lists the file, the removal waits and retries for up to one day, then keeps the file, because that record was never deleted (see the Deletion note on the Storage page). If a record in another knowledge base or connector holds identical content, its own uploaded file is not touched and the shared search index stays. If the processed copy of that content was filed under the deleted knowledge base, it is removed with the rest, and PipesHub then re-indexes the surviving record to rebuild it.
 
 <Tabs>
 <Tab title="Request">
@@ -442,7 +442,7 @@ When you attach a file, the record is renamed after that file, without its exten
 </Accordion>
 
 <Accordion title="DELETE /record/:recordId - Delete Record">
-Delete a file from a knowledge base. The record is removed from the graph database and can't be restored, and its stored file is cleaned up in the background. Only files uploaded to a knowledge base can be deleted here: a record synced from a connector is refused with `403 Forbidden`, and is removed by deleting the item in the source app.
+Delete a file from a knowledge base. The record is removed from the graph database and can't be restored. Only files uploaded to a knowledge base can be deleted here: a record synced from a connector is refused with `403 Forbidden`, and is removed by deleting the item in the source app. Before anything is deleted, PipesHub schedules the removal of its uploaded file; if that fails, nothing is deleted and the request returns `503`, so you can try again. A `200` means the record is gone from the graph. Its search index (embeddings) and its uploaded file are then removed by the indexing service. If storage cannot remove the file, the removal is retried until it succeeds, with no time limit, and so is a removal whose record can't be checked. If a record still lists the file, the removal waits and retries for up to one day, then keeps the file, because that record was never deleted (see the Deletion note on the Storage page). If another record holds identical content, the shared search index and processed content stay until the last copy is deleted.
 
 <Tabs>
 <Tab title="Request">
@@ -668,7 +668,7 @@ Update folder properties such as name.
 </Accordion>
 
 <Accordion title="DELETE /:kbId/folder/:folderId - Delete Folder">
-Delete a folder and all its contents.
+Delete a folder and all its contents, including sub-folders, the same way a record is deleted: the removal of every uploaded file inside is scheduled first (if that fails, nothing is deleted and the request returns `503`), a `200` means they are gone from the graph, and their embeddings and stored files are removed afterwards. Nothing outside the folder is touched.
 
 <Tabs>
 <Tab title="Request">
@@ -766,9 +766,14 @@ The Knowledge Base Service broadcasts events through Kafka to notify other servi
   "recordId": "rec789012",
   "version": 2,
   "extension": "pdf",
-  "mimeType": "application/pdf"
+  "mimeType": "application/pdf",
+  "summaryDocumentId": null,
+  "virtualRecordId": "vr-3f2a9c1b",
+  "connectorId": "kb345678"
 }
 ```
+
+This event cleans up the search index and processed content. If it is lost, the indexing service's periodic orphan sweep finds and removes them. Uploaded files are removed through their own event, scheduled before the record is deleted.
 </Accordion>
 
 </AccordionGroup>

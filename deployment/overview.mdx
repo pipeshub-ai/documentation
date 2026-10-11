@@ -76,6 +76,43 @@ and the Docker Compose deployment does not set that variable.
 
 Kafka is worth choosing when you expect sustained high-volume indexing across many connectors. Redis Streams is simpler to run, and is what the slim deployment uses.
 
+### Neo4j: all-or-nothing creates
+
+On Neo4j, PipesHub normally saves each step of a change on its own. Creating an
+agent, a team or a knowledge base takes several steps: the object itself, then
+the links that say who owns it and which organization it belongs to. If one of
+those later steps failed, the earlier ones stayed saved, and you were left with
+something half-made: an agent nobody owned, a team with no members, or a
+knowledge base nobody else in the organization could reach.
+
+These creates now run as one database transaction, which means their steps are
+saved together or not at all. If anything goes wrong partway, nothing is kept,
+and trying again starts from a clean slate. This covers:
+
+- creating an agent
+- creating a team
+- creating a knowledge base, including the private knowledge base each new user gets
+- repairing a private knowledge base that is missing some of its links
+
+The setting that controls this is `NEO4J_CREATE_TRANSACTIONS`. It is on
+(`true`) by default, so you do not need to set it.
+
+While a transaction runs, it locks the few records it touches (the user and the
+organization) until it finishes, which for these creates takes milliseconds. If
+you ever see other work waiting on those locks, for example connector syncs
+slowing down at the moment people create agents or knowledge bases, you can
+turn it off:
+
+```bash
+NEO4J_CREATE_TRANSACTIONS=false
+```
+
+Add that line to `.env` and recreate the containers with
+`./install.sh --upgrade`. On Kubernetes, set it under `extraEnv` in your Helm
+values. Turning it off brings back the old behaviour, where each step is saved
+on its own. The setting has no effect on ArangoDB, which always saves these
+creates all-or-nothing.
+
 ## Day-two operations
 
 Run these from the directory the installer prints when it finishes:

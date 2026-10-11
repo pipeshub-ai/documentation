@@ -78,16 +78,19 @@ Kafka is worth choosing when you expect sustained high-volume indexing across ma
 
 ### Neo4j: all-or-nothing creates
 
-On Neo4j, PipesHub normally saves each step of a change on its own. Creating an
+This arrives in the first PipesHub release after v0.9.1. Up to and including
+v0.9.1, PipesHub on Neo4j saves each step of a change on its own. Creating an
 agent, a team or a knowledge base takes several steps: the object itself, then
 the links that say who owns it and which organization it belongs to. If one of
-those later steps failed, the earlier ones stayed saved, and you were left with
-something half-made: an agent nobody owned, a team with no members, or a
-knowledge base nobody else in the organization could reach.
+those later steps fails, the earlier ones stay saved, and you are left with
+something half-made: an agent with no owner, a team with no members, or a
+knowledge base that is missing its owner's permission or its link to the
+organization.
 
-These creates now run as one database transaction, which means their steps are
-saved together or not at all. If anything goes wrong partway, nothing is kept,
-and trying again starts from a clean slate. This covers:
+From that release on, these creates run as one database transaction, which
+means their steps are saved together or not at all. If anything goes wrong
+partway, nothing is kept, and trying again starts from a clean slate. This
+covers:
 
 - creating an agent
 - creating a team
@@ -107,11 +110,17 @@ turn it off:
 NEO4J_CREATE_TRANSACTIONS=false
 ```
 
-Add that line to `.env` and recreate the containers with
+With Docker Compose, add that line to `.env`. The setting only reaches PipesHub
+through a `docker-compose.yml` from that same release or later, and
+`./install.sh --upgrade` keeps the `docker-compose.yml` already on disk. So
+update the file first: re-run the `curl` installer, or run `git pull` if you
+installed from a clone of the repository. Then recreate the containers with
 `./install.sh --upgrade`. On Kubernetes, set it under `extraEnv` in your Helm
-values. Turning it off brings back the old behaviour, where each step is saved
-on its own. The setting has no effect on ArangoDB, which always saves these
-creates all-or-nothing.
+values.
+
+Turning it off brings back the old behaviour, where each step is saved on its
+own, unless you have also set `NEO4J_EXPLICIT_TRANSACTIONS=true`. The setting
+has no effect on ArangoDB, which always saves these creates all-or-nothing.
 
 ## Day-two operations
 

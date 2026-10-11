@@ -110,13 +110,29 @@ turn it off:
 NEO4J_CREATE_TRANSACTIONS=false
 ```
 
-With Docker Compose, add that line to `.env`. The setting only reaches PipesHub
-through a `docker-compose.yml` from that same release or later, and
-`./install.sh --upgrade` keeps the `docker-compose.yml` already on disk. So
-update the file first: re-run the `curl` installer, or run `git pull` if you
-installed from a clone of the repository. Then recreate the containers with
-`./install.sh --upgrade`. On Kubernetes, set it under `extraEnv` in your Helm
-values.
+With Docker Compose, add that line to `.env`. Compose only passes it to
+PipesHub if your `docker-compose.yml` lists it, which it does from the release
+that adds this setting onwards. `./install.sh --upgrade` keeps the
+`docker-compose.yml` already on disk, so update that file first:
+
+- **Installed with the `curl` command:** run the same `curl` command again from
+  the directory you first ran it in, which is the folder that contains your
+  `pipeshub` folder, or set `PIPESHUB_DIR` to your existing install folder. Run
+  from inside the install folder, it downloads a second copy into a nested
+  `pipeshub/pipeshub/` and leaves yours unchanged. This also runs the installer
+  again.
+- **Installed from a clone of the repository:** run `git pull`.
+
+Then recreate the containers with `./install.sh --upgrade`.
+
+On Kubernetes, add it to `extraEnv` in your Helm values. It is a list of
+name and value pairs:
+
+```yaml
+extraEnv:
+  - name: NEO4J_CREATE_TRANSACTIONS
+    value: "false"
+```
 
 Turning it off brings back the old behaviour, where each step is saved on its
 own, unless you have also set `NEO4J_EXPLICIT_TRANSACTIONS=true`. The setting

@@ -102,11 +102,18 @@ covers:
 The setting that controls this is `NEO4J_CREATE_TRANSACTIONS`. It is on
 (`true`) by default, so you do not need to set it.
 
-While a transaction runs, it locks the few records it touches (the user and the
-organization) until it finishes, which for these creates takes milliseconds. If
-you ever see other work waiting on those locks, for example connector syncs
-slowing down at the moment people create agents or knowledge bases, you can
-turn it off:
+While a transaction runs, it locks the records it links to until it finishes,
+which for these creates usually takes milliseconds:
+
+- creating an agent locks its owner, and the organization too when the agent is
+  shared with it
+- creating a team locks the person creating it and every member, so a team with
+  many members locks many users at once
+- creating a knowledge base locks its owner and the organization
+
+If you ever see other work waiting on those locks, for example connector syncs
+slowing down at the moment people create teams, agents or knowledge bases, you
+can turn it off:
 
 ```bash
 NEO4J_CREATE_TRANSACTIONS=false

@@ -78,30 +78,26 @@ Kafka is worth choosing when you expect sustained high-volume indexing across ma
 
 ### Neo4j: all-or-nothing creates
 
-This arrives in the first PipesHub release after v0.9.1. Up to and including
-v0.9.1, PipesHub on Neo4j saves each step of a change on its own. Creating an
-agent, a team or a knowledge base takes several steps: the object itself, then
-the links that say who owns it and which organization it belongs to. If one of
-those later steps fails, the earlier ones stay saved, and you are left with
-something half-made: an agent with no owner, a team with no members, or a
-knowledge base that is missing its owner's permission or its link to the
-organization.
-
-From that release on, these creates run as one database transaction, which
-means their steps are saved together or not at all. If anything goes wrong
-partway, nothing is kept, and trying again starts from a clean slate. This
-covers:
+From 0.10.0, PipesHub on Neo4j saves each of these creates as one database
+transaction, so all of its steps are saved together or none are:
 
 - creating an agent
 - creating a team
 - creating a knowledge base, including the private knowledge base each new user gets
 - repairing a private knowledge base that is missing some of its links
 
-The setting that controls this is `NEO4J_CREATE_TRANSACTIONS`. It is on
-(`true`) by default, so you do not need to set it.
+Each create takes several steps: the object itself, then the links that say who
+owns it and which organization it belongs to. If a step fails, nothing is kept,
+and trying again starts from a clean slate. Saved step by step instead, a
+failure leaves something half-made: an agent with no owner, a team with no
+members, or a knowledge base missing its owner's permission or its link to the
+organization.
 
-While a transaction runs, it locks the records it links to until it finishes,
-which for these creates usually takes milliseconds:
+The setting `NEO4J_CREATE_TRANSACTIONS` controls this. It is on (`true`) by
+default, so you do not need to set it.
+
+A transaction locks the records it links to until it finishes, which for these
+creates usually takes milliseconds:
 
 - creating an agent locks its owner, and the organization too when the agent is
   shared with it
@@ -109,31 +105,30 @@ which for these creates usually takes milliseconds:
   many members locks many users at once
 - creating a knowledge base locks its owner and the organization
 
-If you ever see other work waiting on those locks, for example connector syncs
-slowing down at the moment people create teams, agents or knowledge bases, you
-can turn it off:
+If other work waits on those locks, for example connector syncs slow down while
+people create teams, agents or knowledge bases, turn the setting off:
 
 ```bash
 NEO4J_CREATE_TRANSACTIONS=false
 ```
 
-With Docker Compose, add that line to `.env`. Compose only passes it to
-PipesHub if your `docker-compose.yml` lists it, which it does from the release
-that adds this setting onwards. `./install.sh --upgrade` keeps the
-`docker-compose.yml` already on disk, so update that file first:
+With Docker Compose, add that line to `.env`. Compose passes it to PipesHub only
+if your `docker-compose.yml` lists it, which the file does from 0.10.0.
+`./install.sh --upgrade` keeps the `docker-compose.yml` already on disk, so
+update that file first:
 
 - **Installed with the `curl` command:** run the same `curl` command again from
-  the directory you first ran it in, which is the folder that contains your
-  `pipeshub` folder, or set `PIPESHUB_DIR` to your existing install folder. Run
-  from inside the install folder, it downloads a second copy into a nested
+  the directory you first ran it in (the folder that contains your `pipeshub`
+  folder), or set `PIPESHUB_DIR` to your existing install folder. Run from
+  inside the install folder, it downloads a second copy into a nested
   `pipeshub/pipeshub/` and leaves yours unchanged. This also runs the installer
   again.
 - **Installed from a clone of the repository:** run `git pull`.
 
 Then recreate the containers with `./install.sh --upgrade`.
 
-On Kubernetes, add it to `extraEnv` in your Helm values. It is a list of
-name and value pairs:
+On Kubernetes, add `NEO4J_CREATE_TRANSACTIONS` to `extraEnv` in your Helm
+values, which is a list of name and value pairs:
 
 ```yaml
 extraEnv:
@@ -141,9 +136,10 @@ extraEnv:
     value: "false"
 ```
 
-Turning it off brings back the old behaviour, where each step is saved on its
-own, unless you have also set `NEO4J_EXPLICIT_TRANSACTIONS=true`. The setting
-has no effect on ArangoDB, which always saves these creates all-or-nothing.
+With `NEO4J_CREATE_TRANSACTIONS=false`, each step of these creates is saved on
+its own, unless you have also set `NEO4J_EXPLICIT_TRANSACTIONS=true`. The
+setting has no effect on ArangoDB, which always saves these creates
+all-or-nothing.
 
 ## Day-two operations
 

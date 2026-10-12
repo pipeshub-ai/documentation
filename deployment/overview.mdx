@@ -93,9 +93,16 @@ failure leaves something half-made: an agent with no owner, a team with no
 members, or a knowledge base missing its owner's permission or its link to the
 organization.
 
-On Neo4j and ArangoDB alike, an agent's MCP servers are added after the agent
-is saved, each in its own transaction. If one fails, the agent and its other MCP servers are kept. Edit
-the agent to add that MCP server again.
+An agent's MCP servers are added after the agent is saved, one at a time. If
+one fails, the agent and its other MCP servers are kept.
+
+- **`NEO4J_CREATE_TRANSACTIONS` on (the default), and on ArangoDB:** each MCP
+  server is added in its own transaction, so a failed one leaves nothing behind.
+  Edit the agent to add that MCP server again.
+- **`NEO4J_CREATE_TRANSACTIONS` off, on Neo4j:** an MCP server's writes are
+  saved as they go. PipesHub removes what it can of a failed one. If it can't
+  remove all of it, the error says the server may be partly attached: edit the
+  agent to remove that MCP server and add it again.
 
 The setting `NEO4J_CREATE_TRANSACTIONS` controls this. It is on (`true`) by
 default, so you do not need to set it.

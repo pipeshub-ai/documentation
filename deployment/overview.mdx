@@ -81,7 +81,7 @@ Kafka is worth choosing when you expect sustained high-volume indexing across ma
 From 0.10.0, PipesHub on Neo4j saves each of these creates as one database
 transaction, so all of its steps are saved together or none are:
 
-- creating an agent
+- creating an agent, with its permissions, toolsets, knowledge and skills
 - creating a team
 - creating a knowledge base, including the private knowledge base each new user gets
 - repairing a private knowledge base that is missing some of its links
@@ -92,6 +92,10 @@ and trying again starts from a clean slate. Saved step by step instead, a
 failure leaves something half-made: an agent with no owner, a team with no
 members, or a knowledge base missing its owner's permission or its link to the
 organization.
+
+An agent's MCP servers are added after the agent is saved, each in its own
+transaction. If one fails, the agent and its other MCP servers are kept. Edit
+the agent to add that MCP server again.
 
 The setting `NEO4J_CREATE_TRANSACTIONS` controls this. It is on (`true`) by
 default, so you do not need to set it.

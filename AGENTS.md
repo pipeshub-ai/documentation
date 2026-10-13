@@ -24,7 +24,7 @@ The Mintlify CLI is not preinstalled. Install it with `npm i -g mint` (older doc
 
 ## Images and logos
 
-- Screenshots go under `images/<section>/...`. Put a new screenshot in the folder that page's existing images already use (check the `src` values on the page, or on a sibling page if it has none). Folder names do not reliably follow the page path: e.g. Google Workspace and Microsoft 365 connector pages use `images/connectors/googleWorkspace/` and `images/connectors/microsoft365/`, while their toolset pages each have their own folder (`images/toolsets/gmail/`, `images/toolsets/outlook/`, …).
+- Screenshots go under `images/<section>/...`. Put a new screenshot in the folder that page's existing images already use (check the `src` values on the page, or on a sibling page if it has none). Folder names do not reliably follow the page path: the Drive connector page (`connectors/google-workspace/drive/drive`), for example, uses `images/connectors/googleWorkspace/`.
 - Product and vendor logos go flat in `logo/` (e.g. `logo/confluence.png`).
 - Reference both with root-absolute paths: `![Alt](/images/...)` or `src="/logo/..."`.
 

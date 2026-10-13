@@ -24,7 +24,7 @@ The Mintlify CLI is not preinstalled. Install it with `npm i -g mint` (older doc
 
 ## Images and logos
 
-- Screenshots go under `images/<section>/...`, mirroring the page path, e.g. `images/connectors/confluence/`, `images/ai-models/llm/`, `images/toolsets/`.
+- Screenshots go under `images/<section>/...`. Use the folder the page's existing images already use (check the `src` on the page or a sibling): most follow the page path (`images/connectors/confluence/`, `images/ai-models/llm/`), but Google Workspace and Microsoft 365 pages use `images/connectors/googleWorkspace/`, `images/connectors/microsoft365/`, `images/toolsets/gmail/`, `images/toolsets/ms-teams/`.
 - Product and vendor logos go flat in `logo/` (e.g. `logo/confluence.png`).
 - Reference both with root-absolute paths: `![Alt](/images/...)` or `src="/logo/..."`.
 
@@ -35,7 +35,7 @@ The Mintlify CLI is not preinstalled. Install it with `npm i -g mint` (older doc
 
 ## Agent-facing pages
 
-`llms.txt` is hand-written and overrides the one Mintlify would generate. It and `for-agents.mdx`, `for-agents-local-demo.mdx`, `for-agents-bootstrap.mdx` tell coding agents how to install PipesHub and connect over MCP. Update them when any of these change: install command or Docker defaults, ports or the instance URL, the `/mcp` endpoint, MCP tool list, PAT or OAuth flow, first-run steps, or SDK package names. `llms.txt` links use `https://docs.pipeshub.com/<path>.md`.
+`llms.txt` is hand-written and overrides the one Mintlify would generate. It, `for-agents.mdx`, `for-agents-local-demo.mdx`, `for-agents-bootstrap.mdx`, and `docs.json` → `markdown.instructions` (prepended to every page's Markdown export) tell coding agents how to install PipesHub and connect over MCP. Update them when any of these change: install command or Docker defaults, ports or the instance URL, the `/mcp` endpoint, MCP tool list, PAT or OAuth flow, first-run steps, or SDK package names. `llms.txt` links use `https://docs.pipeshub.com/<path>.md`.
 
 When you add or rename an MCP tool, update `mcp/tools.mdx` and the tool count in `llms.txt`.
 

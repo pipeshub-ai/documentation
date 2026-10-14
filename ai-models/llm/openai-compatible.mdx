@@ -77,7 +77,7 @@ Enable this checkbox if your selected model has enhanced reasoning capabilities.
 
 **Default reasoning effort.** For a model with **Reasoning** on, PipesHub sends the model's saved `defaultReasoningEffort` whenever a chat or agent doesn't pick a reasoning effort. With no saved default, it sends `high`, the platform default. The check run when you save the model sends the same effort. If the provider rejects that effort, the model fails its check when you save it, and chats fail later. To fix it, set the model's default reasoning effort to a level the provider accepts. When `high` is the effort rejected, choose `low`, `medium` or `max`.
 
-A level picked in a chat or agent still wins over the model's default. When no level is picked, the chat input and a project's chat defaults show it, for example **Default (Low)**, and the reasoning effort picker highlights that level with the hint "Defaults to Low, this model's own default, when not set."
+A level picked in a chat or agent still wins over the model's default. The reasoning effort picker starts with **Model default**, labelled with that default when the model has one, for example **Model default (Low)**. In an agent chat with its own default, the option reads **Agent default (Medium)**, for example. Choose it to go back to the default after picking a level. A picked level lasts until you close or reload PipesHub, and reopening a conversation doesn't bring back the level it used. When no level is picked, the chat input and a project's chat defaults show the default, for example **Default (Low)**.
 
 The Add Model dialog doesn't have this setting. Set it through the API as `configuration.defaultReasoningEffort` (see "AI Model Provider Management" in the [Configuration Manager](/system-overview/configuration-manager) API reference).
 
@@ -137,7 +137,7 @@ PipesHub's OpenAI-compatible configuration works with any provider that implemen
 **Response Errors:**
 - Ensure the selected model is currently available (not deprecated)
 - Verify that multimodal/reasoning flags match the model's actual capabilities
-- If the provider rejects the reasoning effort (for example, `high`), set the model's default reasoning effort to a level it accepts (see [Reasoning](#reasoning)). Also check the level chosen in the chat and on the agent, which overrides the model's default: a level picked earlier can stay selected, and reopening a conversation brings back the level it used. Change a rejected level to one the provider accepts
+- If the provider rejects the reasoning effort (for example, `high`), set the model's default reasoning effort to a level it accepts (see [Reasoning](#reasoning)). Also check the level picked in the chat and the agent's own default, which both override the model's default. Change a rejected level to one the provider accepts. In a chat, **Model default** goes back to the model's default. In an agent chat the same option reads **Agent default** and uses the agent's level, so to drop a rejected agent default, set the agent's reasoning effort to **Model default** in the agent builder
 - Check your provider's status page for any ongoing issues
 
 For additional support, refer to your provider's documentation or contact PipesHub support.

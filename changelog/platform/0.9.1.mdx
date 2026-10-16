@@ -121,7 +121,7 @@ try {
 
 - **A user token on 22 endpoints.** OAuth apps, personal access tokens, user info, org auth config and reset password now send only the user token. If you set up only an app token, add a user token:
   ```ts
-  const sdk = new Pipeshub(\{ security: \{ bearerAuth: userToken \} \});
+  const sdk = new Pipeshub({ security: { bearerAuth: userToken } });
   ```
 - **Stream event `data` stays a string.** Code that calls `JSON.parse(event.data)` keeps working.
 
@@ -344,7 +344,7 @@ for _, c := range msg.Citations {
 
 - **A user token on 22 endpoints.** OAuth apps, personal access tokens, user info, org auth config and reset password now send only the user token. If you set up only an app token, add a user token:
   ```go
-  s := pipeshub.New(pipeshub.WithSecurity(components.Security\{BearerAuth: pipeshub.Pointer(userToken)\}))
+  s := pipeshub.New(pipeshub.WithSecurity(components.Security{BearerAuth: pipeshub.Pointer(userToken)}))
   ```
 - **Stream event `data` stays a string.** Code that reads `*ev.Data` keeps working.
 

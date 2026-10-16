@@ -28,7 +28,7 @@ const PRODUCTS = {
 };
 
 const CHANNELS = ['Stable', 'Beta', 'Alpha', 'Pre-release'];
-const REQUIRED = ['version', 'date', 'channel', 'release_url', 'summary'];
+const REQUIRED = ['title', 'version', 'date', 'channel', 'release_url', 'summary'];
 const SEMVER = /^(\d+)\.(\d+)\.(\d+)(?:-([0-9A-Za-z.-]+))?$/;
 
 const fail = (message) => {
@@ -59,7 +59,18 @@ function compareSemver(a, b) {
   if (!aPre && !bPre) return 0;
   if (!aPre) return 1; // a release is newer than its own pre-release
   if (!bPre) return -1;
-  return aPre < bPre ? -1 : aPre > bPre ? 1 : 0;
+  // SemVer 11.4: dot-separated identifiers, numeric ones compare as numbers and rank below text.
+  const x = aPre.split('.');
+  const y = bPre.split('.');
+  for (let i = 0; i < Math.min(x.length, y.length); i++) {
+    if (x[i] === y[i]) continue;
+    const xn = /^\d+$/.test(x[i]);
+    const yn = /^\d+$/.test(y[i]);
+    if (xn && yn) return Number(x[i]) - Number(y[i]);
+    if (xn !== yn) return xn ? -1 : 1;
+    return x[i] < y[i] ? -1 : 1;
+  }
+  return x.length - y.length;
 }
 
 function loadVersions(product) {
@@ -80,6 +91,7 @@ function loadVersions(product) {
       continue;
     }
     if (!SEMVER.test(data.version)) fail(`${file}: version "${data.version}" is not semver`);
+    if (data.title !== data.version) fail(`${file}: title must equal version`);
     if (`${data.version}.mdx` !== name) fail(`${file}: file name must be ${data.version}.mdx`);
     if (!/^\d{4}-\d{2}-\d{2}$/.test(data.date)) fail(`${file}: date must be YYYY-MM-DD`);
     if (!CHANNELS.includes(data.channel)) fail(`${file}: channel must be one of ${CHANNELS.join(', ')}`);

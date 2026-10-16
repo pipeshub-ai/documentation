@@ -42,7 +42,7 @@ jobs:
 
       - name: Commit the generated pages
         run: |
-          if git diff --quiet; then
+          if [ -z "$(git status --porcelain changelog)" ]; then
             echo "Generated pages are current."
             exit 0
           fi

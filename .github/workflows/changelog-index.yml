@@ -1,0 +1,55 @@
+name: Changelog index
+
+# A release job adds one file, changelog/{product}/{version}.mdx. Mintlify
+# imports files by explicit path, so the product page that lists every version
+# is generated from those files. This workflow regenerates it on the PR branch
+# and then validates the result.
+#
+# Pushes made with GITHUB_TOKEN do not start new workflow runs, so a required
+# status check will not run on the index commit. If branch protection requires
+# checks, push with a GitHub App token instead of GITHUB_TOKEN.
+on:
+  pull_request:
+    paths:
+      - 'changelog/**'
+      - 'scripts/changelog/**'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: changelog-index-${{ github.head_ref }}
+  cancel-in-progress: true
+
+jobs:
+  index:
+    # Fork PRs get a read-only token and cannot be pushed to.
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Regenerate the product pages
+        run: node scripts/changelog/build-index.mjs
+
+      - name: Commit the generated pages
+        run: |
+          if [ -z "$(git status --porcelain changelog)" ]; then
+            echo "Generated pages are current."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add changelog
+          git commit -m "docs(changelog): regenerate product pages"
+          git push
+
+      - name: Validate
+        run: node scripts/changelog/build-index.mjs --check

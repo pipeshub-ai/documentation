@@ -130,6 +130,7 @@ Open the **Scopes** section in the app builder and add the following **admin-sco
 | Scope | Purpose |
 |-------|---------|
 | `user:read:list_users:admin` | List all users in the Zoom account |
+| `user:read:user:admin` | Identify the admin who authorizes the app |
 | `report:read:user:admin` | Read per-user activity reports (meeting history) |
 | `report:read:list_meeting_participants:admin` | List meeting participants via Report API |
 | `meeting:read:meeting:admin` | Read meeting details (subject, settings, alt-hosts) |
@@ -139,7 +140,7 @@ Open the **Scopes** section in the app builder and add the following **admin-sco
 <div className="text-center">
   <img
     src="/images/connectors/zoom/scopes.png"
-    alt="Add the six admin scopes to the Zoom app"
+    alt="Add the admin scopes to the Zoom app"
     className="block mx-auto w-11/12"
   />
 </div>
@@ -147,6 +148,12 @@ Open the **Scopes** section in the app builder and add the following **admin-sco
 <Info>
   All scopes are **admin-scoped** (`*:admin`). Only Admin-managed apps can request these; User-managed apps cannot. If you chose User-managed in Step 2, you will not see these scopes in the list — delete the app and create a new Admin-managed one.
 </Info>
+
+<Note>
+  `user:read:user:admin` lets PipesHub read which Zoom admin authorized the app. If that admin's Zoom email differs from the email of the PipesHub user who set up the connector, that PipesHub user still gets the admin's access to the meetings this connector syncs.
+
+  **Connector already set up?** If your Zoom app doesn't have `user:read:user:admin` yet, add it in the app's **Scopes** section first, then click **Reauthenticate** on the connector's **Authorize** tab. Zoom refuses an authorization that asks for a scope the app doesn't have. Until you reauthenticate, the connector keeps syncing as before and logs a warning on each sync.
+</Note>
 
 #### Step 6: Copy Client ID and Client Secret
 
@@ -300,7 +307,7 @@ The Zoom connector syncs the following from your Zoom account:
 
 **Scopes missing on the consent screen:**
 - If admin scopes are not shown when authorizing, the app was likely created as **User-managed** instead of **Admin-managed**. Delete the app and create a new Admin-managed one.
-- Confirm all six scopes are added in the **Scopes** section of the app builder before authorizing.
+- Confirm all seven scopes are added in the **Scopes** section of the app builder before authorizing.
 
 **Authorization blocked — "Only admins can install this app":**
 - Only a Zoom **admin** can authorize an Admin-managed app. Sign out and sign back in as an admin, then retry **Authenticate** on the Authorize tab.
@@ -396,6 +403,7 @@ Every sync runs in this order:
 The connector syncs meeting history for **every user in the account**, not just the authorizing user. That requires admin-scoped APIs — specifically:
 
 - **List all users** in the account → `user:read:list_users:admin`
+- **Identify the admin** who authorized the app → `user:read:user:admin`
 - **Read meeting history** per user via the Report API → `report:read:user:admin`
 - **Fetch meeting participants** → `report:read:list_meeting_participants:admin`
 - **Meeting details and recording share URLs** across the account → `meeting:read:meeting:admin`, `cloud_recording:read:list_recording_files:admin`, `cloud_recording:read:meeting_transcript:admin`

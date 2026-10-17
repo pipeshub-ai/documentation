@@ -1,0 +1,80 @@
+---
+title: "Google Docs Toolset"
+description: "Let agents read, create and edit Google Docs"
+icon: "/logo/gdocs.png"
+---
+
+The Google Docs toolset lets an agent read a Google Doc, create a new one, add text, replace text, and make other edits, acting as the Google account that connected the toolset.
+
+## What agents can do
+
+| Tool | What it does |
+|------|-------------|
+| `get_document` | Read a document's title, link, and the text of every tab, child tabs included. A long document is cut at 60,000 characters and marked `truncated`; later tabs are left out |
+| `create_document` | Create a new document, optionally with starting text |
+| `insert_text` | Add text at a position, or at the end, in the first tab or a tab you name |
+| `replace_text` | Replace every occurrence of some text, in every tab or one tab, and report how many changed |
+| `batch_update_document` | Apply Google Docs API edits the other tools don't cover, such as styles, tables or deleting a range |
+
+Tools that change a document (`create_document`, `insert_text`, `replace_text`, `batch_update_document`) act in the connected account. In a chat in the PipesHub app, each one asks the user to approve it before it runs, unless an admin has pre-approved it in the action's **Tool approvals**. Where nobody can approve (the Slack bot, the API, the PipesHub MCP server, and service-account agents), these tools run only if they are pre-approved; the read tools run as usual.
+
+**Tabs.** `get_document` labels each tab's text with its title and `tab_id`. Without a `tab_id`, `insert_text` writes into the first tab and `replace_text` changes every tab; give a `tab_id` to work in one tab.
+
+If `create_document` creates the document but can't add its starting text, it says so and gives the new document's id: the agent then adds the text with `insert_text` instead of creating a second document.
+
+A tool finds a document by its id: the part of the link after `/document/d/`. To work with a document you only know by name, also add the [Drive toolset](/toolsets/google-workspace/drive) so the agent can search for it.
+
+## Permissions it asks for
+
+| Scope | Why |
+|-------|-----|
+| `https://www.googleapis.com/auth/documents` | A sensitive scope: it lets the action read, edit, create and delete **all** of the connected account's Google Docs, not only ones the agent created |
+
+Docs has its own sign-in, separate from Drive, Gmail and Calendar, so connecting it never asks those actions to sign in again.
+
+## Set up
+
+An admin sets the action up once; then each person who wants agents to use it signs in with their own Google account.
+
+<Steps>
+  <Step title="Enable the Google Docs API">
+    In [Google Cloud Console](https://console.cloud.google.com/), open your project, go to **APIs & Services > Library**, search for **Google Docs API** and click **Enable**.
+  </Step>
+  <Step title="Add the scope">
+    Add `https://www.googleapis.com/auth/documents` to your OAuth app's scopes. In the newer console layout that is **Google Auth Platform > Data Access > Add or Remove Scopes**; in the older one, **APIs & Services > OAuth consent screen > Scopes**.
+  </Step>
+  <Step title="Start the setup in PipesHub">
+    Go to **Workspace > Actions**, find **Docs** and click **Setup**. The **Action configuration** panel shows the **Redirect URI**; copy it.
+  </Step>
+  <Step title="Create an OAuth client">
+    In **APIs & Services > Credentials** (or **Google Auth Platform > Clients**), create an OAuth client of type **Web application**, paste the redirect URI under **Authorized redirect URIs**, and create it. Copy the **Client ID** and **Client secret**.
+  </Step>
+  <Step title="Finish the action configuration">
+    Back in the **Action configuration** panel, enter an **Instance name**, an **OAuth app name**, the **Client ID** and the **Client secret**, then click **Create**.
+  </Step>
+  <Step title="Each person signs in">
+    Each user opens **Your actions**, finds the Docs action and clicks **Authenticate**, signs in to Google and allows access. The action then shows **Authenticated**.
+  </Step>
+</Steps>
+
+You can reuse the OAuth client of your other Google actions: add this action's redirect URI to it and enable the Google Docs API in the same project.
+
+## Errors you may see
+
+| Message | What to do |
+|---------|-----------|
+| "…has not given this app permission to do that. Reconnect Docs under Your actions and allow Google Docs access…" | Open **Your actions**, open the Docs action, click **Manage connection**, then **Reconnect**, and allow the permission. If Google doesn't ask for it, an admin adds the scope to the OAuth app (see [Set up](#set-up)) |
+| "…could not find that document…" | Check the document id, and that the connected account can open the document |
+| "…is receiving too many requests right now…" | Wait the time the message gives, then try again |
+| "…the Google sign-in has expired or was revoked. Reconnect Docs under Your actions…" | Open **Your actions**, open the Docs action, click **Manage connection**, then **Reconnect** |
+
+## FAQ
+
+<AccordionGroup>
+<Accordion title="How is this different from the Google Docs connector?">
+The [connector](/connectors/google-workspace/docs/docs) indexes documents so they appear in search and chat answers. The toolset lets an agent act on documents: create them and change them. Use both if agents should find documents and also edit them.
+</Accordion>
+<Accordion title="Can an agent read a document it found through search?">
+Yes. Search results link to the document, and `get_document` reads it by the id in that link, as long as the connected account can open it.
+</Accordion>
+</AccordionGroup>

@@ -1,0 +1,82 @@
+---
+title: "Google Sheets Toolset"
+description: "Let agents read and update Google Sheets"
+icon: "/logo/gsheets.png"
+---
+
+The Google Sheets toolset lets an agent create a spreadsheet, read cells, write cells, add rows and clear ranges, acting as the Google account that connected the toolset.
+
+## What agents can do
+
+| Tool | What it does |
+|------|-------------|
+| `create_spreadsheet` | Create a new spreadsheet, optionally with named sheets (tabs) |
+| `get_spreadsheet` | List a spreadsheet's sheets and their sizes, without the cell values |
+| `get_values` | Read the cells in one range |
+| `batch_get_values` | Read several ranges in one call |
+| `update_values` | Overwrite the cells in a range |
+| `append_values` | Add rows after the last row of data, without overwriting anything |
+| `clear_values` | Erase the values in a range, keeping its formatting |
+
+Tools that change a spreadsheet (`create_spreadsheet`, `update_values`, `append_values`, `clear_values`) act in the connected account. In a chat in the PipesHub app, each one asks the user to approve it before it runs, unless an admin has pre-approved it in the action's **Tool approvals**. Where nobody can approve (the Slack bot, the API, the PipesHub MCP server, and service-account agents), these tools run only if they are pre-approved; the read tools run as usual.
+
+**Ranges** use A1 notation, for example `Sheet1!A1:C10`, or just a sheet name such as `Sheet1` for the whole sheet. **Values are written as if typed** into the sheet by default (`USER_ENTERED`), so writing `=SUM(A1:A3)` stores a formula and `2026-10-15` a date. An agent can ask for `RAW` to store values exactly as given.
+
+Reads return up to 20,000 cells; a larger range is cut and marked `truncated`, so ask for a smaller range.
+
+A tool finds a spreadsheet by its id: the part of the link after `/spreadsheets/d/`. To work with a spreadsheet you only know by name, also add the [Drive toolset](/toolsets/google-workspace/drive) so the agent can search for it.
+
+## Permissions it asks for
+
+| Scope | Why |
+|-------|-----|
+| `https://www.googleapis.com/auth/spreadsheets` | A sensitive scope: it lets the action read, edit, create and delete **all** of the connected account's Google Sheets, not only ones the agent created |
+
+Sheets has its own sign-in, separate from Drive, Gmail and Calendar, so connecting it never asks those actions to sign in again.
+
+## Set up
+
+An admin sets the action up once; then each person who wants agents to use it signs in with their own Google account.
+
+<Steps>
+  <Step title="Enable the Google Sheets API">
+    In [Google Cloud Console](https://console.cloud.google.com/), open your project, go to **APIs & Services > Library**, search for **Google Sheets API** and click **Enable**.
+  </Step>
+  <Step title="Add the scope">
+    Add `https://www.googleapis.com/auth/spreadsheets` to your OAuth app's scopes. In the newer console layout that is **Google Auth Platform > Data Access > Add or Remove Scopes**; in the older one, **APIs & Services > OAuth consent screen > Scopes**.
+  </Step>
+  <Step title="Start the setup in PipesHub">
+    Go to **Workspace > Actions**, find **Sheets** and click **Setup**. The **Action configuration** panel shows the **Redirect URI**; copy it.
+  </Step>
+  <Step title="Create an OAuth client">
+    In **APIs & Services > Credentials** (or **Google Auth Platform > Clients**), create an OAuth client of type **Web application**, paste the redirect URI under **Authorized redirect URIs**, and create it. Copy the **Client ID** and **Client secret**.
+  </Step>
+  <Step title="Finish the action configuration">
+    Back in the **Action configuration** panel, enter an **Instance name**, an **OAuth app name**, the **Client ID** and the **Client secret**, then click **Create**.
+  </Step>
+  <Step title="Each person signs in">
+    Each user opens **Your actions**, finds the Sheets action and clicks **Authenticate**, signs in to Google and allows access. The action then shows **Authenticated**.
+  </Step>
+</Steps>
+
+You can reuse the OAuth client of your other Google actions: add this action's redirect URI to it and enable the Google Sheets API in the same project.
+
+## Errors you may see
+
+| Message | What to do |
+|---------|-----------|
+| "…has not given this app permission to do that. Reconnect Sheets under Your actions and allow Google Sheets access…" | Open **Your actions**, open the Sheets action, click **Manage connection**, then **Reconnect**, and allow the permission. If Google doesn't ask for it, an admin adds the scope to the OAuth app (see [Set up](#set-up)) |
+| "…could not find that spreadsheet or range…" | Check the spreadsheet id and the sheet name in the range |
+| "…is receiving too many requests right now…" | Wait the time the message gives, then try again |
+| "…the Google sign-in has expired or was revoked. Reconnect Sheets under Your actions…" | Open **Your actions**, open the Sheets action, click **Manage connection**, then **Reconnect** |
+
+## FAQ
+
+<AccordionGroup>
+<Accordion title="How is this different from the Google Sheets connector?">
+The [connector](/connectors/google-workspace/sheets/sheets) indexes spreadsheets so they appear in search and chat answers. The toolset lets an agent act on spreadsheets: create them, write cells and add rows. Use both if agents should find spreadsheets and also update them.
+</Accordion>
+<Accordion title="Can I undo a clear?">
+Not from PipesHub. Use **File > Version history** in Google Sheets to restore an earlier version.
+</Accordion>
+</AccordionGroup>

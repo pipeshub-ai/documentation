@@ -1,32 +1,17 @@
-# Mintlify Starter Kit
+# PipesHub documentation
 
-Click on `Use this template` to copy the Mintlify starter kit. The starter kit contains examples including
+Source for [docs.pipeshub.com](https://docs.pipeshub.com), built with [Mintlify](https://mintlify.com). Pages are `.mdx` files; navigation and site settings are in `docs.json`.
 
-- Guide pages
-- Navigation
-- Customizations
-- API Reference pages
-- Use of popular components
+## Preview locally
 
-### Development
-
-Install the [Mintlify CLI](https://www.npmjs.com/package/mintlify) to preview the documentation changes locally. To install, use the following command
-
-```
-npm i -g mintlify
+```bash
+npm i -g mint
+mint dev              # http://localhost:3000
+mint broken-links     # check internal links
 ```
 
-Run the following command at the root of your documentation (where docs.json is)
+Run both from the repository root (where `docs.json` is).
 
-```
-mintlify dev
-```
+## Contributing
 
-### Publishing Changes
-
-Install our Github App to auto propagate changes from your repo to your deployment. Changes will be deployed to production automatically after pushing to the default branch. Find the link to install on your dashboard. 
-
-#### Troubleshooting
-
-- Mintlify dev isn't running - Run `mintlify install` it'll re-install dependencies.
-- Page loads as a 404 - Make sure you are running in a folder with `docs.json`
+Read [AGENTS.md](AGENTS.md) for the conventions: adding pages to `docs.json`, frontmatter, image and logo paths, and link style.

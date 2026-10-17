@@ -93,7 +93,11 @@ function loadVersions(product) {
     if (!SEMVER.test(data.version)) fail(`${file}: version "${data.version}" is not semver`);
     if (data.title !== data.version) fail(`${file}: title must equal version`);
     if (`${data.version}.mdx` !== name) fail(`${file}: file name must be ${data.version}.mdx`);
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(data.date)) fail(`${file}: date must be YYYY-MM-DD`);
+    // The second test rejects dates that do not exist, such as 2026-02-30.
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(data.date) || Number.isNaN(Date.parse(data.date)) ||
+        new Date(`${data.date}T00:00:00Z`).toISOString().slice(0, 10) !== data.date) {
+      fail(`${file}: date must be a real date in YYYY-MM-DD format`);
+    }
     if (!CHANNELS.includes(data.channel)) fail(`${file}: channel must be one of ${CHANNELS.join(', ')}`);
     if (!/^https:\/\//.test(data.release_url)) fail(`${file}: release_url must be an https URL`);
     versions.push({ ...data, file });
@@ -107,6 +111,8 @@ const identifier = (version) => 'V' + version.replace(/[^0-9A-Za-z]/g, '_');
 // Heading id of a version on its product page, e.g. 0.6.0-beta -> v0-6-0-beta.
 const anchor = (version) => 'v' + version.toLowerCase().replace(/[^0-9a-z]+/g, '-');
 const js = (value) => JSON.stringify(value);
+// Frontmatter text placed in MDX: {, } and < would start an expression or a tag.
+const mdxText = (text) => text.replace(/[{}<]/g, (c) => `&#${c.charCodeAt(0)};`);
 
 const formatDate = (iso) =>
   new Date(`${iso}T00:00:00Z`).toLocaleDateString('en-US', {
@@ -134,7 +140,7 @@ function groupByDate(versions) {
 function renderRelease(v) {
   const channel = v.channel === 'Stable' ? 'Stable release' : `${v.channel} release`;
   return [
-    `## ${v.version} — ${v.summary} {#${anchor(v.version)}}`,
+    `## ${v.version} — ${mdxText(v.summary)} {#${anchor(v.version)}}`,
     '',
     `${channel} · [View on GitHub](${v.release_url})`,
     '',

@@ -1,0 +1,165 @@
+---
+title: "Web Search"
+description: "Let chat and agents search the web and read pages, with free, paid or self-hosted providers"
+icon: "globe"
+---
+
+With web search on, chat and agents can search the web and read the pages they find. Answers cite each page by its title, and the chat shows every search and every page read as a step you can open.
+
+<Frame caption="A reply's steps: the search lists every result with a link, and the page read names the page.">
+  <img src="/images/web-search/chat-web-steps.png" alt="Chat reply steps: Searched the web with a table of linked results, and Read a web page naming Quickstart on docs.pipeshub.com" />
+</Frame>
+
+It works out of the box: with no provider configured, PipesHub uses free search engines and needs no API key. Add a provider when you want more reliable or higher-volume search, or to keep searches on your own servers.
+
+## Providers
+
+| Provider | Searches | Reads pages | What you need |
+| --- | --- | --- | --- |
+| DuckDuckGo | Yes | | Nothing (built in) |
+| Serper | Yes | | API key |
+| Tavily | Yes | | API key |
+| Exa | Yes | | API key |
+| Brave Search | Yes | | API key |
+| SearXNG | Yes | | A self-hosted SearXNG server |
+| Firecrawl | Yes | Yes | An API key for Firecrawl Cloud, or a self-hosted server |
+| Crawl4AI | | Yes | A self-hosted Crawl4AI server, version 0.9.4 or later |
+
+PipesHub has its own page reader, so you only need Firecrawl or Crawl4AI for sites the built-in reader can't get through, such as sites that block automated clients.
+
+## Add a provider
+
+<Steps>
+  <Step title="Open the settings">
+    As an admin, go to **Workspace → Web Search**.
+
+    <Frame caption="Workspace → Web Search, with SearXNG as the default and Serper and Crawl4AI configured.">
+      <img src="/images/web-search/providers.png" alt="Web Search Configuration page listing providers with their status and Set as default buttons" style={{ width: 480, maxWidth: "100%" }} />
+    </Frame>
+  </Step>
+  <Step title="Configure the provider">
+    Click the provider's configure button and fill in its fields:
+    - **API Key** for Serper, Tavily, Exa and Brave Search.
+    - **Server URL** for SearXNG and Crawl4AI, for example `http://searxng:8080`.
+    - Firecrawl: an **API Key** for Firecrawl Cloud. For a self-hosted server, also set its **Server URL**.
+    - Crawl4AI: an **API Token** if the server was started with one.
+
+    <Frame caption="SearXNG needs only its server address.">
+      <img src="/images/web-search/searxng-form.png" alt="SearXNG configuration panel with a Server URL field" />
+    </Frame>
+  </Step>
+  <Step title="Save">
+    Saving runs one real search (or, for Crawl4AI, one real page read). If the check fails, the provider is not saved and the error says why.
+  </Step>
+  <Step title="Make it the default">
+    Click **Set as default** to have chat use the provider. Crawl4AI only reads pages, so it can't be the default.
+  </Step>
+</Steps>
+
+An agent can use a different provider from the default: choose it in the agent builder's Web Search section.
+
+Only admins see API keys and server addresses. Other members see them masked.
+
+### When a provider fails
+
+A search tries several sources in this order:
+
+1. The chosen provider: the agent's own, or else the default.
+2. The other configured search providers, in the order you added them.
+3. The free engines.
+
+So a wrong key or a provider outage doesn't stop the search. A source that rejected its key or blocked the server is skipped for a few minutes.
+
+Pages are read by the built-in reader first. If it fails, for example on a bot check or a timeout, the configured Firecrawl and Crawl4AI servers are tried. A failure about the address itself (not a public website, too many redirects, not a valid address, or not allowed) ends there: that address is never sent to Firecrawl or Crawl4AI.
+
+A search that fails is reported as a failure, with the reason. It is never reported as finding nothing.
+
+## Self-hosted SearXNG and Crawl4AI
+
+The Docker Compose setup includes both servers as optional profiles.
+
+<Steps>
+  <Step title="Turn on the profiles">
+    In `.env`, add `search-searxng` and/or `fetch-crawl4ai` to `COMPOSE_PROFILES`:
+    ```bash
+    COMPOSE_PROFILES=graph-neo4j,sandbox,search-searxng,fetch-crawl4ai
+    ```
+  </Step>
+  <Step title="Set their secrets">
+    ```bash
+    # A long random string. SearXNG does not start without one.
+    SEARXNG_SECRET=
+    # The token PipesHub sends to Crawl4AI.
+    # Enter the same value as its API Token in the settings.
+    CRAWL4AI_API_TOKEN=
+    ```
+  </Step>
+  <Step title="Start the stack and add the providers">
+    Run `docker compose up -d`. Then add SearXNG at `http://searxng:8080` and Crawl4AI at `http://crawl4ai:11235` under **Workspace → Web Search**. For Crawl4AI, enter the same token as `CRAWL4AI_API_TOKEN`.
+
+    <Frame caption="Crawl4AI takes its server address and the token from .env.">
+      <img src="/images/web-search/crawl4ai-form.png" alt="Crawl4AI configuration panel with Server URL and API Token fields" />
+    </Frame>
+  </Step>
+</Steps>
+
+Both servers run on their own network. They can reach the internet, but not PipesHub or its databases. PipesHub reaches them through a small gateway container, which only forwards to the two servers.
+
+<Warning>
+  If you run your own SearXNG server, its `settings.yml` must list `json` under `search.formats`, or saving it fails.
+  Crawl4AI servers older than 0.9.4 are refused, because they let anyone who can reach them run code or reach internal addresses.
+</Warning>
+
+## Pages built by JavaScript
+
+Some sites send an almost empty page and build their content with scripts. When PipesHub gets such a page, it opens it in its headless browser to read the finished content. If the browser fails, it keeps the page as it was served.
+
+To turn this off, set `WEB_FETCH_RENDER_JS=off`. It is also off whenever `WEB_CONNECTOR_ALLOWED_HOSTS` is set.
+
+PipesHub reads HTML, PDF (pages with a text layer), plain text, Markdown, CSV and JSON.
+
+## Deep research
+
+In agent mode, the chat's **+** menu has a **Deep research** switch. It needs **Web Search** turned on. With it on, the agent:
+
+- splits the question into parts and searches them in parallel;
+- reads the best pages in full and checks key facts against two sources;
+- writes a report with citations, with the direct answer first.
+
+<Frame caption="Deep research in the + menu. It turns off when Web Search is off.">
+  <img src="/images/web-search/deep-research.png" alt="The + menu with Internal Search, Web Search and Deep research switches turned on" style={{ width: 320, maxWidth: "100%" }} />
+</Frame>
+
+Deep research takes longer and uses more searches. The switch stays on for your next chats until you turn it off.
+
+## Limits
+
+| | Searches per answer | Page reads per answer |
+| --- | --- | --- |
+| Normal | 10 | 20 |
+| Deep research | 24 | 40 |
+
+When an answer reaches its limit, the agent answers with what it has found.
+
+Each search has 12 seconds and each page read 20 seconds. The built-in reader stops at 10 MB; Firecrawl and Crawl4AI return the page's text without that limit.
+
+## Safety
+
+- PipesHub only reads public websites. Addresses that point inside your network, such as `localhost`, private IP ranges or cloud metadata addresses, are refused. The built-in reader also checks every redirect.
+- Firecrawl and Crawl4AI follow redirects on their own servers, so PipesHub checks only the address it sends them and the one they land on. Run them where they can't reach your internal services. The Docker Compose profiles above do this; a server you run elsewhere and add by its Server URL needs the same isolation.
+- Text from the web is marked as untrusted, so the model treats it as information, not instructions. A page can't use it to change what the agent does.
+- A citation link the model invents is removed from the answer.
+
+## Troubleshooting
+
+When a step fails, open it in the chat to see why. Common reasons:
+
+| Message | What to do |
+| --- | --- |
+| The search engines blocked the request | The free engines treat your server as a bot. Add a provider with an API key, or SearXNG. |
+| The search provider rejected its API key | Check the key under **Workspace → Web Search**. |
+| The search provider's credits are used up | Add credits, or add another provider so search falls back to it. |
+| The site refused the request; it may need a sign-in | The site blocks automated readers or needs a login. Adding Firecrawl or Crawl4AI often gets past bot checks. Pages behind a login can't be read. |
+| That address isn't a public website | The page is on a private network and can't be read. |
+| Failed to read: No readable content could be extracted from … | The page or file has no text to read, for example a scanned PDF or an empty page. |
+| The searches for this answer are used up | The answer reached its limit. Ask a narrower question, or continue in a new message. |

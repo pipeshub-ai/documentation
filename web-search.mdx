@@ -6,6 +6,10 @@ icon: "globe"
 
 With web search on, chat and agents can search the web and read the pages they find. Answers cite each page by its title, and the chat shows every search and every page read as a step you can open.
 
+<Frame caption="A reply's steps: the search lists every result with a link, and the page read names the page.">
+  <img src="/images/web-search/chat-web-steps.png" alt="Chat reply steps: Searched the web with a table of linked results, and Read a web page naming Quickstart on docs.pipeshub.com" />
+</Frame>
+
 It works out of the box: with no provider configured, PipesHub uses free search engines and needs no API key. Add a provider when you want more reliable or higher-volume search, or to keep searches on your own servers.
 
 ## Providers
@@ -28,6 +32,10 @@ PipesHub has its own page reader, so you only need Firecrawl or Crawl4AI for sit
 <Steps>
   <Step title="Open the settings">
     As an admin, go to **Workspace → Web Search**.
+
+    <Frame caption="Workspace → Web Search, with SearXNG as the default and Serper and Crawl4AI configured.">
+      <img src="/images/web-search/providers.png" alt="Web Search Configuration page listing providers with their status and Set as default buttons" style={{ width: 480, maxWidth: "100%" }} />
+    </Frame>
   </Step>
   <Step title="Configure the provider">
     Click the provider's configure button and fill in its fields:
@@ -35,6 +43,10 @@ PipesHub has its own page reader, so you only need Firecrawl or Crawl4AI for sit
     - **Server URL** for SearXNG and Crawl4AI, for example `http://searxng:8080`.
     - Firecrawl: an **API Key** for Firecrawl Cloud. For a self-hosted server, also set its **Server URL**.
     - Crawl4AI: an **API Token** if the server was started with one.
+
+    <Frame caption="SearXNG needs only its server address.">
+      <img src="/images/web-search/searxng-form.png" alt="SearXNG configuration panel with a Server URL field" />
+    </Frame>
   </Step>
   <Step title="Save">
     Saving runs one real search (or, for Crawl4AI, one real page read). If the check fails, the provider is not saved and the error says why.
@@ -83,7 +95,11 @@ The Docker Compose setup includes both servers as optional profiles.
     ```
   </Step>
   <Step title="Start the stack and add the providers">
-    Run `docker compose up -d`. Then add SearXNG at `http://searxng:8080` and Crawl4AI at `http://crawl4ai:11235` under **Workspace → Web Search**.
+    Run `docker compose up -d`. Then add SearXNG at `http://searxng:8080` and Crawl4AI at `http://crawl4ai:11235` under **Workspace → Web Search**. For Crawl4AI, enter the same token as `CRAWL4AI_API_TOKEN`.
+
+    <Frame caption="Crawl4AI takes its server address and the token from .env.">
+      <img src="/images/web-search/crawl4ai-form.png" alt="Crawl4AI configuration panel with Server URL and API Token fields" />
+    </Frame>
   </Step>
 </Steps>
 
@@ -109,6 +125,10 @@ In agent mode, the chat's **+** menu has a **Deep research** switch. It needs **
 - splits the question into parts and searches them in parallel;
 - reads the best pages in full and checks key facts against two sources;
 - writes a report with citations, with the direct answer first.
+
+<Frame caption="Deep research in the + menu. It turns off when Web Search is off.">
+  <img src="/images/web-search/deep-research.png" alt="The + menu with Internal Search, Web Search and Deep research switches turned on" style={{ width: 320, maxWidth: "100%" }} />
+</Frame>
 
 Deep research takes longer and uses more searches. The switch stays on for your next chats until you turn it off.
 

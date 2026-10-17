@@ -20,13 +20,18 @@ All fields are required. Values are double-quoted strings.
 
 ## Body
 
-- Start with the narrative paragraph. Do not repeat the title or the date. The page shows them.
-- Use `##` for sections and `###` for items inside a section.
+- Start with the narrative paragraph. Do not repeat the version, summary, date or channel. The page shows them.
+- Use `###` for sections and `####` for items inside a section. The page uses `##` for the version.
 - Each item comes from a commit, PR or API diff. Do not invent items.
 - Link to a PR as `[#123](https://github.com/pipeshub-ai/pipeshub-ai/pull/123)`.
-- Link to another version as `[0.9.0](/changelog/platform?version=0.9.0)`.
+- Link to another version as `[0.9.0](#v0-9-0)`: `v`, then the version in lowercase with each run of other characters replaced by `-`. Example: `0.6.0-beta` is `#v0-6-0-beta`.
+- A heading you link to within the same file needs an id that ends with the version, so it is unique on the page: `### Upgrade notes {#upgrade-notes-0-10-0}`.
 - Write MDX: escape `{`, `}` and `<` outside code spans and code blocks.
 - Do not use imports, exports or custom components.
+
+## Page
+
+`changelog/{product}.mdx` shows every version on one page, newest date first, in Mintlify `<Update>` entries. The entry label is the release date. Versions released on the same date share an entry.
 
 ## What the job may change
 

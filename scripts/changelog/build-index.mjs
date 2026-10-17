@@ -22,6 +22,7 @@ const CHANGELOG_DIR = join(ROOT, 'changelog');
 const PRODUCTS = {
   platform: {
     title: 'PipesHub changelog',
+    name: 'PipesHub',
     description: 'Release notes for the PipesHub Workplace AI platform',
     icon: 'bolt',
   },
@@ -151,6 +152,19 @@ function renderRelease(v) {
   ].join('\n');
 }
 
+// One RSS item per <Update>. Mintlify takes the item from these props; without them
+// it uses the date label as the title and the page's last commit as the date, and
+// it does not include the imported release text.
+function rssItem(meta, group) {
+  const item = {
+    title: `${meta.name} ${group.versions.map((v) => v.version).join(' and ')}`,
+    description: group.versions.map((v) => `${v.version}: ${v.summary}`).join(' · '),
+    date: group.date,
+  };
+  // Mintlify reads only plain identifier keys (title:), not quoted ones ("title":).
+  return `{ ${Object.entries(item).map(([key, value]) => `${key}: ${js(value)}`).join(', ')} }`;
+}
+
 function renderPage(product, versions) {
   const meta = PRODUCTS[product];
   const imports = versions.map(
@@ -158,7 +172,7 @@ function renderPage(product, versions) {
   );
   const entries = groupByDate(versions).map((group) =>
     [
-      `<Update label=${js(formatDate(group.date))}>`,
+      `<Update label=${js(formatDate(group.date))} rss={${rssItem(meta, group)}}>`,
       group.versions.map(renderRelease).join('\n\n'),
       '</Update>',
     ].join('\n'),

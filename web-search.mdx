@@ -77,7 +77,8 @@ The Docker Compose setup includes both servers as optional profiles.
     ```bash
     # A long random string. SearXNG does not start without one.
     SEARXNG_SECRET=
-    # The token PipesHub sends to Crawl4AI. You also enter it in the Crawl4AI settings.
+    # The token PipesHub sends to Crawl4AI.
+    # Enter the same value as its API Token in the settings.
     CRAWL4AI_API_TOKEN=
     ```
   </Step>
@@ -88,10 +89,10 @@ The Docker Compose setup includes both servers as optional profiles.
 
 Both servers run on their own network. They can reach the internet, but not PipesHub or its databases. PipesHub reaches them through a small gateway container, which only forwards to the two servers.
 
-<Callout type="warning">
+<Warning>
   If you run your own SearXNG server, its `settings.yml` must list `json` under `search.formats`, or saving it fails.
   Crawl4AI servers older than 0.9.4 are refused, because they let anyone who can reach them run code or reach internal addresses.
-</Callout>
+</Warning>
 
 ## Pages built by JavaScript
 

@@ -19,7 +19,7 @@ It works out of the box: with no provider configured, PipesHub uses free search 
 | Brave Search | Yes | | API key |
 | SearXNG | Yes | | A self-hosted SearXNG server |
 | Firecrawl | Yes | Yes | An API key for Firecrawl Cloud, or a self-hosted server |
-| Crawl4AI | | Yes | A self-hosted Crawl4AI server, version 0.8.8 or later |
+| Crawl4AI | | Yes | A self-hosted Crawl4AI server, version 0.9.4 or later |
 
 PipesHub has its own page reader, so you only need Firecrawl or Crawl4AI for sites the built-in reader can't get through, such as sites that block automated clients.
 
@@ -86,11 +86,11 @@ The Docker Compose setup includes both servers as optional profiles.
   </Step>
 </Steps>
 
-Both servers run on their own network. They can reach the internet and PipesHub, but not its databases.
+Both servers run on their own network. They can reach the internet, but not PipesHub or its databases. PipesHub reaches them through a small gateway container, which only forwards to the two servers.
 
 <Callout type="warning">
   If you run your own SearXNG server, its `settings.yml` must list `json` under `search.formats`, or saving it fails.
-  Crawl4AI servers older than 0.8.8 are refused, because they let anyone who can reach them run code.
+  Crawl4AI servers older than 0.9.4 are refused, because they let anyone who can reach them run code or reach internal addresses.
 </Callout>
 
 ## Pages built by JavaScript

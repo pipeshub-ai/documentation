@@ -70,7 +70,7 @@ A search tries several sources in this order:
 
 So a wrong key or a provider outage doesn't stop the search. A source that rejected its key or blocked the server is skipped for a few minutes.
 
-Pages are read by the built-in reader first. If it fails, the configured Firecrawl and Crawl4AI servers are tried.
+Pages are read by the built-in reader first. If it fails, for example on a bot check or a timeout, the configured Firecrawl and Crawl4AI servers are tried. A failure about the address itself (not a public website, too many redirects, not a valid address, or not allowed) ends there: that address is never sent to Firecrawl or Crawl4AI.
 
 A search that fails is reported as a failure, with the reason. It is never reported as finding nothing.
 
@@ -141,11 +141,12 @@ Deep research takes longer and uses more searches. The switch stays on for your 
 
 When an answer reaches its limit, the agent answers with what it has found.
 
-Each search has 12 seconds and each page read 20 seconds. Pages larger than 10 MB are not read.
+Each search has 12 seconds and each page read 20 seconds. The built-in reader stops at 10 MB; Firecrawl and Crawl4AI return the page's text without that limit.
 
 ## Safety
 
-- PipesHub only reads public websites. Addresses that point inside your network, such as `localhost`, private IP ranges or cloud metadata addresses, are refused, and so are redirects to them.
+- PipesHub only reads public websites. Addresses that point inside your network, such as `localhost`, private IP ranges or cloud metadata addresses, are refused. The built-in reader also checks every redirect.
+- Firecrawl and Crawl4AI follow redirects on their own servers, so PipesHub checks only the address it sends them and the one they land on. Run them where they can't reach your internal services. The Docker Compose profiles above do this; a server you run elsewhere and add by its Server URL needs the same isolation.
 - Text from the web is marked as untrusted, so the model treats it as information, not instructions. A page can't use it to change what the agent does.
 - A citation link the model invents is removed from the answer.
 
@@ -160,5 +161,5 @@ When a step fails, open it in the chat to see why. Common reasons:
 | The search provider's credits are used up | Add credits, or add another provider so search falls back to it. |
 | The site refused the request; it may need a sign-in | The site blocks automated readers or needs a login. Adding Firecrawl or Crawl4AI often gets past bot checks. Pages behind a login can't be read. |
 | That address isn't a public website | The page is on a private network and can't be read. |
-| The PDF has no text layer | The PDF is scanned, so there is no text to read. |
+| Failed to read: No readable content could be extracted from … | The page or file has no text to read, for example a scanned PDF or an empty page. |
 | The searches for this answer are used up | The answer reached its limit. Ask a narrower question, or continue in a new message. |

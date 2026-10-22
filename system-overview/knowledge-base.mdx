@@ -338,6 +338,8 @@ Retrieve a specific record by its ID with full metadata.
     "isDeleted": false,
     "isArchived": false,
     "indexingStatus": "COMPLETED",
+    "extractionStatus": "COMPLETED",
+    "contentRev": "78f3f276290c9f81",
     "version": 1,
     "webUrl": "/record/rec789012",
     "mimeType": "application/pdf",
@@ -358,6 +360,26 @@ Retrieve a specific record by its ID with full metadata.
     "orgId": "org123456"
   },
   "folder": null,
+  "stageStates": [
+    {
+      "stage": "classify",
+      "status": "COMPLETED",
+      "reason": null,
+      "attempt": 1,
+      "startedAtMs": 1714208460000,
+      "finishedAtMs": 1714208472000,
+      "updatedAtMs": 1714208472000
+    },
+    {
+      "stage": "entities",
+      "status": "COMPLETED",
+      "reason": null,
+      "attempt": 1,
+      "startedAtMs": 1714208460000,
+      "finishedAtMs": 1714208495000,
+      "updatedAtMs": 1714208495000
+    }
+  ],
   "metadata": {
     "departments": [],
     "categories": [],
@@ -380,6 +402,12 @@ Retrieve a specific record by its ID with full metadata.
 ```
 
 `permissions` holds one entry describing your access to the record: `relationship` is your role, and `accessType` is how you have it (here, through the knowledge base). `metadata` lists the departments, categories, topics and languages found for the record. `folder` is often `null`, even for a file that is inside a folder.
+
+`indexingStatus` says whether the record is indexed and searchable. `extractionStatus` is the status of its classification (summary, categories, topics, departments), which runs after the record is searchable: `QUEUED` until classification finishes, then `COMPLETED`, `SKIPPED` or `FAILED`, with the reason in `reason`. See [After a record is searchable](/system-overview#after-a-record-is-searchable).
+
+`contentRev` is the revision of the record's content: 16 lowercase hex characters from the start of the SHA-256 of the content the indexer received. Identical content gives the same value. It is absent on records not indexed since background stages were introduced.
+
+`stageStates` lists the background stages for that revision, one entry per stage: `classify` (classification, mirrored on `extractionStatus`) and `entities` (named-entity extraction, which has no status field on the record). Each entry has the stage's `status` (the same values as `indexingStatus`), the failure or skip `reason`, the number of times it has run for this revision (`attempt`), and when it started, finished and was last updated, in epoch milliseconds. The list is empty for records indexed before background stages existed.
 </Tab>
 </Tabs>
 </Accordion>
@@ -908,7 +936,7 @@ Delete a folder and all its contents, including sub-folders. Nothing outside the
 Connector statistics, reindexing and resync are not part of the Knowledge Base API. They are in the Connectors API, under `/api/v1/connectors`, and take a connector instance ID:
 
 - `GET /api/v1/connectors/:connectorId/stats` - Indexing statistics for a connector. Needs only the ID.
-- `POST /api/v1/connectors/:connectorId/reindex` - Reindex a connector's records. The body is optional: send `{ "statusFilters": [...] }` to reindex only the records with those indexing statuses.
+- `POST /api/v1/connectors/:connectorId/reindex` - Reindex a connector's records. The body is optional: send `{ "statusFilters": [...] }` to reindex only the records with those indexing statuses, or add `"stages": ["classify"]` or `"stages": ["entities"]` to re-run only classification or named-entity extraction, without parsing or embedding again. See the [Connector Manager API](/system-overview/connector-manager#api-endpoints).
 - `POST /api/v1/connectors/:connectorId/resync` - Resync a connector's records. The body must include `connectorName` (the connector's name), and may include `fullSync: true` for a full resync. A request without `connectorName` is refused.
 
 The Knowledge Base API's old `stats/:connector`, `reindex-all/connector` and `resync/connector` endpoints no longer exist.
@@ -1020,6 +1048,8 @@ interface IRecordDocument {
   lastIndexTimestamp?: number;
   lastExtractionTimestamp?: number;
   indexingStatus?: IndexingStatus; // 'NOT_STARTED' | 'IN_PROGRESS' | 'FAILED' | 'COMPLETED'
+  extractionStatus?: string; // classification status, e.g. 'QUEUED' | 'COMPLETED' | 'SKIPPED' | 'FAILED'
+  contentRev?: string; // revision of the record's content, 16 hex characters
   
   // Versioning
   version?: number;

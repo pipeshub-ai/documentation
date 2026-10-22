@@ -89,6 +89,28 @@ Run these from the directory the installer prints when it finishes:
 
 `curl | bash` does not change your shell's directory, so the success banner prints the path to use.
 
+### Upgrading from 0.10.0 or earlier
+
+Starting with the release after 0.10.0, classification and named-entity extraction run as background stages after a record is searchable (see [After a record is searchable](/system-overview#after-a-record-is-searchable)). Existing records keep their classification. Before or while you upgrade:
+
+- **Kafka.** The indexing service needs two new topics, `pipeline.classify` and `pipeline.entities`. It creates them itself when its Kafka user is allowed to; otherwise, or if your cluster needs more replicas, create them first. See [Kafka topics for classification and named entities](/system-overview/external-services#kafka-topics-for-classification-and-named-entities).
+- **`DEFER_EXTRACTION` is removed.** Drop it from custom Compose files.
+- **Separate Extraction service.** If the Extraction service runs as its own deployment, upgrade it with or before the indexing service. An older Extraction service's answer to a model outage is recorded as `SKIPPED`.
+- **Records the old classification left unfinished.** Records left with `extractionStatus` `IN_PROGRESS` (a pod stopped mid-classification) or `NOT_STARTED` (`DEFER_EXTRACTION=true`) are not picked up on their own. After the upgrade, classify them again for each connector:
+
+  ```bash
+  curl -X POST "$PIPESHUB_URL/api/v1/connectors/$CONNECTOR_ID/reindex" \
+    -H "Authorization: Bearer $TOKEN" \
+    -H "Content-Type: application/json" \
+    -d '{"stages": ["classify"], "statusFilters": ["IN_PROGRESS", "NOT_STARTED"]}'
+  ```
+
+  Records indexed before the upgrade get a full reindex this way.
+
+<Warning>
+Rolling back to 0.10.0 on ArangoDB needs a data cleanup first: 0.10.0's records schema rejects every update to a record that carries `contentRev` or a status value it does not know. The cleanup query is in [`docs/indexing-service.md`](https://github.com/pipeshub-ai/pipeshub-ai/blob/main/docs/indexing-service.md) ("Upgrading and rolling back"). Neo4j needs no cleanup.
+</Warning>
+
 ## Cloud guides
 
 - [Google Cloud](/deployment/vendor/gcp) — a complete worked example including firewall rules, Nginx, backup and restore.

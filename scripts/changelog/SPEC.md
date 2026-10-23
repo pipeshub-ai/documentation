@@ -16,27 +16,30 @@ All fields are required. Values are double-quoted strings.
 | `date` | `YYYY-MM-DD` | `"2026-09-28"` |
 | `channel` | `Stable`, `Beta`, `Alpha` or `Pre-release` | `"Stable"` |
 | `release_url` | HTTPS URL of the GitHub release | `"https://github.com/.../releases/tag/v0.9.1"` |
-| `summary` | One line. The headline of the release. | `"OAuth and PKCE hardening, ..."` |
+| `description` | One line. The headline of the release, shown under the page title. | `"OAuth and PKCE hardening, ..."` |
+| `summary` | Two sentences, no links: what changed for users. Shown on the changelog page. | `"A same-day security and reliability patch on 0.9.0: ..."` |
 
 ## Body
 
-- Start with the narrative paragraph. Do not repeat the version, summary, date or channel. The page shows them.
-- Use `###` for sections and `####` for items inside a section. The page uses `##` for the version.
+- Start with the line `Released {Month} {D}, {YYYY} · {channel} · [View on GitHub]({release_url})`, then the narrative paragraph.
+- Use `##` for sections and `###` for items inside a section. The page title is the version.
 - Each item comes from a commit, PR or API diff. Do not invent items.
 - Link to a PR as `[#123](https://github.com/pipeshub-ai/pipeshub-ai/pull/123)`.
-- Link to another version as `[0.9.0](#v0-9-0)`: `v`, then the version in lowercase with each run of other characters replaced by `-`. Example: `0.6.0-beta` is `#v0-6-0-beta`.
-- A heading you link to within the same file needs an id that ends with the version, so it is unique on the page: `### Upgrade notes {#upgrade-notes-0-10-0}`.
+- Link to another version as `[0.9.0](/changelog/platform/0.9.0)`.
+- A heading you link to within the same file keeps the id GitHub gives it: `## Upgrade notes {#upgrade-notes}`.
 - Write MDX: escape `{`, `}` and `<` outside code spans and code blocks.
 - Do not use imports, exports or custom components.
 
 ## Page
 
-`changelog/{product}.mdx` shows every version on one page, newest date first, in Mintlify `<Update>` entries. The entry label is the release date. Versions released on the same date share an entry.
+Each version is its own page. `changelog/{product}.mdx` is the summary page: one Mintlify `<Update>` entry per version, newest date first, labelled with the version, showing its date, headline and summary, linking to the version's page.
+
+In `docs.json` the product is a sidebar group whose root is the summary page, with the newest 20 versions under it; older versions keep their pages but leave the sidebar. Previous/next at the foot of a version page follows that order. `changelog-sidebar.js` and `style.css` show the versions 5 at a time behind "Show more" / "Show less".
 
 ## What the job may change
 
 A release job adds or replaces exactly one file: `changelog/{product}/{version}.mdx`.
-It changes no other file. `changelog/{product}.mdx` is generated:
+It changes no other file. `changelog/{product}.mdx` and the sidebar group in `docs.json` are generated:
 
 ```bash
 node scripts/changelog/build-index.mjs          # write

@@ -1,12 +1,13 @@
 #!/usr/bin/env node
-// Builds the product changelog pages from the version files.
+// Builds the product changelog summary pages and sidebar from the version files.
 //
-//   changelog/{product}/{version}.mdx   <- input, one file per release (frontmatter + body)
-//   changelog/{product}.mdx             <- output, generated: imports every version file
+//   changelog/{product}/{version}.mdx   <- input, one page per release (frontmatter + body)
+//   changelog/{product}.mdx             <- output, generated: one summary entry per release
+//   docs.json                           <- output: the product's sidebar group, newest releases
 //
 // Usage:
-//   node scripts/changelog/build-index.mjs          write the pages
-//   node scripts/changelog/build-index.mjs --check  exit 1 if a page is missing or stale
+//   node scripts/changelog/build-index.mjs          write the outputs
+//   node scripts/changelog/build-index.mjs --check  exit 1 if an output is missing or stale
 //
 // No dependencies. The format of a version file is in scripts/changelog/SPEC.md.
 
@@ -16,20 +17,26 @@ import { fileURLToPath } from 'node:url';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const CHANGELOG_DIR = join(ROOT, 'changelog');
+const DOCS_JSON = join(ROOT, 'docs.json');
+// Older releases keep their pages and summary entries but leave the sidebar.
+const SIDEBAR_LIMIT = 20;
 
 // One entry for each product that has a changelog. A directory under changelog/
 // that is not listed here is an error, so a typo in a product name is caught.
 const PRODUCTS = {
   platform: {
     title: 'Platform Changelog',
-    name: 'PipesHub',
     description: 'Release notes for the PipesHub Workplace AI platform',
     icon: 'bolt',
+    intro:
+      'What changed in each PipesHub release, newest first. Every entry below sums up a release in a few lines; ' +
+      'open it for the highlights, upgrade notes and every merged pull request. **Stable** releases are ' +
+      'recommended for production; **Beta**, **Alpha** and **Pre-release** builds preview the next stable release.',
   },
 };
 
 const CHANNELS = ['Stable', 'Beta', 'Alpha', 'Pre-release'];
-const REQUIRED = ['title', 'version', 'date', 'channel', 'release_url', 'summary'];
+const REQUIRED = ['title', 'version', 'date', 'channel', 'release_url', 'description', 'summary'];
 const SEMVER = /^(\d+)\.(\d+)\.(\d+)(?:-([0-9A-Za-z.-]+))?$/;
 
 const fail = (message) => {
@@ -103,17 +110,16 @@ function loadVersions(product) {
     if (!/^https:\/\//.test(data.release_url)) fail(`${file}: release_url must be an https URL`);
     versions.push({ ...data, file });
   }
+  // Newest release date first; releases on the same date by version.
   return versions
     .filter((v) => SEMVER.test(v.version))
-    .sort((a, b) => compareSemver(b.version, a.version));
+    .sort((a, b) => b.date.localeCompare(a.date) || compareSemver(b.version, a.version));
 }
 
-const identifier = (version) => 'V' + version.replace(/[^0-9A-Za-z]/g, '_');
-// Heading id of a version on its product page, e.g. 0.6.0-beta -> v0-6-0-beta.
-const anchor = (version) => 'v' + version.toLowerCase().replace(/[^0-9a-z]+/g, '-');
 const js = (value) => JSON.stringify(value);
 // Frontmatter text placed in MDX: {, } and < would start an expression or a tag.
 const mdxText = (text) => text.replace(/[{}<]/g, (c) => `&#${c.charCodeAt(0)};`);
+const pagePath = (product, version) => `changelog/${product}/${version}`;
 
 const formatDate = (iso) =>
   new Date(`${iso}T00:00:00Z`).toLocaleDateString('en-US', {
@@ -123,75 +129,60 @@ const formatDate = (iso) =>
     timeZone: 'UTC',
   });
 
-// One <Update> per release date, newest first. Releases that share a date go in
-// the same entry, so each date label (and the anchor Mintlify derives from it)
-// appears once.
-function groupByDate(versions) {
-  const byDate = [...versions].sort(
-    (a, b) => b.date.localeCompare(a.date) || compareSemver(b.version, a.version),
-  );
-  const groups = [];
-  for (const v of byDate) {
-    if (groups.length && groups[groups.length - 1].date === v.date) groups[groups.length - 1].versions.push(v);
-    else groups.push({ date: v.date, versions: [v] });
-  }
-  return groups;
-}
-
-function renderRelease(v) {
-  const channel = v.channel === 'Stable' ? 'Stable release' : `${v.channel} release`;
-  return [
-    `## ${v.version} — ${mdxText(v.summary)} {#${anchor(v.version)}}`,
-    '',
-    `${channel} · [View on GitHub](${v.release_url})`,
-    '',
-    // Mintlify renders paragraphs of an imported file as inline spans.
-    `<div className="space-y-4 [&>span[data-as=p]]:block">`,
-    `  <${identifier(v.version)} />`,
-    '</div>',
-  ].join('\n');
-}
-
-// One RSS item per <Update>. Mintlify takes the item from these props; without them
-// it uses the date label as the title and the page's last commit as the date, and
-// it does not include the imported release text.
-function rssItem(meta, group) {
-  const item = {
-    title: `${meta.name} ${group.versions.map((v) => v.version).join(' and ')}`,
-    description: group.versions.map((v) => `${v.version}: ${v.summary}`).join(' · '),
-    date: group.date,
-  };
-  // Mintlify reads only plain identifier keys (title:), not quoted ones ("title":).
-  return `{ ${Object.entries(item).map(([key, value]) => `${key}: ${js(value)}`).join(', ')} }`;
-}
-
+// The summary page: one <Update> per release, linking to the release's own page.
 function renderPage(product, versions) {
   const meta = PRODUCTS[product];
-  const imports = versions.map(
-    (v) => `import ${identifier(v.version)} from '/changelog/${product}/${v.version}.mdx'`,
-  );
-  const entries = groupByDate(versions).map((group) =>
-    [
-      `<Update label=${js(formatDate(group.date))} rss={${rssItem(meta, group)}}>`,
-      group.versions.map(renderRelease).join('\n\n'),
+  const entries = versions.map((v) => {
+    const when = formatDate(v.date) + (v.channel === 'Stable' ? '' : ` · ${v.channel}`);
+    return [
+      `<Update label=${js(v.version)} description=${js(when)}>`,
+      `**[${mdxText(v.description)}](/${pagePath(product, v.version)})**`,
+      '',
+      mdxText(v.summary),
       '</Update>',
-    ].join('\n'),
-  );
+    ].join('\n');
+  });
   return [
     '---',
     `title: ${js(meta.title)}`,
     `description: ${js(meta.description)}`,
     `icon: ${meta.icon}`,
-    'rss: true',
     '---',
     '',
     '{/* Generated by scripts/changelog/build-index.mjs. Do not edit by hand. */}',
     '',
-    ...imports,
+    meta.intro,
     '',
     entries.length ? entries.join('\n\n') : 'No releases yet.',
     '',
   ].join('\n');
+}
+
+// The product's sidebar entry: the summary page with the newest releases under it.
+// Replaces the entry in place, whether it is still the plain page or an earlier group.
+function updateNav(nav, product, versions) {
+  const root = `changelog/${product}`;
+  const group = {
+    group: PRODUCTS[product].title,
+    icon: PRODUCTS[product].icon,
+    root,
+    expanded: false,
+    // changelog-sidebar.js shows these in batches behind a "Show more" row.
+    pages: versions.slice(0, SIDEBAR_LIMIT).map((v) => pagePath(product, v.version)),
+  };
+  let found = false;
+  const visit = (node) => {
+    if (Array.isArray(node)) {
+      node.forEach((item, i) => {
+        if (item === root || (item && item.root === root)) {
+          node[i] = group;
+          found = true;
+        } else visit(item);
+      });
+    } else if (node && typeof node === 'object') Object.values(node).forEach(visit);
+  };
+  visit(nav);
+  if (!found) fail(`docs.json: no navigation entry for ${root}`);
 }
 
 const check = process.argv.includes('--check');
@@ -201,18 +192,24 @@ for (const product of products) {
     fail(`changelog/${product}/ is not a known product. Known: ${Object.keys(PRODUCTS).join(', ')}`);
   }
 }
+const outputs = new Map();
+const docs = JSON.parse(readFileSync(DOCS_JSON, 'utf8'));
 for (const product of Object.keys(PRODUCTS)) {
   const dir = join(CHANGELOG_DIR, product);
   if (!existsSync(dir)) continue;
   const versions = loadVersions(product);
-  const page = join(CHANGELOG_DIR, `${product}.mdx`);
-  const next = renderPage(product, versions);
-  if (check) {
-    if (!existsSync(page) || readFileSync(page, 'utf8') !== next) {
-      fail(`changelog/${product}.mdx is out of date. Run: node scripts/changelog/build-index.mjs`);
-    }
-  } else if (!existsSync(page) || readFileSync(page, 'utf8') !== next) {
-    writeFileSync(page, next);
-    console.log(`wrote changelog/${product}.mdx (${versions.length} versions)`);
+  outputs.set(join(CHANGELOG_DIR, `${product}.mdx`), renderPage(product, versions));
+  updateNav(docs.navigation, product, versions);
+}
+outputs.set(DOCS_JSON, JSON.stringify(docs, null, 2) + '\n');
+
+for (const [file, next] of outputs) {
+  const name = file.slice(ROOT.length + 1);
+  const current = existsSync(file) ? readFileSync(file, 'utf8') : null;
+  if (current === next) continue;
+  if (check) fail(`${name} is out of date. Run: node scripts/changelog/build-index.mjs`);
+  else {
+    writeFileSync(file, next);
+    console.log(`wrote ${name}`);
   }
 }

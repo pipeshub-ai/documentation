@@ -4,52 +4,54 @@ version: "0.2.0"
 date: "2026-02-11"
 channel: "Stable"
 release_url: "https://github.com/pipeshub-ai/pipeshub-ai/releases/tag/v0.2.0"
-summary: "The connector fleet goes wide: 15+ new sources, multi-instance connectors, and a built-in OAuth2 provider"
+description: "The connector fleet goes wide: 15+ new sources, multi-instance connectors, and a built-in OAuth2 provider"
+summary: "More than fifteen data sources arrive, including Jira, Box, S3, Notion, Linear and Salesforce, and connectors can run as several instances with their own filters. Knowledge bases become first-class connectors, and a built-in OAuth2 provider lands."
 ---
 
+Released February 11, 2026 · Stable · [View on GitHub](https://github.com/pipeshub-ai/pipeshub-ai/releases/tag/v0.2.0)
 
 0.2.0 is a very large release — 260+ merged PRs — centered on turning PipesHub's connector layer into a real platform. More than fifteen new data sources land (Jira, Box, S3, MinIO, Google Cloud Storage, Azure Blob, Azure Files, Nextcloud, Notion, Linear, Zammad, Zoom, Google Drive, Monday, Snowflake, Salesforce), connectors gain multi-instance support with per-instance filters, and knowledge bases are re-architected as first-class connectors with their own migration. Under the hood, a new database abstraction layer makes ArangoDB access fully async and removes the direct Arango dependency from the Node.js API.
 
 Operators also get meaningful security hardening (logout token invalidation, captcha, password-reset fixes, the MongoDB "Mongobleed" CVE fix), a PipesHub OAuth2.0 authorization server with JIT account provisioning, and new deployment options: a Helm chart, Kafka SASL, Redis TLS, and S3-compatible object storage for internal blobs.
 
-### Highlights
+## Highlights
 
-#### 15+ new connectors and datasources
+### 15+ new connectors and datasources
 
 The connector catalog roughly triples this release: Jira ([#1098](https://github.com/pipeshub-ai/pipeshub-ai/pull/1098) — @darshangodase), Box ([#1136](https://github.com/pipeshub-ai/pipeshub-ai/pull/1136) — @SharmaNishchay), S3 ([#1235](https://github.com/pipeshub-ai/pipeshub-ai/pull/1235) — @Kushagra1122), MinIO via S3-compatible API ([#1249](https://github.com/pipeshub-ai/pipeshub-ai/pull/1249) — @abhishekgml1991), Google Cloud Storage ([#1315](https://github.com/pipeshub-ai/pipeshub-ai/pull/1315)), Azure Blob Storage ([#1316](https://github.com/pipeshub-ai/pipeshub-ai/pull/1316)), Azure Files ([#1433](https://github.com/pipeshub-ai/pipeshub-ai/pull/1433) — @Kushagra1122), Nextcloud ([#1310](https://github.com/pipeshub-ai/pipeshub-ai/pull/1310) — @SharmaNishchay), Notion ([#1302](https://github.com/pipeshub-ai/pipeshub-ai/pull/1302) — @shrikantNemiwal1), Linear ([#1198](https://github.com/pipeshub-ai/pipeshub-ai/pull/1198) — @darshangodase), Zammad ([#1346](https://github.com/pipeshub-ai/pipeshub-ai/pull/1346) — @darshangodase), Zoom ([#1002](https://github.com/pipeshub-ai/pipeshub-ai/pull/1002) — @roy-sid), and dedicated Google Drive personal and enterprise connectors ([#1258](https://github.com/pipeshub-ai/pipeshub-ai/pull/1258) — @R0gue-one). New datasource clients also arrive for Monday ([#1299](https://github.com/pipeshub-ai/pipeshub-ai/pull/1299)), Snowflake ([#1303](https://github.com/pipeshub-ai/pipeshub-ai/pull/1303), [#1304](https://github.com/pipeshub-ai/pipeshub-ai/pull/1304) — @rish664), and Salesforce ([#1289](https://github.com/pipeshub-ai/pipeshub-ai/pull/1289) — @jatingaur18).
 
-#### Multi-instance connectors with filters and lifecycle management
+### Multi-instance connectors with filters and lifecycle management
 
 You can now run multiple configured instances of the same connector ([#1151](https://github.com/pipeshub-ai/pipeshub-ai/pull/1151) — @vishwjeet-pawar03), each with its own credentials and sync filters. The surrounding lifecycle matured across the release: connector filters with dynamic filter-option APIs ([#1202](https://github.com/pipeshub-ai/pipeshub-ai/pull/1202), [#1169](https://github.com/pipeshub-ai/pipeshub-ai/pull/1169) — @shrikantNemiwal1), separate API routes for saving auth and filters ([#1192](https://github.com/pipeshub-ai/pipeshub-ai/pull/1192)), instance rename ([#1166](https://github.com/pipeshub-ai/pipeshub-ai/pull/1166)), instance deletion ([#1350](https://github.com/pipeshub-ai/pipeshub-ai/pull/1350)), a connector-status check before indexing ([#1191](https://github.com/pipeshub-ai/pipeshub-ai/pull/1191)), and a corrected default admin scope of "team" ([#1168](https://github.com/pipeshub-ai/pipeshub-ai/pull/1168)).
 
-#### Knowledge bases become connectors, plus a Knowledge Hub API
+### Knowledge bases become connectors, plus a Knowledge Hub API
 
 Knowledge bases were re-architected as a connector type with an automated migration ([#1371](https://github.com/pipeshub-ai/pipeshub-ai/pull/1371) — @tushar1245, follow-ups [#1403](https://github.com/pipeshub-ai/pipeshub-ai/pull/1403), [#1406](https://github.com/pipeshub-ai/pipeshub-ai/pull/1406)) and renamed to "Collections" in the UI ([#1386](https://github.com/pipeshub-ai/pipeshub-ai/pull/1386) — @vishwjeet-pawar03). A new Knowledge Hub API unifies browsing and search over all knowledge ([#1232](https://github.com/pipeshub-ai/pipeshub-ai/pull/1232), [#1334](https://github.com/pipeshub-ai/pipeshub-ai/pull/1334) — @shrikantNemiwal1), backed by KB and folder migrations ([#1170](https://github.com/pipeshub-ai/pipeshub-ai/pull/1170), [#1179](https://github.com/pipeshub-ai/pipeshub-ai/pull/1179)) and an all-records page in the frontend ([#1374](https://github.com/pipeshub-ai/pipeshub-ai/pull/1374)).
 
-#### Graph database abstraction layer, async ArangoDB
+### Graph database abstraction layer, async ArangoDB
 
 A new database abstraction layer introduces an `IGraphDBProvider` interface, an aiohttp-based HTTP client for fully async ArangoDB operations, and a `GraphDataStore` with transaction management via context managers; connectors were migrated off the old `BaseArangoService` ([#1145](https://github.com/pipeshub-ai/pipeshub-ai/pull/1145) — @tushar1245, follow-up fixes [#1194](https://github.com/pipeshub-ai/pipeshub-ai/pull/1194), [#1195](https://github.com/pipeshub-ai/pipeshub-ai/pull/1195), [#1197](https://github.com/pipeshub-ai/pipeshub-ai/pull/1197)). The `syncPoint` collection was flattened ([#1181](https://github.com/pipeshub-ai/pipeshub-ai/pull/1181)) and the Node.js API dropped its direct ArangoDB dependency entirely ([#1455](https://github.com/pipeshub-ai/pipeshub-ai/pull/1455) — @vishwjeet-pawar03).
 
-#### PipesHub as an OAuth2.0 provider, JIT provisioning, and security hardening
+### PipesHub as an OAuth2.0 provider, JIT provisioning, and security hardening
 
 PipesHub now ships its own OAuth2.0 support ([#1321](https://github.com/pipeshub-ai/pipeshub-ai/pull/1321) — @rish664) with the spec published in OpenAPI ([#1324](https://github.com/pipeshub-ai/pipeshub-ai/pull/1324)), JIT account provisioning ([#1347](https://github.com/pipeshub-ai/pipeshub-ai/pull/1347) — @abhishekgml1991) and generic OAuth JIT support ([#1453](https://github.com/pipeshub-ai/pipeshub-ai/pull/1453)). Hardening includes token invalidation on logout ([#1162](https://github.com/pipeshub-ai/pipeshub-ai/pull/1162) — @tushar1245), captcha verification on auth flows ([#1241](https://github.com/pipeshub-ai/pipeshub-ai/pull/1241), [#1294](https://github.com/pipeshub-ai/pipeshub-ai/pull/1294)), password change/reset fixes ([#1257](https://github.com/pipeshub-ai/pipeshub-ai/pull/1257)), a user-enumeration fix ([#1273](https://github.com/pipeshub-ai/pipeshub-ai/pull/1273)), and the MongoDB "Mongobleed" CVE-2025-14847 fix ([#1252](https://github.com/pipeshub-ai/pipeshub-ai/pull/1252) — @loganaden).
 
-#### Citations that are actually usable
+### Citations that are actually usable
 
 Citation handling in answers was overhauled: filenames now appear in citations ([#1187](https://github.com/pipeshub-ai/pipeshub-ai/pull/1187) — @vishwjeet-pawar03), citations for the same file are grouped ([#1200](https://github.com/pipeshub-ai/pipeshub-ai/pull/1200)), and numbering was fixed across streaming, non-sequential, and overflow cases ([#1172](https://github.com/pipeshub-ai/pipeshub-ai/pull/1172), [#1188](https://github.com/pipeshub-ai/pipeshub-ai/pull/1188), [#1205](https://github.com/pipeshub-ai/pipeshub-ai/pull/1205), [#1206](https://github.com/pipeshub-ai/pipeshub-ai/pull/1206)). Citation metadata gained a `previewRenderable` flag so the UI knows what it can preview ([#1226](https://github.com/pipeshub-ai/pipeshub-ai/pull/1226)), and source links were fixed ([#1300](https://github.com/pipeshub-ai/pipeshub-ai/pull/1300)).
 
-#### Smarter document parsing: VLM OCR, structured output, spreadsheets
+### Smarter document parsing: VLM OCR, structured output, spreadsheets
 
 A VLM-based OCR strategy joins the parsing pipeline ([#1148](https://github.com/pipeshub-ai/pipeshub-ai/pull/1148) — @kaushal1999) alongside structured output for specific LLMs in indexing and query ([#1144](https://github.com/pipeshub-ai/pipeshub-ai/pull/1144), fix [#1178](https://github.com/pipeshub-ai/pipeshub-ai/pull/1178)). Spreadsheet handling matured significantly: multi-row header handling with LLM header detection in the Excel parser ([#1368](https://github.com/pipeshub-ai/pipeshub-ai/pull/1368)), refactored CSV processing ([#1456](https://github.com/pipeshub-ai/pipeshub-ai/pull/1456), [#1336](https://github.com/pipeshub-ai/pipeshub-ai/pull/1336), [#1344](https://github.com/pipeshub-ai/pipeshub-ai/pull/1344)), TSV support including in-chat rendering ([#1339](https://github.com/pipeshub-ai/pipeshub-ai/pull/1339), [#1354](https://github.com/pipeshub-ai/pipeshub-ai/pull/1354)), and SVG image indexing ([#1199](https://github.com/pipeshub-ai/pipeshub-ai/pull/1199)).
 
-### Breaking changes & upgrade notes
+## Breaking changes & upgrade notes
 
 - Knowledge bases are migrated into connector form on upgrade ([#1371](https://github.com/pipeshub-ai/pipeshub-ai/pull/1371)); related KB/folder migrations run automatically ([#1170](https://github.com/pipeshub-ai/pipeshub-ai/pull/1170), [#1179](https://github.com/pipeshub-ai/pipeshub-ai/pull/1179), [#1406](https://github.com/pipeshub-ai/pipeshub-ai/pull/1406), [#1452](https://github.com/pipeshub-ai/pipeshub-ai/pull/1452)).
 - The deprecated "Public connector URL" setting was removed from frontend and backend ([#1233](https://github.com/pipeshub-ai/pipeshub-ai/pull/1233), [#1337](https://github.com/pipeshub-ai/pipeshub-ai/pull/1337)).
 - Individual account creation was removed ([#1382](https://github.com/pipeshub-ai/pipeshub-ai/pull/1382)); `common` is no longer the default Microsoft tenant ID ([#1267](https://github.com/pipeshub-ai/pipeshub-ai/pull/1267)).
 - New environment variables control rate limiting and access/refresh-token lifetimes ([#1255](https://github.com/pipeshub-ai/pipeshub-ai/pull/1255)); LLM row-processing count for tables is now env-configurable ([#1319](https://github.com/pipeshub-ai/pipeshub-ai/pull/1319)); Kafka partitions default to 1 ([#1384](https://github.com/pipeshub-ai/pipeshub-ai/pull/1384)).
 
-### Connectors
+## Connectors
 
 - **Jira** — connector-ID fixes, dynamic `project_keys` filter options, web URLs on comment and attachment records, scope fixes, site URL removed from credentials, multi-project sync fix, block-group implementation, and Arango-service removal from record deletion ([#1180](https://github.com/pipeshub-ai/pipeshub-ai/pull/1180), [#1186](https://github.com/pipeshub-ai/pipeshub-ai/pull/1186), [#1204](https://github.com/pipeshub-ai/pipeshub-ai/pull/1204), [#1298](https://github.com/pipeshub-ai/pipeshub-ai/pull/1298), [#1247](https://github.com/pipeshub-ai/pipeshub-ai/pull/1247), [#1417](https://github.com/pipeshub-ai/pipeshub-ai/pull/1417), [#1356](https://github.com/pipeshub-ai/pipeshub-ai/pull/1356), [#1197](https://github.com/pipeshub-ai/pipeshub-ai/pull/1197) — @darshangodase)
 - **Box** — file-extension filters, incremental folder sync, folder collaborations, date filters with scheduled sync as the default strategy, CCG authentication replacing manual token handling, and URL/reindexing fixes ([#1190](https://github.com/pipeshub-ai/pipeshub-ai/pull/1190), [#1240](https://github.com/pipeshub-ai/pipeshub-ai/pull/1240), [#1277](https://github.com/pipeshub-ai/pipeshub-ai/pull/1277), [#1283](https://github.com/pipeshub-ai/pipeshub-ai/pull/1283), [#1275](https://github.com/pipeshub-ai/pipeshub-ai/pull/1275) — @SharmaNishchay)
@@ -66,7 +68,7 @@ A VLM-based OCR strategy joins the parsing pipeline ([#1148](https://github.com/
 - **Workday** — client moved to its correct path ([#1251](https://github.com/pipeshub-ai/pipeshub-ai/pull/1251))
 - **Shared connector framework** — `DataSourceEntitiesProcessor` derives parent external records ([#1396](https://github.com/pipeshub-ai/pipeshub-ai/pull/1396)), fix for hierarchical record structure with multi-instance connectors ([#1183](https://github.com/pipeshub-ai/pipeshub-ai/pull/1183)), scope deletion on auth change ([#1351](https://github.com/pipeshub-ai/pipeshub-ai/pull/1351)), streaming fix for attachments with special characters ([#1335](https://github.com/pipeshub-ai/pipeshub-ai/pull/1335)), and cached-credentials validation ([#1160](https://github.com/pipeshub-ai/pipeshub-ai/pull/1160))
 
-### Agents & AI
+## Agents & AI
 
 - Optimized agent execution with reduced latency and improved tool handling ([#1096](https://github.com/pipeshub-ai/pipeshub-ai/pull/1096) — @vishwjeet-pawar03), plus agent and agent-streaming fixes ([#1349](https://github.com/pipeshub-ai/pipeshub-ai/pull/1349), [#1365](https://github.com/pipeshub-ai/pipeshub-ai/pull/1365)) and removal of non-working bind-tools code ([#1149](https://github.com/pipeshub-ai/pipeshub-ai/pull/1149))
 - Hybrid Qdrant search and token-limit handling in tool calls ([#1421](https://github.com/pipeshub-ai/pipeshub-ai/pull/1421) — @kaushal1999)
@@ -76,7 +78,7 @@ A VLM-based OCR strategy joins the parsing pipeline ([#1148](https://github.com/
 - MD5-based deduplication across all record types ([#1208](https://github.com/pipeshub-ai/pipeshub-ai/pull/1208))
 - Docling BytesIO handling and mimetype-to-extension fallback in parsing ([#1201](https://github.com/pipeshub-ai/pipeshub-ai/pull/1201), [#1218](https://github.com/pipeshub-ai/pipeshub-ai/pull/1218))
 
-### Fixes
+## Fixes
 
 - Connector configuration: trailing spaces and whitespace at init ([#1165](https://github.com/pipeshub-ai/pipeshub-ai/pull/1165), [#1185](https://github.com/pipeshub-ai/pipeshub-ai/pull/1185)), trailing slashes in URLs ([#1164](https://github.com/pipeshub-ai/pipeshub-ai/pull/1164)), removed 10-character minimum-length validation ([#1167](https://github.com/pipeshub-ai/pipeshub-ai/pull/1167)), filter key property and instance destroy on toggle ([#1184](https://github.com/pipeshub-ai/pipeshub-ai/pull/1184)), duplicate instance-name error message and no-subject mail sync ([#1209](https://github.com/pipeshub-ai/pipeshub-ai/pull/1209))
 - Query/retrieval: record access bug ([#1182](https://github.com/pipeshub-ai/pipeshub-ai/pull/1182)), retrieval bug ([#1288](https://github.com/pipeshub-ai/pipeshub-ai/pull/1288)), region mapper for search queries ([#1425](https://github.com/pipeshub-ai/pipeshub-ai/pull/1425)), query update ([#1428](https://github.com/pipeshub-ai/pipeshub-ai/pull/1428)), org-record filters ([#1216](https://github.com/pipeshub-ai/pipeshub-ai/pull/1216))
@@ -87,20 +89,20 @@ A VLM-based OCR strategy joins the parsing pipeline ([#1148](https://github.com/
 - UI: 404-page logo ([#1196](https://github.com/pipeshub-ai/pipeshub-ai/pull/1196)), web-URL highlighting ([#1231](https://github.com/pipeshub-ai/pipeshub-ai/pull/1231)) and hide-web-URL support ([#1307](https://github.com/pipeshub-ai/pipeshub-ai/pull/1307)), white-label logo ([#1292](https://github.com/pipeshub-ai/pipeshub-ai/pull/1292)), PDF-highlighter and chip styling ([#1265](https://github.com/pipeshub-ai/pipeshub-ai/pull/1265)), refresh after image upload ([#1276](https://github.com/pipeshub-ai/pipeshub-ai/pull/1276)), filter-settings next button ([#1256](https://github.com/pipeshub-ai/pipeshub-ai/pull/1256)), file-extension filter rendering ([#1322](https://github.com/pipeshub-ai/pipeshub-ai/pull/1322)), form autoscroll and error handling ([#1381](https://github.com/pipeshub-ai/pipeshub-ai/pull/1381)), frontend-URL/services section removal ([#1263](https://github.com/pipeshub-ai/pipeshub-ai/pull/1263)), all-records issues and pagination ([#1390](https://github.com/pipeshub-ai/pipeshub-ai/pull/1390), [#1364](https://github.com/pipeshub-ai/pipeshub-ai/pull/1364), [#1458](https://github.com/pipeshub-ai/pipeshub-ai/pull/1458)), record-details source header ([#1399](https://github.com/pipeshub-ai/pipeshub-ai/pull/1399)), filter cleared on record click ([#1395](https://github.com/pipeshub-ai/pipeshub-ai/pull/1395)), PPT rendering ([#1459](https://github.com/pipeshub-ai/pipeshub-ai/pull/1459)), non-admin redirect from connector routes ([#1446](https://github.com/pipeshub-ai/pipeshub-ai/pull/1446))
 - Misc: upload API payload structure ([#1295](https://github.com/pipeshub-ai/pipeshub-ai/pull/1295)), exception handling ([#1296](https://github.com/pipeshub-ai/pipeshub-ai/pull/1296)), organization permission fix ([#1348](https://github.com/pipeshub-ai/pipeshub-ai/pull/1348)), all-records count with dead-code removal ([#1370](https://github.com/pipeshub-ai/pipeshub-ai/pull/1370)), minor fixes ([#1394](https://github.com/pipeshub-ai/pipeshub-ai/pull/1394))
 
-### Performance & reliability
+## Performance & reliability
 
 - Kafka: producer-initialization race fixed ([#1248](https://github.com/pipeshub-ai/pipeshub-ai/pull/1248)), semaphore-based event-consumption control later decoupled from consumption ([#1176](https://github.com/pipeshub-ai/pipeshub-ai/pull/1176), [#1291](https://github.com/pipeshub-ai/pipeshub-ai/pull/1291)), and indexing semaphore tuned to 15 ([#1309](https://github.com/pipeshub-ai/pipeshub-ai/pull/1309))
 - Record JSON size reduction — empty-field stripping and index ranges for Block/BlockGroup children — landed, was reverted, then re-landed ([#1380](https://github.com/pipeshub-ai/pipeshub-ai/pull/1380), [#1387](https://github.com/pipeshub-ai/pipeshub-ai/pull/1387), [#1388](https://github.com/pipeshub-ai/pipeshub-ai/pull/1388))
 - Parallel record fetching from blob storage ([#1436](https://github.com/pipeshub-ai/pipeshub-ai/pull/1436)) and minimal batch size for CPU embeddings ([#1449](https://github.com/pipeshub-ai/pipeshub-ai/pull/1449))
 - Knowledge Hub filter queries moved into ArangoDB and API queries refactored ([#1412](https://github.com/pipeshub-ai/pipeshub-ai/pull/1412), [#1457](https://github.com/pipeshub-ai/pipeshub-ai/pull/1457))
 
-### Security & authentication
+## Security & authentication
 
 - Removed emails from the getUsers API ([#1234](https://github.com/pipeshub-ai/pipeshub-ai/pull/1234)), general security bug fix ([#1238](https://github.com/pipeshub-ai/pipeshub-ai/pull/1238)), AWS region input sanitization ([#1242](https://github.com/pipeshub-ai/pipeshub-ai/pull/1242)), and input validation fix ([#1253](https://github.com/pipeshub-ai/pipeshub-ai/pull/1253))
 - Token handling: removed unnecessary token generation ([#1280](https://github.com/pipeshub-ai/pipeshub-ai/pull/1280)), auth tokens used for signed-URL record downloads ([#1282](https://github.com/pipeshub-ai/pipeshub-ai/pull/1282)), redirect-URI fix ([#1246](https://github.com/pipeshub-ai/pipeshub-ai/pull/1246)), and OAuth configuration support ([#1225](https://github.com/pipeshub-ai/pipeshub-ai/pull/1225))
 - Dependency upgrades for vulnerabilities: aiohttp ([#1217](https://github.com/pipeshub-ai/pipeshub-ai/pull/1217)), qs ([#1223](https://github.com/pipeshub-ai/pipeshub-ai/pull/1223)), config-resolver ([#1243](https://github.com/pipeshub-ai/pipeshub-ai/pull/1243)), jwk-to-pem ([#1244](https://github.com/pipeshub-ai/pipeshub-ai/pull/1244)), react-router ([#1236](https://github.com/pipeshub-ai/pipeshub-ai/pull/1236)), undici ([#1308](https://github.com/pipeshub-ai/pipeshub-ai/pull/1308)), lodash-es ([#1341](https://github.com/pipeshub-ai/pipeshub-ai/pull/1341)) with a lodash dependency fix ([#1360](https://github.com/pipeshub-ai/pipeshub-ai/pull/1360)), multer ([#1423](https://github.com/pipeshub-ai/pipeshub-ai/pull/1423)), fast-xml-parser and python-multipart ([#1422](https://github.com/pipeshub-ai/pipeshub-ai/pull/1422)), and a protobuf bump that was subsequently reverted ([#1420](https://github.com/pipeshub-ai/pipeshub-ai/pull/1420), [#1424](https://github.com/pipeshub-ai/pipeshub-ai/pull/1424))
 
-### Developer experience & infrastructure
+## Developer experience & infrastructure
 
 - Helm chart for Kubernetes deployment ([#1338](https://github.com/pipeshub-ai/pipeshub-ai/pull/1338) — @KrKOo)
 - Kafka SASL support and configuration ([#1359](https://github.com/pipeshub-ai/pipeshub-ai/pull/1359), [#1357](https://github.com/pipeshub-ai/pipeshub-ai/pull/1357)), Redis TLS support ([#1367](https://github.com/pipeshub-ai/pipeshub-ai/pull/1367)), Redis as a key-value store for config ([#1281](https://github.com/pipeshub-ai/pipeshub-ai/pull/1281)), and S3-compatible object storage as an internal storage backend ([#1400](https://github.com/pipeshub-ai/pipeshub-ai/pull/1400))
@@ -108,7 +110,7 @@ A VLM-based OCR strategy joins the parsing pipeline ([#1148](https://github.com/
 - CI/build: lint-job fix ([#1212](https://github.com/pipeshub-ai/pipeshub-ai/pull/1212)), env flag ([#1215](https://github.com/pipeshub-ai/pipeshub-ai/pull/1215)), missing cachetools package ([#1220](https://github.com/pipeshub-ai/pipeshub-ai/pull/1220)), environment config variable ([#1462](https://github.com/pipeshub-ai/pipeshub-ai/pull/1462))
 - Cleanup: unused domain-extraction logic ([#1237](https://github.com/pipeshub-ai/pipeshub-ai/pull/1237)), TEST_EVIDENCE.md deleted ([#1250](https://github.com/pipeshub-ai/pipeshub-ai/pull/1250)), debug-level logging in GraphDataStore ([#1270](https://github.com/pipeshub-ai/pipeshub-ai/pull/1270)), schema cleanup and ticket enum/edge-type standardization ([#1320](https://github.com/pipeshub-ai/pipeshub-ai/pull/1320), [#1259](https://github.com/pipeshub-ai/pipeshub-ai/pull/1259)), ticketRelation schema removal ([#1352](https://github.com/pipeshub-ai/pipeshub-ai/pull/1352)), unused AWS Amplify removal ([#1419](https://github.com/pipeshub-ai/pipeshub-ai/pull/1419)), unused code removal ([#1440](https://github.com/pipeshub-ai/pipeshub-ai/pull/1440))
 
-### New contributors
+## New contributors
 
 - @codingiran made their first contribution in [#1219](https://github.com/pipeshub-ai/pipeshub-ai/pull/1219)
 - @Kushagra1122 made their first contribution in [#1235](https://github.com/pipeshub-ai/pipeshub-ai/pull/1235)

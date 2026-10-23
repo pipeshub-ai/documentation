@@ -22,6 +22,7 @@ const CHANGELOG_DIR = join(ROOT, 'changelog');
 const PRODUCTS = {
   platform: {
     title: 'PipesHub changelog',
+    sidebarTitle: 'Platform Changelog',
     name: 'PipesHub',
     description: 'Release notes for the PipesHub Workplace AI platform',
     icon: 'bolt',
@@ -180,6 +181,7 @@ function renderPage(product, versions) {
   return [
     '---',
     `title: ${js(meta.title)}`,
+    `sidebarTitle: ${js(meta.sidebarTitle)}`,
     `description: ${js(meta.description)}`,
     `icon: ${meta.icon}`,
     'rss: true',

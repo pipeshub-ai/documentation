@@ -31,7 +31,11 @@ icon: "/logo/one-drive.png"
 
 OneDrive is Microsoft's cloud storage service that lets you store, sync, and share files across all your devices, often bundled with Microsoft 365. 
 
-The OneDrive connector uses OAuth 2.0 via Microsoft Graph API with Application Permissions, allowing background access to organizational files and folders without requiring individual user sign-ins.
+The OneDrive connector uses OAuth 2.0 via Microsoft Graph API with Application Permissions, allowing background access to organizational files and folders without requiring individual user sign-ins. It signs in with a client certificate, which also lets it read from the SharePoint API which files share the access of their folder.
+
+<Note>
+Set up a connector with a client secret before certificates were required? It keeps working. See [Switch to certificate sign-in](#switch-to-certificate-sign-in) to move it to a certificate.
+</Note>
 
 ---
 
@@ -96,30 +100,64 @@ After registration, you'll see the Overview page. Copy the following values:
 Copy the "Application (client) ID" NOT the "Object ID". These are different values.
 </Warning>
 
-### Step 3: Create Client Secret
+### Step 3: Create a Client Certificate
 
-- In the left sidebar, click "Certificates & secrets"
-- Click "New client secret"
-- Configure the secret:
-  - **Description:** Enter a description (e.g., "PipesHub Connector Secret")
-  - **Expires:** Choose expiration period (recommended: 24 months)
-- Click "Add"
-- Immediately copy the secret value from the "Value" column
+The connector signs in with a client certificate and its private key. New OneDrive connectors can't use a client secret.
+
+**Install OpenSSL:**
+
+OpenSSL is installed by default on Linux and macOS terminals. If you are using Windows:
+
+- Download the OpenSSL installer for your version of Windows. OpenSSL lists third-party binary distributions, with Shining Light Productions as an option.
+- During installation, select the option to copy the OpenSSL binaries into the `/bin` directory.
+- Open a new PowerShell window and run the following command to use the OpenSSL binaries:
+
+```powershell
+$env:Path += ";C:\Program Files\OpenSSL-Win64\bin"
+```
+
+**Generate the Certificate and Private Key:**
+
+Run these commands one at a time. Microsoft needs the private key in PKCS#8 format:
+
+```bash
+openssl genrsa -out tempprivatekey.key 2048
+openssl pkcs8 -topk8 -inform PEM -outform PEM -in tempprivatekey.key -out privatekey.key -nocrypt
+openssl req -new -key privatekey.key -out request.csr
+openssl x509 -req -days 365 -in request.csr -signkey privatekey.key -out certificate.crt
+```
+
+`-days 365` makes the certificate valid for one year. PipesHub reminds you 30 days before it expires.
+
+**Check the Files:**
+
+Make sure both `certificate.crt` and `privatekey.key` exist, and open each one to check its format:
+
+- The certificate starts with `BEGIN CERTIFICATE` and ends with `END CERTIFICATE`.
+- The private key starts with `BEGIN PRIVATE KEY` and ends with `END PRIVATE KEY`. It must not have `RSA` in its headers, and it must not be encrypted.
+
+**Upload the Certificate to Azure:**
+
+- In your app registration, click **Certificates & secrets**
+- Open the **Certificates** tab and click **Upload certificate**
+- Upload `certificate.crt` and click **Add**
+- The certificate now shows in the list, with its thumbprint and expiry date
 <div style={{ textAlign: "center" }}>
   <img
-    src="/images/connectors/microsoft365/onedrive/5.png"
-    alt="OneDrive"
+    src="/images/connectors/microsoft365/onedrive/certificate-upload-azure.png"
+    alt="App registration Certificates & secrets: client certificate uploaded"
     style={{ display: 'block', margin: '0 auto' }}
     width="90%"
   />
 </div>
 
 <Warning>
-The client secret value is only displayed once! If you navigate away, you cannot retrieve it again and must create a new secret.
+Keep `privatekey.key` safe and don't share it. You upload it to PipesHub in Step 6, and only there. `request.csr` and `tempprivatekey.key` aren't needed afterwards; delete them.
 </Warning>
 
 ### Step 4: Configure API Permissions
 
+**Microsoft Graph Permissions:**
 - In the left sidebar, click "API permissions"
 - Click "Add a permission" → "Microsoft Graph"
 - Choose "Application permissions" (not Delegated permissions)
@@ -136,6 +174,24 @@ The client secret value is only displayed once! If you navigate away, you cannot
     width="90%"
   />
 </div>
+
+**SharePoint Permission:**
+- Click "Add a permission" again and select **SharePoint** (not Microsoft Graph)
+- Choose "Application permissions"
+- Add `Sites.Read.All`
+- Click "Add permissions"
+<div style={{ textAlign: "center" }}>
+  <img
+    src="/images/connectors/microsoft365/onedrive/sharepoint-sites-read-all.png"
+    alt="API permissions: SharePoint Sites.Read.All application permission added"
+    style={{ display: 'block', margin: '0 auto' }}
+    width="90%"
+  />
+</div>
+
+<Note>
+OneDrive stores each user's files on a SharePoint site. The connector reads from the SharePoint API which files share the access of their folder, and that API needs its own `Sites.Read.All`. The Microsoft Graph permission with the same name doesn't count. `Sites.FullControl.All` isn't needed.
+</Note>
 
 ### Step 5: Grant Admin Consent
 
@@ -165,14 +221,15 @@ Admin consent is required for application permissions. Only Global Administrator
 - Find the OneDrive connector and click "Configure"
 - Enter the following details:
   - **Application (Client) ID:** From Step 2
-  - **Client Secret:** From Step 3
   - **Directory (Tenant) ID:** From Step 2
+  - **Client Certificate:** Upload `certificate.crt` from Step 3
+  - **Private Key (PKCS#8):** Upload `privatekey.key` from Step 3
 - Check the "Has Admin Consent" checkbox
 - Click "Next"
 <div style={{ textAlign: "center" }}>
   <img
-    src="/images/connectors/microsoft365/onedrive/8.png"
-    alt="OneDrive"
+    src="/images/connectors/microsoft365/onedrive/connector-form-certificate.png"
+    alt="OneDrive connector form with client ID, tenant ID, client certificate and private key"
     style={{ display: 'block', margin: '0 auto' }}
     width="90%"
   />
@@ -180,6 +237,10 @@ Admin consent is required for application permissions. Only Global Administrator
 
 <Note>
 Unlike user-facing OAuth flows, there's no login screen because the connector uses application permissions with client credentials.
+</Note>
+
+<Note>
+PipesHub checks the credentials before it saves them: it signs in to Microsoft Graph and to the SharePoint API. If SharePoint refuses the app, the save stops and says what to fix. New permissions can take a few minutes to apply after admin consent, so wait and try again if `Sites.Read.All` was just granted.
 </Note>
 
 </Accordion>
@@ -237,6 +298,82 @@ When enabled, files shared with others are indexed alongside personal files. Dis
 </Accordion>
 
 </AccordionGroup>
+
+---
+
+## Switch to Certificate Sign-in
+
+A OneDrive connector set up with a client secret keeps signing in with it, but it can't read which files share the access of their folder. Its overview page shows **Switch to certificate sign-in** under **Action needed** until it has a certificate. The steps below switch it over. Files already synced stay, and you don't set the connector up again.
+
+<Steps>
+
+<Step title="Create a certificate and register it on the app">
+Follow **Step 3: Create a Client Certificate** in the [Setup Guide](#configuration-setup) above. Upload `certificate.crt` to the same app registration the connector uses now.
+</Step>
+
+<Step title="Grant the SharePoint permission">
+- In the app registration, click **API permissions** → **Add a permission**
+- Select **SharePoint** (not Microsoft Graph), choose **Application permissions**, and add `Sites.Read.All`
+- Click **Grant admin consent for [Your Organization]** and confirm
+
+The Microsoft Graph permissions the connector already has stay as they are.
+<div style={{ textAlign: "center" }}>
+  <img
+    src="/images/connectors/microsoft365/onedrive/sharepoint-sites-read-all.png"
+    alt="API permissions: SharePoint Sites.Read.All granted with admin consent"
+    style={{ display: 'block', margin: '0 auto' }}
+    width="90%"
+  />
+</div>
+</Step>
+
+<Step title="Open the connector's authentication">
+In PipesHub, go to **Settings > Connectors**, open the OneDrive connector, and click **Update authentication** next to **Switch to certificate sign-in**. This opens the **Authenticate Instance** tab.
+<div style={{ textAlign: "center" }}>
+  <img
+    src="/images/connectors/microsoft365/onedrive/migrate-action-needed.png"
+    alt="OneDrive connector overview: Action needed, Switch to certificate sign-in, with Update authentication and View setup steps"
+    style={{ display: 'block', margin: '0 auto' }}
+    width="90%"
+  />
+</div>
+</Step>
+
+<Step title="Upload the certificate and private key">
+- Upload `certificate.crt` under **Client Certificate**
+- Upload `privatekey.key` under **Private Key (PKCS#8)**
+- Leave **Client ID**, **Tenant ID** and **Has Admin Consent** as they are
+- Save
+
+PipesHub checks the credentials first. If the connector is enabled, it then asks to disable it to save the new credentials: click **Disable & Proceed**. It disables the connector and saves what you entered, so you don't upload the files again. **Cancel** keeps the form as it is.
+<div style={{ textAlign: "center" }}>
+  <img
+    src="/images/connectors/microsoft365/onedrive/migrate-disable-first.png"
+    alt="Dialog: Connector is currently enabled, Disable & Proceed to save the new credentials"
+    style={{ display: 'block', margin: '0 auto' }}
+    width="90%"
+  />
+</div>
+</Step>
+
+<Step title="Enable the connector">
+Enable the connector again. **Switch to certificate sign-in** no longer shows, and the next sync reads which files share the access of their folder.
+</Step>
+
+</Steps>
+
+<Note>
+The connector keeps signing in to Microsoft Graph with the client secret while it is saved, and uses the certificate for SharePoint. To sign in with the certificate only, clear **Client Secret** in the same step, then delete the secret in Azure (**Certificates & secrets**). Once cleared, a client secret can't be added back.
+</Note>
+
+<Accordion title="SharePoint refused the app">
+The connector couldn't sign in to the SharePoint API. Check that:
+
+- The app has the **SharePoint** `Sites.Read.All` application permission (not only the Microsoft Graph one) with admin consent. A newly granted permission can take a few minutes to apply.
+- The certificate uploaded to PipesHub is the one registered on the app under **Certificates & secrets**, and it hasn't expired.
+
+Then save the authentication again.
+</Accordion>
 
 ---
 
@@ -358,18 +495,26 @@ There are three common causes:
 
 </Accordion>
 
+<Accordion title="My client certificate expires soon. What do I do?">
+
+PipesHub shows **The client certificate expires soon** on the connector 30 days before the certificate expires. Once it expires, the connector can't sign in and sync stops.
+
+1. Create a new certificate and upload it to the app registration, as in **Step 3: Create a Client Certificate**. Keep the old one until the connector uses the new one.
+2. In PipesHub, open the OneDrive connector, click **Update authentication**, and upload the new certificate and private key.
+3. Delete the old certificate in Azure (**Certificates & secrets**).
+
+</Accordion>
+
 <Accordion title="My client secret has expired. What do I do?">
 
-Azure AD client secrets expire based on the duration set during creation. Once expired, the connector will fail to authenticate and sync will stop.
+Only connectors set up before certificates were required use a client secret. Once it expires, the connector can't sign in and sync stops.
+
+The simplest fix is to [switch to certificate sign-in](#switch-to-certificate-sign-in) and clear the secret. To keep the secret instead:
 
 1. Go to your app registration in the [Azure Portal](https://portal.azure.com)
 2. Navigate to **Certificates & secrets** → **New client secret**
 3. Set a new expiry and copy the secret **Value** immediately (it won't be shown again).
 4. Go to **Settings > Connectors** in PipesHub, open the OneDrive connector, and update the **Client Secret** field with the new value
-
-<Note>
-To avoid disruption, set a calendar reminder before your secret's expiry date. The recommended duration is 24 months.
-</Note>
 
 </Accordion>
 

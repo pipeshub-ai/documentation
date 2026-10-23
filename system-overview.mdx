@@ -133,7 +133,7 @@ Reindexing content that has not changed, with the same model, prompt and departm
 | `indexingStatus` | Parsing, embedding, and whether the record is searchable | `COMPLETED` once the record is searchable |
 | `extractionStatus` | Classification only | `QUEUED` until classification finishes, then `COMPLETED`, `SKIPPED` or `FAILED` |
 
-`SKIPPED` comes with a reason in the record's `reason` field, for example when classification is turned off, the record has nothing to classify, or the organization has no language model configured. A model failure marks only `extractionStatus` as `FAILED`; the record stays searchable.
+`SKIPPED` comes with a reason in the record's `reason` field, for example when classification is turned off, the record has nothing to classify, or the organization has no language model configured. A model call that fails or returns nothing usable is retried, and `extractionStatus` stays `QUEUED` meanwhile; it becomes `FAILED` only when the retries run out, or at once when the Extraction service rejects the document. A model provider or Extraction service outage pauses classification instead of failing it. The record stays searchable throughout.
 
 Named-entity extraction has no status field on the record. Its progress is kept per stage, and the record page shows it in the **Pipeline** track as the **Entities** step, after **Parsed**, **Searchable** and **Classified**. The details button next to a step shows its attempt count and any failure or skip reason. The Entities step appears only on records that have run that stage.
 
@@ -150,7 +150,7 @@ The same is available over the API, for classification and for named-entity extr
 - **Concurrency.** `MAX_CONCURRENT_INDEXING_LLM_CALLS` (default `24`) caps the indexing-time language model calls one process makes at once, in the indexing service and, when they run, the Parsing and Extraction services. The cap covers classification, named-entity extraction, image descriptions, VLM OCR and table summaries together. Each stage also runs at most that many jobs at a time, and both stages draw on the same cap.
 - **Event bus.** On Kafka the stages use their own topics, `pipeline.classify` and `pipeline.entities`. See [Kafka topics for classification and named entities](/system-overview/external-services#kafka-topics-for-classification-and-named-entities). Redis Streams needs no setup.
 - **Health.** `GET /health` on the indexing service (port `8091`) has a `stages` block: `publisher_bound`, and for each stage its topic, its limit and how its jobs have ended since the service started. `publisher_bound: false` means the stage topics could not be created yet: records are still indexed and searchable, the stages wait, and the indexing service keeps retrying in the background.
-- **`DEFER_EXTRACTION` is removed.** It never deferred anything. Drop it from custom Compose files.
+- **`DEFER_EXTRACTION` is removed.** With it set to `true`, classification was skipped and records were left with `extractionStatus` `NOT_STARTED`; nothing ran it for them later. Drop it from custom Compose files, and see "Upgrading from 0.10.0 or earlier" in [Deployment](/deployment/overview) for the records it left behind.
 
 ### Embedding server
 

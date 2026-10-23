@@ -1,39 +1,57 @@
 ---
 title: "Zendesk"
-description: "Customer support and ticketing system connector"
+description: "Connect Zendesk tickets and Help Center articles to PipesHub"
 icon: "/logo/zendesk.png"
 ---
-<div className="flex flex-col items-center justify-center text-center pt-10">
-  <h1 className="text-4xl font-bold">✅ Zendesk Connector Ready</h1>
-  <h3 className="text-xl mt-2">
-    Connector is live and ready to use. Documentation in process!
-  </h3>
-</div>
-<div className="not-prose mt-10">
-  <div className="p-6 border border-gray-200 dark:border-gray-700 rounded-xl bg-blue-50 dark:bg-gray-800">
-    <div className="flex items-center gap-3 mb-4">
-      <img 
-        src="/logo/zendesk.png" 
-        alt="Zendesk Logo" 
-        className="w-8 h-8 object-contain flex-shrink-0"
-      />
-      <div className="text-xl font-semibold text-gray-900 dark:text-white">Zendesk</div>
-    </div>
-    <p className="text-base text-gray-700 dark:text-gray-300 mt-0 mb-5">Customer support and ticketing system</p>
-    <div className="flex flex-wrap items-center gap-2">
-      <span className="px-3 py-1.5 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 rounded-full text-sm font-medium">
-        ✅ Ready
-      </span>
-      <span className="px-3 py-1.5 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-full text-sm font-medium">
-        📝 Documentation in process
-      </span>
-    </div>
-  </div>
-</div>
-<div className="text-center mt-12 p-6 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl">
-  <h3 className="text-lg font-semibold mb-2">Need Help Getting Started?</h3>
-  <p className="text-gray-600 dark:text-gray-400">
-    The Zendesk connector is fully operational and ready for use. While we're finalizing the documentation, 
-    feel free to reach out to our support team for setup assistance.
-  </p>
-</div>
+
+## Overview
+
+The Zendesk connector makes tickets, their public comments and attachments, and published Help Center articles searchable in PipesHub. It respects ticket access in Zendesk. Internal ticket notes and Help Center articles restricted to a user segment are not synced.
+
+## Set up Zendesk
+
+You need a **Zendesk admin account** and access to **Workspace Settings** in PipesHub. Use the same email address in both apps so your access is matched correctly.
+
+### 1. Copy the redirect URL
+
+In PipesHub, go to **Workspace Settings** → **Connectors** → **Zendesk** → **+ Setup**. On **Authenticate Instance**, name the connection and copy the **Redirect URL**.
+
+### 2. Create an OAuth client in Zendesk
+
+In Zendesk **Admin Center**, go to **Apps and integrations** → **APIs** → **OAuth clients** → **Add OAuth client**. Give it a name, then set:
+
+| Field | Value |
+|-------|-------|
+| **Client kind** | **Confidential** |
+| **Redirect URLs** | Paste the exact URL copied from PipesHub |
+| **Scopes** | Allow `read` if you restrict client scopes |
+
+Save the client. Copy its **Identifier** and **Secret**; Zendesk displays the full secret only once. See [Zendesk's OAuth client instructions](https://support.zendesk.com/hc/en-us/articles/4408845965210-Using-OAuth-authentication-with-your-application) if you need help with this step.
+
+### 3. Enter the client details in PipesHub
+
+Return to **Authenticate Instance** and enter:
+
+| Field | Value for `acme.zendesk.com` |
+|-------|-------------------------------|
+| **Subdomain** | `acme` |
+| **Authorize URL** | `https://acme.zendesk.com/oauth/authorizations/new` |
+| **Token URL** | `https://acme.zendesk.com/oauth/tokens` |
+| **Client ID** | The Zendesk client's **Identifier** |
+| **Client Secret** | The Zendesk client's **Secret** |
+
+Replace `acme` with your Zendesk subdomain, then click **Next**.
+
+### 4. Authorize and start syncing
+
+On **Authorize**, sign in with a **Zendesk admin account** and approve access. On **Configure Records**, choose **Scheduled** or **Manual** sync, adjust filters if needed, and click **Save**. Select **Start syncing now** to begin.
+
+<Note>
+  Leave **Groups** empty to sync tickets from all groups. The date filters limit tickets and articles. The **Index Tickets**, **Index Attachments**, and **Index Knowledge Base** switches control what appears in search.
+</Note>
+
+## Troubleshooting
+
+- **Authorization fails:** Check that the redirect URL matches exactly, the Client ID is the Zendesk **Identifier**, and the Secret is complete.
+- **Sync requires an admin:** Re-authorize with a Zendesk admin account. An agent account cannot run the required exports.
+- **Content is missing:** Review the group and date filters. Only public ticket comments and published Help Center articles without user-segment restrictions are synced; also check the indexing switches.

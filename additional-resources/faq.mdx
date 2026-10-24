@@ -16,11 +16,24 @@ icon: "question"
   </Accordion>
 
   <Accordion title="Can I self-host PipesHub?">
-    Yes. Docker Compose is the default install (`curl -fsSL https://get.pipeshub.com/install | bash`). Kubernetes is supported with the Helm chart. You bring the LLM. Indexed data stays on your infrastructure. See the [Quickstart](/quickstart).
+    Yes. Docker Compose is the default install (`curl -fsSL https://get.pipeshub.com/install | bash`). Kubernetes is supported with the Helm chart. See the [Quickstart](/quickstart).
+
+    The index, the knowledge graph and stored files live in the databases and storage you run. Document text leaves them only when you choose a hosted model:
+
+    - **Embeddings:** the built-in `BAAI/bge-large-en-v1.5` model runs inside PipesHub. A hosted embedding provider, such as OpenAI or Cohere, receives document chunks to embed.
+    - **Answers:** the LLM you configure receives the passages it answers from. A local model, for example through Ollama, keeps them on your machines.
   </Accordion>
 
   <Accordion title="Does search follow source permissions?">
-    Yes. Search and answers only return records the signed-in person can open in the source system. A citation points at the block of that document.
+    Yes, for apps with their own sharing. For apps such as Slack, Google Drive and Jira, PipesHub syncs who can open each record. Search, answers, the API and MCP then return it only to those people. If you could not open a file in Slack, PipesHub does not show it to you either.
+
+    Records without per-person sharing in a source follow the access set in PipesHub:
+
+    - **Team connectors** such as Web or RSS are readable by everyone in your organization.
+    - **Personal connectors** are readable only by the person who set them up.
+    - **Knowledge-base files** are readable by the people the knowledge base is shared with, as Owner, Writer or Reader.
+
+    A citation points at the block of the document the answer came from.
   </Accordion>
 
   <Accordion title="Is PipesHub an open-source alternative to Glean?">

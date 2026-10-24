@@ -187,6 +187,23 @@ The following events are subscribed exactly as provided in your manifest:
 | `message.groups` | Receive message activity in private channels. |
 | `message.im` | Receive direct message activity between users and the bot. |
 
+## File Attachments
+
+Users can attach files to a direct message or an `@bot` mention, and the bot passes them to the chat along with the question.
+
+| Type | Extensions |
+| --- | --- |
+| PDF | `.pdf` |
+| Images | `.jpg`, `.jpeg`, `.png` |
+| Plain text | `.txt` |
+| Markdown | `.md`, `.markdown`, `.mdx` |
+| CSV and TSV | `.csv`, `.tsv` |
+
+- Each file can be up to **5 MB**.
+- Plain-text and Markdown files must be saved as UTF-8. The bot skips one whose content is not readable text, such as a binary file renamed to `.txt`, and asks the user to save it as UTF-8 and send it again.
+- Save CSV and TSV files as UTF-8 where you can (in Excel, choose **CSV UTF-8 (Comma delimited)**). The bot also accepts a CSV saved in Excel's older Windows format (Windows-1252), and keeps its accented letters, euro signs (€), curly quotes and long dashes (fixed in [pipeshub-ai#3714](https://github.com/pipeshub-ai/pipeshub-ai/pull/3714)). The bot skips a CSV or TSV only when its downloaded bytes contain a NUL byte (a zero byte, which usually means a binary file renamed to `.csv`).
+- The bot skips any other type, such as Word, Excel or JSON files, and any file over the size limit. It replies in the thread with the files it skipped and the list of accepted types, whether or not the bot is linked to an agent. If some attachments were accepted, it answers using those. If the message also has a question, it still answers the question. If the message had only attachments and none were accepted, that reply is the whole answer.
+
 ## End-To-End Verification Checklist
 
 After setup, verify all layers:

@@ -14,6 +14,17 @@ PipesHub exposes a **remote MCP endpoint** over **Streamable HTTP** at `/mcp`. M
 
 This lets AI clients such as **Cursor**, **Claude Code**, **Gemini CLI**, **Claude.ai (Web)**, **LibreChat**, and **Omnigent** search and chat over your organization's indexed documents, look up people and groups, and download files.
 
+Here's Claude Code using PipesHub over MCP, with each person's own permissions:
+
+<iframe
+  className="w-full aspect-video rounded-xl"
+  src="https://www.youtube.com/embed/VgyND38QZ7w"
+  title="PipesHub demo: company context for AI agents"
+  frameborder="0"
+  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; web-share; fullscreen; picture-in-picture 'none';"
+  allowfullscreen
+></iframe>
+
 <Note>
   Looking for the tool reference? See [Tools Reference](/mcp/tools) for descriptions, arguments, and a decision guide for each tool the MCP server exposes.
 </Note>
@@ -24,7 +35,7 @@ This lets AI clients such as **Cursor**, **Claude Code**, **Gemini CLI**, **Clau
 
 ## Prerequisites
 
-- A running PipesHub instance (self-hosted or cloud). If they have none yet, follow [Local Docker demo](/for-agents-local-demo) instead of scaffolding LangChain.
+- A running PipesHub instance: [PipesHub Cloud](https://app.pipeshub.com) or self-hosted. If they have none yet, start on PipesHub Cloud, or self-host with the [Local Docker demo](/for-agents-local-demo); do not scaffold LangChain.
 - Either an OAuth app (see [Step 1](#step-1-create-an-oauth-app) below), **or** a [Personal Access Token](/developer/personal-access-tokens) — see the note below for which one to use
 
 <Note>
@@ -156,6 +167,12 @@ This returns all OAuth endpoints automatically:
 - Revocation: `PIPESHUB_INSTANCE_URL/api/v1/oauth2/revoke`
 - JWKS: `PIPESHUB_INSTANCE_URL/.well-known/jwks.json`
 
+### Request size limit
+
+PipesHub accepts MCP requests of up to 5 MB. A larger request is refused with HTTP 413 and a JSON-RPC error that gives the limit.
+
+Real tool calls are far smaller. A chat question can be at most 100,000 characters, and no tool uploads files. If a client hits the limit, send less in one call, such as a shorter question or fewer IDs.
+
 ## Troubleshooting
 
 <AccordionGroup>
@@ -174,6 +191,9 @@ This returns all OAuth endpoints automatically:
   </Accordion>
   <Accordion title="Cannot reach MCP endpoint">
     - Verify the endpoint is accessible: `curl -X POST PIPESHUB_INSTANCE_URL/mcp` (should return 401, not a connection error).
+  </Accordion>
+  <Accordion title="Request is too large (HTTP 413)">
+    One MCP request can be at most 5 MB. Send less in one call, such as a shorter question or fewer IDs, and try again.
   </Accordion>
   <Accordion title="Debugging with MCP Inspector">
     ```bash

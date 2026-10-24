@@ -193,6 +193,22 @@ Using read-only scopes ensures connectors can access your data for indexing but 
 
 </Accordion>
 
+<Accordion title="What happens when I turn off Sync Enabled on a connector?">
+
+Turning off **Sync Enabled** on a connector's instance card pauses that connector. PipesHub asks you to confirm before it does.
+
+- **Indexed records stay searchable.** Records that were fully indexed before you turned sync off still show up in search, chat, and agents, for the people who could see them before.
+- **Records that were never indexed stay unsearchable.** For example, records left out by **Enable Manual Indexing** or by the connector's indexing filters were not searchable before, and turning sync off does not change that.
+- **A record with an update still waiting to be indexed can drop out of search.** If an edit had been synced but not yet indexed when you turned sync off, that record leaves search until it is indexed again. Turning sync back on queues these records for indexing automatically, so you don't need a full sync or a manual reindex.
+- **Access is frozen as of that moment.** While sync is off, PipesHub reads nothing from the source, including changes to sharing. If someone gains or loses access to a file in the source app, PipesHub keeps the access it had when you turned sync off. The change reaches PipesHub only after you turn sync back on.
+- **New and edited content stops arriving** until you turn sync back on.
+
+Saving configuration changes on a connector whose sync is on turns its sync off first, and it stays off after the save until you turn it back on.
+
+To remove a connector's records from PipesHub, delete the connector instead: open the instance, go to **Settings**, and choose **Remove connector instance**.
+
+</Accordion>
+
 <Accordion title="Queries not returning results. What could be wrong?">
 
 There are three common causes:

@@ -90,6 +90,8 @@ then attach it to an agent from the **Tools** panel.
 | [Gmail](/toolsets/google-workspace/gmail) | Read, send, and reply to email | 7 |
 | [Calendar](/toolsets/google-workspace/calendar) | Create and manage calendar events | 7 |
 | [Drive](/toolsets/google-workspace/drive) | Find, read, and manage files | 8 |
+| [Docs](/toolsets/google-workspace/docs) | Read, create, and edit documents | 5 |
+| [Sheets](/toolsets/google-workspace/sheets) | Read and update spreadsheets | 7 |
 
 ### Microsoft 365
 
@@ -127,7 +129,7 @@ then attach it to an agent from the **Tools** panel.
 | [MariaDB](/toolsets/mariadb/mariadb) | Query tables and inspect schemas | 5 |
 | [Redshift](/toolsets/redshift/redshift) | Query tables and inspect schemas | 8 |
 
-That is **19 catalogue toolsets** carrying 342 tools that you authorise and attach, on top of the built-in capabilities above.
+That is **21 catalogue toolsets** carrying 354 tools that you authorise and attach, on top of the built-in capabilities above.
 
 <Note>
 Two kinds of toolset are deliberately absent from **Actions**, for different reasons.
@@ -251,6 +253,20 @@ Once a toolset is configured, it becomes available in the Agent Builder:
 <Warning>
   Only authenticated toolsets appear in the Agent Builder. If a toolset is missing, check its configuration status in **Settings > Toolsets**.
 </Warning>
+
+---
+
+## Tool approvals
+
+Each tool says what it does to data, and that decides whether it runs straight away.
+
+- **Tools that read** run.
+- **Tools that change data**, like creating a Jira issue, posting to Slack or adding a row to a spreadsheet, run.
+- **Tools whose action can't be undone** ask first. That means deleting data (including a Google Docs `batch_update_document` call that does more than add or restyle content or replace literal text with non-empty text), clearing a sheet's values, sending email, and creating or changing a calendar event, which emails the attendees. A database query asks first unless it's a single plain read, insert or update, so `DELETE`, `DROP`, `TRUNCATE` or several statements in one query ask.
+- **In a chat in the PipesHub app**, the person sees an approval card and chooses **Allow** or **Deny**.
+- **Where nobody can answer a card** (the Slack bot, the API, the PipesHub MCP server and service-account agents), a tool that asks first doesn't run.
+
+In the Enterprise Edition, an admin can set these rules for the whole organization, per toolset and per tool, in the action's **Tool approvals**: **Pre-approved**, **Allow on approval** or **Deny**. For example, an admin can make a tool that changes data ask first, or pre-approve a tool that can't be undone for an automation that needs it.
 
 ---
 

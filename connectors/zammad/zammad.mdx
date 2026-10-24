@@ -65,6 +65,16 @@ The Zammad connector uses **API Access Token** authentication (HTTP Token Authen
   API operations performed with the token inherit the same permissions as the user who generated it. For full access to all tickets and data, generate the token from an **admin user account**.
 </Info>
 
+#### Before you start: Elasticsearch in Zammad
+
+<Warning>
+  **Ticket sync needs Elasticsearch configured in Zammad.** The connector finds each group's tickets through Zammad's ticket search, asking for tickets by group and by last-updated date. Without Elasticsearch, Zammad falls back to a basic database search that looks for the whole request as plain text in ticket titles and messages. That search finds no tickets, and Zammad reports no error, so the sync finishes with no tickets. We confirmed this on Zammad 6.4.1 and 6.5.2.
+</Warning>
+
+- Zammad describes Elasticsearch as optional but strongly recommended, and notes that without it search is very limited ([Zammad software requirements](https://docs.zammad.org/en/latest/prerequisites/software.html)). For this connector it is required.
+- Zammad's Docker Compose stack includes Elasticsearch by default. For a package or source install, set it up with Zammad's guide: [Connect and configure Elasticsearch](https://docs.zammad.org/en/latest/install/elasticsearch/connect-configure-elasticsearch.html).
+- Not sure whether your Zammad uses Elasticsearch? See **No tickets sync but the connection test passes** under [Troubleshooting](#troubleshooting) for a quick check.
+
 #### Step 1: Access User Profile in Zammad
 
 1. Log in to your Zammad instance with an account that has administrator privileges.
@@ -201,6 +211,14 @@ On the **Configure Records** tab, control how the connector syncs and what gets 
 
 **Sync filters** — determine which content is downloaded from Zammad. Data excluded by sync filters is never downloaded.
 
+<Note>
+  When you narrow a filter, the next sync removes the tickets it now leaves out, with their attachments, from PipesHub search. Anything PipesHub can't read from Zammad stays, and the following sync tries again:
+
+  - If the group list can't be read, no tickets are removed for leaving the group filter.
+  - If some of a group's tickets can't be listed, only those tickets stay. The rest of that group and the other groups are still cleaned up.
+  - If one ticket can't be read back, only that ticket stays.
+</Note>
+
 <div className="text-center">
   <img
     src="/images/connectors/zammad/sync_filters.png"
@@ -297,11 +315,29 @@ The connector preserves these permissions:
 - Check that the user account is active and not locked
 - Verify the user has access to the required groups
 
+**No tickets sync but the connection test passes:**
+
+This usually means Zammad has no Elasticsearch connected. The connection test only checks the URL and API token, but ticket sync relies on Zammad's search, which finds nothing without Elasticsearch (see [Before you start](#before-you-start-elasticsearch-in-zammad)).
+
+1. Check whether Zammad has an Elasticsearch address set. Run this on the Zammad server:
+   - Package install: `zammad run rails r "p Setting.get('es_url')"`
+   - Docker Compose (from your Zammad compose folder): `docker compose run --rm zammad-railsserver bundle exec rails r "p Setting.get('es_url')"`
+
+   If it prints `nil` or `""`, Elasticsearch isn't set up, and ticket search can't find tickets.
+2. Set up Elasticsearch and build Zammad's search index by following [Connect and configure Elasticsearch](https://docs.zammad.org/en/latest/install/elasticsearch/connect-configure-elasticsearch.html). Building the index can take a long time on a large Zammad instance.
+3. When the index is built, run a sync again from **Workspace Settings** → **Connectors** in PipesHub. Tickets should now appear.
+
 **No data syncing:**
 - Verify the connector status shows "Active"
 - Check that tickets exist in Zammad within your filter criteria
 - Ensure the API token user has access to the groups being synced
 - Review sync logs for specific error messages
+
+**Missing knowledge base answers:**
+- Check what the API token's user can see in Zammad's knowledge base. The connector syncs exactly that; the token's own permission checkboxes don't change it.
+- Drafts and archived answers sync only from categories where the user is an editor, which is the case when any of the user's roles is an editor there.
+- If an answer can't be saved, the sync logs a warning and the next sync tries it again.
+- Releases before 0.10.0 synced no knowledge base answers from Zammad 6.0 to 6.4. After you update PipesHub, the first sync reads the whole knowledge base, so no extra step is needed.
 
 **Missing tickets:**
 - Verify group filters aren't excluding the desired content
@@ -346,11 +382,26 @@ The connector syncs data in the following order:
 - Only fetches content modified since last sync
 - Uses `updated_at` timestamps for change detection
 
+**Deleted tickets**: on Zammad 6.5 and later, each sync also compares each group's tickets in PipesHub with that group's tickets in Zammad (on older versions, see below). PipesHub counts the tickets it holds in batches. Only a batch whose count comes up short, or that can't be counted, is listed, in small ticket-ID ranges.
+
+- **Deleted in Zammad, or moved out of scope:** a ticket that Zammad confirms is deleted, or that moved outside your sync filters or into a group PipesHub doesn't sync, is removed from PipesHub with its attachments.
+- **Moved to another synced group:** the ticket moves there in PipesHub.
+- **Kept:** a ticket that is only missing from Zammad's search results, for example while Zammad rebuilds its search index.
+- **When Zammad can't be read:** a ticket-ID range that can't be listed keeps its own tickets until a later sync can list it. The rest of the group is still compared.
+- **Zammad before 6.5:** these versions can't count tickets, so the comparison lists every ticket a group holds. PipesHub does that full comparison at most once every 24 hours per group, counted from the last comparison that read the whole group and settled every missing ticket. A ticket deleted in Zammad is removed on the first sync after those 24 hours: about a day with the default hourly schedule, or later with a longer interval or manual sync. A comparison that fails partway, for example a range that can't be listed or a delete that doesn't go through, doesn't start the 24 hours, so the next sync tries again. Zammad 6.5 and later is compared on every sync.
+- **Large groups:** Zammad's search pages through only about 10,000 results at once. PipesHub reads a larger group in date ranges, and in ticket-ID ranges when many tickets share one update time (for example, after a bulk edit), so no group is too large to sync.
+
 ### What Gets Processed
 
 **Tickets**: Number, title, state, priority, group assignment, owner, customer, all articles (messages, replies, notes), attachments
 
 **Knowledge Base**: Categories hierarchy, answers/articles with full content and translations, associated attachments
+
+On Zammad 6.0 and later, each sync reads the whole knowledge base listing and writes only the answers changed since the last sync. It syncs the answers the API token's user can see, by category:
+
+- **Editor** (any of the user's roles is an editor in the category): every answer, including drafts and archived answers.
+- **Reader only:** internal and published answers.
+- **Any other category:** published answers only.
 
 **Attachments**: Files attached to ticket articles and knowledge base answers
 

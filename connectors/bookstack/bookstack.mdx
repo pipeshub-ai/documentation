@@ -169,6 +169,14 @@ The integration requires three pieces of information:
   The connector can be configured to sync data on a schedule or manually. Webhooks are planned for future implementation to enable real-time synchronization.
 </Accordion>
 
+<Accordion title="What happens to pages I delete in BookStack, or leave out with a filter?">
+  **Deleted in BookStack.** A deleted page is removed from PipesHub, search results included, on the next sync. A page restored from BookStack's recycle bin before that sync is kept.
+
+  **Left out by a narrowed filter.** After you narrow the sync filters (for example, remove a book from **Book Name**), the next sync is a full sync. It removes the pages the filters now leave out.
+
+  **When BookStack can't be read.** If a full sync's page list doesn't finish (BookStack can't be reached, returns an error, or stops listing early), nothing is removed on that sync, and the next sync tries again. Once the page list finishes, a page whose lookup or removal fails is kept, and the other pages are still removed. On an incremental sync, page deletions already read from the audit log are applied even if a later part of the log can't be read. A page already removed stays removed, and the next sync retries only what's left. After a filter change, that next sync reads the whole page list again, so you don't need to save the filters again.
+</Accordion>
+
 <Accordion title="Facing issues not mentioned here?">
   If you're experiencing issues not covered in this documentation, please check the docker logs for bookstack to see if it's failing from there, otherwise feel free to reach out to our support team for assistance on our [discord](https://discord.com/invite/K5RskzJBm2). 
 </Accordion>
@@ -325,6 +333,8 @@ The full sync processes all pages using paginated API calls and performs a detai
   - **Permission Changes:** Trigger `on_updated_record_permissions`.
   - **Deleted Records:** Trigger deletion via `on_record_deleted`.
 
+- **Removing pages that are no longer listed:** After reading the whole listing, the connector removes each previously synced page the listing no longer returns: pages deleted in BookStack, and pages the sync filters now leave out (for example, a book taken out of **Book Name**, or a narrowed date filter). The listing pages by offset, so a delete during the sync can push a live page out of it. So each previously synced page the finished listing didn't return is looked up by ID. The page is kept when BookStack still has it and it passes the sync filters. A page BookStack still has but the filters leave out is removed. Removal deletes the record, its search index entries and its processed content; processed content that another record shares stays until its last copy is gone. If the listing fails or stops early, nothing is removed. If one page's lookup or removal fails, that page is kept and the other pages are still removed. In both cases the records sync point, cleared when the full sync was scheduled, isn't saved, so the next sync reads the whole page list again and finishes the removal.
+
 #### 4.2 Incremental Records Sync
 
 **Function:** `async def _sync_records_incremental(...) -> None`
@@ -336,7 +346,7 @@ Incremental sync for records uses the Audit Log to identify specific pages that 
 | `page_create` | `_handle_page_upsert_event` | Fetches the full, current page details and triggers the standard record processing (`_process_bookstack_page`) to create the new record and its permissions. |
 | `page_update` | `_handle_page_upsert_event` | Fetches the current page details and triggers `_process_bookstack_page` to update content and metadata. |
 | `permissions_update` | `_handle_page_upsert_event` | If the loggable type is 'page', it triggers a full upsert to refresh all permissions and metadata for that record. |
-| `page_delete` | (Intended) | (Intended) Calls `on_record_deleted` in the data processor to remove the page record. |
+| `page_delete` | `_handle_page_delete_event` | Checks that BookStack no longer has the page (a deleted page can be restored from the recycle bin under the same ID), then removes its record, search index entries and processed content. If BookStack can't be reached or returns an error, the record is kept and the records sync point doesn't move, so the event is read again on the next sync. If the event no longer names the page (the recycle bin was emptied), the connector lists every page ID within the sync filters and removes the records of pages not in that list. |
 | `page_move` | (Intended) | (Intended) Updates the page's `external_record_group_id` to reflect its new parent (Book or Chapter), triggering a metadata update. |
 
 ---

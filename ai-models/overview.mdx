@@ -35,9 +35,9 @@ Only workspace **admins** and **owners** can access the AI Models settings page.
   </Step>
   <Step title="Set optional fields (if needed)">
     - **Model Friendly Name** — a human-readable label shown in chat (e.g. "My GPT-5"). Optional.
-    - **Context Length** — token window override (1–1,000,000). Leave blank to use the provider default.
+    - **Context Length** — the model's context window in tokens, from 1,024 to 20,000,000. Leave it empty and PipesHub assumes 128,000.
     - **Multimodal** toggle — enable if this model can accept image input. On by default.
-    - **Reasoning** toggle — enable for chain-of-thought / o-series style models. Off by default.
+    - **Reasoning** toggle — enable for chain-of-thought / o-series style models. On by default.
   </Step>
   <Step title="Save and validate">
     Click **Add Model**. PipesHub runs a live health check to validate your credentials.
@@ -89,6 +89,8 @@ After saving, your model appears under the **Configured** tab. Each row has the 
 
 ## Troubleshooting
 
+If the health check fails when you save a model, the dialog shows the check's message word for word. The one exception is an embedding model refused because content is indexed with another model; see [Changing the embedding model in use](#changing-the-embedding-model-in-use).
+
 <Note>
 If the health check fails when saving, double-check:
 - The API key is correct and has not expired.
@@ -96,6 +98,83 @@ If the health check fails when saving, double-check:
 - For Ollama, the server is running and the Docker internal hostname resolves correctly.
 - The model name string exactly matches what the provider API expects (check the provider's documentation for valid model IDs).
 </Note>
+
+### Health check error messages
+
+These are the messages a chat model's check returns. Embedding, image, speech and speech-to-text models get most of the same messages; the differences are in [Health check messages for other model types](#health-check-messages-for-other-model-types).
+
+**The provider refused the settings (400).** The message names the setting to fix:
+- A rejected key: "The API key for &lt;model name&gt; was rejected by &lt;provider&gt;. Check the key in Workspace > AI Models, then try again."
+- A missing model or a wrong endpoint path: "&lt;provider&gt; couldn't find the model "&lt;name&gt;" at this endpoint. Check the model name (or deployment name) and the endpoint address in Workspace > AI Models, then try again."
+- An unreachable endpoint: "Couldn't reach &lt;provider&gt; at the endpoint in these settings. Check the endpoint address and that PipesHub can connect to it, then try again."
+- Any other request the provider refused: "&lt;provider&gt; refused these chat model settings. Check the model name and its options (such as reasoning effort or context length), then try again."
+
+**An endpoint this deployment won't call (400).** The health check tests the endpoint before every other check and before sending anything to the provider. It checks the endpoint's text first, with no lookup:
+- An endpoint that isn't an http or https URL: "Model endpoint '&lt;endpoint&gt;' must be an http(s) URL."
+- A link-local or cloud metadata IP address (such as `169.254.169.254`), or the name `metadata.google.internal`: "Model endpoint '&lt;endpoint&gt;' is a link-local or cloud metadata address, which is never allowed."
+- Only when `PIPESHUB_BLOCK_PRIVATE_ADDRESSES` is on: a private IP address, `localhost`, a one-word service name, or a name ending in `.internal`, `.local`, `.localhost` or `.svc` (for example `host.docker.internal`): "Model endpoint '&lt;endpoint&gt;' is a private or internal address, which this deployment does not allow (PIPESHUB_BLOCK_PRIVATE_ADDRESSES)."
+
+A name that passes the text check is then looked up. If it resolves to a blocked address, the message says "resolves to":
+- A link-local, unspecified or cloud metadata address: "Model endpoint '&lt;endpoint&gt;' resolves to a link-local, unspecified or cloud metadata address, which is never allowed."
+- Only when `PIPESHUB_BLOCK_PRIVATE_ADDRESSES` is on, a private address: "Model endpoint '&lt;endpoint&gt;' resolves to a private or internal address, which this deployment does not allow (PIPESHUB_BLOCK_PRIVATE_ADDRESSES)."
+
+If the lookup finds nothing, the check also fails with a 400:
+- No address for the name: "Model endpoint '&lt;endpoint&gt;' does not resolve: no address was found for its host name."
+- A temporary DNS failure: "Model endpoint '&lt;endpoint&gt;' could not be checked: temporary DNS failure. Try again."
+
+A failed lookup is not refused when PipesHub reaches the endpoint through a proxy set in `HTTP_PROXY` or `HTTPS_PROXY` (and not excluded by `NO_PROXY`), because the name may resolve only on the proxy's side.
+
+The Ollama address the deployment sets in `OLLAMA_API_URL` is exempt from the private-address check and is not looked up.
+
+**Other checks made before or instead of asking the provider:**
+- No model name (400): "No valid model names found in configuration"
+- A context length outside 1,024 to 20,000,000 tokens (400): "Context length &lt;value&gt; is not a usable window. Set it to the model's context window in tokens (between 1,024 and 20,000,000), or leave it empty to assume 128,000."
+- A default reasoning effort that isn't a valid choice (400): "This model's default reasoning effort is '&lt;value&gt;', which isn't a valid choice. Set it to low, medium, high or max, or remove it to use the platform default."
+- PipesHub has no internet access for a cloud provider (500): "Cannot reach cloud LLM providers from PipesHub. The container may not have outbound internet access. Cloud LLMs and external connectors require container egress; air-gapped installs should use local models (Ollama, LM Studio). See deployment/docker-compose/ADVANCED_DEPLOYMENT.md#container-outbound-connectivity."
+- The provider took too long (504): "LLM health check timed out. For cloud providers, verify your API key and that PipesHub containers can reach the internet. See deployment/docker-compose/ADVANCED_DEPLOYMENT.md#container-outbound-connectivity." If the dialog's own request times out before any response arrives, the dialog shows "Request timed out while validating the model. Cloud providers need outbound internet from the PipesHub container — see deployment/docker-compose/ADVANCED_DEPLOYMENT.md#container-outbound-connectivity."
+
+**The provider answered, but the chat model failed the check (400):**
+- The model answered with no text: "Model accepted the request but returned an empty response"
+- With **Multimodal** on (the default for chat models), the model refused the test image: "Model doesn't support images/vision."
+- With **Multimodal** on, the model took the test image but answered with no text: "Model accepted the image but returned an empty response"
+
+For either image message, turn off **Multimodal** for this model, or choose a model that can read images.
+
+**Any other failure (500):** "Couldn't connect to &lt;provider&gt; with these chat model settings. Check the API key, model name and endpoint, then try again." The details are in the AI service's logs. An endpoint that fails the endpoint check, including its lookup, never gets this message; it gets one of the endpoint messages.
+
+### Health check messages for other model types
+
+Embedding, image, speech and speech-to-text models get the same endpoint messages as a chat model, and the same messages for a rejected key, a missing model and an unreachable endpoint. These messages differ by model type:
+
+| Message or check | Chat | Embedding | Image, speech, speech-to-text |
+|---|---|---|---|
+| "&lt;provider&gt; refused these &lt;kind&gt; settings. …" (400) and "Couldn't connect to &lt;provider&gt; with these &lt;kind&gt; settings. …" (500) | "chat model" | "embedding model" | "image model", "speech model" or "speech-to-text model" |
+| "No valid model names found in configuration" | 400 | 400 | 500 |
+| Timeout (504) | "LLM health check timed out. …" | "Embedding health check timed out. …" | No timeout message of its own |
+| Context length, default reasoning effort, empty response and test image checks | Yes | No | No |
+| Image embedding checks | No | Only with **Multimodal** on | No |
+
+The embedding timeout message in full: "Embedding health check timed out. If this is the first run, the model may still be downloading. Please wait for the download to complete and try again."
+
+With **Multimodal** on, an embedding model is also asked to embed a test image. These failures return a 400:
+- The model refused the image: "Model cannot embed images."
+- PipesHub can't embed images with this provider: "Provider '&lt;provider&gt;' has no image-embedding support in PipesHub, so images would never be indexed for this model."
+- Image and text vectors differ in size: "Image embeddings are &lt;n&gt;-dimensional but text embeddings are &lt;m&gt;-dimensional; both share one collection."
+
+For any of these, turn off **Multimodal** for this model, or choose a model that embeds images. When the test image fails because of the endpoint or API key instead, the message says to check those.
+
+### Changing the embedding model in use
+
+Adding or editing the embedding model that will be in use (the first one you add, or the one already in use) is also checked against what the vector store already holds. The dialog shows:
+- Content is indexed with another embedding model (400): "This model is embedding your indexed content. Delete the embeddings in Labs first, then change or delete the model and re-embed."
+- PipesHub can't read what the vector store holds (503): "Could not verify what the vector store currently holds, so an embedding model change cannot be validated. Check vector store connectivity and retry."
+- The vector store is empty but couldn't be rebuilt for the new model (503): "The vector store could not be rebuilt for the new embedding model, so the model was not changed. The empty collection may already have been removed; it is created again on the next upload. Check that the vector store is reachable and try again."
+
+In every case the model in use stays the same.
+
+### A chat stops answering
+
+If a chat stops answering after a key expires or a model is removed at the provider, the chat says so and asks users to contact an admin. Update the model on the AI Models settings page, or set another model as the default.
 
 ## Embedding models
 
@@ -183,8 +262,19 @@ After saving, your model appears under the **Configured** tab. Each row has the 
 - **Delete** — permanently remove the configuration. You will be asked to type the model's name to confirm.
 
 <Note>
-Changing the default embedding model does not automatically re-index existing documents.
-Documents indexed with the old model and queries run with the new model use different vector spaces, which will degrade search quality. Re-index your documents after switching embedding models.
+While vectors are stored, PipesHub refuses to switch the **embedding model in use** to a different model or a different vector size. A different model is refused even if its vectors are the same size. The same model from another provider (for example `nomic-ai/nomic-embed-text` and `nomic-embed-text`) counts as unchanged: the change is saved and the stored vectors are kept. The embedding model in use is the default one, or the first configured model if none is marked default. With no embedding model configured, the built-in `BAAI/bge-large-en-v1.5` embeds your content.
+
+The refusal covers adding your first embedding model when content is already embedded with the built-in model, setting another model as default, deleting the model in use, and editing the model in use to change its model name or **Output Dimensions**. Adding, editing and deleting are refused with: "This model is embedding your indexed content. Delete the embeddings in Labs first, then change or delete the model and re-embed." **Set as Default** shows "Failed to set default model". In every case the model in use stays the same. The first model you add sizes the vector store only when the store is empty.
+
+To change or delete the embedding model in use:
+
+1. Under **Labs → Feature flags**, turn on **Enable Vector Store Rebuild** and click **Save**. The **Vector Store** section appears in **Labs**.
+2. In **Labs → Vector Store**, click **Clean up**, type `DELETE`, and click **Delete embeddings**. The button stays disabled until the word is typed.
+3. Wait for the cleanup to finish. It runs in the background, and until it finishes the old vectors are still stored, so the change in step 4 is refused.
+4. Add, edit, set as default, or delete the embedding model.
+5. In **Labs → Vector Store**, click **Reindex**, type `REINDEX`, and click **Start reindex**. If the cleanup is still running, the reindex is refused with "A search index cleanup or reindex is already running. Wait for it to finish, then try again." or "Vector-store cleanup is still dropping the collection". Wait a little and try again.
+
+Adding, editing or deleting any other embedding model does not touch the vector store.
 </Note>
 
 ### Troubleshooting

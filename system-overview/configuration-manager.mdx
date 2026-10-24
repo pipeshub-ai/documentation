@@ -822,20 +822,25 @@ Advanced management endpoints for AI model providers.
       "modelName": "gpt-4o",
       "modelKey": "uuid-generated-key",
       "isMultimodal": false,
+      "isReasoning": false,
       "isDefault": true
     },
     {
       "modelType": "llm",
       "provider": "openAI",
-      "modelName": "gpt-4o-mini",
-      "modelKey": "uuid-generated-key",
+      "modelName": "o4-mini",
+      "modelKey": "another-uuid-generated-key",
       "isMultimodal": false,
-      "isDefault": false
+      "isReasoning": true,
+      "isDefault": false,
+      "defaultReasoningEffort": "low"
     }
   ],
   "message": "Found 2 llm models"
 }
 ```
+
+`defaultReasoningEffort` appears only on a model whose entry has a default reasoning effort saved (set with `POST /ai-models/providers`). If the entry lists several comma-separated models, each of them carries it. The chat uses it to show which effort applies when the user hasn't picked one.
 </Tab>
 </Tabs>
 </Accordion>
@@ -861,6 +866,7 @@ CRUD operations for individual AI model providers.
 | provider | string | Yes | Provider name (e.g., openAI, anthropic, cohere) |
 | configuration | object | Yes | Provider-specific configuration |
 | isMultimodal | boolean | No | Whether model supports multimodal input (default: false) |
+| isReasoning | boolean | No | Whether the model reasons before answering (default: false) |
 | isDefault | boolean | No | Whether this should be the default model (default: false) |
 
 ```json
@@ -873,6 +879,27 @@ CRUD operations for individual AI model providers.
   },
   "isMultimodal": true,
   "isDefault": false
+}
+```
+
+**Default reasoning effort.** For a reasoning model (`isReasoning: true`), set `configuration.defaultReasoningEffort` to a level your provider accepts. The valid levels are `low`, `medium`, `high` and `max`. When the provider rejects `high`, the platform default, choose `low`, `medium` or `max`; some hosted Qwen models, for example, accept only `low` and `medium`. The Add Model dialog doesn't have this setting.
+
+- It applies whenever a chat or agent request doesn't choose an effort, and to the check PipesHub runs when you save the model. An effort chosen in the chat or on the agent wins.
+- Leave it out, or send an empty string, to use the platform default, `high`. `none` is accepted and treated as `low`.
+- Any other value is refused with "Default reasoning effort must be low, medium, high or max. Leave it empty to use the platform default."
+- GET responses include it.
+
+```json
+{
+  "modelType": "llm",
+  "provider": "openAICompatible",
+  "configuration": {
+    "model": "qwen-plus",
+    "endpoint": "https://your-provider.example.com/v1",
+    "apiKey": "your-key",
+    "defaultReasoningEffort": "low"
+  },
+  "isReasoning": true
 }
 ```
 </Tab>
@@ -916,6 +943,7 @@ CRUD operations for individual AI model providers.
 | provider | string | Yes | Provider name |
 | configuration | object | Yes | Provider-specific configuration |
 | isMultimodal | boolean | No | Whether model supports multimodal input (default: false) |
+| isReasoning | boolean | No | Whether the model reasons before answering (default: false) |
 | isDefault | boolean | No | Whether this should be the default model (default: false) |
 
 ```json
@@ -927,6 +955,26 @@ CRUD operations for individual AI model providers.
   },
   "isMultimodal": true,
   "isDefault": true
+}
+```
+
+**Default reasoning effort.** Send `configuration.defaultReasoningEffort` (`low`, `medium`, `high` or `max`) to set or change a reasoning model's default effort. Leave it out to keep the saved value, or send an empty string to go back to the platform default, `high`.
+
+The rest of the body replaces the model's settings: a missing `isReasoning`, `isMultimodal` or `isDefault` is saved as `false`, and a missing `contextLength` is cleared. Send each of them with the model's current value, as in the example.
+
+```json
+{
+  "provider": "openAICompatible",
+  "configuration": {
+    "model": "qwen-plus",
+    "endpoint": "https://your-provider.example.com/v1",
+    "apiKey": "your-key",
+    "defaultReasoningEffort": "medium"
+  },
+  "isReasoning": true,
+  "isMultimodal": false,
+  "isDefault": false,
+  "contextLength": 131072
 }
 ```
 </Tab>

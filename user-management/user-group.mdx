@@ -50,6 +50,10 @@ The page shows a table of all groups with columns for **Name**, **Description**,
   />
 </div>
 
+<Note>
+  Group names must be unique within your organization. A name another group already has, even one someone else created a moment earlier, is refused with **Failed to create group** and the detail *Group already exists*; choose a different name. A rename follows the same rule and shows **Failed to update group** with the same detail. A deleted group's name can be reused.
+</Note>
+
 <Tip>
   **Access Permissions** for groups are shown as *Coming Soon* in the current UI — group membership itself controls access today.
 </Tip>
@@ -106,6 +110,25 @@ While inviting a user from the **Users** page, use the **Add to a User Group** f
 <Warning>
   Deleting a group is irreversible. Members of the group are not deleted, but they lose any permissions that were inherited from it. System groups cannot be deleted.
 </Warning>
+
+### Duplicate Group Names from Older Versions
+
+If an older version left two active groups in one organization with the same name, PipesHub logs an error each time the server starts, and keeps the database safeguard off. The safeguard is a unique index that refuses a duplicate name even when two requests arrive at the same moment. Older versions allowed duplicates in two ways: a rename didn't check the new name, and two create requests at the same moment could both be saved.
+
+The error reads:
+
+```text
+Skipped adding the unique user group name index: some active user groups in the same organization share a name. Rename the user groups listed in "duplicates" so that no two active groups in one organization share a name, then restart the service. Nothing was renamed or deleted. Until then, two requests arriving at the same moment can still create user groups with the same name.
+```
+
+The log entry's `duplicates` field lists each clash: the organization ID (`orgId`), the shared `name`, and the IDs of the groups that use it (`groupIds`).
+
+Nothing is renamed or deleted automatically. Creating or renaming a group still refuses a duplicate name; only requests arriving at the same moment can get past while the safeguard is off. To fix it:
+
+1. Rename all but one group in each listed set, so every active group in the organization has its own name.
+2. Restart PipesHub.
+
+On the next start, the check finds no duplicates, turns the safeguard on, and stops logging the error.
 
 ### Conclusion
 

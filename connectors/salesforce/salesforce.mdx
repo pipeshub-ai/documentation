@@ -49,7 +49,9 @@ The Salesforce connector syncs your CRM data — accounts, contacts, leads, oppo
 
 ### Authentication
 
-In PipesHub the flow has three tabs: **Authenticate Instance** (Redirect/Callback URL, Salesforce Instance URL, and OAuth client credentials), **Authorize** (sign in to Salesforce), then **Configure Records** (sync strategy and indexing).
+In PipesHub the flow has three tabs: **Authenticate Instance** (Redirect/Callback URL, Salesforce Instance URL, an optional Salesforce Login URL, and OAuth client credentials), **Authorize** (sign in to Salesforce), then **Configure Records** (sync strategy and indexing).
+
+The connector works with production orgs and with sandboxes. For a sandbox, see [Connect a Salesforce sandbox](#connect-a-salesforce-sandbox).
 
 <Note>
   This connector matches people by **email**. Use the **same email** in PipesHub as in Salesforce so permissions and visible records line up.
@@ -198,6 +200,7 @@ Return to **Salesforce Configuration** → **Authenticate Instance** and fill in
 |-------|-------|
 | **OAuth app name** | A name for the saved OAuth registration, for example `Salesforce` — it appears when users pick a saved app for other instances |
 | **Salesforce Instance URL** | Your org's base domain from Step 8, for example `https://yourcompany.my.salesforce.com` |
+| **Salesforce Login URL** (optional) | Where you sign in to Salesforce. Leave it blank for a production org, and PipesHub uses `https://login.salesforce.com`. For a sandbox, enter `https://test.salesforce.com`. You can also enter your My Domain address if your org requires sign-in there |
 | **Client ID** | The **Consumer Key** from Step 7 |
 | **Client Secret** | The **Consumer Secret** from Step 7 |
 
@@ -245,9 +248,34 @@ When the **Start sync process?** dialog appears, click **Confirm** to begin sync
 
 Use **Re-authenticate with provider** on **Authorize** if tokens are rotated or access was revoked.
 
+### Connect a Salesforce sandbox
+
+A sandbox signs in at `https://test.salesforce.com` (or at its own My Domain address), not at `https://login.salesforce.com`. PipesHub uses the **Salesforce Login URL** you enter for every step of sign-in: the Salesforce sign-in page, the exchange of the sign-in code for tokens, and each later token refresh.
+
+1. Sign in to the **sandbox**, not production, and follow Steps 2 to 7 there to create an External Client App and copy its Consumer Key and Consumer Secret.
+2. Find the sandbox's **Instance URL** the same way as in Step 8. A sandbox's My Domain address looks like `https://yourcompany--sandboxname.sandbox.my.salesforce.com`.
+3. In PipesHub, fill in **Authenticate Instance** as in Step 9, with these values:
+
+| Field | Value for a sandbox |
+|-------|-------|
+| **Salesforce Instance URL** | The sandbox's My Domain address, for example `https://yourcompany--uat.sandbox.my.salesforce.com` |
+| **Salesforce Login URL** | `https://test.salesforce.com`, or the same sandbox My Domain address |
+| **Client ID** / **Client Secret** | The Consumer Key and Consumer Secret of the app you created in the sandbox |
+
+4. Continue with Step 10 and sign in with a **sandbox** user.
+
+<Note>
+  The **Salesforce Login URL** must be an `https://` address on `salesforce.com` with nothing after the host name, such as `https://test.salesforce.com`, `https://yourcompany.my.salesforce.com` or `https://yourcompany--uat.sandbox.my.salesforce.com`. PipesHub refuses any other address, because it sends your app's client secret there.
+</Note>
+
+<Warning>
+  When Salesforce creates a sandbox, it usually changes users' email addresses (for example by adding `.invalid` at the end). This connector matches people by email, so correct the email of each sandbox user you test with to match their PipesHub email, or their records and permissions won't line up.
+</Warning>
+
 ## Useful Links
 
 - **Salesforce OAuth Web Server Flow:** [https://help.salesforce.com/s/articleView?id=sf.remoteaccess_oauth_web_server_flow.htm](https://help.salesforce.com/s/articleView?id=sf.remoteaccess_oauth_web_server_flow.htm)
+- **Salesforce OAuth endpoints (production, sandbox, and My Domain):** [https://help.salesforce.com/s/articleView?id=sf.remoteaccess_oauth_endpoints.htm](https://help.salesforce.com/s/articleView?id=sf.remoteaccess_oauth_endpoints.htm)
 - **External Client Apps:** [https://help.salesforce.com/s/articleView?id=sf.create_external_client_apps.htm](https://help.salesforce.com/s/articleView?id=sf.create_external_client_apps.htm)
 - **PipesHub:** **Workspace Settings** → **Connectors** → **Salesforce** for the live Redirect/Callback URL
 
@@ -272,6 +300,14 @@ Use **Re-authenticate with provider** on **Authorize** if tokens are rotated or 
 **Wrong instance URL**
 
 - Use the base domain from your browser's address bar (for example `https://yourcompany.my.salesforce.com`) — not `https://login.salesforce.com`. For a sandbox, use that sandbox's own My Domain URL.
+
+**Sandbox users can't sign in, or the sign-in page is production's**
+
+- Set **Salesforce Login URL** to `https://test.salesforce.com` (or the sandbox's My Domain address), save, and run **Authorize** again. With the field blank, PipesHub signs in on production, which doesn't know your sandbox users.
+
+**"The Salesforce Login URL must be an https address on salesforce.com…"**
+
+- Enter only the address, starting with `https://`, with nothing after the host name. For example, enter `https://test.salesforce.com`, not `https://test.salesforce.com/services/oauth2/authorize`. Leave the field blank for production.
 
 **Missing records after sync**
 

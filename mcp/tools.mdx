@@ -53,7 +53,7 @@ Three operations on records, selected by `mode`.
 |---|---|---|---|
 | `mode` | enum | no | `content` (default), `navigate`, or `lookup`. |
 | `recordId` | string | conditional | Required when `mode` is `content`. Get it from a chat citation, a search hit, or a `lookup`. |
-| `nodeId` | string | no | `navigate` only. Omit for a flat listing of everything reachable. |
+| `nodeId` | string | no | `navigate` only. Omit to list the top level: a flat listing of everything reachable. On a limited connection, see the note below. |
 | `page` / `limit` | number | no | `navigate` only. 1-based page, 50–200 children per page (default 50). |
 | `depth` | number (1–3) | no | `navigate` only. `2` or `3` flattens descendants into one call instead of one call per level. Default 1. |
 | `identifiers` | string or string[] | conditional | Required when `mode` is `lookup`. A URL, issue key, or external ID — or up to 10 of them. |
@@ -61,6 +61,11 @@ Three operations on records, selected by `mode`.
 - **`mode: "content"`** — the only way to see a document's full text. Use it to summarize, extract, or quote a named document. Prefer it over `pipeshub_download_record` when you need what the record *says* rather than the file bytes.
 - **`mode: "navigate"`** — browse the hierarchy (project / space / folder → records → children). Use it for structure and for every "how many" / "all" / "every" question. Pass `depth: 2` or `3` to see several levels in one call. Returns no document text.
 - **`mode: "lookup"`** — resolve a Jira key, URL, or external ID to a `recordId` plus metadata.
+
+**On a limited connection.** A personal access token or OAuth app set to **Only what I pick** browses only what was picked. With no `nodeId`, `mode: "navigate"` lists:
+
+- **Whole sources only:** the flat listing above, kept to those sources: every record group (project, space, drive, channel) and every record (issue, page, message, file) in them. Its total mixes the two, so don't read it as a count of issues, pages, messages or files.
+- **Any space, folder or file picked:** one item for each source, space, folder and file picked, and nothing inside them. `pagination.total` counts these items, not what they hold, and `depth` does not open them. To see inside an item, pass its id as `nodeId`. Do that for each item before answering a "how many" or "list all" question.
 
 ## `pipeshub_download_record`
 

@@ -409,7 +409,10 @@ On the **Configure Records** tab, control how the connector syncs and what gets 
   **Scheduled sync** runs automatically at the specified intervals. **Manual sync** requires you to trigger synchronization on-demand.
 </Note>
 
-**Sync filters** — determine which content is downloaded from Confluence. Data excluded by sync filters is never downloaded.
+**Sync filters** — determine which content is downloaded from Confluence. Data excluded by sync filters is never downloaded. When you narrow the filters, the full sync that follows removes what they now leave out, from search and from storage:
+
+- **Spaces:** once the whole space list has been read, a space that is no longer listed is removed with everything in it. That covers a space the space filter now leaves out, and one that was deleted, archived, or that the connector's account can no longer open. Its sync checkpoints are cleared, so a space listed again later is read in full. A space list that can't be read to the end, or that comes back empty (for example, because the space filter now leaves out every space), removes no space.
+- **Pages and blog posts:** a page or blog post is removed when a search of its space finds it without the new filters but not with them. If the search can't tell (for example, because Confluence hasn't indexed the page yet), the page is kept and the next sync reads that space in full again.
 
 <div className="text-center">
   <img
@@ -438,6 +441,10 @@ Available sync filters:
 4. **Modified Date** — filter by last modification date. Operators: `Is After`, `Is Before`, `Is Between`.
 
 5. **Created Date** — filter by creation date. Same operators.
+
+<Info>
+  Date filters apply exactly as set: `Is Before` keeps content from before that date and time, and `Is After` keeps content from after it. For **Modified Date** and **Created Date** the time defaults to midnight, so `Is Before` 1 June keeps content up to the end of 31 May, and `Is After` 1 March starts just after midnight on 1 March. To include 1 June, choose `Is Before` 2 June. Confluence compares these dates in your site's time zone, so on a site not set to UTC the edge can shift by that time-zone difference.
+</Info>
 
 **Indexing filters** — control what synced data gets processed for AI search. All data is synced, but only enabled content types are indexed.
 
@@ -542,7 +549,10 @@ On the **Configure Records** tab, control how the connector syncs and what gets 
   />
 </div>
 
-**Sync filters** — determine which content is downloaded from Confluence. Data excluded by sync filters is never downloaded.
+**Sync filters** — determine which content is downloaded from Confluence. Data excluded by sync filters is never downloaded. When you narrow the filters, the full sync that follows removes what they now leave out, from search and from storage:
+
+- **Spaces:** once the whole space list has been read, a space that is no longer listed is removed with everything in it. That covers a space the space filter now leaves out, and one that was deleted, archived, or that the connector's account can no longer open. Its sync checkpoints are cleared, so a space listed again later is read in full. A space list that can't be read to the end, or that comes back empty (for example, because the space filter now leaves out every space), removes no space.
+- **Pages and blog posts:** a page or blog post is removed when a search of its space finds it without the new filters but not with them. If the search can't tell (for example, because Confluence hasn't indexed the page yet), the page is kept and the next sync reads that space in full again.
 
 <div className="text-center">
   <img
@@ -559,6 +569,10 @@ Available sync filters:
 3. **Blogpost IDs** — filter specific blog posts.
 4. **Modified Date** — filter by last modification date. Operators: `Is After`, `Is Before`, `Is Between`.
 5. **Created Date** — filter by creation date. Same operators.
+
+<Info>
+  Date filters apply exactly as set: `Is Before` keeps content from before that date and time, and `Is After` keeps content from after it. For **Modified Date** and **Created Date** the time defaults to midnight, so `Is Before` 1 June keeps content up to the end of 31 May, and `Is After` 1 March starts just after midnight on 1 March. To include 1 June, choose `Is Before` 2 June. Confluence compares these dates in your site's time zone, so on a site not set to UTC the edge can shift by that time-zone difference.
+</Info>
 
 **Indexing filters** — control what synced data gets processed for AI search.
 
@@ -682,10 +696,20 @@ The Confluence connector syncs the following data from your Confluence Cloud wor
 
 ### Incremental sync
 - Uses timestamp-based synchronization to detect changes
-- Only syncs new or modified content since last sync
+- Only syncs new or modified content since last sync, plus current pages and blog posts that PipesHub doesn't hold (see **Deleted, trashed and hidden content**)
+- Each sync also re-checks the 24 hours before the previous sync, so edits made around then aren't missed. This look-back never goes earlier than a **Modified Date** `Is After` date you set
 - Syncs every attachment of a page or blog post, however many it has. If the attachment list can't be read in full, the attachments already read are kept, and the space's page or blog post checkpoint doesn't move, so the next sync reads that time window again. That includes a temporary failure (such as a timeout or rate limit) on the list's first request, in which case the connector uses the attachments that came with the page or blog post in the search results. If the first request fails for a lasting reason, such as the list not being found, the connector uses those search-result attachments and the checkpoint moves on as usual
-- Efficiently handles additions, updates, and deletions
 - Reduces API calls and sync duration
+
+### Deleted, trashed and hidden content
+Each sync lists what the connector's account can see in every synced space, separately for pages and blog posts: current and archived pages, and current blog posts.
+
+- **Deleted or hidden in Confluence:** a stored page or blog post missing from that list is removed from PipesHub, with its file attachments, comments and replies. That covers content that was deleted, moved to the trash or out of the space, or restricted so the account can't see it.
+- **Kept:** archived pages the account can see. When a page or blog post is removed, the folders and child pages directly under it stay, and PipesHub lists them at the top of the space.
+- **Coming back:** each incremental sync also fetches, by ID and within your sync filters, the current pages and blog posts in that list that PipesHub doesn't hold, whatever their last-modified date. Content the account can see again returns on the next sync.
+- **Spaces:** a space the account can no longer see, or that the space filter now leaves out, is removed with its records. If it comes back, it is read in full.
+- **When Confluence can't be read:** if a space's list can't be read to the end, or PipesHub can't read what it has stored for that space, nothing is removed for that space and content type, and its checkpoint doesn't move. A space list that can't be read to the end, or that comes back with no spaces at all, removes no space.
+- **When a removal fails partway:** removal runs in order: the folders and child pages move to the top of the space, then the file attachments, comments and replies are deleted, then the page or blog post itself. Whatever was done before a failure stays done. For example, if the page itself can't be deleted, its attachments and comments are already gone; if one attachment can't be deleted, those deleted before it stay deleted. The space's other removals for that content type still go ahead, but that type's checkpoint doesn't move, so the next sync retries whatever is still stored. Other spaces and the other content type carry on.
 
 ### Permission handling
 - Syncs content based on the authenticating user's permissions

@@ -34,7 +34,7 @@ All fields are required. Values are double-quoted strings.
 
 Each version is its own page. `changelog/{product}.mdx` is the summary page: one Mintlify `<Update>` entry per version, newest date first, labelled with the version, showing its date, headline and summary, linking to the version's page.
 
-In `docs.json` the product is a sidebar group whose root is the summary page, with the newest 20 versions under it; older versions keep their pages but leave the sidebar. Previous/next at the foot of a version page follows that order. `changelog-sidebar.js` and `style.css` show the versions 5 at a time behind "Show more" / "Show less".
+In `docs.json` the product is a sidebar group whose root is the summary page, with every version under it, newest first, so each version page stays in search. Previous/next at the foot of a version page follows that order. `changelog-sidebar.js` and `style.css` show the versions 5 at a time behind "Show more" / "Show less".
 
 ## What the job may change
 

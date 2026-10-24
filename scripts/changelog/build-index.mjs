@@ -3,7 +3,7 @@
 //
 //   changelog/{product}/{version}.mdx   <- input, one page per release (frontmatter + body)
 //   changelog/{product}.mdx             <- output, generated: one summary entry per release
-//   docs.json                           <- output: the product's sidebar group, newest releases
+//   docs.json                           <- output: the product's sidebar group, newest release first
 //
 // Usage:
 //   node scripts/changelog/build-index.mjs          write the outputs
@@ -18,19 +18,18 @@ import { fileURLToPath } from 'node:url';
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const CHANGELOG_DIR = join(ROOT, 'changelog');
 const DOCS_JSON = join(ROOT, 'docs.json');
-// Older releases keep their pages and summary entries but leave the sidebar.
-const SIDEBAR_LIMIT = 20;
 
 // One entry for each product that has a changelog. A directory under changelog/
 // that is not listed here is an error, so a typo in a product name is caught.
 const PRODUCTS = {
   platform: {
+    name: 'PipesHub',
     title: 'Platform Changelog',
     description: 'Release notes for the PipesHub Workplace AI platform',
     icon: 'bolt',
     intro:
       'What changed in each PipesHub release, newest first. Every entry below sums up a release in a few lines; ' +
-      'open it for the highlights, upgrade notes and every merged pull request. **Stable** releases are ' +
+      'open it for the highlights, upgrade notes and a link to the full GitHub release. **Stable** releases are ' +
       'recommended for production; **Beta**, **Alpha** and **Pre-release** builds preview the next stable release.',
   },
 };
@@ -129,13 +128,22 @@ const formatDate = (iso) =>
     timeZone: 'UTC',
   });
 
+// The RSS item of an <Update>. Mintlify publishes changelog/{product}/rss.xml from the page's
+// <Update> entries; without these props it titles each item with its label and dates it
+// from the page's last commit.
+function rssItem(meta, v) {
+  const item = { title: `${meta.name} ${v.version}`, description: v.summary, date: v.date };
+  // Mintlify reads only plain identifier keys (title:), not quoted ones ("title":).
+  return `{ ${Object.entries(item).map(([key, value]) => `${key}: ${js(value)}`).join(', ')} }`;
+}
+
 // The summary page: one <Update> per release, linking to the release's own page.
 function renderPage(product, versions) {
   const meta = PRODUCTS[product];
   const entries = versions.map((v) => {
     const when = formatDate(v.date) + (v.channel === 'Stable' ? '' : ` · ${v.channel}`);
     return [
-      `<Update label=${js(v.version)} description=${js(when)}>`,
+      `<Update label=${js(v.version)} description=${js(when)} rss={${rssItem(meta, v)}}>`,
       `**[${mdxText(v.description)}](/${pagePath(product, v.version)})**`,
       '',
       mdxText(v.summary),
@@ -158,7 +166,8 @@ function renderPage(product, versions) {
   ].join('\n');
 }
 
-// The product's sidebar entry: the summary page with the newest releases under it.
+// The product's sidebar entry: the summary page with every release under it, newest first.
+// Every release stays in navigation, so Mintlify keeps it in search and previous/next.
 // Replaces the entry in place, whether it is still the plain page or an earlier group.
 function updateNav(nav, product, versions) {
   const root = `changelog/${product}`;
@@ -168,7 +177,7 @@ function updateNav(nav, product, versions) {
     root,
     expanded: false,
     // changelog-sidebar.js shows these in batches behind a "Show more" row.
-    pages: versions.slice(0, SIDEBAR_LIMIT).map((v) => pagePath(product, v.version)),
+    pages: versions.map((v) => pagePath(product, v.version)),
   };
   let found = false;
   const visit = (node) => {

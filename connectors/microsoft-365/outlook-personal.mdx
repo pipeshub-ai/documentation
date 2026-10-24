@@ -1,0 +1,133 @@
+---
+title: "Outlook Personal"
+description: "Sync your own Outlook mailbox with your Microsoft sign-in"
+icon: "/logo/outlook.png"
+---
+
+<div className="not-prose mt-10">
+  <div className="p-6 border border-gray-200 dark:border-gray-700 rounded-xl bg-blue-50 dark:bg-gray-800">
+    <div className="flex items-center gap-3 mb-4">
+      <img
+        src="/logo/outlook.png"
+        alt="Microsoft Outlook Logo"
+        className="w-8 h-8 object-contain flex-shrink-0"
+      />
+      <div className="text-xl font-semibold text-gray-900 dark:text-white">Outlook Personal</div>
+    </div>
+    <p className="text-base text-gray-700 dark:text-gray-300 mt-0 mb-5">Your own mailbox, with your own Microsoft sign-in</p>
+    <div className="flex flex-wrap items-center gap-2">
+      <span className="px-3 py-1.5 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 rounded-full text-sm font-medium">
+        ✅ Ready
+      </span>
+      <span className="px-3 py-1.5 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-full text-sm font-medium">
+        📖 Documentation Available
+      </span>
+    </div>
+  </div>
+</div>
+
+## Overview
+
+Outlook Personal syncs **one mailbox: the one you sign in with**. It uses delegated Microsoft Graph permissions, so it needs no admin-consented application permissions and reads nothing beyond your own mail. Only you can search what it syncs.
+
+To sync every mailbox in your organization, an administrator sets up the [Outlook](/connectors/microsoft-365/outlook) connector instead.
+
+### What gets synced
+
+| Entity | Description |
+|--------|-------------|
+| **Mail folders** | Your folders and subfolders (Deleted Items only when selected) |
+| **Emails** | Messages in those folders, within the Received Date filter |
+| **Attachments** | Files attached to the messages. Attached emails and cloud links are skipped |
+
+### Authentication
+
+You enter the Client ID, Client Secret and Directory (Tenant) ID of an app registration, then sign in with your Microsoft work or school account. PipesHub asks for these delegated permissions:
+
+| Permission | Why |
+|------------|-----|
+| `Mail.Read` | Read your mail and folders |
+| `User.Read` | Read your profile (your email address) |
+| `offline_access` | Keep syncing after the first sign-in (refresh token) |
+
+## Configuration Guide
+
+### Step 1: Register an application
+
+1. Go to the [Azure Portal](https://portal.azure.com) → **Microsoft Entra ID** → **App registrations** → **New registration**.
+2. Give it a name (for example, `PipesHub Outlook Personal`).
+3. Under **Supported account types**, choose **Accounts in this organizational directory only**.
+4. Under **Redirect URI**, choose **Web** and enter:
+
+```text
+https://{your_pipeshub_base_url}/connectors/oauth/callback/OutlookPersonal
+```
+
+5. Click **Register**.
+
+<Note>
+  The redirect URI must match your PipesHub address exactly, including `http` or `https` and the port if you use one.
+</Note>
+
+### Step 2: Copy the IDs and create a client secret
+
+1. On the app's **Overview** page, copy the **Application (client) ID** and the **Directory (tenant) ID**.
+2. Go to **Certificates & secrets** → **New client secret**, add it, and copy its **Value** right away (it is shown only once).
+
+### Step 3: Add the delegated permissions
+
+1. Go to **API permissions** → **Add a permission** → **Microsoft Graph** → **Delegated permissions**.
+2. Add `Mail.Read`, `User.Read` and `offline_access`.
+
+These are delegated permissions: each user consents for their own mailbox when they sign in. If your organization blocks user consent, an administrator can grant consent for these three permissions once.
+
+### Step 4: Add the connector in PipesHub
+
+1. In PipesHub, open **Connectors**, choose **Outlook Personal** and click **Add**.
+2. Enter the Client ID, Client Secret and Tenant ID from step 2, and save.
+3. Click **Authorize**. Microsoft opens its sign-in page: sign in with the mailbox you want to sync and accept the permissions.
+
+<Warning>
+  Sign in with the same email address as your PipesHub account.
+</Warning>
+
+### Step 5: Choose what to sync and enable
+
+| Filter | Behaviour |
+|--------|-----------|
+| **Mail Folders** | The folders to sync. Leave empty to sync every folder except Deleted Items. Only top-level folders can be picked; their subfolders come with them. |
+| **Received Date** | Only mail received in this window is synced. |
+| **Index Emails** / **Index Attachments** | Turn indexing of messages or attachments on or off. |
+
+Enable sync. The first sync reads every selected folder; later syncs read only the changes (every 60 minutes by default, or when you start one).
+
+## Data sync behavior
+
+- **New, changed and moved mail** is picked up on the next sync. A moved message keeps its place in search; reading or flagging mail does not re-index it.
+- **Deleted mail and folders** are removed from search on the next sync. Moving mail to Deleted Items counts as deleting it, unless you sync Deleted Items.
+- **Large attachments**: attachments over 25 MB are listed but not indexed.
+- **Changing a filter** starts a full sync, which removes what is no longer in scope.
+
+## Troubleshooting
+
+<AccordionGroup>
+
+<Accordion title="Common issues" icon="circle-exclamation">
+
+**"Sign in again" or the connector stops syncing.** Your refresh token was revoked or expired (for example after a password change). Open the connector and click **Authorize** again.
+
+**Redirect URI mismatch during sign-in (AADSTS50011).** The redirect URI in the app registration must match the one in step 1 exactly.
+
+**Need admin approval.** Your organization requires an administrator to consent. Ask them to grant consent for `Mail.Read`, `User.Read` and `offline_access` on the app.
+
+**A personal outlook.com account does not work.** The app registration in step 1 accepts accounts of your organization only.
+
+</Accordion>
+
+</AccordionGroup>
+
+## Useful Links
+
+- [Register an application (Microsoft Entra)](https://learn.microsoft.com/en-us/entra/identity-platform/quickstart-register-app)
+- [Microsoft Graph permissions reference](https://learn.microsoft.com/en-us/graph/permissions-reference)
+- [Outlook connector for the whole organization](/connectors/microsoft-365/outlook)

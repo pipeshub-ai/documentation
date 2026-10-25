@@ -8,12 +8,12 @@ icon: "laptop-code"
   **Not released yet.** The `@pipeshub-ai/standalone` package, the `@pipeshub-ai/mcp` release that proxies the full tool set, and the local images this page uses are not published. Do not publish this page until they are.
 </Warning>
 
-Three commands put a PipesHub on your computer, connect your coding agents to it, and let them answer questions about the code in the repository you are in: who calls a function, what breaks if you change it, where something is defined.
+One command, run in your repository, puts a PipesHub on your computer, connect your coding agents to it, and let them answer questions about the code in the repository you are in: who calls a function, what breaks if you change it, where something is defined.
 
 ```bash
-npx @pipeshub-ai/standalone init     # start PipesHub (Docker), sign in, set up your agents
+cd path/to/your/repo
+npx @pipeshub-ai/standalone init     # start PipesHub (Docker), sign in, set up your agents, index this repository
 # restart your coding agent
-npx @pipeshub-ai/standalone index    # push this git repository into the code graph
 ```
 
 Then ask your agent, for example: *"What calls `create_session`, and what breaks if I change its arguments?"*
@@ -30,13 +30,16 @@ Everything runs on your computer. Your files go to the PipesHub container on you
 | **A coding agent** | Claude Code, Codex, Claude Desktop, Cursor, Windsurf, VS Code, Gemini CLI, Zed or Cline |
 | **A git repository** (to index code) | Only files that git lists are indexed |
 
-## The three commands
+## The steps
 
 <Steps>
   <Step title="Set up: init">
     ```bash
+    cd path/to/your/repo
     npx @pipeshub-ai/standalone init
     ```
+
+    Run it inside the git repository you want to ask about: at the end `init` indexes that repository (the same as `index`, below) and prints one `Code:` line. Pass `--no-index` to skip that. Outside a git repository it indexes nothing and tells you how to index one later.
 
     `init` looks for a PipesHub on your computer (port 3000) and, if there is none, offers to start one with Docker. The first start downloads the images; later starts take about 30 seconds. On a new stack it creates the first account and signs in. Then it finds the coding agents you have installed and sets up each one. It prints every file it created or changed.
 
@@ -45,13 +48,13 @@ Everything runs on your computer. Your files go to the PipesHub container on you
   <Step title="Restart your coding agent">
     Quit and reopen it, or start a new session, so it reads the new configuration. Ask a question about your team's documents to check the connection. Each client page below shows how to confirm the tools are listed.
   </Step>
-  <Step title="Index the repository: index">
+  <Step title="Index another repository or refresh: index (optional)">
     ```bash
-    cd path/to/your/repo
+    cd path/to/another/repo
     npx @pipeshub-ai/standalone index
     ```
 
-    This sends the repository's text files to your local PipesHub, waits until they are indexed, and tells you when the code tools are available. Your agent can also do this itself with the `index_workspace` tool or a slash command. See [Index a repository](#index-a-repository).
+    This sends the repository's text files to your local PipesHub, waits until they are indexed, and tells you when the code tools are available. Your agent can also do this itself with the `index_workspace` tool or a slash command, and the instructions `init` installs tell it to when the open folder is not indexed yet. See [Index a repository](#index-a-repository).
   </Step>
 </Steps>
 
@@ -66,7 +69,7 @@ Install the command once with `npm i -g @pipeshub-ai/standalone` if you want to 
 | PipesHub stack files | `~/.pipeshub/standalone/` | The Compose file and `.env` with generated secrets (mode 0600), and a `workspace/` folder the stack can read |
 | Your sign-in | `~/.config/pipeshub/credentials.json` | Mode 0600. The agents' bridge process reads it when it connects |
 | The local account | `~/.config/pipeshub/local-account.json` | Mode 0600. Email `developer@pipeshub.local` and a generated password, so you can open the web app at `http://127.0.0.1:3000` |
-| An MCP entry named `pipeshub` | One config file per agent | Runs `npx -y @pipeshub-ai/mcp@>=4.7.0 start --server-url http://127.0.0.1:3000` with `PIPESHUB_MCP_CHAT=off` |
+| An MCP entry named `pipeshub` | One config file per agent | Runs `npx -y @pipeshub-ai/mcp@>=4.8.0 start --server-url http://127.0.0.1:3000` with `PIPESHUB_MCP_CHAT=off` |
 | A short instruction text | Claude Code skill, Codex and Gemini CLI user instruction files | Tells the agent when to use search, the code tools and `index_workspace`. Under 2,000 characters |
 | Slash commands | Claude Code and Gemini CLI | `/pipeshub-index`, `/pipeshub-code` (Claude Code); `/pipeshub:index`, `/pipeshub:code` (Gemini CLI) |
 | A backup of every file it edits | `~/.config/pipeshub/backups/<time>/` | Made before the edit |

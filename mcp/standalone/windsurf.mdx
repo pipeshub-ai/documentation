@@ -10,7 +10,7 @@ After [`init`](/mcp/standalone/quickstart), Windsurf can search your team's docu
 
 | File | What |
 |---|---|
-| `~/.codeium/windsurf/mcp_config.json` | The `pipeshub` entry under `mcpServers` |
+| `~/.config/devin/mcp_config.json` (and `~/.codeium/windsurf/mcp_config.json` if it already exists) | The `pipeshub` entry under `mcpServers` |
 | `.windsurf/rules/pipeshub.md` in your repository | A rule Cascade applies when a request matches its description. Only with `init --project` |
 
 Windsurf has no user-level instruction file for `init` to write, so run `init --project` in each repository where you want the rule. Windsurf has no slash commands from `init`: ask in plain words.
@@ -31,14 +31,14 @@ Windsurf has no user-level instruction file for `init` to write, so run `init --
 
 ## Without `init`
 
-Start the stack and sign in first ([Set up one agent by hand](/mcp/standalone/quickstart#set-up-one-agent-by-hand)), then add the entry to `~/.codeium/windsurf/mcp_config.json`:
+Start the stack and sign in first ([Set up one agent by hand](/mcp/standalone/quickstart#set-up-one-agent-by-hand)), then add the entry to `~/.config/devin/mcp_config.json` (and `~/.codeium/windsurf/mcp_config.json` if it already exists):
 
 ```json
 {
   "mcpServers": {
     "pipeshub": {
       "command": "npx",
-      "args": ["-y", "@pipeshub-ai/mcp@>=4.7.0", "start", "--server-url", "http://127.0.0.1:3000"],
+      "args": ["-y", "@pipeshub-ai/mcp@>=4.8.0", "start", "--server-url", "http://127.0.0.1:3000"],
       "env": { "PIPESHUB_MCP_CHAT": "off" }
     }
   }

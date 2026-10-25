@@ -1,0 +1,58 @@
+---
+title: "Codex"
+description: "What init sets up for Codex when you run PipesHub locally: the config.toml entry and the AGENTS.md instructions."
+icon: "terminal"
+---
+
+After [`init`](/mcp/standalone/quickstart), Codex can search your team's documents and, once you have indexed a repository, ask about its code. This page covers what `init` changes for Codex and how to check it.
+
+## What `init` writes
+
+| File | What |
+|---|---|
+| `~/.codex/config.toml` | A `[mcp_servers.pipeshub]` table, between `# >>> pipeshub` and `# <<< pipeshub` marker lines. If `CODEX_HOME` is set, `$CODEX_HOME/config.toml` |
+| `~/.codex/AGENTS.md` | A PipesHub section between `pipeshub:begin` and `pipeshub:end` markers: when to use search, the code tools and `index_workspace` |
+| `AGENTS.md` in your repository | The same section. Only with `init --project` |
+
+The Codex command line and the Codex IDE extension read the same `config.toml`. Codex has no slash commands from `init`: ask it in plain words ("index this repository") and it calls `index_workspace`.
+
+## Check that Codex sees PipesHub
+
+<Steps>
+  <Step title="Restart Codex">
+    Start a new session.
+  </Step>
+  <Step title="List the servers">
+    ```bash
+    codex mcp list
+    ```
+
+    `pipeshub` should be listed and enabled. Inside the terminal UI, `/mcp` lists the tools.
+  </Step>
+  <Step title="Index and ask">
+    Say "index this repository with PipesHub", then ask who calls a function.
+  </Step>
+</Steps>
+
+## Without `init`
+
+Start the stack and sign in first ([Set up one agent by hand](/mcp/standalone/quickstart#set-up-one-agent-by-hand)), then add this to `~/.codex/config.toml`:
+
+```toml
+[mcp_servers.pipeshub]
+command = "npx"
+args = ["-y", "@pipeshub-ai/mcp@>=4.7.0", "start", "--server-url", "http://127.0.0.1:3000"]
+
+[mcp_servers.pipeshub.env]
+PIPESHUB_MCP_CHAT = "off"
+```
+
+Add the section from `~/.codex/AGENTS.md` yourself if you want Codex to know when to use the tools.
+
+## Undo
+
+```bash
+npx @pipeshub-ai/standalone uninstall --client codex
+```
+
+This removes only what `init` added for Codex, from the files above. A backup of each file `init` changed is in `~/.config/pipeshub/backups/`. To remove everything, see [Undo everything](/mcp/standalone/quickstart#undo-everything).

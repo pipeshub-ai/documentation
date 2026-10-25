@@ -1,0 +1,59 @@
+---
+title: "Cline"
+description: "What init sets up for Cline when you run PipesHub locally: the cline_mcp_settings.json entry and the project rules file."
+icon: "robot"
+---
+
+After [`init`](/mcp/standalone/quickstart), Cline (the VS Code extension) can search your team's documents and, once you have indexed a repository, ask about its code. This page covers what `init` changes for Cline (the VS Code extension) and how to check it.
+
+## What `init` writes
+
+| Platform | MCP file |
+|---|---|
+| Linux | `~/.config/Code/User/globalStorage/saoudrizwan.claude-dev/settings/cline_mcp_settings.json` |
+| macOS | `~/Library/Application Support/Code/User/globalStorage/saoudrizwan.claude-dev/settings/cline_mcp_settings.json` |
+| Windows | `%APPDATA%\Code\User\globalStorage\saoudrizwan.claude-dev\settings\cline_mcp_settings.json` |
+
+`init` adds the `pipeshub` entry under `mcpServers` with `"disabled": false` and an empty `autoApprove` list, so Cline asks before each PipesHub tool call. Add tool names to `autoApprove` if you want it to stop asking. With `init --project` it also writes `.clinerules/pipeshub.md` in your repository. Cline has no slash commands from `init`: ask in plain words.
+
+`init` finds Cline only if its settings folder exists, so open Cline once before running `init`.
+
+## Check that Cline sees PipesHub
+
+<Steps>
+  <Step title="Reload VS Code">
+    Run **Developer: Reload Window**.
+  </Step>
+  <Step title="Open the MCP Servers page">
+    In the Cline panel, open **MCP Servers** and the **Installed** tab. `pipeshub` should be listed and enabled, with its tools.
+  </Step>
+  <Step title="Ask">
+    Ask Cline to index this repository with PipesHub, then ask who calls a function, and approve the tool calls.
+  </Step>
+</Steps>
+
+## Without `init`
+
+Start the stack and sign in first ([Set up one agent by hand](/mcp/standalone/quickstart#set-up-one-agent-by-hand)), then add the entry to the file above, or edit it from the Cline panel (**MCP Servers > Configure MCP Servers**):
+
+```json
+{
+  "mcpServers": {
+    "pipeshub": {
+      "command": "npx",
+      "args": ["-y", "@pipeshub-ai/mcp@>=4.7.0", "start", "--server-url", "http://127.0.0.1:3000"],
+      "env": { "PIPESHUB_MCP_CHAT": "off" },
+      "disabled": false,
+      "autoApprove": []
+    }
+  }
+}
+```
+
+## Undo
+
+```bash
+npx @pipeshub-ai/standalone uninstall --client cline
+```
+
+This removes only what `init` added for Cline, from the files above. A backup of each file `init` changed is in `~/.config/pipeshub/backups/`. To remove everything, see [Undo everything](/mcp/standalone/quickstart#undo-everything).

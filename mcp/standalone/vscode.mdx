@@ -1,0 +1,56 @@
+---
+title: "VS Code"
+description: "What init sets up for VS Code when you run PipesHub locally: the user mcp.json entry and the project instructions."
+icon: "code"
+---
+
+After [`init`](/mcp/standalone/quickstart), VS Code (GitHub Copilot agent mode) can search your team's documents and, once you have indexed a repository, ask about its code. This page covers what `init` changes for VS Code (GitHub Copilot agent mode) and how to check it.
+
+## What `init` writes
+
+| Platform | MCP file |
+|---|---|
+| Linux | `~/.config/Code/User/mcp.json` (or under `$XDG_CONFIG_HOME`) |
+| macOS | `~/Library/Application Support/Code/User/mcp.json` |
+| Windows | `%APPDATA%\Code\User\mcp.json` |
+
+`init` adds the `pipeshub` entry under `servers`, so it is available in every workspace. With `init --project` it also writes `.github/instructions/pipeshub.instructions.md` in your repository, an instructions file whose description tells Copilot when to use PipesHub. VS Code has no slash commands from `init`: ask in plain words.
+
+## Check that VS Code sees PipesHub
+
+<Steps>
+  <Step title="Restart VS Code">
+    Reload the window.
+  </Step>
+  <Step title="List the servers">
+    Run **MCP: List Servers** from the Command Palette. `pipeshub` should be listed; choose it to see its tools or start it.
+  </Step>
+  <Step title="Ask in agent mode">
+    Open Copilot Chat in **Agent** mode. The tools picker lists the PipesHub tools. Ask it to index the repository, then ask who calls a function.
+  </Step>
+</Steps>
+
+## Without `init`
+
+Start the stack and sign in first ([Set up one agent by hand](/mcp/standalone/quickstart#set-up-one-agent-by-hand)), then run **MCP: Open User Configuration** and add the entry (or put it in `.vscode/mcp.json` for one workspace):
+
+```json
+{
+  "servers": {
+    "pipeshub": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@pipeshub-ai/mcp@>=4.7.0", "start", "--server-url", "http://127.0.0.1:3000"],
+      "env": { "PIPESHUB_MCP_CHAT": "off" }
+    }
+  }
+}
+```
+
+## Undo
+
+```bash
+npx @pipeshub-ai/standalone uninstall --client vscode
+```
+
+This removes only what `init` added for VS Code, from the files above. A backup of each file `init` changed is in `~/.config/pipeshub/backups/`. To remove everything, see [Undo everything](/mcp/standalone/quickstart#undo-everything).

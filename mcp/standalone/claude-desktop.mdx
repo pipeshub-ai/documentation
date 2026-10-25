@@ -1,0 +1,59 @@
+---
+title: "Claude Desktop"
+description: "What init sets up for Claude Desktop when you run PipesHub locally: the claude_desktop_config.json entry."
+icon: "/logo/claude.svg"
+---
+
+After [`init`](/mcp/standalone/quickstart), Claude Desktop can search your team's documents and, once you have indexed a repository, ask about its code. This page covers what `init` changes for Claude Desktop and how to check it.
+
+## What `init` writes
+
+| Platform | File |
+|---|---|
+| macOS | `~/Library/Application Support/Claude/claude_desktop_config.json` |
+| Windows | `%APPDATA%\Claude\claude_desktop_config.json` |
+| Linux | Nothing: there is no Claude Desktop for Linux, so `init` skips it |
+
+`init` adds the `pipeshub` entry under `mcpServers`. Claude Desktop has no instruction file or slash commands for `init` to use, so tell it in your message when you want the code tools ("use PipesHub to find what calls ..."). Claude Desktop does not share open folders, so index a repository in a terminal with `npx @pipeshub-ai/standalone index`.
+
+## Check that Claude Desktop sees PipesHub
+
+<Steps>
+  <Step title="Quit and reopen Claude Desktop">
+    Closing the window is not enough: quit the application.
+  </Step>
+  <Step title="Open the developer settings">
+    In **Settings > Developer**, `pipeshub` should be listed as running. In a chat, the tools menu lists its tools.
+  </Step>
+  <Step title="Ask">
+    Ask something your indexed documents answer, or about a repository you have indexed.
+  </Step>
+</Steps>
+
+If `pipeshub` shows an error, check that `npx` is on the `PATH` that Claude Desktop starts with. Applications started from the dock or Start menu can have a shorter `PATH` than your terminal. Using the full path to `npx` as `command` fixes it.
+
+## Without `init`
+
+Start the stack and sign in first ([Set up one agent by hand](/mcp/standalone/quickstart#set-up-one-agent-by-hand)), then add the entry to the file above:
+
+```json
+{
+  "mcpServers": {
+    "pipeshub": {
+      "command": "npx",
+      "args": ["-y", "@pipeshub-ai/mcp@>=4.7.0", "start", "--server-url", "http://127.0.0.1:3000"],
+      "env": { "PIPESHUB_MCP_CHAT": "off" }
+    }
+  }
+}
+```
+
+For the hosted connector and other ways to connect Claude Desktop, see [Claude Desktop](/mcp/claude-desktop).
+
+## Undo
+
+```bash
+npx @pipeshub-ai/standalone uninstall --client claude-desktop
+```
+
+This removes only what `init` added for Claude Desktop, from the files above. A backup of each file `init` changed is in `~/.config/pipeshub/backups/`. To remove everything, see [Undo everything](/mcp/standalone/quickstart#undo-everything).

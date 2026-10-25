@@ -1,0 +1,81 @@
+---
+title: "Code tools"
+description: "The pipeshub_code_* tools and index_workspace: let a coding agent ask who calls a function, what breaks if it changes, and where something is defined."
+icon: "code"
+---
+
+<Warning>
+  **Not released yet.** These tools come with the local setup described in [Run PipesHub locally for your coding agent](/mcp/standalone/quickstart). Do not publish this page until that is released.
+</Warning>
+
+PipesHub builds a graph of the code in an indexed repository (files, symbols, and the calls, imports and inheritance between them). Nine `pipeshub_code_*` tools query it, and the bridge adds one more tool, `index_workspace`, that puts your repository in. The code tools are marked **experimental**.
+
+The tools are listed only for a sign-in that can read code (`code:read`) and only once at least one repository is indexed. A repository you have not indexed has no code tools, so index first: run `npx @pipeshub-ai/standalone index`, or let the agent call `index_workspace`.
+
+## When to use which
+
+| The question | Use |
+|---|---|
+| Who calls this function? What does it call? Who imports this file? | `pipeshub_code_neighbours` |
+| What could break if I change this? | `pipeshub_code_impact` |
+| Where is `X` defined? | `pipeshub_code_search` |
+| Where does this string, config key or pattern appear? | `pipeshub_code_search` with `mode: "text"` or `"regex"` and a `path` |
+| What is in this directory or file? | `pipeshub_code_symbols` |
+| What is in this file, without the bodies? | `pipeshub_code_outline` |
+| Show me this function or these lines | `pipeshub_code_read` |
+| How does A reach B? | `pipeshub_code_path` |
+| Where does the program start? | `pipeshub_code_entry_points` |
+| What is indexed? | `pipeshub_code_repos` |
+| What the team decided, discussed or filed about it | `pipeshub_search`, then `pipeshub_get_record_content` |
+| The file you are about to edit | Read the file in your editor. The indexed copy can lag behind your working tree |
+
+## Tools
+
+All code tools except `pipeshub_code_repos` take a `repo` (`owner/name`, or just the name when unique) from `pipeshub_code_repos`. Symbols are named as results show them, such as `function:parse_config` or `method:Client.fetch`: copy the name from a result. Test files are left out unless `include_tests` is true.
+
+| Tool | Main arguments | Returns |
+|---|---|---|
+| `pipeshub_code_repos` | none | The repositories you can read |
+| `pipeshub_code_symbols` | `repo`, `select` (a directory, a file or a glob), `kinds`, `limit` (1-500) | The children of a directory, or the symbols a file defines with line ranges, ranked by how connected each is |
+| `pipeshub_code_neighbours` | `repo`, `file_path` or `record_id`, `qualified_name`, `direction` (`inbound`, `outbound`, `any`), `edge_types` (`CALLS`, `IMPORTS`, `INHERITS`, `CONTAINS`), `depth` (1-3), `limit`, `offset` | Callers, callees, imports and inheritance, each with file, line range and name |
+| `pipeshub_code_read` | `repo`, `file_path` or `record_id`, `qualified_name` or `lines` (`"40-80"`), `max_lines` (up to 2000) | One symbol, a line range, or a file up to `max_lines` (it says where it stopped) |
+| `pipeshub_code_path` | `repo`, `file_path_a`, `qualified_name_a`, `file_path_b`, `qualified_name_b`, `max_depth` (1-8) | How A reaches B, hop by hop. `reversed: true` means B reaches A |
+| `pipeshub_code_search` | `repo`, `pattern`, `mode` (`identifier`, `text`, `regex`), `path` (needed for `text` and `regex`), `limit` (up to 200) | Every definition of a name, or matching lines in up to 100 files |
+| `pipeshub_code_outline` | `repo`, `file_path` or `record_id` | Classes, functions and methods with signatures and line ranges, no bodies |
+| `pipeshub_code_impact` | `repo`, `file_path` or `record_id`, `qualified_name`, `depth` (1-3, default 2) | What calls, imports or builds on a symbol, followed backwards and grouped by file |
+| `pipeshub_code_entry_points` | `repo`, `limit` (up to 200) | Functions nothing in the repository calls (routes, command lines, jobs, hooks), conventional names first |
+
+### Coverage
+
+Calls and imports across files are resolved through imports for Python, JavaScript, TypeScript and Java. Other languages get calls matched by name. Links across languages or over HTTP are not in the graph. When an answer may be incomplete, the result carries a `coverage` field: confirm an empty result with `pipeshub_search` or by searching the files before relying on it.
+
+## `index_workspace`
+
+Added by the local bridge, not by the server, so it exists for every agent set up with `init`.
+
+| Argument | Description |
+|---|---|
+| `path` | A folder inside a git repository. Only needed when the client does not share its open folders; otherwise the open folders are used |
+| `waitSeconds` | How long to wait for indexing to finish before reporting its status. Default 20, up to 300. `0` returns right after the files are sent |
+
+It sends the text files git lists that changed since last time, and returns per folder the repository name, files, files sent and skipped, and the indexing state. It is incremental, so it is safe to call again. If the client shares no folders and you pass no `path`, it says so and sends nothing. A subfolder of a repository indexes the whole repository. See [Index a repository](/mcp/standalone/quickstart#index-a-repository) for what is and is not sent.
+
+## What the agent is told
+
+`init` installs a short instruction text for each client (under 2,000 characters) that teaches the agent to:
+
+- use the code tools for questions about the repository's structure, and `pipeshub_search` for what the team knows;
+- call `index_workspace` first when the repository is not indexed or has changed a lot;
+- keep calls small: set `limit`, use `depth` 1 or 2, outline before reading, read a symbol or line range rather than a whole file;
+- cite results as repository, file path and line range, and say so when a `coverage` note warns of an incomplete answer.
+
+A search hit for an indexed file has a `local-repo://` link that a browser cannot open, because the repository exists only on your computer. Cite the file name and the passage instead.
+
+## Slash commands
+
+| Client | Commands |
+|---|---|
+| Claude Code | `/pipeshub-index` and `/pipeshub-code <question>` |
+| Gemini CLI | `/pipeshub:index` and `/pipeshub:code <question>` |
+
+`index` indexes the current repository. `code` answers the question with the code tools and indexes first if needed. Other clients have the tools and the instruction text but no commands.

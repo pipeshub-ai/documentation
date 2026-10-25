@@ -1,0 +1,58 @@
+---
+title: "Claude Code"
+description: "What init sets up for Claude Code when you run PipesHub locally: MCP entry, skill, and slash commands."
+icon: "/logo/claude.svg"
+---
+
+After [`init`](/mcp/standalone/quickstart), Claude Code can search your team's documents and, once you have indexed a repository, ask about its code. This page covers what `init` changes for Claude Code and how to check it.
+
+## What `init` writes
+
+| File | What |
+|---|---|
+| `~/.claude.json` | The `pipeshub` entry under `mcpServers` (user scope, available in every project) |
+| `~/.claude/skills/pipeshub/SKILL.md` | A skill that tells Claude when to use search, the code tools and `index_workspace` |
+| `~/.claude/commands/pipeshub-index.md` | `/pipeshub-index` |
+| `~/.claude/commands/pipeshub-code.md` | `/pipeshub-code <question>` |
+| `CLAUDE.md` in your repository | A short PipesHub section. Only with `init --project` |
+
+`init` edits `~/.claude.json` directly instead of running `claude mcp add`. If Claude Code is running while `init` does, restart it.
+
+## Check that Claude Code sees PipesHub
+
+<Steps>
+  <Step title="Restart Claude Code">
+    Start a new session.
+  </Step>
+  <Step title="List the servers">
+    ```bash
+    claude mcp list
+    ```
+
+    `pipeshub` should be listed. Inside a session, `/mcp` shows its tools.
+  </Step>
+  <Step title="Index and ask">
+    Run `/pipeshub-index`, then `/pipeshub-code what calls the main entry point?`, or ask in your own words.
+  </Step>
+</Steps>
+
+The PipesHub tools appear to Claude Code as `mcp__pipeshub__<tool>`, for example `mcp__pipeshub__pipeshub_search`.
+
+## Without `init`
+
+Start the stack and sign in first ([Set up one agent by hand](/mcp/standalone/quickstart#set-up-one-agent-by-hand)), then:
+
+```bash
+claude mcp add --scope user --env PIPESHUB_MCP_CHAT=off pipeshub -- \
+  npx -y "@pipeshub-ai/mcp@>=4.7.0" start --server-url http://127.0.0.1:3000
+```
+
+This adds only the tools. Without the skill, Claude has them but is not told when to reach for them: run `npx @pipeshub-ai/standalone init --client claude-code` to add the skill and the commands too.
+
+## Undo
+
+```bash
+npx @pipeshub-ai/standalone uninstall --client claude-code
+```
+
+This removes only what `init` added for Claude Code, from the files above. A backup of each file `init` changed is in `~/.config/pipeshub/backups/`. To remove everything, see [Undo everything](/mcp/standalone/quickstart#undo-everything).

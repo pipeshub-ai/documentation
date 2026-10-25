@@ -1,0 +1,55 @@
+---
+title: "Zed"
+description: "What init sets up for Zed when you run PipesHub locally: the context_servers entry and the project rules file."
+icon: "bolt"
+---
+
+After [`init`](/mcp/standalone/quickstart), Zed can search your team's documents and, once you have indexed a repository, ask about its code. This page covers what `init` changes for Zed and how to check it.
+
+## What `init` writes
+
+| File | What |
+|---|---|
+| `~/.config/zed/settings.json` (Windows: `%APPDATA%\Zed\settings.json`; `$XDG_CONFIG_HOME` is honoured) | The `pipeshub` entry under `context_servers`, with `"source": "custom"`. The file may contain comments: `init` keeps them |
+| `.rules` in your repository | A PipesHub section between `pipeshub:begin` and `pipeshub:end` markers. Only with `init --project` |
+
+Zed has no slash commands from `init`: ask in plain words.
+
+## Check that Zed sees PipesHub
+
+<Steps>
+  <Step title="Restart Zed">
+    Quit and reopen it.
+  </Step>
+  <Step title="Check the server in the Agent Panel">
+    Open the Agent Panel settings. `pipeshub` should be listed with a green dot, and its tools appear in the tools list.
+  </Step>
+  <Step title="Ask">
+    Ask the agent to index this repository with PipesHub, then ask who calls a function.
+  </Step>
+</Steps>
+
+## Without `init`
+
+Start the stack and sign in first ([Set up one agent by hand](/mcp/standalone/quickstart#set-up-one-agent-by-hand)), then add the entry to Zed's `settings.json`:
+
+```json
+{
+  "context_servers": {
+    "pipeshub": {
+      "source": "custom",
+      "command": "npx",
+      "args": ["-y", "@pipeshub-ai/mcp@>=4.7.0", "start", "--server-url", "http://127.0.0.1:3000"],
+      "env": { "PIPESHUB_MCP_CHAT": "off" }
+    }
+  }
+}
+```
+
+## Undo
+
+```bash
+npx @pipeshub-ai/standalone uninstall --client zed
+```
+
+This removes only what `init` added for Zed, from the files above. A backup of each file `init` changed is in `~/.config/pipeshub/backups/`. To remove everything, see [Undo everything](/mcp/standalone/quickstart#undo-everything).

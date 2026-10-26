@@ -36,6 +36,14 @@ The Jira Data Center connector syncs projects, issues, comments, and attachments
   If Atlassian hosts your Jira for you, that is Jira Cloud. Use the [Jira Cloud connector](/connectors/jira/jira) instead. The two connectors are not interchangeable.
 </Info>
 
+<Info>
+  Atlassian ended support for Jira Server on February 15, 2024, and plans to end Data Center on March 28, 2029. The connector still works with Jira Server, since it uses the same REST API.
+</Info>
+
+<Note>
+  A separate **Jira Data Center Personal** connector syncs only what your own account can see. See [Personal connector](#personal-connector).
+</Note>
+
 ### Jira Data Structure
 
 The connector understands Jira's hierarchical data model:
@@ -59,7 +67,7 @@ The connector indexes the following content for AI-powered search:
 - **Issue Content**: Summary, description, status, priority, labels
 - **Issue Metadata**: Reporter, assignee, created/updated dates, issue type, parent, custom fields
 - **Issue Links**: Links between issues, including Epic Link and parent link
-- **Comments**: Full comment threads with author information
+- **Comments**: Comments that everyone who can see the issue can read, with author information. Comments restricted to a role or group are not indexed.
 - **Attachments**: All file types attached to issues (PDFs, images, documents)
 - **Permissions**: Project permission schemes, project roles, and issue-level security
 
@@ -81,7 +89,7 @@ Check these before you start:
 |-------------|--------|
 | **Deployment** | Jira Data Center or Jira Server that PipesHub can reach over HTTPS |
 | **Base URL** | The root URL of your instance, such as `https://jira.company.com`. Not a page URL like `/browse/PROJ-1` |
-| **PAT support** | Personal Access Tokens need Jira Core 8.14 or later. On older versions, use Basic Authentication |
+| **PAT support** | Personal Access Tokens need Jira Core or Jira Software 8.14 or later, or Jira Service Management 4.15 or later. On older versions, use Basic Authentication |
 | **Service account** | Use a dedicated account for the integration rather than someone's personal account |
 | **Admin rights** | Recommended. See [Required privileges](#required-privileges) below |
 
@@ -108,10 +116,8 @@ The connector reads a few admin-only APIs to work out who is allowed to see what
 PipesHub matches Jira users to PipesHub accounts by email address.
 
 <Info>
-  If a user hides their email in Jira, PipesHub can still find them, as long as that user already exists in PipesHub or in another connected app. Making emails public is not required here. It only makes the first sync faster, because the connector does not have to look up each user one by one.
+  If a user hides their email in Jira, PipesHub can still find them, as long as that user already exists in PipesHub or in another connected app. Making emails public is not required here. It only makes the first sync faster, because the connector does not have to look up each user one by one. Jira Cloud resolves hidden emails the same way.
 </Info>
-
-This is different from Jira Cloud, where a hidden email stops PipesHub from matching the user at all.
 
 <Note>
   On Jira Data Center, email visibility is a **global setting that an administrator controls**. Users cannot change it for themselves, unlike Jira Cloud where each person sets their own.
@@ -136,7 +142,7 @@ To make the first sync faster, a Jira administrator can make email addresses vis
 
 | Method | Best for |
 |--------|----------|
-| **Personal Access Token (PAT)** | Recommended. Needs Jira Core 8.14 or later. You can revoke it at any time, and it does not expose a password. |
+| **Personal Access Token (PAT)** | Recommended. Needs Jira Core or Jira Software 8.14 or later, or Jira Service Management 4.15 or later. You can revoke it at any time, and it does not expose a password. |
 | **Basic Authentication** | Older instances that do not support tokens, or where an admin has turned token creation off. Sends a username and password with every request. |
 
 <Tabs>
@@ -147,7 +153,7 @@ To make the first sync faster, a Jira administrator can make email addresses vis
 
 1. Sign in to your Jira with the account you want the connector to use.
 2. Click your **profile picture** in the top right, then select **Profile**.
-3. Open the **Personal Access Tokens** tab.
+3. Select **Personal access tokens** in the left-hand menu.
 
 <div className="text-center">
   <img
@@ -188,15 +194,16 @@ To make the first sync faster, a Jira administrator can make email addresses vis
   A token has the same access as the account that created it. Create it from the Jira admin or service account you want the connector to run as. See [Required privileges](#required-privileges).
 </Info>
 
-#### Step 2: Authenticate Instance tab — enter your credentials
+#### Step 2: Authenticate tab — enter your credentials
 
-1. In PipesHub, go to **Workspace Settings** → **Connectors**, find **Jira Data Center**, and click **+ Setup**.
+1. In PipesHub, go to **Workspace Settings** → **Connectors**, find **Jira Data Center**, and click **Set up**.
 2. The connector panel opens as a drawer on the right.
-3. On the **Authenticate Instance** tab, select **Personal Access Token** in the **Authentication method** dropdown.
-4. Enter:
-   - **Base URL** — the root URL of your Jira, such as `https://jira.company.com`, with no trailing slash
+3. On the **Authenticate** tab, enter an **Instance name** (required), such as `Jira Data Center`.
+4. Select **API Token** in the **Authentication method** dropdown. The field it shows is labelled **Personal Access Token**.
+5. Enter:
+   - **Base URL** — the root URL of your Jira, such as `https://jira.company.com` (a trailing slash is removed automatically)
    - **Personal Access Token** — the token you copied in Step 1
-5. Click **Next**. PipesHub checks the credentials and moves you to the **Configure Records** tab.
+6. Click **Next**. PipesHub checks the credentials and moves you to the **Configure records** tab.
 
 <div className="text-center">
   <img
@@ -206,9 +213,9 @@ To make the first sync faster, a Jira administrator can make email addresses vis
   />
 </div>
 
-#### Step 3: Configure Records tab
+#### Step 3: Configure records tab
 
-See [Configure Records](#configure-records) below. The options are the same for both sign-in methods.
+See [Configure records](#configure-records) below. The options are the same for both sign-in methods.
 
 </Tab>
 
@@ -221,15 +228,16 @@ Use this on instances that do not support Personal Access Tokens, or where an ad
 1. Pick or create the Jira account the connector will use. A dedicated service account such as `svc-jira-sync` works best.
 2. Check that the account can sign in to Jira with a username and password.
 
-#### Step 2: Authenticate Instance tab — enter your credentials
+#### Step 2: Authenticate tab — enter your credentials
 
-1. In PipesHub, go to **Workspace Settings** → **Connectors**, find **Jira Data Center**, and click **+ Setup**.
-2. On the **Authenticate Instance** tab, select **Basic Authentication** in the **Authentication method** dropdown.
-3. Enter:
-   - **Base URL** — the root URL of your Jira, such as `https://jira.company.com`, with no trailing slash
+1. In PipesHub, go to **Workspace Settings** → **Connectors**, find **Jira Data Center**, and click **Set up**.
+2. On the **Authenticate** tab, enter an **Instance name** (required), such as `Jira Data Center`.
+3. Select **Basic authentication** in the **Authentication method** dropdown.
+4. Enter:
+   - **Base URL** — the root URL of your Jira, such as `https://jira.company.com` (a trailing slash is removed automatically)
    - **Username** — the Jira username of the service account, such as `svc-jira-sync`
    - **Password** — the account password
-4. Click **Next**. PipesHub checks the credentials and moves you to the **Configure Records** tab.
+5. Click **Next**. PipesHub checks the credentials and moves you to the **Configure records** tab.
 
 <div className="text-center">
   <img
@@ -243,17 +251,17 @@ Use this on instances that do not support Personal Access Tokens, or where an ad
   Enter the Jira **username**, not the email address. On many instances these are different.
 </Warning>
 
-#### Step 3: Configure Records tab
+#### Step 3: Configure records tab
 
-See [Configure Records](#configure-records) below. The options are the same for both sign-in methods.
+See [Configure records](#configure-records) below. The options are the same for both sign-in methods.
 
 </Tab>
 
 </Tabs>
 
-### Configure Records
+### Configure records
 
-On the **Configure Records** tab, you choose how often the connector syncs and what it syncs.
+On the **Configure records** tab, you choose how often the connector syncs and what it syncs.
 
 **Sync settings** — set these first:
 
@@ -296,6 +304,7 @@ Available sync filters:
 
 **Indexing filters** — these decide what gets prepared for AI search. Everything is synced, but only what you enable here is indexed.
 
+- **Enable Manual Indexing** (default: off) — when on, synced issues are not indexed until you pick them; when off, everything synced is indexed
 - **Index issues** (default: on) — include issue descriptions and comments in search
 - **Index issue and comment attachments** (default: on) — include attachments in search
 
@@ -310,7 +319,7 @@ Available sync filters:
 - *Recent issues only:* Modified Date → `Is After` → `2024-06-01`
 - *Issues but not attachments:* turn off **Index issue and comment attachments**
 
-Click **Save**. PipesHub shows a dialog saying **"Instance is configured and ready to sync"**, with two choices: **I'll do it later** or **Start syncing now**.
+Click **Save**. PipesHub shows a dialog saying **"Instance is configured and ready to sync!"**, with two choices: **I'll do it later** or **Start syncing now**.
 
 <div className="text-center">
   <img
@@ -322,6 +331,15 @@ Click **Save**. PipesHub shows a dialog saying **"Instance is configured and rea
 
 Pick **Start syncing now** to start straight away, or **I'll do it later** to turn the connector on without syncing yet. Watch **Indexing Progress** to see how the sync is going.
 
+## Personal connector
+
+**Jira Data Center Personal** is a separate connector that syncs Jira Data Center issues your own account can see into your personal workspace. Set it up under Workspace Settings → **Personal** → **Your Connectors**.
+
+- **What it syncs:** only the projects and issues visible to the credentials you provide.
+- **Who can see it:** only you, the user who created the connector. It doesn't read Jira permission schemes or other users.
+- **Sign-in:** Personal Access Token or Basic Authentication, with the same fields as the team connector. Use your own token or account, not a service account.
+- **Configure records:** the same sync settings, filters, and indexing options as the team connector.
+
 ## Supported Features
 
 The Jira Data Center connector syncs:
@@ -329,7 +347,7 @@ The Jira Data Center connector syncs:
 - **Projects** — every project your account can see, with their permission schemes
 - **Issues** — summary, description, status, priority, and custom fields
 - **Issue links** — links between issues, including Epic Link and parent link
-- **Comments** — all comments, with author information
+- **Comments** — comments visible to everyone who can see the issue, with author information. Comments restricted to a role or group are not indexed
 - **Attachments** — files attached to issues and comments
 - **Users** — user profiles and account information
 - **Groups** — user groups and memberships
@@ -358,18 +376,18 @@ The Jira Data Center connector syncs:
 ### Common issues
 
 **The connector will not start, or you see "authType is required":**
-- No sign-in method was selected. Reopen the connector, choose **Personal Access Token** or **Basic Authentication**, and save again.
+- No sign-in method was selected. Reopen the connector, choose **API Token** (personal access token) or **Basic authentication**, and save again.
 
 **Base URL problems:**
 - Start with `https://`
-- No trailing slash. Use `https://jira.company.com`, not `https://jira.company.com/`
+- A trailing slash is removed automatically, so `https://jira.company.com/` also works
 - No page paths like `/browse/PROJ-1` or `/secure/Dashboard.jspa`
 - If Jira runs under a path, include it: `https://company.com/jira`
 
 **The Personal Access Token does not work:**
 - Check for extra spaces at the start or end of the token
-- The token may have expired or been revoked. Create a new one from **Profile → Personal Access Tokens**
-- Your Jira version may be older than 8.14 and not support tokens. Use Basic Authentication instead
+- The token may have expired or been revoked. Create a new one from **Profile → Personal access tokens**
+- Your Jira version may be too old to support tokens (Jira Core or Jira Software before 8.14, or Jira Service Management before 4.15). Use Basic Authentication instead
 
 **Basic Authentication does not work:**
 - Use the Jira **username**, not the email address
@@ -378,6 +396,8 @@ The Jira Data Center connector syncs:
 **Connection times out, or you see a certificate error:**
 - Check that PipesHub can reach the base URL through your firewall, VPN, or allowlist
 - If your instance uses a self-signed or internal certificate, PipesHub needs to trust that certificate
+- If your PipesHub deployment sets `PIPESHUB_BLOCK_PRIVATE_ADDRESSES`, a Jira on a private IP address is refused. Loopback addresses such as `localhost` are never allowed
+- For firewall allowlists, get the addresses PipesHub connects from with `GET /api/v1/connectors/network/egress-ips` (see the [Connector Manager API](/system-overview/connector-manager))
 
 **Nothing is syncing:**
 - Check that the connector shows **Active**
@@ -389,7 +409,7 @@ The Jira Data Center connector syncs:
 - This happens when the account cannot read permission schemes or application roles. Set the connector up again with a Jira administrator account. See [Required privileges](#required-privileges).
 
 **Some users are missing from permissions:**
-- On Jira 10 and later, the bulk user list can be restricted, and the fallback search may not return everyone
+- The connector reads the full user list from `/rest/api/2/user/list`, which exists only on the Jira 10.3 LTS from 10.3.13, and on Jira 11.0 or later. On other versions it falls back to user search, which Jira 10 and later cap at 100 results, so some users may be missing. Upgrade to 10.3.13 or later on the 10.3 LTS, or to 11.x, so the connector can use the full user list
 - Give the account Browse Users permission, or ask a Jira administrator to set **User email visibility** to **Public** in General Configuration
 
 **Project role access doesn't update for groups past the first 1000:**
@@ -401,7 +421,7 @@ The Jira Data Center connector syncs:
 - Check that the account is a Jira administrator and that auditing is turned on
 
 <Warning>
-  If you change the Personal Access Token or the account password, update it on the **Authenticate Instance** tab. Data Center credentials are not refreshed automatically.
+  If you change the Personal Access Token or the account password, update it on the **Authenticate** tab. Data Center credentials are not refreshed automatically.
 </Warning>
 
 </Accordion>
@@ -436,7 +456,7 @@ A **full sync** runs when:
 - You changed the sync filters
 - You start a full sync by hand
 
-An **incremental sync** runs the rest of the time. It uses a JQL query with `updated >= "last_sync_time"` so it only fetches what changed.
+An **incremental sync** runs the rest of the time. It asks Jira only for issues updated since the last checkpoint, with a small overlap so no change is missed.
 
 ### How Data Center differs from Jira Cloud
 
@@ -445,7 +465,7 @@ This connector talks to the **REST v2** API on your own server. It never goes th
 | Area | Jira Cloud | Jira Data Center |
 |---------|-----------|------------------|
 | Project list | `GET /rest/api/3/project/search`, paginated | `GET /rest/api/2/project`, one JSON array with no paging |
-| Issue search | `POST /rest/api/3/search` | `POST /rest/api/2/search` with `startAt` paging |
+| Issue search | `POST /rest/api/3/search/jql` (enhanced JQL search, `nextPageToken` paging) | `POST /rest/api/2/search` with `startAt` paging |
 | Users | Identified by `accountId` | `GET /rest/api/2/user/list`, falling back to `/user/search`. Identified by user key and username |
 | Groups | Cloud group APIs | `GET /rest/api/2/groups/picker` and `GET /rest/api/2/group/member` |
 | Issue description | Atlassian Document Format (ADF) | Wiki markup or plain text, rendered with `?expand=renderedFields` |
@@ -494,7 +514,7 @@ No. This connector supports **Personal Access Token** and **Basic Authentication
 
 | | Personal Access Token | Basic Authentication |
 |---|---|---|
-| **Best for** | Jira Core 8.14 or later | Older instances, or where tokens are turned off |
+| **Best for** | Jira Core or Jira Software 8.14+, Jira Service Management 4.15+ | Older instances, or where tokens are turned off |
 | **What you store** | A token you can revoke, with an optional expiry | A username and password |
 
 Use a **Personal Access Token** unless your instance cannot create them. Both sync the same data.
@@ -521,7 +541,7 @@ It is strongly recommended. Without admin access the connector cannot read appli
 
 <Accordion title="Can I sync only certain Jira projects?">
 
-Yes. On the **Configure Records** tab, use the **Project keys** filter with the `In` operator and pick the projects you want. Use `Not In` to leave projects out instead.
+Yes. On the **Configure records** tab, use the **Project keys** filter with the `In` operator and pick the projects you want. Use `Not In` to leave projects out instead.
 
 </Accordion>
 
@@ -531,7 +551,7 @@ Check these in order:
 
 1. **The sync has not finished.** Go to **Settings → Connectors** and check the sync status, then look in **All Records** for the issues you expect.
 2. **Permissions are incomplete.** If a non-admin account set up the connector, some projects may only be visible to that person. Set it up again with a Jira administrator account.
-3. **Your filters are too narrow.** Check the **Project keys** and date filters on the **Configure Records** tab.
+3. **Your filters are too narrow.** Check the **Project keys** and date filters on the **Configure records** tab.
 4. **Indexing is off.** Check that **Index issues** is turned on.
 
 </Accordion>

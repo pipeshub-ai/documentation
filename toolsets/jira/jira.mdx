@@ -190,6 +190,8 @@ Before configuring the Callback URL in Atlassian, copy the Redirect URI from Pip
 | `read:audit-log:jira` | Read audit logs |
 | `read:application-role:jira` | Read application roles |
 | `read:project-role:jira` | Read project roles and role assignments |
+| `read:issue-security-level:jira` | Read issue security levels and who holds them |
+| `read:issue-security-scheme:jira` | Read the issue security scheme of each project |
 
 <div className="text-center">
   <img
@@ -299,7 +301,7 @@ This is different from the connector — here every user that wants to use the t
 Each user that will use the toolset must generate their own API token.
 
 1. Sign in to [id.atlassian.com/manage-profile/security/api-tokens](https://id.atlassian.com/manage-profile/security/api-tokens).
-2. Click **Create API token**, set a meaningful label (e.g., `PipesHub Jira Toolset`) and an expiry if you want, then click **Create**.
+2. Click **Create API token** (not **Create API token with scopes**). PipesHub uses the token with your site URL, which only works for tokens without scopes. Set a meaningful label (e.g., `PipesHub Jira Toolset`), choose an expiry (Atlassian requires one, at most one year), then click **Create**.
 
 <div className="text-center">
   <img
@@ -404,7 +406,7 @@ The Jira tile in **Your actions** now shows **Authenticated**. The toolset is co
 | **Per-user setup** | OAuth popup (one click) | Each user pastes Email + API Token |
 | **Prerequisites** | Atlassian Developer Console admin access | Any Atlassian account |
 
-Choose **OAuth** for the simplest per-user experience. Choose **API Token** when you cannot register an Atlassian OAuth app or when each user wants to manage their own token (for example, to set tighter scopes or expiry).
+Choose **OAuth** for the simplest per-user experience. Choose **API Token** when you cannot register an Atlassian OAuth app or when each user wants to manage their own token (for example, to set their own expiry).
 
 </Accordion>
 

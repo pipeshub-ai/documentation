@@ -32,6 +32,8 @@ Jira is the leading project management and issue tracking platform developed by 
 
 <Info>
   This page is for **Jira Cloud**, the version Atlassian hosts for you. If you run Jira on your own servers, use the [Jira Data Center connector](/connectors/jira/jira-data-center) instead.
+
+  In the connector catalog, the team connector is shown as **Jira**. A separate **Jira Cloud Personal** connector syncs only what your own account can see; see [Personal connector](#personal-connector).
 </Info>
 
 ### Jira Data Structure
@@ -48,6 +50,7 @@ The connector understands Jira's hierarchical data model:
 | **Attachments** | Files, images, and documents attached to issues |
 | **Users & Groups** | Team members and their group memberships |
 | **Project Roles** | Role-based access control for project permissions |
+| **Application Roles** | Licensed application groups used in permission schemes |
 
 ### What Gets Synced
 
@@ -55,8 +58,8 @@ The connector indexes the following content for AI-powered search:
 
 - **Issue Content**: Summary, description (with rich text/ADF support), status, priority, labels
 - **Issue Metadata**: Reporter, assignee, created/updated dates, custom fields
-- **Comments**: Full comment threads with author information
-- **Attachments**: All file types attached to issues (PDFs, images, documents)
+- **Comments**: Comments that everyone who can see the issue can read, with author information. Comments restricted to a role or group, and Jira Service Management internal notes, are not indexed.
+- **Attachments**: All file types attached to issues (PDFs, images, documents), except files attached only in a restricted comment or internal note
 - **Permissions**: Project-level and issue-level access controls are preserved
 
 ---
@@ -65,22 +68,15 @@ The connector indexes the following content for AI-powered search:
 
 The Jira connector supports **two authentication methods**. Both sync the same data — pick whichever fits your rollout.
 
-### Prerequisite: Email Visibility
+### Email visibility (recommended)
 
-<Warning>
-  <div className="text-lg font-semibold">
-    **Each user in your organization must set their email address to be visible** in order for PipesHub to correctly assign permissions and make records visible to them.
-  </div>
-</Warning>
+PipesHub matches Jira users to PipesHub accounts by email address. This applies to **both** authentication methods (OAuth and API Token).
 
-This prerequisite applies to **both** authentication methods (OAuth and API Token).
+<Info>
+  If a user hides their email in Jira, PipesHub can still match them, as long as that user already exists in PipesHub or in another connected source. Making emails visible is not required. It only makes the first sync faster, because the connector does not have to look up each user one by one.
+</Info>
 
-**Why email visibility matters.** PipesHub uses email addresses to match Jira users with their permissions. If a user's email is hidden:
-- PipesHub cannot identify the user when syncing permissions
-- Records will appear invisible to that user even if they have proper access in Jira
-- The user won't be able to see any content they should have access to
-
-**How to configure email visibility.** Every user must complete these steps in their Atlassian account:
+**How to configure email visibility.** To make the first sync faster, each user can complete these steps in their Atlassian account:
 
 1. Click your **profile picture** in the top right → select **Account Settings**.
 
@@ -104,21 +100,33 @@ This prerequisite applies to **both** authentication methods (OAuth and API Toke
   />
 </div>
 
-<Warning>
-  **Do not select "Only you and admins"** — this will prevent PipesHub from accessing your email address and matching you to permissions, making all records invisible to you.
-</Warning>
+With **Only you and admins**, the connector can't read your email from Jira and has to find you through PipesHub or another connected source instead.
 
 📖 **Official documentation:** [Update your profile and visibility settings](https://support.atlassian.com/atlassian-account/docs/update-your-profile-and-visibility-settings/)
 
 <Info>
-  This is a **per-user setting** that must be configured by each individual user. Administrators cannot change this setting for other users. We recommend communicating this requirement to your team during the Jira connector rollout.
+  This is a **per-user setting** that each user configures. Administrators cannot change this setting for other users.
 </Info>
+
+### Required privileges
+
+The connector reads a few admin-only Jira APIs to work out who is allowed to see what. Use an account with the **Administer Jira** global permission: the user who authorizes OAuth, or the owner of the API token. Without it the sync still runs, but some access is missing.
+
+| What the connector reads | Needs | What happens if access is denied |
+|--------------------------|-------|----------------------------------|
+| Audit log | Administer Jira | Deleted issues are not found through the audit log and may stay in PipesHub. See [Troubleshooting](#troubleshooting). |
+| Application roles | Administer Jira | Projects that grant access through an application role give access only to the person who set up the connector. |
+| Issue security schemes and who holds each level | Administer Jira | Issues that have a security level are not shown to anyone in PipesHub until the account can read them. |
+
+<Note>
+  This applies to the team connector only. The [Jira Cloud Personal connector](#personal-connector) doesn't read these APIs.
+</Note>
 
 ### Choose an authentication method
 
 | Method | Best for |
 |--------|----------|
-| **OAuth 2.0 (3LO)** | Multi-user / org-wide rollouts, production — per-user refresh tokens, per-user consent, audit trail. Requires Atlassian Developer Console access. |
+| **OAuth 2.0 (3LO)** | Org-wide rollouts, production — one admin authorizes, and refresh tokens rotate automatically. Requires Atlassian Developer Console access. |
 | **API Token** | Single-account setups, quick POCs, or environments where you cannot register an OAuth app. Fastest path to sync. |
 
 <Tabs>
@@ -196,9 +204,9 @@ Use the left sidebar to navigate between **Permissions**, **Authorization**, and
   />
 </div>
 
-4. **Get the Redirect URL from PipesHub:**
-   - In PipesHub, go to **Workspace Settings** → **Connectors**, find **Jira**, and click **+ Setup** for a new instance.
-   - The connector panel opens as a right-side drawer. On the **Authenticate Instance** tab, copy the **Redirect URL**.
+4. **Get the Redirect/Callback URL from PipesHub:**
+   - In PipesHub, go to **Workspace Settings** → **Connectors**, find **Jira**, and click **Set up** for a new instance.
+   - The connector panel opens as a right-side drawer. On the **Authenticate** tab, copy the **Redirect/Callback URL**. It ends in `connectors/oauth/callback/Jira`.
 
 <div className="text-center">
   <img
@@ -254,7 +262,7 @@ Click **Add** next to User identity API and select:
 </div>
 
 <Info>
-  The `offline_access` scope is automatically included when you configure OAuth 2.0 (3LO). It enables refresh tokens so scheduled synchronization continues when users are not actively logged in.
+  PipesHub requests the `offline_access` scope for you; you don't add it in the console. It gives PipesHub a refresh token so scheduled syncs keep running.
 </Info>
 
 **Jira API — Classic scopes**
@@ -292,6 +300,8 @@ Next, the **Granular scopes** tab. Add these read permissions for fine-grained a
 | `read:audit-log:jira` | Read audit logs (for detecting deleted issues) |
 | `read:application-role:jira` | Read application roles |
 | `read:project-role:jira` | Read project roles and role assignments |
+| `read:issue-security-level:jira` | Read issue security levels and who holds them |
+| `read:issue-security-scheme:jira` | Read the issue security scheme of each project |
 
 <div className="text-center">
   <img
@@ -302,8 +312,12 @@ Next, the **Granular scopes** tab. Add these read permissions for fine-grained a
 </div>
 
 <Note>
-  Classic scopes (`read:jira-work`, `read:jira-user`) provide the primary data access. Granular scopes enable specific features: user lookup, group resolution, audit-log-based deletion detection, and project role permissions.
+  Classic scopes (`read:jira-work`, `read:jira-user`) provide the primary data access. Granular scopes enable specific features: user lookup, group resolution, audit-log-based deletion detection, project role permissions, and issue security levels (issue-level permissions).
 </Note>
+
+<Warning>
+  PipesHub requests every scope in these tables when you authorize. Add all of them, including the two issue security scopes. Without the issue security scopes, PipesHub can't read who may see an issue that has a security level, and such issues are not shown to anyone in PipesHub.
+</Warning>
 
 #### Step 6: Copy Client ID and Client Secret
 
@@ -325,16 +339,17 @@ Next, the **Granular scopes** tab. Add these read permissions for fine-grained a
   Store the Client ID and Client Secret securely. The secret can be regenerated if needed, but you'll have to update your PipesHub configuration with the new value.
 </Warning>
 
-#### Step 7: Authenticate Instance tab — enter credentials
+#### Step 7: Authenticate tab — enter credentials
 
-The connector drawer in PipesHub has three tabs: **Authenticate Instance**, **Authorize**, and **Configure Records**. Start on the **Authenticate Instance** tab.
+The connector drawer in PipesHub has three tabs: **Authenticate**, **Authorize**, and **Configure records**. Start on the **Authenticate** tab.
 
-1. Confirm the **Redirect URL** matches the Callback URL you saved in Atlassian in Step 4.
-2. If your admin has pre-registered an OAuth app, pick it from the **OAuth app** dropdown. Otherwise leave it blank and enter credentials manually.
-3. Enter:
+1. Enter an **Instance name** (required), such as `Jira Production`.
+2. Confirm the **Redirect/Callback URL** matches the Callback URL you saved in Atlassian in Step 4.
+3. If your admin has pre-registered an OAuth app, pick it from the **OAuth app** dropdown. Otherwise leave it blank and enter credentials manually.
+4. Enter:
    - **Application (Client) ID** — from Step 6
    - **Client Secret** — from Step 6
-4. Click **Next** to move to the **Authorize** tab.
+5. Click **Next** to move to the **Authorize** tab.
 
 <div className="text-center">
   <img
@@ -383,11 +398,11 @@ On the **Authorize** tab, all the OAuth authorization work happens. The tab show
 
 4. The popup closes and returns you to PipesHub. The connector tile shows an **Authenticated** badge with a **Reauthenticate** option.
 
-5. Click **Next** to move to the **Configure Records** tab.
+5. Click **Next** to move to the **Configure records** tab.
 
-#### Step 9: Configure Records tab — sync settings, filters, and indexing
+#### Step 9: Configure records tab — sync settings, filters, and indexing
 
-On the **Configure Records** tab, control how the connector syncs and what gets synced.
+On the **Configure records** tab, control how the connector syncs and what gets synced.
 
 **Sync settings** — configure your synchronization preferences first:
 
@@ -403,7 +418,7 @@ On the **Configure Records** tab, control how the connector syncs and what gets 
 </div>
 
 <Note>
-  **Scheduled sync** runs automatically at the specified intervals. **Manual sync** requires you to trigger synchronization on-demand.
+  **Scheduled sync** runs automatically at the specified intervals. **Manual sync** requires you to trigger synchronization on-demand. Real-time sync is not available; changes arrive on the next scheduled or manual sync.
 </Note>
 
 **Sync filters** — determine which content is downloaded from Jira. Data excluded by sync filters is never downloaded.
@@ -430,8 +445,9 @@ Available sync filters:
 
 **Indexing filters** — control what synced data gets processed for AI search. All data is synced, but only enabled content types are indexed.
 
+- **Enable Manual Indexing** (default: off) — when on, synced issues are not indexed until you pick them; when off, everything synced is indexed
 - **Index Issues** (default: enabled) — include issue content (description + comments) in search
-- **Index Issue and Comment Attachments** (default: enabled) — include attachments in search
+- **Index Issue and comment Attachments** (default: enabled) — include attachments in search
 
 <Info>
   Comments are stored as part of the issue content (not as separate records). When **Index Issues** is enabled, both issue descriptions and comments are indexed together.
@@ -442,9 +458,9 @@ Available sync filters:
 - *Sync only Engineering project:* Project Keys → Operator `In` → select "Engineering"
 - *Exclude archived projects:* Project Keys → Operator `Not In` → select archived projects
 - *Recent issues only:* Modified Date → Operator `Is After` → Date `2024-06-01`
-- *Index issues but not attachments:* disable the **Index Issue and Comment Attachments** toggle
+- *Index issues but not attachments:* disable the **Index Issue and comment Attachments** toggle
 
-Click **Save** to save your configuration. PipesHub confirms the instance is ready with a final dialog — **"Instance is configured and ready to sync"** — offering two choices: **I'll do it later** or **Start syncing now**.
+Click **Save** to save your configuration. PipesHub confirms the instance is ready with a final dialog — **"Instance is configured and ready to sync!"** — offering two choices: **I'll do it later** or **Start syncing now**.
 
 <div className="text-center">
   <img
@@ -465,8 +481,8 @@ Use this method when you want the fastest setup and only need a single user acco
 #### Step 1: Generate an API token in Atlassian
 
 1. Sign in to [id.atlassian.com/manage-profile/security/api-tokens](https://id.atlassian.com/manage-profile/security/api-tokens).
-2. Click **Create API token**.
-3. Give it a meaningful label (e.g., `PipesHub Jira Connector`), set an expiry if you want, and click **Create**.
+2. Click **Create API token** (not **Create API token with scopes**). PipesHub uses the token with your site URL, which only works for tokens without scopes.
+3. Give it a meaningful label (e.g., `PipesHub Jira Connector`), choose an expiry, and click **Create**. Atlassian requires an expiry of at most one year. Sync stops when the token expires, so set a reminder to replace it on the **Authenticate** tab.
 
 <div className="text-center">
   <img
@@ -494,16 +510,17 @@ Use this method when you want the fastest setup and only need a single user acco
   The token inherits the permissions of the account that created it. Use an account that can read the Jira projects you want to sync — ideally a dedicated integration user rather than a personal account.
 </Info>
 
-#### Step 2: Authenticate Instance tab — enter credentials
+#### Step 2: Authenticate tab — enter credentials
 
-1. In PipesHub, go to **Workspace Settings** → **Connectors**, find **Jira**, and click **+ Setup**.
-2. The connector panel opens as a right-side drawer with three tabs: **Authenticate Instance**, **Authorize**, and **Configure Records**.
-3. On the **Authenticate Instance** tab, pick **API Token** in the **Authentication method** dropdown.
-4. Enter:
-   - **Base URL** — your Jira site URL (e.g., `https://your-domain.atlassian.net`; no trailing slash)
+1. In PipesHub, go to **Workspace Settings** → **Connectors**, find **Jira**, and click **Set up**.
+2. The connector panel opens as a right-side drawer with three tabs: **Authenticate**, **Authorize**, and **Configure records**.
+3. On the **Authenticate** tab, enter an **Instance name** (required), such as `Jira Production`.
+4. Pick **API Token** in the **Authentication method** dropdown.
+5. Enter:
+   - **Base URL** — your Jira site URL (e.g., `https://your-domain.atlassian.net`; a trailing slash is removed automatically)
    - **Email** — your Atlassian account email (the account that created the API token)
    - **API Token** — the token you copied in Step 1
-5. Click **Next**. PipesHub validates the credentials and advances directly to the **Configure Records** tab (the **Authorize** tab is skipped for API Token because the token authenticates on its own).
+6. Click **Next**. PipesHub validates the credentials and advances directly to the **Configure records** tab (the **Authorize** tab is skipped for API Token because the token authenticates on its own).
 
 <div className="text-center">
   <img
@@ -517,9 +534,9 @@ Use this method when you want the fastest setup and only need a single user acco
   The **Email** must match the Atlassian account that owns the API token. Using a different email causes authentication to fail.
 </Warning>
 
-#### Step 3: Configure Records tab — sync settings, filters, and indexing
+#### Step 3: Configure records tab — sync settings, filters, and indexing
 
-On the **Configure Records** tab, control how the connector syncs and what gets synced.
+On the **Configure records** tab, control how the connector syncs and what gets synced.
 
 **Sync settings** — configure your synchronization preferences first:
 
@@ -554,10 +571,11 @@ Available sync filters:
 
 **Indexing filters** — control what synced data gets processed for AI search.
 
+- **Enable Manual Indexing** (default: off) — when on, synced issues are not indexed until you pick them; when off, everything synced is indexed
 - **Index Issues** (default: enabled) — include issue content (description + comments) in search
-- **Index Issue and Comment Attachments** (default: enabled) — include attachments in search
+- **Index Issue and comment Attachments** (default: enabled) — include attachments in search
 
-Click **Save** to save your configuration. PipesHub confirms the instance is ready with a final dialog — **"Instance is configured and ready to sync"** — offering two choices: **I'll do it later** or **Start syncing now**.
+Click **Save** to save your configuration. PipesHub confirms the instance is ready with a final dialog — **"Instance is configured and ready to sync!"** — offering two choices: **I'll do it later** or **Start syncing now**.
 
 <div className="text-center">
   <img
@@ -573,13 +591,31 @@ Choose **Start syncing now** to kick off the initial sync immediately, or **I'll
 
 </Tabs>
 
+## Personal connector
+
+**Jira Cloud Personal** is a separate connector that syncs Jira Cloud issues your own account can see into your personal workspace. Set it up under Workspace Settings → **Personal** → **Your Connectors**.
+
+- **What it syncs:** only the projects and issues visible to the credentials you provide.
+- **Who can see it:** only you, the user who created the connector. It doesn't read Jira permission schemes, groups, other users, or the audit log, so it doesn't need Jira admin rights.
+- **Sign-in:** OAuth 2.0 or API Token, with the same fields as the team connector. For OAuth, the Redirect/Callback URL ends in `connectors/oauth/callback/JiraCloudPersonal`, and the app needs fewer scopes:
+
+| Scope | API |
+|-------|-----|
+| `read:jira-work` | Jira API (classic) |
+| `read:jira-user` | Jira API (classic) |
+| `read:user:jira` | Jira API (granular) |
+| `read:avatar:jira` | Jira API (granular) |
+| `read:account` | User identity API |
+
+PipesHub also requests `offline_access` for you. The **Configure records** tab has the same sync settings, filters, and indexing options as the team connector. Deleted issues are found by comparison on every sync; see [Connector Workflow](#connector-workflow).
+
 ## Supported Features
 
 The Jira connector syncs the following data from your Jira Cloud workspace:
 
 - **Projects** — all accessible projects with their configurations and permission schemes
 - **Issues** — full issue content including summary, description, status, priority, and custom fields
-- **Comments** — all comments on issues with author information
+- **Comments** — comments that everyone who can see the issue can read, with author information. Comments restricted to a role or group, Jira Service Management internal notes, and files attached only in them are not indexed.
 - **Attachments** — files attached to issues (images, documents, etc.)
 - **Users** — user profiles and account information
 - **Groups** — user groups and memberships
@@ -610,7 +646,7 @@ The Jira connector syncs the following data from your Jira Cloud workspace:
 - Regenerate the secret if necessary and update PipesHub
 
 **Callback URL mismatch error (OAuth):**
-- Ensure the Redirect URL in PipesHub exactly matches the Callback URL in Atlassian
+- Ensure the Redirect/Callback URL in PipesHub exactly matches the Callback URL in Atlassian
 - Check for trailing slashes, protocol differences (`http` vs `https`), or casing
 - Update both configurations to use the same URL
 
@@ -618,11 +654,12 @@ The Jira connector syncs the following data from your Jira Cloud workspace:
 - Confirm the token was copied correctly — no leading/trailing whitespace
 - The token may have been revoked or expired; create a new one at [id.atlassian.com/manage-profile/security/api-tokens](https://id.atlassian.com/manage-profile/security/api-tokens)
 - Verify the **Email** field matches the Atlassian account that created the token
-- Verify the **Base URL** matches your Jira site (must include `https://`, no trailing slash, match `*.atlassian.net`)
+- Make sure the token was created with **Create API token**, not **Create API token with scopes**
+- Verify the **Base URL** matches your Jira site (must include `https://` and match `*.atlassian.net`)
 
 **Base URL format issues (API Token):**
 - Must include the protocol: `https://`
-- Must **not** include a trailing slash — use `https://acme.atlassian.net`, not `https://acme.atlassian.net/`
+- Use the site root, such as `https://acme.atlassian.net`. A trailing slash is removed automatically
 - Must match the actual Jira Cloud site (usually `*.atlassian.net`)
 - Do not include paths like `/jira` or `/browse/...`
 
@@ -638,8 +675,8 @@ The Jira connector syncs the following data from your Jira Cloud workspace:
 - Review sync logs for specific error messages
 
 **Token expired or sync stopped:**
-- OAuth tokens may expire per Atlassian's policies; disable and re-enable the connector to re-authenticate
-- API tokens can be revoked from the Atlassian account page; generate a new one and update the Authenticate Instance tab
+- If an OAuth connector doesn't sync for 90 days, Atlassian expires its refresh token; use **Reauthenticate** to sign in again
+- API tokens expire after at most one year and can be revoked from the Atlassian account page; generate a new one and update the **Authenticate** tab
 - Check if the OAuth app is still active in Developer Console
 
 **Permission denied for specific issues:**
@@ -660,10 +697,11 @@ The Jira connector syncs the following data from your Jira Cloud workspace:
 **Missing comments or attachments:**
 - Verify indexing filters are enabled for issues and attachments
 - Check that the user has permission to view comments/attachments
-- Ensure attachment size limits are not exceeded
+- Comments restricted to a role or group, Jira Service Management internal notes, and files attached only in them are not indexed
+- Images up to 5 MiB are embedded in the issue content; larger images and other files are stored as separate file records under the issue
 
 <Warning>
-  If you modify OAuth application settings in Atlassian Developer Console (Client ID, Secret, Callback URL, or scopes), update the configuration in PipesHub and re-authorize. For API tokens, re-enter the token in the Authenticate Instance tab if you regenerate it.
+  If you modify OAuth application settings in Atlassian Developer Console (Client ID, Secret, Callback URL, or scopes), update the configuration in PipesHub and re-authorize. For API tokens, re-enter the token in the **Authenticate** tab if you regenerate it.
 </Warning>
 
 </Accordion>
@@ -681,17 +719,19 @@ The Jira connector follows a structured synchronization process to ensure all da
 
 ### Sync overview
 
-The `run_sync` method executes a complete synchronization cycle in a specific order:
+Each sync runs these steps in order:
 
-| Step | Function | Data Synced | Purpose |
-|------|----------|-------------|---------|
-| 1 | `_fetch_users()` | Users | Sync all Jira users with their profiles |
-| 2 | `_sync_user_groups()` | Groups | Sync groups and user-group memberships |
-| 3 | `_fetch_projects()` | Projects | Fetch projects (filtered if configured) |
-| 4 | `_sync_project_roles()` | Roles | Sync project role assignments |
-| 5 | `_sync_project_lead_roles()` | Lead Roles | Assign project lead permissions |
-| 6 | `_sync_project_issues()` | Issues | Sync issues, comments, and attachments |
-| 7 | `_handle_issue_deletions()` | Deletions | Detect and remove deleted issues |
+| Step | Data Synced | Purpose |
+|------|-------------|---------|
+| 1 | Users | Sync Jira users with their profiles |
+| 2 | Application roles | Map application roles to their groups, and keep only users with a Jira license |
+| 3 | Groups | Sync groups and user-group memberships |
+| 4 | Projects | Fetch projects (filtered if configured) |
+| 5 | Project roles | Sync project role assignments |
+| 6 | Project lead roles | Assign project lead permissions |
+| 7 | Issues | Sync issues, comments, and attachments |
+| 8 | Deletions | Detect and remove deleted issues |
+| 9 | Removed projects | Remove projects that are no longer synced |
 
 ### Full sync vs incremental sync
 
@@ -705,7 +745,7 @@ The connector automatically determines whether to perform a full or incremental 
 **Incremental sync** occurs when:
 - A valid sync checkpoint exists
 - Filters haven't changed
-- Uses JQL queries with `updated >= "last_sync_time"` to fetch only changes
+- Asks Jira only for issues updated since the last checkpoint, with a small overlap so issues Jira indexed late are not missed
 
 ### User & group synchronization
 
@@ -792,11 +832,11 @@ After each successful sync:
 
 | | OAuth 2.0 | API Token |
 |---|-----------|-----------|
-| **Best for** | Multi-user / org-wide rollouts, production | Single-account setups, quick POCs |
-| **Credentials model** | Per-user consent, rotating refresh tokens | Single token, long-lived until revoked |
+| **Best for** | Org-wide rollouts, production | Single-account setups, quick POCs |
+| **Credentials model** | One admin authorizes; refresh tokens rotate automatically | Single token that expires after at most one year |
 | **Prerequisites** | Atlassian Developer Console admin access | Any Atlassian account |
 
-Choose **OAuth** for production and anything that needs per-user attribution. Choose **API Token** when you cannot register a developer-console app or just want to get syncing quickly. Both methods sync the same data.
+Choose **OAuth** for production. Choose **API Token** when you cannot register a developer-console app or just want to get syncing quickly. Both methods sync the same data.
 
 </Accordion>
 
@@ -816,11 +856,11 @@ Choose **OAuth** for production and anything that needs per-user attribution. Ch
 
 Check these in order:
 
-1. **PipesHub email mismatch** — the email used to authenticate the Jira connector must match your PipesHub account email. For OAuth, this is the email you signed in with during consent; for API Token, it's the **Email** field on the Authenticate Instance tab.
+1. **PipesHub email mismatch** — the email used to authenticate the Jira connector must match your PipesHub account email. For OAuth, this is the email you signed in with during consent; for API Token, it's the **Email** field on the **Authenticate** tab.
    - **Fix:** reconfigure the connector and authenticate using the same email as your PipesHub account.
 
-2. **Email visibility not set** — if your Atlassian email visibility is set to *Only you and admins*, PipesHub can't match you to Jira permissions and no records will be visible.
-   - **Fix:** set it to **Anyone** or **Your organization** (see the *Prerequisite: Email Visibility* section above).
+2. **Hidden email** — if your Atlassian email visibility is set to *Only you and admins*, PipesHub matches you only if you already exist in PipesHub or in another connected source.
+   - **Fix:** set it to **Anyone** or **Your organization** (see [Email visibility](#email-visibility-recommended) above), then run a sync.
 
 3. **Verify in All Records** — go to **All Records** in PipesHub and confirm the Jira issues you expect are actually present. If they're missing, the sync hasn't reached them yet — check sync status in **Settings → Connectors**.
 
@@ -828,7 +868,7 @@ Check these in order:
 
 <Accordion title="Is it possible to index only specific Jira projects?">
 
-Yes. On the **Configure Records** tab, use the **Project Keys** filter with the `In` operator and pick the projects you want to include. Or use `Not In` to exclude specific projects.
+Yes. On the **Configure records** tab, use the **Project Keys** filter with the `In` operator and pick the projects you want to include. Or use `Not In` to exclude specific projects.
 
 </Accordion>
 

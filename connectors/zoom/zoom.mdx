@@ -1,6 +1,6 @@
 ---
 title: "Zoom"
-description: "Meetings, participants, recordings, and transcripts connector"
+description: "Meetings, participants, recording links, and transcripts connector"
 icon: "/logo/zoom.png"
 ---
 
@@ -56,8 +56,10 @@ Zoom is the video conferencing and online meeting platform used by teams for cal
 Zoom replaced the standalone "OAuth App" type with the **General App** type, which supports the same 3-legged OAuth flow.
 
 1. Sign in to the [Zoom App Marketplace](https://marketplace.zoom.us/) with an account that has **admin privileges**.
-2. Click **Develop** in the top-right corner, then **Build App**.
+2. Click **Developer** in the left navigation, then click **Develop** and choose **Build an app**.
 3. Select **General App** and click **Create**.
+
+Server-to-Server OAuth apps are not supported. Create a General app.
 
 <div className="text-center">
   <img
@@ -85,20 +87,20 @@ In the app creation dialog, choose:
 </div>
 
 <Warning>
-  The choice between **Admin-managed** and **User-managed** is **permanent** — it cannot be changed after the app is created. Admin-managed is required because the connector uses admin-scoped Report APIs to sync meeting data for all users.
+  Admin-managed is required because the connector uses admin-scoped Report APIs to sync meeting data for all users. You can change how the app is managed later on **Basic Information**, but you must then re-check the app's scopes.
 </Warning>
 
-#### Step 3: Get the Redirect URL from PipesHub
+#### Step 3: Get the Redirect/Callback URL from PipesHub
 
-Before filling in the Zoom form, copy the Redirect URL from PipesHub so the values match exactly.
+Before filling in the Zoom form, copy the Redirect/Callback URL from PipesHub so the values match exactly.
 
-1. In PipesHub, go to **Workspace Settings** → **Connectors**, find **Zoom**, and click **+ Setup** for a new instance.
-2. The connector panel opens as a right-side drawer. On the **Authenticate Instance** tab, copy the **Redirect URL**.
+1. In PipesHub, go to **Workspace Settings** → **Connectors**, find **Zoom**, and click **Set up** for a new instance.
+2. The connector panel opens as a right-side drawer. On the **Authenticate** tab, enter an **Instance name** and copy the **Redirect/Callback URL**.
 
 <div className="text-center">
   <img
     src="/images/connectors/zoom/zoom_config.png"
-    alt="PipesHub Zoom Authenticate Instance tab — copy the Redirect URL"
+    alt="PipesHub Zoom Authenticate tab — copy the Redirect/Callback URL"
     className="block mx-auto w-11/12"
   />
 </div>
@@ -107,7 +109,7 @@ Before filling in the Zoom form, copy the Redirect URL from PipesHub so the valu
 
 In the Zoom app builder, open **Basic Information** and scroll to **OAuth Information**:
 
-1. Paste the PipesHub **Redirect URL** into the **OAuth Redirect URL** field.
+1. Paste the PipesHub **Redirect/Callback URL** into the **OAuth Redirect URL** field.
 2. Add the same URL to the **OAuth Allow List** below.
 3. Click **Save**.
 
@@ -147,13 +149,13 @@ Open the **Scopes** section in the app builder and add the following **admin-sco
 </div>
 
 <Info>
-  All scopes are **admin-scoped** (`*:admin`). Only Admin-managed apps can request these; User-managed apps cannot. If you chose User-managed in Step 2, you will not see these scopes in the list — delete the app and create a new Admin-managed one.
+  All scopes are **admin-scoped** (`*:admin`). Only Admin-managed apps can request these; User-managed apps cannot. If you chose User-managed in Step 2, you will not see these scopes in the list. Switch the app to Admin-managed on **Basic Information**, add the `:admin` scopes again, and re-authorize.
 </Info>
 
 <Note>
   `user:read:user:admin` lets PipesHub read which Zoom admin authorized the app. If that admin's Zoom email differs from the email of the PipesHub user who set up the connector, that PipesHub user still gets the admin's access to the meetings this connector syncs.
 
-  **Connector already set up?** If your Zoom app doesn't have `user:read:user:admin` yet, add it in the app's **Scopes** section first, then click **Reauthenticate** on the connector's **Authorize** tab. Zoom refuses an authorization that asks for a scope the app doesn't have. Until you reauthenticate, the connector keeps syncing as before and logs a warning on each sync.
+  **Connector already set up?** If your Zoom app doesn't have `user:read:user:admin` yet, add it in the app's **Scopes** section first, then click **Re-authenticate with provider** on the connector's **Authorize** tab. Zoom refuses an authorization that asks for a scope the app doesn't have. Until you reauthenticate, the connector keeps syncing as before and logs a warning on each sync.
 </Note>
 
 #### Step 6: Copy Client ID and Client Secret
@@ -175,11 +177,11 @@ Open the **Scopes** section in the app builder and add the following **admin-sco
   Store the Client Secret securely. It can be regenerated if needed, but you'll have to update your PipesHub configuration with the new value and re-authorize.
 </Warning>
 
-#### Step 7: Authenticate Instance tab — enter credentials
+#### Step 7: Authenticate tab — enter credentials
 
-Return to the PipesHub connector drawer. On the **Authenticate Instance** tab:
+Return to the PipesHub connector drawer. On the **Authenticate** tab:
 
-1. Confirm the **Redirect URL** matches the OAuth Redirect URL you saved in Zoom in Step 4.
+1. Confirm the **Redirect/Callback URL** matches the OAuth Redirect URL you saved in Zoom in Step 4.
 2. Enter:
    - **Client ID** — from Step 6
    - **Client Secret** — from Step 6
@@ -188,14 +190,14 @@ Return to the PipesHub connector drawer. On the **Authenticate Instance** tab:
 <div className="text-center">
   <img
     src="/images/connectors/zoom/connector_add_creds.png"
-    alt="Authenticate Instance tab — enter Client ID and Client Secret"
+    alt="Authenticate tab — enter Client ID and Client Secret"
     className="block mx-auto w-11/12"
   />
 </div>
 
 #### Step 8: Authorize tab — complete the OAuth flow
 
-On the **Authorize** tab, all the OAuth authorization work happens. The tab shows an **Authenticate** button to kick off the OAuth handshake.
+On the **Authorize** tab, all the OAuth authorization work happens. The tab shows an **Authenticate Zoom to proceed** button to kick off the OAuth handshake.
 
 <div className="text-center">
   <img
@@ -205,7 +207,7 @@ On the **Authorize** tab, all the OAuth authorization work happens. The tab show
   />
 </div>
 
-1. Click **Authenticate** to start the OAuth flow. A popup opens to Zoom's authorization page.
+1. Click **Authenticate Zoom to proceed** to start the OAuth flow. A popup opens to Zoom's authorization page.
 2. Sign in as a Zoom **admin** (Admin-managed apps can only be authorized by admins).
 3. Review the requested scopes and click **Allow**.
 
@@ -221,12 +223,12 @@ On the **Authorize** tab, all the OAuth authorization work happens. The tab show
   If the consent screen shows **"Only admins can install this app"** or blocks the install, confirm the signed-in Zoom user has admin privileges on the account.
 </Warning>
 
-4. The popup closes and returns you to PipesHub. The connector tile shows an **Authenticated** badge with a **Reauthenticate** option.
-5. Click **Next** to move to the **Configure Records** tab.
+4. The popup closes and returns you to PipesHub. The **Authorize** tab shows **Connected — you can continue to Configure records**, with a **Re-authenticate with provider** button.
+5. Click **Continue to configuration →** to move to the **Configure records** tab.
 
-#### Step 9: Configure Records tab — sync settings and indexing
+#### Step 9: Configure records tab — sync settings and indexing
 
-On the **Configure Records** tab, control how the connector syncs and what gets indexed.
+On the **Configure records** tab, control how the connector syncs and what gets indexed.
 
 **Sync settings** — configure your synchronization preferences first:
 
@@ -250,14 +252,15 @@ On the **Configure Records** tab, control how the connector syncs and what gets 
 <div className="text-center">
   <img
     src="/images/connectors/zoom/zoom_filters.png"
-    alt="Configure Records tab — Index Meeting Transcripts toggle"
+    alt="Configure records tab — Index Meeting Transcripts toggle"
     className="block mx-auto w-11/12"
   />
 </div>
 
-- **Index Meeting Transcripts** (default: enabled) — include AI Companion meeting transcripts in search. Disable if you want to sync meetings without indexing transcript content.
+- **Enable Manual Indexing** — when on, synced records are not indexed until you choose them. When off, every synced record is indexed.
+- **Index Meeting Transcripts** (default: enabled) — index meeting records for search. When off, meeting records are still synced but not indexed, so neither the transcript nor the participant list is searchable.
 
-Click **Save** to save your configuration. PipesHub confirms the instance is ready with a final dialog — **"Instance is configured and ready to sync"** — offering two choices: **I'll do it later** or **Start syncing now**.
+Click **Save** to save your configuration. PipesHub confirms the instance is ready with a final dialog — **"Instance is configured and ready to sync!"** — offering two choices: **I'll do it later** or **Start syncing now**.
 
 <div className="text-center">
   <img
@@ -303,11 +306,11 @@ The Zoom connector syncs the following from your Zoom account:
 - Regenerate the secret if necessary and update PipesHub
 
 **OAuth Redirect URL mismatch:**
-- The Redirect URL in PipesHub must match the **OAuth Redirect URL** saved in Zoom exactly — protocol, host, path, and trailing slash
+- The Redirect/Callback URL in PipesHub must match the **OAuth Redirect URL** saved in Zoom exactly — protocol, host, path, and trailing slash
 - Also ensure the same URL is on the **OAuth Allow List** in Zoom
 
 **Scopes missing on the consent screen:**
-- If admin scopes are not shown when authorizing, the app was likely created as **User-managed** instead of **Admin-managed**. Delete the app and create a new Admin-managed one.
+- If admin scopes are not shown when authorizing, the app was likely created as **User-managed** instead of **Admin-managed**. Switch it to Admin-managed on **Basic Information**, add the `:admin` scopes again, and re-authorize.
 - Confirm all seven scopes are added in the **Scopes** section of the app builder before authorizing.
 
 **Authorization blocked — "Only admins can install this app":**
@@ -317,6 +320,7 @@ The Zoom connector syncs the following from your Zoom account:
 - Confirm the authorizing admin can see the account's users (e.g., via Zoom Admin → User Management)
 - If users show up but no meetings, check that **Report API** access is enabled for your plan — Report APIs require Pro or higher
 - Initial sync only covers the **last 180 days**; older meetings are intentionally excluded
+- Zoom's Report API only returns meetings that had two or more unique participants. Meetings attended only by the host are not synced.
 
 **Transcripts missing:**
 - Only **AI Companion** transcripts are indexed. Meetings without AI Companion enabled will not have a transcript.
@@ -324,7 +328,7 @@ The Zoom connector syncs the following from your Zoom account:
 - If transcripts fail with Zoom error `3322`, the meeting simply has no transcript — this is expected, not an error
 
 **Sync stuck or slow:**
-- The Report API `GET /v2/report/meetings/{id}/participants` is a Heavy-rate endpoint (~10–20 req/s). For accounts with thousands of meetings, the initial 180-day backfill can take an hour or more.
+- The Report API endpoints `GET /v2/report/users/{userId}/meetings` and `GET /v2/report/meetings/{id}/participants` are Heavy-rate APIs (10 req/s on Pro, 40 req/s on Business and higher, with a daily cap of 30,000 requests on Pro and 60,000 on Business and higher). For accounts with thousands of meetings, the initial 180-day backfill can take an hour or more.
 - The connector processes meetings with a concurrency cap to stay under rate limits — this is intentional.
 
 <Warning>
@@ -365,13 +369,13 @@ Every sync runs in this order:
 
 ### Rate-limit awareness
 
-- `GET /v2/report/meetings/{id}/participants` is Zoom's rate-limit bottleneck (Heavy-rate tier, ~10–20 req/s).
+- `GET /v2/report/meetings/{id}/participants` is Zoom's rate-limit bottleneck. Both report endpoints are Heavy-rate APIs (10 req/s on Pro, 40 req/s on Business and higher, with a daily cap of 30,000 requests on Pro and 60,000 on Business and higher).
 - The connector processes meetings with a concurrency cap to stay safely under the limit.
 - Throttled responses trigger exponential backoff; long-running syncs will continue across scheduled intervals.
 
 ### Transcripts
 
-- Transcripts are **not pre-cached** — they are fetched live when the record is opened in PipesHub.
+- Transcripts are **not stored** by the connector. They are fetched from Zoom when the record is indexed or opened in PipesHub.
 - Zoom error `3322` means the meeting has no transcript (expected for meetings without AI Companion).
 - Zoom errors `3001`/`3301` mean the meeting/transcript expired — silently skipped.
 
@@ -389,7 +393,7 @@ Every sync runs in this order:
 
 | Aspect | Zoom Connector | Zoom Toolset |
 |--------|----------------|--------------|
-| **Purpose** | Sync and index Zoom meetings, participants, recordings, and transcripts for search | Enable agents to schedule meetings, update recurring series, fetch transcripts on demand |
+| **Purpose** | Sync and index Zoom meetings, participants, recording links, and transcripts for search | Enable agents to schedule meetings, update recurring series, fetch transcripts on demand |
 | **Data Flow** | One-way (import data into PipesHub) | Two-way (read and write via API) |
 | **Zoom app type** | **Admin-managed** (single admin authorization) | **User-managed** (each user authorizes individually) |
 | **Scopes** | Admin-scoped (`*:admin`) | User-scoped |

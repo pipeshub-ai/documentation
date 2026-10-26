@@ -48,7 +48,7 @@ The connector indexes the following content for AI-powered search:
 
 | Content Type | Details |
 |--------------|---------|
-| **Tickets** | Title, state, priority, group, owner, customer, articles (messages/replies), attachments
+| **Tickets** | Title, state, priority, group, owner, customer, articles (messages/replies), attachments |
 | **Knowledge Base** | Categories, answers/articles with translations, and associated attachments |
 | **Users** | Customer and agent profiles with emails and roles |
 | **Groups** | Support team/department information |
@@ -68,12 +68,17 @@ The Zammad connector uses **API Access Token** authentication (HTTP Token Authen
 #### Before you start: Elasticsearch in Zammad
 
 <Warning>
-  **Ticket sync needs Elasticsearch configured in Zammad.** The connector finds each group's tickets through Zammad's ticket search, asking for tickets by group and by last-updated date. Without Elasticsearch, Zammad falls back to a basic database search that looks for the whole request as plain text in ticket titles and messages. That search finds no tickets, and Zammad reports no error, so the sync finishes with no tickets. We confirmed this on Zammad 6.4.1 and 6.5.2.
+  **Ticket sync needs Elasticsearch configured in Zammad.** The connector finds each group's tickets through Zammad's ticket search, asking for tickets by group and by last-updated date. Without Elasticsearch, Zammad falls back to a basic database search that looks for the whole request as plain text in ticket titles and messages. That search finds no tickets, and Zammad reports no error, so the sync finishes with no tickets. We tested this with Zammad 6.4 and 6.5.
 </Warning>
 
 - Zammad describes Elasticsearch as optional but strongly recommended, and notes that without it search is very limited ([Zammad software requirements](https://docs.zammad.org/en/latest/prerequisites/software.html)). For this connector it is required.
 - Zammad's Docker Compose stack includes Elasticsearch by default. For a package or source install, set it up with Zammad's guide: [Connect and configure Elasticsearch](https://docs.zammad.org/en/latest/install/elasticsearch/connect-configure-elasticsearch.html).
 - Not sure whether your Zammad uses Elasticsearch? See **No tickets sync but the connection test passes** under [Troubleshooting](#troubleshooting) for a quick check.
+
+#### Before you start: API token access in Zammad
+
+- A Zammad admin must turn on **API Token Access** under **Admin → System → API**. This needs the `admin.api` permission. Without it, Zammad rejects the token.
+- The user who creates the token needs the `user_preferences.access_token` permission. Without it, the **Token Access** tab doesn't appear in their profile.
 
 #### Step 1: Access User Profile in Zammad
 
@@ -162,20 +167,21 @@ The Zammad connector uses **API Access Token** authentication (HTTP Token Authen
   />
 </div>
 
-#### Step 5: Authenticate Instance tab — enter credentials
+#### Step 5: Authenticate tab — enter credentials
 
-The connector drawer in PipesHub has three tabs: **Authenticate Instance**, **Authorize**, and **Configure Records**. Start on the **Authenticate Instance** tab.
+The connector drawer in PipesHub has two tabs: **Authenticate** and **Configure records**. There is no **Authorize** tab, because the access token authenticates on its own. Start on the **Authenticate** tab.
 
-1. In PipesHub, go to **Workspace Settings** → **Connectors**, find **Zammad**, and click **+ Setup** for a new instance.
-2. The connector panel opens as a right-side drawer. On the **Authenticate Instance** tab, enter:
-   - **Zammad URL** — your Zammad instance base URL (e.g., `https://support.yourcompany.com`; no trailing slash)
-   - **API Token** — the token you copied in Step 4
-3. Click **Next**. PipesHub validates the credentials and advances directly to the **Configure Records** tab (the **Authorize** tab is skipped because API Token authenticates on its own).
+1. In PipesHub, go to **Workspace Settings** → **Connectors**, find **Zammad**, and click **Set up** for a new instance.
+2. The connector panel opens as a right-side drawer. On the **Authenticate** tab, enter:
+   - **Instance name** (required) — a name to identify this connector instance
+   - **Zammad Instance URL** — your Zammad instance base URL (e.g., `https://<name>.zammad.com` for hosted Zammad, or `https://support.yourcompany.com` for self-hosted)
+   - **Access Token** — the token you copied in Step 4
+3. Click **Next**. PipesHub validates the credentials and advances to the **Configure records** tab.
 
 <div className="text-center">
   <img
     src="/images/connectors/zammad/pipeshub_config.png"
-    alt="Authenticate Instance tab — enter Zammad URL and API Token"
+    alt="Authenticate tab — enter Zammad Instance URL and Access Token"
     className="block mx-auto w-11/12"
   />
 </div>
@@ -185,12 +191,12 @@ The connector drawer in PipesHub has three tabs: **Authenticate Instance**, **Au
 </Warning>
 
 <Info>
-  The Zammad URL must not include a trailing slash. Use `https://support.yourcompany.com`, not `https://support.yourcompany.com/`.
+  A trailing slash in the **Zammad Instance URL** is ignored.
 </Info>
 
-#### Step 6: Configure Records tab — sync settings, filters, and indexing
+#### Step 6: Configure records tab — sync settings, filters, and indexing
 
-On the **Configure Records** tab, control how the connector syncs and what gets synced.
+On the **Configure records** tab, control how the connector syncs and what gets synced.
 
 **Sync settings** — configure your synchronization preferences first:
 
@@ -245,10 +251,10 @@ Available sync filters:
 **Indexing filters** — control what synced data gets processed for AI search.
 
 - **Index Tickets** (default: enabled) — include ticket content in search
-- **Index Attachments** (default: enabled) — include file attachments in search
+- **Index Ticket Attachments** (default: enabled) — include files attached to ticket articles in search. Knowledge base answer attachments follow **Index Knowledge Base**.
 - **Index Knowledge Base** (default: enabled) — include knowledge base articles in search
 
-Click **Save** to save your configuration. PipesHub confirms the instance is ready with a final dialog — **"Instance is configured and ready to sync"** — offering two choices: **I'll do it later** or **Start syncing now**.
+Click **Save** to save your configuration. PipesHub confirms the instance is ready with a final dialog — **"Instance is configured and ready to sync!"** — offering two choices: **I'll do it later** or **Start syncing now**.
 
 <div className="text-center">
   <img
@@ -264,7 +270,7 @@ Choose **Start syncing now** to kick off the initial sync immediately, or **I'll
 
 The Zammad connector provides:
 
-- **Full content sync** — Tickets, knowledge base, attachments, users, and groups
+- **Full content sync** — Tickets, knowledge base, attachments, users, groups, and roles
 - **Incremental sync** — only fetches changes since last sync using `updated_at` timestamps
 - **Batch processing** — fetches data in optimized batches for performance
 - **Permission preservation** — respects group-based access controls
@@ -276,11 +282,13 @@ The Zammad connector provides:
 Zammad uses different permission models for different content types:
 
 - **Tickets**: Group-based access controls. Users can only access tickets in their assigned groups.
-- **Knowledge Base**: Role-based access controls. Access to knowledge base content is determined by user roles.
+- **Knowledge Base**: Answer state and category roles control access.
 
 The connector preserves these permissions:
-- Group assignments determine which agents can view synced tickets in PipesHub.
-- Internal articles respect the internal/public visibility flag.
+- **Tickets**, including internal notes, are visible in PipesHub to the members of the ticket's Zammad group. Ticket customers get no access through PipesHub.
+- **Published knowledge base answers** are visible to everyone in your PipesHub organization.
+- **Internal knowledge base answers** are visible to users with the category's reader or editor roles.
+- **Draft and archived knowledge base answers** are visible only to users with the category's editor roles.
 
 ## Useful Links
 
@@ -334,7 +342,7 @@ This usually means Zammad has no Elasticsearch connected. The connection test on
 - Review sync logs for specific error messages
 
 **Missing knowledge base answers:**
-- Check what the API token's user can see in Zammad's knowledge base. The connector syncs exactly that; the token's own permission checkboxes don't change it.
+- Check what the API token's user can see in Zammad's knowledge base. The answers listed depend on what that user can see. Keep the knowledge base permissions from Step 3 ticked on the token.
 - Drafts and archived answers sync only from categories where the user is an editor, which is the case when any of the user's roles is an editor there.
 - If an answer can't be saved, the sync logs a warning and the next sync tries it again.
 - Releases before 0.10.0 synced no knowledge base answers from Zammad 6.0 to 6.4. After you update PipesHub, the first sync reads the whole knowledge base, so no extra step is needed.
@@ -342,7 +350,6 @@ This usually means Zammad has no Elasticsearch connected. The connection test on
 **Missing tickets:**
 - Verify group filters aren't excluding the desired content
 - Check that the API token user has access to those groups
-- Ensure ticket state filters aren't excluding tickets
 - Verify date filters aren't too restrictive
 
 <Warning>
@@ -370,6 +377,8 @@ The connector syncs data in the following order:
 3. **Roles** → Sync user roles for knowledge base access controls
 4. **Tickets** → Sync tickets per group with articles and attachments
 5. **Knowledge Base** → Sync categories and answers with translations
+
+If the user list can't be read in full, group members and roles are left as they were until a later sync reads the full list.
 
 ### Full Sync vs Incremental Sync
 
@@ -404,6 +413,8 @@ On Zammad 6.0 and later, each sync reads the whole knowledge base listing and wr
 - **Any other category:** published answers only.
 
 **Attachments**: Files attached to ticket articles and knowledge base answers
+
+**Linked records**: Linked tickets and linked knowledge base answers are kept as related records
 
 </Accordion>
 

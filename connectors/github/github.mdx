@@ -49,7 +49,7 @@ Organization
 | **Repository** | The main container, split into the three sections below |
 | **Issues** | Bugs, tasks, and feature requests |
 | **Pull Requests** | Proposed code changes with reviews and merge history |
-| **Code Repository** | Source files and folders on the default branch |
+| **Code Repository** | Source files and folders on the synced branch (the default branch unless you choose another) |
 | **Comments** | Discussion on issues and pull requests |
 | **Attachments** | Files and images added to issues, pull requests, and comments |
 
@@ -58,10 +58,13 @@ right part of a repo rather than all of it at once.
 
 ### What Gets Synced
 
-The connector indexes the following content for AI-powered search:
+Each connector instance syncs **one repository**, chosen in the **Repository** filter. To sync more
+repositories, add another connector instance for each one. For that repository, the connector
+indexes the following content for AI-powered search:
 
-- **Repositories**: All repositories you have access to, and the organizations that own them
-- **Code Files**: Source files and folders on each repository's default branch
+- **Repository**: The selected repository, and the organization that owns it
+- **Code Files**: Source files and folders on the branch chosen in the **Branch** filter, or the
+  repository's default branch when no branch is chosen
 - **Issues**: Title, description, status, labels, and assignee
 - **Pull Requests**: Description, commits, changed files with diffs, and review comments
 - **Comments**: Full comment threads on issues and pull requests with author information
@@ -69,7 +72,29 @@ The connector indexes the following content for AI-powered search:
 - **Users**: Organization members and outside collaborators
 - **Permissions**: Repository access controls are preserved
 
+The connector works with github.com, including GitHub Enterprise Cloud. GitHub Enterprise Server
+(self-hosted GitHub) is not supported.
+
 ---
+
+## Choose a connector
+
+PipesHub has two GitHub connectors, shown in the connector catalog as **GitHub Teams** and
+**Github**. This page covers both; the steps are the same unless a section says otherwise.
+
+| | **GitHub Teams** | **Github** (personal) |
+|---|---|---|
+| **Scope** | Team: records are shared with the people who can see them on GitHub | Personal: records are visible only to you |
+| **Who can add it** | Workspace admins only. Other users who try are directed to the personal **Github** connector | Any user |
+| **Where to add it** | **Workspace settings** → **Connectors** | **Workspace settings** → **Personal** → **Your Connectors** |
+| **Authentication** | OAuth App or a personal access token | OAuth App only |
+| **OAuth scopes** | `read:org`, `repo`, `user:email` | `read:user`, `repo` |
+| **Organization filter** | **Github Organizations** narrows the Repository picker | None. Any repository the account can read, whether it owns it, collaborates on it, or reaches it through an organization |
+| **Users and permissions** | Syncs organization members and outside collaborators and mirrors each repository's access (see *Permission handling*) | Syncs no GitHub users or emails; everything is visible only to you |
+| **Redirect URL ends in** | `connectors/oauth/callback/Github%20Teams` | `connectors/oauth/callback/Github` |
+
+GitHub allows only one callback URL per OAuth App, so GitHub Teams and the personal Github connector
+each need their own OAuth App.
 
 ## Configuration Guide
 
@@ -80,13 +105,24 @@ The connector indexes the following content for AI-powered search:
 <div className="mt-4">
 ### Authentication Method
 
-The GitHub connector uses **OAuth Apps** for secure authentication.
+**GitHub Teams** offers two authentication methods. Pick one from the **Authentication method**
+dropdown on the **Authenticate** tab:
+
+| Method | Shown as | When to use it |
+|--------|----------|----------------|
+| **OAuth App** | OAuth 2.0 | The default. You register an OAuth App on GitHub and sign in through it (Steps 1–5 below) |
+| **Personal access token** | API Token | When you can't register an OAuth App, or prefer a token. See *Using a personal access token* below |
+
+The personal **Github** connector supports the OAuth App method only.
 
 <Info>
-  An OAuth App is used as it provides secure, token-based access without requiring users to share their passwords.
+  An OAuth App provides secure, token-based access without requiring users to share their passwords.
 </Info>
 
 ### Prerequisite: Email Visibility
+
+This prerequisite applies to **GitHub Teams** only. The personal Github connector syncs no GitHub
+users, so it needs no email setup.
 
 <Warning>
   **PipesHub matches GitHub users to PipesHub accounts by email address.** A user whose email
@@ -189,11 +225,14 @@ as their email becomes readable, the next sync grants their access automatically
    - **Application description**: Description about app (Optional)
    - **Authorization callback URL**: 
       - You need to enter the redirect URI provided by PipesHub
-      - To get this URL, open PipesHub in another tab, navigate to **PipesHub (bottom left corner)** → **Workspace settings** → **Connectors** → **Your Connectors**, find the **Github** connector, and click **"Setup"**
+      - To get this URL, open PipesHub in another tab, navigate to **PipesHub (bottom left corner)** → **Workspace settings** → **Connectors**, find the **GitHub Teams** connector, and click **"Set up"** (for the personal connector, go to **Workspace settings** → **Personal** → **Your Connectors** and find **Github**)
         <Info>
-          GitHub OAuth App allows only one callback URL.
+          GitHub OAuth App allows only one callback URL, so GitHub Teams and the personal Github
+          connector each need their own OAuth App.
         </Info>
-      - Copy the **Redirect URL** shown in the configuration dialog:
+      - Copy the **Redirect/Callback URL** shown in the configuration dialog. It ends in
+        `connectors/oauth/callback/Github%20Teams` for GitHub Teams, or
+        `connectors/oauth/callback/Github` for the personal Github connector:
     <div className="text-center">
       <img
         src="/images/connectors/github/copy_redirect_url.png"
@@ -224,14 +263,20 @@ as their email becomes readable, the next sync grants their access automatically
 
 ### Step 4: Configure Connector in PipesHub
 
-1. Return to the Pipeshub Github configuration dialog (if you closed it, navigate to **Pipeshub (bottom left corner)** → **Workspace settings** → **Connectors** → **Your Connectors**, find the **Github** connector, and click **Setup**)
-2. The configuration dialog has two steps:
-   - **Step 1: Authentication** - Enter OAuth credentials
-   - **Step 2: Sync Settings** - Configure synchronization
+1. Return to the PipesHub GitHub configuration dialog (if you closed it, navigate to **PipesHub (bottom left corner)** → **Workspace settings** → **Connectors**, find the **GitHub Teams** connector, and click **Set up**)
+2. With OAuth, the configuration dialog has three tabs (a personal access token skips **Authorize**):
+   - **Authenticate** - Enter an instance name and your credentials
+   - **Authorize** - Sign in to GitHub and grant access
+   - **Configure records** - Configure synchronization
 
-3. Verify the **Redirect URI** displayed matches the callback URL you configured in GitHub Developer Settings (Step 2)
+3. Enter an **Instance name** for this connector instance (required). Because each instance syncs
+   one repository, a name that includes the repository makes instances easy to tell apart
 
-4. Enter your OAuth 2.0 credentials:
+4. If an **Authentication method** dropdown is shown, choose **OAuth 2.0**
+
+5. Verify the **Redirect/Callback URL** displayed matches the callback URL you configured in GitHub Developer Settings (Step 2)
+
+6. Enter your OAuth 2.0 credentials:
    - **Application (Client) ID**: From previous step
    - **Client Secret**: From previous step
 <div className="text-center">
@@ -241,11 +286,11 @@ as their email becomes readable, the next sync grants their access automatically
     className="block mx-auto w-11/12"
   />
 </div>
-5. Click **"Next"** to move forward
+7. Click **"Next"** to move forward
 
 ### Step 5: Authorize the Connection
 
-1. After saving the configuration, click **"Authenticate GitHub to Proceed"**
+1. On the **Authorize** tab, click **Authenticate GitHub Teams to proceed**
 2. You'll be redirected to GitHub's authorization page
 <div className="text-center">
   <img
@@ -265,16 +310,35 @@ as their email becomes readable, the next sync grants their access automatically
   />
 </div>
 
+GitHub Teams requests these scopes:
+
 | Scope | Description |
 |-------|-------------|
 | `read:org` | Read organization membership and teams — required to enumerate repositories and resolve who has access to them |
 | `repo` | Read repository contents, issues, and pull requests, including private repositories |
 | `user:email` | Read email addresses, used to match GitHub members to PipesHub accounts |
 
+The personal Github connector requests `read:user` and `repo`.
+
 <Note>
-  Authorize with an account that is an **organization owner**. A member-level account can only see
-  the repositories it collaborates on, and cannot read the verified-domain emails used to resolve
-  the rest of the organization.
+  For GitHub Teams, authorize with an account that is an **organization owner**. A member-level
+  account can only see the repositories it collaborates on, and cannot read the verified-domain
+  emails used to resolve the rest of the organization.
+
+  The authorizing account also needs at least **Write** access on every private repository you
+  sync, because GitHub only lists a repository's collaborators to accounts with write access or
+  above. Without it, a private repository is skipped. Public and internal repositories still sync,
+  with access based on their visibility only.
+</Note>
+
+<Note>
+  **Organizations with OAuth app access restrictions.** GitHub turns these restrictions on by
+  default for new organizations. If yours has them, an organization owner must approve the OAuth
+  App for the organization, either from the authorization page or later in the organization's
+  settings. Until then, the connector can't read the organization's private data.
+
+  **Organizations that use SAML single sign-on.** Have an active SSO session for the organization
+  when you click **Authorize**. If SSO is turned on later, re-authorize the connector.
 </Note>
 
 <Info>
@@ -293,9 +357,36 @@ as their email becomes readable, the next sync grants their access automatically
   />
 </div>
 
+### Using a personal access token
+
+**GitHub Teams** can authenticate with a personal access token instead of an OAuth App. If you use
+a token, skip Steps 1–5 and do this instead:
+
+1. On GitHub, create a **classic** personal access token (**Settings** → **Developer settings** →
+   **Personal access tokens**) with the `repo`, `read:org`, and `user:email` scopes
+2. Create it from an **organization owner** account, for the same reasons given in Step 5: the
+   verified-domain emails and Write access to private repositories still apply
+3. If your organization uses SAML single sign-on, authorize the token for that organization
+4. In PipesHub, open **Workspace settings** → **Connectors**, find **GitHub Teams**, and click
+   **Set up**
+5. Enter an **Instance name**, and under **Authentication method** choose **API Token**
+6. Paste the token into **Personal Access Token**
+7. Continue with Step 6 below
+
+<Note>
+  We recommend a classic token because it uses the same scopes as the OAuth App. Organizations can
+  set policies for personal access tokens, such as requiring an owner to approve a token or
+  blocking classic tokens. Check your organization's policy before you create one.
+</Note>
+
+<Warning>
+  If the token expires or is revoked, the connector stops syncing. Create a new token and update
+  it in the connector's **Authenticate** tab.
+</Warning>
+
 ### Step 6: Enable and Configure the Connector
 
-1. After successful authentication, click **"Continue to configuration"** to activate the connector
+1. After successful authorization, click **Continue to configuration →** to open the **Configure records** tab
 2. A configuration dialog will appear with a section:
    - **Sync Settings** - Configure synchronization strategy and schedule
 <div className="text-center">
@@ -324,8 +415,11 @@ retrieved, so narrowing scope also shortens sync time.
 
 | Filter | Type | What it does |
 |--------|------|--------------|
-| **Github Organizations** | Multi-select | Limit the sync to these organizations. Uses the org login, e.g. `my-org` |
-| **Repositories** | Multi-select | Limit the sync to specific repositories. Uses the full name, e.g. `my-org/my-repo` |
+| **Github Organizations** | Multi-select | Narrows the **Repository** picker to these organizations. Uses the org login, e.g. `my-org`. GitHub Teams only |
+| **Repository** | Single select, **required** | The one repository this connector instance syncs, e.g. `my-org/my-repo`. To sync another repository, add another connector instance |
+| **Branch** | Single select | The branch whose files are synced. Leave it unset to follow the repository's default branch |
+| **Sync issues and pull requests updated since** | Date | Only issues and pull requests updated on or after this date are synced. Choose the last 7, 14, 30, 90, 180, or 365 days, or a fixed start date. Leave it empty to sync the full history. A changed date takes full effect on the next full sync |
+| **Exclude Paths** | List | Paths to leave out of code sync, gitignore-style: `docs/`, `**/fixtures/**`, `*.snap`. Adds to the built-in exclusions in *What is excluded from code sync*; it can't bring those back |
 
 <div className="text-center">
   <img
@@ -335,8 +429,16 @@ retrieved, so narrowing scope also shortens sync time.
   />
 </div>
 
-Both are live pickers — start typing and PipesHub searches GitHub for matches. Each supports an
-**In** operator (sync only these) or **Not In** (sync everything except these).
+**Github Organizations**, **Repository**, and **Branch** are live pickers — start typing and
+PipesHub searches GitHub for matches. You can't save the configuration until exactly one repository
+is selected in **Repository**.
+
+If the chosen branch no longer exists, code sync for the repository stops and the existing code
+records are kept; the connector does not fall back to the default branch. Changing the branch
+re-walks the whole repository on the next sync.
+
+The date filter applies to **issues and pull requests only**. Code files always reflect the current
+state of the synced branch.
 
 #### Indexing Filters
 
@@ -346,8 +448,14 @@ Indexing filters control **what gets indexed for search** from the content that 
 |--------|---------|--------------|
 | **Index Issues** | On | Index issues with their comments and attachments |
 | **Index Pull Requests** | On | Index pull requests with their diffs, review comments, and commits |
-| **Index Code Files** | On | Index the source files on each repository's default branch |
+| **Index Code Files** | On | Index the source files on the synced branch |
+| **Index Test Files** | Off | Index test files too. When off, test files are still synced and findable by name and path, but their contents are not indexed |
 | **Enable Manual Indexing** | Off | Records are synced but held unindexed until you trigger indexing yourself |
+
+A file counts as a test file when it sits under a folder such as `test/`, `tests/`, `spec/`,
+`__tests__/`, `__mocks__/`, `e2e/`, `testdata/`, or `fixtures/` (any capitalization), or when its
+name follows a test convention such as `test_*.py`, `*_test.go`, `*.test.ts`, `*.spec.js`,
+`*Test.java`, `*_spec.rb`, or `conftest.py`.
 
 <div className="text-center">
   <img
@@ -364,7 +472,8 @@ their contents are left unindexed.
 #### Save and Activate
 
 1. Click **"Save Configuration"** to save your configuration.
-2. User will be prompted to begin synchronization.
+2. A dialog shows **"Instance is configured and ready to sync!"**. Choose **Start syncing now**, or
+   **I'll do it later** to start the sync from settings later
 3. The connector will verify credentials and begin initial synchronization
 4. Monitor the **Indexing Progress** to track sync completion
 
@@ -375,11 +484,13 @@ their contents are left unindexed.
 
 ## Supported Features
 
-The GitHub connector syncs the following data from your GitHub repositories:
+The GitHub connector syncs the following data from the repository selected in the **Repository**
+filter (one repository per connector instance):
 
-- **Organizations & Repositories**: All accessible organizations and repositories
-- **Code repository**: Every file and folder on each repository's default branch, with language
-  detection and full-text indexing of file contents
+- **Organizations & Repositories**: The selected repository and the organization that owns it
+- **Code repository**: Files and folders on the synced branch (the default branch unless you choose
+  another in the **Branch** filter), with language detection and full-text indexing of file
+  contents
 - **Issues**: Full issue content including description, status, comments
 - **Pull Requests**: Full pull request content including description, merge status, commit history, review comments, comments and file changes
 - **Comments**: All comments on issues and pull requests with author information
@@ -419,19 +530,32 @@ The GitHub connector syncs the following data from your GitHub repositories:
 
 **No data syncing:**
 - Verify the connector status shows "Active"
-- Check that the authenticating user has owned repositories
+- Check that a repository is selected in the **Repository** sync filter and that the authorizing
+  account (or the token's owner) can read it
+- For GitHub Teams, a private repository is skipped if the authorizing account has less than
+  **Write** access to it
 - Review sync logs for specific error messages
 
 **Token expired or sync stopped:**
-- Disable and re-enable the connector to re-authenticate
+- The OAuth authorization or personal access token was revoked, or the token expired. Re-authorize
+  the connector, or create a new token and update it in the connector
+- The organization requires OAuth app approval and the app hasn't been approved, or the approval
+  was withdrawn. Ask an organization owner to approve it
+- The organization turned on SAML single sign-on. Re-authorize with an active SSO session, or
+  authorize the personal access token for SSO
 - Check if the OAuth app is still active in GitHub Developer Settings
 
 **No code files synced:**
 - Confirm **Index Code Files** is enabled under Indexing Filters
-- Only the **default branch** is synced; content on other branches is expected to be absent
+- Only one branch is synced: the one chosen in the **Branch** filter, or the default branch when
+  none is chosen. If the chosen branch was deleted, code sync stops until you pick another
+- Check that the files aren't covered by the **Exclude Paths** filter or the built-in exclusions.
+  Lock files, minified files, and source maps get no record at all (see *What is excluded from
+  code sync*)
+- Test files are synced but not indexed unless **Index Test Files** is on
 - Files above 5 MB appear as records but their contents are not indexed
-- Lock files, minified files, source maps, and `.ndjson` / `.jsonl` files appear as records marked
-  **File Type Not Supported**; this is expected (see *How each file is indexed*)
+- `.ndjson` / `.jsonl` files appear as records marked **File Type Not Supported**; this is expected
+  (see *How each file is indexed*)
 
 **A user sees no records even though they have GitHub access:**
 - Their email could not be read. Either verify your organization's domain in GitHub, or ask them
@@ -439,16 +563,19 @@ The GitHub connector syncs the following data from your GitHub repositories:
 - A `@users.noreply.github.com` address does not count as a usable email
 - Their GitHub email must match their PipesHub account email
 
-**Organization repositories are missing:**
+**Organization repositories are missing from the Repository picker:**
 - Authorize with an **organization owner** account. A member-level account only sees repositories
   it collaborates on
-- If your organization enforces OAuth app approval, an owner must approve the app for the org
-- Check the **Github Organizations** sync filter is not excluding them
+- If your organization enforces OAuth app approval, an owner must approve the app for the org (see
+  Step 5)
+- Check that the **Github Organizations** sync filter isn't narrowing the picker to other
+  organizations
 
-**Sync stops partway on a large organization:**
+**Sync stops partway on a large repository:**
 - GitHub's authenticated API budget is 5,000 requests/hour. When it is exhausted the sync stops
   with its checkpoint withheld and resumes on the next scheduled run — no data is lost
-- Narrow the **Repositories** or **Github Organizations** filters to reduce per-run cost
+- To reduce per-run cost, set the **Sync issues and pull requests updated since** filter, or leave out
+  folders with **Exclude Paths**
 
 **The repository picker returns few or no results:**
 - GitHub's search API allows 30 requests/minute and will not page past the first 1,000 results.
@@ -501,9 +628,8 @@ The connector automatically determines whether to perform a full or incremental 
 
 ### Repository Synchronization
 
-1. **Repository fetch**: Retrieves repositories in scope, honoring the Organization and Repository
-   filters
-2. **Container creation**: Each repository becomes a record group with three children — *Issues*,
+1. **Repository fetch**: Retrieves the repository selected in the **Repository** filter
+2. **Container creation**: The repository becomes a record group with three children — *Issues*,
    *Pull requests*, and *Code repository*. Owning organizations are created above them
 3. **Permission assignment**: Collaborator roles and repository visibility are translated into
    permissions (see *Permission handling* below)
@@ -514,8 +640,9 @@ sync checkpoint.
 
 ### Code Repository Synchronization
 
-Code sync tracks the repository's **default branch** and is checkpointed on the branch's current
-commit SHA.
+Code sync tracks the branch chosen in the **Branch** filter, or the repository's **default branch**
+when none is chosen, and is checkpointed on the branch's current commit SHA. If the synced branch
+changes, the next sync walks the whole tree.
 
 **Full sync** (first run, or when the delta cannot be trusted):
 
@@ -535,8 +662,35 @@ this and falls back to walking directories one at a time, so coverage stays comp
    history rather than being recreated
 3. Applies deletions, renames, and upserts, then removes folders left empty
 
-Every file on the default branch gets a record. Files above the 5 MB indexing ceiling still appear
-and remain name-searchable; only their contents go unindexed, with the reason recorded.
+Every file on the synced branch gets a record, except the files listed in *What is excluded from
+code sync* below. Files above the 5 MB indexing ceiling still appear and remain name-searchable;
+only their contents go unindexed, with the reason recorded.
+
+#### What is excluded from code sync
+
+The connector skips content that adds noise without adding meaning, and never reads credential
+files. Excluded files get no record at all, and records left over from earlier syncs are removed:
+
+| Excluded | Examples |
+|----------|----------|
+| Dependency directories (at any depth) | `node_modules`, `bower_components`, `jspm_packages`, `vendor`, `third_party`, `thirdparty`, `site-packages`, `venv`, `.venv` |
+| Caches and tool output (at any depth) | `__pycache__`, `.mypy_cache`, `.pytest_cache`, `.ruff_cache`, `.tox`, `.next`, `.nuxt`, `.svelte-kit`, `.parcel-cache`, `.turbo`, `coverage`, `htmlcov`, `.nyc_output` |
+| Build output | `dist`, `build`, `target`, `out`, `bin`, `obj`, and `env` at the top of the repository. Deeper down, `dist`, `target`, and `obj` folders, and built files such as `.js`, `.class`, or `.o` inside `build` or `out` folders, unless they sit under a source folder such as `src/`, `lib/`, `app/`, or `pkg/` |
+| Lock files | `package-lock.json`, `npm-shrinkwrap.json`, `yarn.lock`, `pnpm-lock.yaml`, `bun.lockb`, `poetry.lock`, `uv.lock`, `Cargo.lock`, `composer.lock`, `Gemfile.lock`, `packages.lock.json`, `go.sum`, and any file ending in `.lock` |
+| Minified and derived files | `*.min.js`, `*.min.css`, `*.map`, `*.snap` |
+| Generated code | Protobuf output (`*.pb.go`, `*_pb2.py`), `*.g.dart`, `*.generated.*`, files under `generated/`, `__generated__/`, or `gen/` |
+| Credential and key files | `.env` and `.env.*` files (templates such as `.env.example` and `.env.sample` are kept), `.npmrc`, `.pypirc`, `.netrc`, `.pgpass`, `.htpasswd`, `.git-credentials`, `credentials.json` / `.yml` / `.yaml`, SSH keys (`id_rsa`, `id_ed25519`), `terraform.tfstate`, `*.pem`, `*.key`, `*.p12`, `*.pfx`, `*.jks`, `*.tfvars` |
+| Marked in `.gitattributes` | Paths the repository's root `.gitattributes` marks `linguist-generated` or `linguist-vendored` |
+| Editor and VCS metadata | `.git`, `.hg`, `.svn`, `.idea`, `.vscode`, `.gradle` |
+| Your own exclusions | Paths matching the **Exclude Paths** sync filter |
+
+A path the root `.gitattributes` explicitly marks as not generated and not vendored (for example
+`-linguist-generated`) is kept even if the built-in rules would skip it. Credential files and
+**Exclude Paths** matches are always left out.
+
+Lock files, minified bundles, and source maps are left out because they are written by tools, not
+people, and their contents would crowd real results out of search. Because of these exclusions,
+the file count in PipesHub will be lower than the file count in the repository — that is expected.
 
 #### How each file is indexed
 
@@ -548,25 +702,25 @@ A repository holds more than source code, so PipesHub reads each file with the r
 | `.csv`, `.tsv` | As a table, row by row, the same way as an uploaded CSV |
 | `.json`, `.yaml`, `.yml` | By its structure, the same way as an uploaded JSON or YAML file |
 | Other text files, such as shell scripts, SQL, and stylesheets | As plain text |
-| Lock files: `package-lock.json`, `yarn.lock`, `pnpm-lock.yaml`, `poetry.lock`, `Cargo.lock`, `composer.lock`, `Gemfile.lock`, `uv.lock`, and any file ending in `.lock` | Not indexed |
-| Minified files, source maps, and test snapshots: `*.min.js`, `*.min.css`, `*.map`, `*.snap` | Not indexed |
+| Source or text files above 5 MB | Not indexed |
 | Line-delimited JSON: `.ndjson`, `.jsonl` | Not indexed |
 | Files that hold binary data under a text file name | Not indexed |
+| Minified code, or a file whose first lines mark it as generated (for example `DO NOT EDIT` or `@generated`) | Not indexed |
+| Git LFS pointers (the file's content is stored in Git LFS) | Not indexed |
 
-A file that isn't indexed keeps its record and stays findable by name and path. It shows
-**File Type Not Supported**, with a reason that depends on the file name:
+A file that isn't indexed keeps its record and stays findable by name and path. Files above 5 MB
+carry a reason giving the file's size. The others show **File Type Not Supported**, with a reason
+that says why:
 
-- For `package-lock.json`, `pnpm-lock.yaml`, `*.min.js` and `*.min.css`: "This is a generated file (a
-  lock file, minified bundle, source map or test snapshot), so PipesHub skips it to keep search
-  results useful. Nothing needs fixing."
-- For `yarn.lock` and every other file ending in `.lock`, and for `*.map` and `*.snap`: "PipesHub
-  can't read .lock files yet. Convert the file to PDF, DOCX or TXT to make it searchable." (with
-  that file's own extension). These files are left out on purpose, so there is nothing to convert.
-- For `.ndjson` and `.jsonl` files: "PipesHub can't read .ndjson files yet. Convert the file to PDF,
-  DOCX or TXT to make it searchable." (with that file's own extension).
-
-Lock files, minified bundles, and source maps are left out because they are written by tools, not
-people, and their contents would crowd real results out of search.
+- `.ndjson` and `.jsonl`: "PipesHub can't read .ndjson files yet. Convert the file to PDF, DOCX or
+  TXT to make it searchable." (with that file's own extension)
+- Binary data: "This file holds binary data rather than text, so PipesHub can't read it. If it is
+  meant to be text, commit it as plain text (UTF-8) and the next sync will index it."
+- Minified or generator-marked files: "This is a generated file (a lock file, minified bundle,
+  source map, test snapshot or a file its generator marked DO NOT EDIT), so PipesHub skips it to
+  keep search results useful. Nothing needs fixing."
+- Git LFS pointers: "This file is stored with Git LFS, so the repository holds only a pointer to
+  it, not its content. PipesHub skips the pointer. Nothing needs fixing."
 
 <Warning>
   **Untrusted deltas are never applied.** A force-push, a branch reset, or a comparison that hits
@@ -616,6 +770,9 @@ For each **issue and pull request**, the connector:
 
 ### Permission handling
 
+This section applies to **GitHub Teams**. The personal Github connector syncs no collaborators and
+adds no visibility-based access: everything it syncs is visible only to the user who set it up.
+
 Each repository's collaborator list is read from GitHub and translated into permissions. That list
 already includes team members, outside collaborators, default-organization-permission members, and
 owners, so no separate team grant is needed.
@@ -648,7 +805,7 @@ Checkpoints are stored **per repository**, and each content type carries its own
 
 - **Issues / pull requests** — the latest update timestamp seen, so the next run only asks GitHub
   for items changed since then
-- **Code repository** — the default branch's commit SHA at the end of the last successful walk,
+- **Code repository** — the synced branch's commit SHA at the end of the last successful walk,
   used as the base of the next comparison
 
 A checkpoint is only written after its stage succeeds. If a sync fails partway, the affected stage
@@ -696,32 +853,33 @@ Common causes:
   The most common causes are missing scopes or selecting the wrong GitHub account. Re-run authentication, ensure the PipesHub email and GitHub account email matches.
 </Accordion>
 
-<Accordion title="Can I sync only specific organizations or repositories?">
+<Accordion title="Can I sync several repositories, or a whole organization?">
 
-Yes. On the **Configure Records** tab:
+Each connector instance syncs exactly **one repository**, chosen in the required **Repository**
+filter on the **Configure records** tab. To sync more repositories, add another connector instance
+for each one.
 
-- Use the **Github Organizations** filter with the `In` operator to restrict the sync to selected
-  organizations, or `Not In` to exclude them
-- Use the **Repositories** filter the same way to target individual repositories
-
-Narrowing scope here also speeds up sync and conserves your GitHub API budget, because excluded
-repositories are never fetched at all. Both fields are live pickers that search GitHub as you type.
+On GitHub Teams, the **Github Organizations** filter only narrows the **Repository** picker to the
+organizations you choose; it doesn't sync a whole organization. Both fields are live pickers that
+search GitHub as you type.
 
 </Accordion>
 
 <Accordion title="Is source code synced, and from which branch?">
 
-Yes. Every file and folder on each repository's **default branch** is synced as a searchable
-record, with the language detected from the file path. Subsequent syncs only fetch what changed
-between commits, and renames are preserved rather than being recreated as new files.
+Yes. Files and folders on one branch are synced as searchable records, with the language detected
+from the file path: the branch chosen in the **Branch** filter, or the repository's **default
+branch** when none is chosen. Files listed in *What is excluded from code sync* get no record.
+Subsequent syncs only fetch what changed between commits, and renames are preserved rather than
+being recreated as new files.
 
-Non-default branches are not synced. Pull request diffs still capture the changes proposed from
+Other branches are not synced. Pull request diffs still capture the changes proposed from
 other branches, so review discussion remains searchable.
 
 Turning off the **Index Code Files** indexing filter stops file *contents* from being indexed — a
 common choice for large monorepos where only issue and pull-request context is wanted. The files
-are still synced and stay findable by name and path. To stop fetching a repository altogether, use
-the **Repositories** sync filter instead.
+are still synced and stay findable by name and path. To stop fetching some folders altogether, use
+the **Exclude Paths** sync filter instead.
 
 </Accordion>
 

@@ -49,16 +49,19 @@ The connector indexes the following content for AI-powered search:
 | **Comments** | Full comment threads organized by thread ID with author info and timestamps |
 | **Attachments** | External links attached to issues |
 | **Documents** | Linear documents linked to issues and projects |
-| **Files** | Files from descriptions/comments (images as base64, others as FileRecord) |
+| **Files** | Files from descriptions/comments (images up to 5 MB each, 20 MB per issue in total, are inlined; larger images stay as links; other files are synced as separate file records) |
 | **Projects** | Description, content, milestones, updates, comments, external links, and documents |
-| **Users** | Profiles with IDs, emails, and display names |
-| **Permissions** | Team-level access controls (public vs. private teams) |
+| **Users** | Profiles with IDs, emails, and display names (inactive users and users without an email are not synced) |
+| **Permissions** | Team-level access controls (public, private, and restricted teams) |
 
 ---
 
 ## Configuration Guide
 
-The Linear connector uses **OAuth 2.0** for authentication. Linear's OAuth apps return refresh tokens that auto-refresh, so a single authorization keeps syncing indefinitely.
+The Linear connector supports two authentication methods:
+
+- **OAuth 2.0** (recommended) — Steps 1–6 below. Linear's OAuth apps return refresh tokens that auto-refresh, so a single authorization keeps syncing indefinitely.
+- **API Token** — a personal API key. See [Alternative: personal API key](#alternative-personal-api-key).
 
 #### Step 1: Access Linear API settings
 
@@ -81,13 +84,13 @@ The Linear connector uses **OAuth 2.0** for authentication. Linear's OAuth apps 
 
 Before creating the OAuth application in Linear, copy the Redirect URL from PipesHub.
 
-1. In PipesHub, go to **Workspace Settings** → **Connectors**, find **Linear**, and click **+ Setup** for a new instance.
-2. The connector panel opens as a right-side drawer. On the **Authenticate Instance** tab, copy the **Redirect URL**.
+1. In PipesHub, go to **Workspace Settings** → **Connectors**, find **Linear**, and click **Set up** for a new instance.
+2. The connector panel opens as a right-side drawer. On the **Authenticate** tab, copy the **Redirect/Callback URL**.
 
 <div className="text-center">
   <img
     src="/images/connectors/linear/linear_config.png"
-    alt="PipesHub Linear Authenticate Instance tab — copy the Redirect URL"
+    alt="PipesHub Linear Authenticate tab — copy the Redirect/Callback URL"
     className="block mx-auto w-11/12"
   />
 </div>
@@ -95,13 +98,13 @@ Before creating the OAuth application in Linear, copy the Redirect URL from Pipe
 #### Step 3: Create a new OAuth 2.0 application
 
 1. Back on the Linear **API** page, find the **OAuth Applications** section.
-2. Click the **+** button to create a new application.
+2. Click the **+** button to create a new application. You can also open the form directly at [linear.app/settings/api/applications/new](https://linear.app/settings/api/applications/new).
 3. Fill in the application details:
    - **Application name:** a meaningful name (e.g., `PipesHub Linear Connector`)
    - **Developer name:** your name or organization name
    - **Developer URL:** your website URL (e.g., `https://your-domain.com`)
    - **Description:** optional description of the application
-   - **Callback URLs:** paste the Redirect URL you copied from PipesHub (Step 2)
+   - **Callback URLs:** paste the Redirect/Callback URL you copied from PipesHub (Step 2)
 
 <div className="text-center">
   <img
@@ -131,7 +134,7 @@ Before creating the OAuth application in Linear, copy the Redirect URL from Pipe
 </Warning>
 
 <Info>
-  OAuth 2.0 applications created from October 1, 2025 onwards have refresh tokens enabled by default. Access tokens last 24 hours and are automatically refreshed.
+  Linear issues refresh tokens for all OAuth 2.0 applications (every app was moved to refresh tokens on April 1, 2026). Access tokens last 24 hours, and PipesHub refreshes them automatically.
 </Info>
 
 #### Step 4: Copy Client ID and Client Secret
@@ -153,21 +156,23 @@ After creating the application, you'll see the application settings page.
   Store the Client Secret securely. It can be regenerated if needed, but you'll have to update your PipesHub configuration with the new value and re-authorize.
 </Warning>
 
-#### Step 5: Authenticate Instance tab — enter credentials
+#### Step 5: Authenticate tab — enter credentials
 
-The connector drawer in PipesHub has three tabs: **Authenticate Instance**, **Authorize**, and **Configure Records**. Return to the **Authenticate Instance** tab.
+With OAuth 2.0, the connector drawer in PipesHub has three tabs: **Authenticate**, **Authorize**, and **Configure records**. Return to the **Authenticate** tab.
 
-1. Confirm the **Redirect URL** matches the Callback URL you saved in Linear in Step 3.
-2. If your admin has pre-registered an OAuth app, pick it from the **OAuth app** dropdown. Otherwise leave it blank and enter credentials manually.
-3. Enter:
+1. Enter an **Instance name** (required) to identify this connector instance.
+2. Under **Authentication method**, choose **OAuth 2.0**.
+3. Confirm the **Redirect/Callback URL** matches the Callback URL you saved in Linear in Step 3.
+4. If your admin has pre-registered an OAuth app, pick it from the **OAuth app** dropdown. Otherwise leave it blank and enter credentials manually.
+5. Enter:
    - **Client ID** — from Step 4
    - **Client Secret** — from Step 4
-4. Click **Next** to move to the **Authorize** tab.
+6. Click **Next** to move to the **Authorize** tab.
 
 <div className="text-center">
   <img
     src="/images/connectors/linear/connector_add_creds.png"
-    alt="Authenticate Instance tab — enter Client ID and Client Secret"
+    alt="Authenticate tab — enter Client ID and Client Secret"
     className="block mx-auto w-11/12"
   />
 </div>
@@ -195,20 +200,33 @@ On the **Authorize** tab, all the OAuth authorization work happens. The tab show
 </div>
 
 <Warning>
-  **Authorize using the same email as your PipesHub account.** Using a different email causes permission issues on the PipesHub platform.
+  **Use the same email in Linear and PipesHub.** The person who connects Linear gets that Linear account's access even if their PipesHub email differs. Everyone else is matched by email, so each user must use the same email in PipesHub and Linear to see Linear content.
 </Warning>
 
 2. Click **Authorize** to grant access.
 3. The popup closes and returns you to PipesHub. The connector tile shows an **Authenticated** badge with a **Reauthenticate** option.
-4. Click **Next** to move to the **Configure Records** tab.
+4. Click **Next** to move to the **Configure records** tab.
 
 <Info>
   The connector requests only **read access** to your workspace. It does not create, modify, or delete any Linear data.
 </Info>
 
-#### Step 7: Configure Records tab — sync settings, filters, and indexing
+#### Alternative: personal API key
 
-On the **Configure Records** tab, control how the connector syncs and what gets synced.
+Instead of Steps 1–6, you can authenticate with a Linear personal API key.
+
+1. In Linear, go to **Settings → Account → Security & access** ([linear.app/settings/account/security](https://linear.app/settings/account/security)) and create a personal API key.
+2. In PipesHub, go to **Workspace Settings** → **Connectors**, find **Linear**, and click **Set up**.
+3. On the **Authenticate** tab, enter an **Instance name**, choose **API Token** under **Authentication method**, and paste the key into **API Token**.
+4. Continue to the **Configure records** tab (Step 7). There is no **Authorize** tab for this method.
+
+<Note>
+  The connector syncs what the key's user can see in Linear. Private teams are synced only if that user is a member.
+</Note>
+
+#### Step 7: Configure records tab — sync settings, filters, and indexing
+
+On the **Configure records** tab, control how the connector syncs and what gets synced.
 
 **Sync settings** — configure your synchronization preferences first:
 
@@ -227,7 +245,7 @@ On the **Configure Records** tab, control how the connector syncs and what gets 
   **Scheduled sync** runs automatically at the specified intervals. **Manual sync** requires you to trigger synchronization on-demand.
 </Note>
 
-**Sync filters** — determine which content is downloaded from Linear. Data excluded by sync filters is never downloaded.
+**Sync filters** — determine which content is downloaded from Linear. Data excluded by sync filters is never downloaded. If you narrow a filter later, the records it now excludes are removed from search on the next sync.
 
 <div className="text-center">
   <img
@@ -260,7 +278,7 @@ Available sync filters:
 
 - **Index Issues** (default: enabled) — include issue content and comments in search
 - **Index Issue Attachments** (default: enabled) — include external link attachments in search
-- **Index Issue Documents** (default: enabled) — include Linear documents in search
+- **Index Issue Documents** (default: enabled) — include Linear documents linked to issues in search. Documents linked to projects follow **Index Projects**.
 - **Index Issue and Comment Files** (default: enabled) — include files extracted from issue descriptions and comments
 - **Index Projects** (default: enabled) — include project content, milestones, and updates in search
 
@@ -272,7 +290,7 @@ Available sync filters:
 - *Index issues but not attachments:* disable **Index Issue Attachments**
 - *Index everything except files:* disable **Index Issue and Comment Files**
 
-Click **Save** to save your configuration. PipesHub confirms the instance is ready with a final dialog — **"Instance is configured and ready to sync"** — offering two choices: **I'll do it later** or **Start syncing now**.
+Click **Save** to save your configuration. PipesHub confirms the instance is ready with a final dialog — **"Instance is configured and ready to sync!"** — offering two choices: **I'll do it later** or **Start syncing now**.
 
 <div className="text-center">
   <img
@@ -291,10 +309,10 @@ The Linear connector provides:
 - **Full content sync** — Teams, issues, projects, comments, attachments, documents, and files
 - **Incremental sync** — only fetches changes since last sync using `updatedAt` timestamps
 - **Batch processing** — fetches data in optimized batches (50 issues, 10 projects per request)
-- **Permission preservation** — respects team-level public/private access controls
+- **Permission preservation** — respects team-level public, private, and restricted access controls
 - **Dual group tracking** — UserGroups (membership) and RecordGroups (content organization)
-- **Fault tolerance** — per-team checkpoints enable sync resumption on failures
-- **File handling** — images embedded as base64, other files synced as separate FileRecords
+- **Fault tolerance** — per-team checkpoints enable sync resumption on failures. If an issue keeps failing, its team's checkpoint is held for up to 3 syncs and then moves on, so one bad issue cannot stall a team
+- **File handling** — images up to 5 MB each (20 MB per issue in total) are inlined; larger images stay as links; other files are synced as separate file records
 
 ## Permission Model
 
@@ -302,12 +320,15 @@ Linear uses a team-based permission model:
 
 | Team Type | Permission Behavior |
 |-----------|---------------------|
-| **Public Teams** | All organization members can view team content |
+| **Public Teams** | All workspace members except guests can view team content. Guests see only the teams they were added to |
 | **Private Teams** | Only team members can view team content |
+| **Restricted sub-teams** (a non-private team inside a private team) | Team members plus members of the parent teams up to the private team |
 
 The connector preserves these permissions:
-- For **public teams**, content is visible to all organization users in PipesHub.
+- For **public teams**, content is visible in PipesHub to every active, non-guest member of the Linear workspace whose Linear email matches their PipesHub email. It is not shared with your whole PipesHub organization.
 - For **private teams**, content is only visible to team members in PipesHub.
+- For **restricted sub-teams**, content is visible to the team's members and to members of its parent teams up to the private team. Parent teams count even if your **Teams** filter excludes them.
+- A **project shared by several teams** is visible in PipesHub to the readers of one team only: its lead team if that team is synced, otherwise one of its other synced teams. Readers of the project's other teams do not see it in PipesHub.
 
 ## Useful Links
 
@@ -388,13 +409,16 @@ The connector syncs data in the following order:
 4. **Attachments** → Sync external links attached to issues
 5. **Documents** → Sync Linear documents linked to issues
 6. **Projects** → Sync projects with milestones, updates, and related content
-7. **Deletions** → Detect and remove deleted/archived issues and projects
+7. **Comment activity** → Re-index issues and projects that got new comments or project updates (these don't change the issue's or project's last-updated time in Linear)
+8. **Deletions** → Remove trashed issues, and compare stored records with Linear to remove deleted or out-of-scope content
 
 ### Full Sync vs Incremental Sync
 
 **Full Sync** occurs when:
 - First-time synchronization
 - Manual full sync is triggered
+- A sync filter changes (records the new filter excludes are then removed from search)
+- A team's key changes in Linear (that team's issues are read again from the start)
 
 **Incremental Sync** occurs when:
 - Previous sync completed successfully
@@ -409,7 +433,7 @@ The connector syncs data in the following order:
 
 **Attachments & Documents**: Synced separately to capture additions even when parent issue wasn't modified
 
-**Deletions**: Automatically detects trashed/archived content and removes from index along with related records
+**Deletions**: Issues moved to Linear's trash are removed on the next sync, with their attachments, documents, and files (their sub-issues stay). Deleted teams and projects, and projects no longer in a synced team, are removed on every sync. Issues deleted for good or moved to a team you don't sync, and deleted attachments and documents, are found by a comparison pass. On large workspaces this pass runs at most once a day.
 
 </Accordion>
 
@@ -428,7 +452,7 @@ The connector syncs data in the following order:
   - **Network latency**: Connection speed to Linear's API
   - **Content complexity**: Issues with many comments and attachments take longer
   
-  The connector fetches data in batches of 50 items per API request for optimal performance. Each team is processed sequentially with per-team checkpoints, allowing sync to resume from the last successful point if interrupted.
+  The connector fetches issues in batches of 50 per API request. Each team is processed sequentially with per-team checkpoints, allowing sync to resume from the last successful point if interrupted.
   
   **Tips to speed up initial sync:**
   - Use **team filters** to sync only the teams you need
@@ -465,8 +489,8 @@ The connector syncs data in the following order:
 
 There are three common causes:
 
-1. **Email mismatch** - The email used during connector authentication doesn't match your PipesHub account email. This causes permission issues preventing you from accessing synced data.
-   - **Fix:** Reconfigure the connector and authenticate using the same email as your PipesHub account.
+1. **Email mismatch** - Your Linear email doesn't match your PipesHub account email. Users are matched by email, so a mismatch prevents you from accessing synced data. (The person who connected Linear is the exception: they get the connected Linear account's access either way.)
+   - **Fix:** Use the same email in PipesHub and Linear.
 
 2. **Records show in "All Records" but not in search** - Documents display in the All Records section but don't appear in search query results.
    - **Fix:** Verify sync filters in the connector settings and ensure indexing has completed. Check that the data matches your search query criteria.

@@ -74,14 +74,27 @@ Add all the redirect URIs for the clients you plan to use:
 | **LibreChat** | `http://localhost:3080/api/mcp/<server-identifier>/oauth/callback` |
 
 <Warning>
-  The scopes in [`MCP_SCOPES`](https://github.com/pipeshub-ai/pipeshub-ai/blob/main/backend/env.template#L57) must match the scopes granted to your OAuth app — a mismatch will result in an authorization error.
+  Grant your OAuth app every scope the discovery endpoint lists (see [Customizing Default Scopes](#customizing-default-scopes)). Sign-in grants only the requested scopes the app allows and drops the rest, so a scope missing from the app does not fail the login, but the tools that need it are refused.
 </Warning>
 
 ### Customizing Default Scopes
 
-By default, PipesHub exposes some default scopes in its `/.well-known/oauth-protected-resource/mcp` discovery endpoint. You can customize which scopes are exposed by setting the [`MCP_SCOPES`](https://github.com/pipeshub-ai/pipeshub-ai/blob/main/backend/env.template#L57) environment variable on your PipesHub instance. This is useful for clients like Claude Code that automatically request all exposed scopes.
+The `/.well-known/oauth-protected-resource/mcp` discovery endpoint lists the scopes the MCP tools use, so clients like Claude Code, which request every listed scope, ask only for what the tools need:
 
-This is the `MCP_SCOPES` value PipesHub ships (`backend/env.template`). It covers chat, search, the directory, agents and code, and lets an agent create collections and upload into them (`kb:write`, `kb:upload`):
+| Scope | Used by |
+| --- | --- |
+| `offline_access` | Refresh tokens, so the client stays signed in |
+| `semantic:write` | `pipeshub_search` |
+| `conversation:chat` | `pipeshub_chat` |
+| `agent:read`, `agent:execute` | `pipeshub_agents`, `pipeshub_sources`, `pipeshub_chat` with an agent |
+| `kb:read`, `connector:read`, `config:read` | `pipeshub_sources`, `pipeshub_get_record_content`, `pipeshub_download_record`, `pipeshub_indexing_status` |
+| `kb:write`, `kb:upload` | `pipeshub_create_collection`, `pipeshub_upload` |
+| `user:read`, `team:read`, `usergroup:read` | `pipeshub_directory` |
+| `code:read` | The `pipeshub_code_*` tools |
+
+The list is limited to the [`MCP_SCOPES`](https://github.com/pipeshub-ai/pipeshub-ai/blob/main/backend/env.template) environment variable on your PipesHub instance, which is also the most any personal access token or OAuth token can hold. Remove a scope from `MCP_SCOPES` to stop clients requesting it.
+
+This is the `MCP_SCOPES` value PipesHub ships (`backend/env.template`). It includes every scope above, plus `openid`, `profile`, `email` and `conversation:write` for personal access tokens and OAuth apps; discovery does not list those four:
 
 ```bash
 MCP_SCOPES=openid,profile,email,offline_access,semantic:write,conversation:write,conversation:chat,kb:read,kb:write,kb:upload,team:read,user:read,usergroup:read,config:read,agent:read,agent:execute,connector:read,code:read
@@ -211,7 +224,7 @@ Real tool calls are far smaller. A chat question can be at most 100,000 characte
 
 <AccordionGroup>
   <Accordion title="How do I update the scopes for my MCP integration?">
-    1. **Update the [`MCP_SCOPES`](https://github.com/pipeshub-ai/pipeshub-ai/blob/main/backend/env.template#L57) environment variable** on your PipesHub instance to include the new scopes you want exposed via the discovery endpoint.
+    1. **Update the [`MCP_SCOPES`](https://github.com/pipeshub-ai/pipeshub-ai/blob/main/backend/env.template) environment variable** on your PipesHub instance so it includes the scopes you want clients to get. Discovery lists only the ones the MCP tools use.
     2. **Update the OAuth app scopes** in PipesHub: go to **Settings > Developer Settings > OAuth Apps**, select your OAuth app, and add or remove scopes as needed.
     3. **Re-authenticate the client** — existing tokens carry the old scopes, so you need to re-authenticate to get a new token with the updated scopes:
        - **Cursor**: Remove and re-add the MCP server, or clear the cached OAuth token and reconnect.

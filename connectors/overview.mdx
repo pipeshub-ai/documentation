@@ -196,9 +196,9 @@ The callback URL must match exactly between PipesHub and the OAuth app for authe
 
 <Accordion title="What permissions or OAuth scopes do Connectors require?">
 
-Connectors need **read-only permissions** to sync and index data. Connectors use OAuth 2.0 or token-based authentication, depending on the source. For OAuth, grant only the scopes listed on the connector's documentation page when you create your OAuth app in the service's developer console. For a token, the connector's page says what access the token's user needs.
+Connectors only read and index data; they never modify or delete anything in your external applications. Connectors use OAuth 2.0 or token-based authentication, depending on the source. For OAuth, grant only the scopes listed on the connector's documentation page when you create your OAuth app in the service's developer console. For a token, the connector's page says what access the token's user needs.
 
-Using read-only scopes ensures connectors can access your data for indexing but cannot modify or delete anything in your external applications.
+Some sources only expose what a connector needs to read through broader permissions. For example, GitHub lists a private repository's collaborators only to accounts with Write access, and Salesforce's `api` scope covers both reading and writing. Use the least access each connector's page asks for.
 
 </Accordion>
 

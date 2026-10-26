@@ -1,0 +1,230 @@
+---
+title: "Drupal Wiki"
+description: "Spaces, pages, and attachments from Drupal Wiki, with per-space permissions"
+icon: "/logo/drupal-wiki.svg"
+---
+
+<div className="not-prose mt-10">
+  <div className="p-6 border border-gray-200 dark:border-gray-700 rounded-xl bg-blue-50 dark:bg-gray-800">
+    <div className="flex items-center gap-3 mb-4">
+      <img src="/logo/drupal-wiki.svg" alt="Drupal Wiki Logo" className="w-8 h-8 object-contain flex-shrink-0" />
+      <div className="text-xl font-semibold text-gray-900 dark:text-white">Drupal Wiki</div>
+    </div>
+    <p className="text-base text-gray-700 dark:text-gray-300 mt-0 mb-5">Sync spaces, pages, and attachments from a self-hosted or cloud Drupal Wiki</p>
+    <div className="flex flex-wrap items-center gap-2">
+      <span className="px-3 py-1.5 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 rounded-full text-sm font-medium">
+        ✅ Ready
+      </span>
+      <span className="px-3 py-1.5 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-full text-sm font-medium">
+        📚 Documentation Available
+      </span>
+    </div>
+  </div>
+</div>
+
+## Overview
+
+[Drupal Wiki](https://drupal-wiki.com/) (by KontextWork) is a knowledge management wiki that organizes content into **spaces**, each holding a tree of **pages** with file attachments. It runs self-hosted (often on a private network) or as a cloud service.
+
+The Drupal Wiki connector syncs users, groups, spaces, pages, and attachments into PipesHub, keeps the page hierarchy, and applies each space's access rules so people only find the pages they can open in the wiki.
+
+| | |
+|---|---|
+| **Catalog name** | Drupal Wiki (category: Knowledge Management) |
+| **Who sets it up** | A workspace admin, under **Workspace Settings → Connectors**. It is a team connector; there is no personal version. |
+| **Authentication** | Personal access token only. Drupal Wiki has no OAuth or basic-auth option for its API. |
+| **Sync** | Scheduled (every 60 minutes by default) or manual. No real-time sync. |
+| **Agent actions** | None. Drupal Wiki has no toolset, so agents can search its content but can't change it. |
+
+### What gets synced
+
+| Content | Details |
+|---|---|
+| **Users** | The whole user directory, read on every sync. Users are matched to PipesHub accounts by email. Disabled users and users without an email address are not added. |
+| **Groups** | Every group and its members. Membership is replaced on each sync, so someone removed from a group in the wiki loses that access on the next sync. |
+| **Spaces** | Each space becomes a container in PipesHub and carries the access rules for everything in it. |
+| **Pages** | Page title, body (as HTML), tags, and categories, with the parent/child page hierarchy. |
+| **Attachments** | Files attached to pages, as separate searchable files linked to their page. |
+
+Page **comments are not synced**.
+
+---
+
+## Configuration Guide
+
+### Prerequisites
+
+- A Drupal Wiki whose REST API PipesHub can reach at `<your wiki address>/api/rest`. If your wiki is on a private network, see [Self-hosted wikis on a private network](#self-hosted-wikis-on-a-private-network).
+- A Drupal Wiki user to own the token. The token acts with that user's rights, so PipesHub can only sync what that user can see. Use a user who can see all the spaces you want to sync and their members; a wiki administrator is simplest. That user must also be able to list the wiki's users, or the connection test fails.
+- A PipesHub admin account, to set up a team connector.
+
+<Tip>
+  Create a dedicated Drupal Wiki user for PipesHub instead of using a person's own account. The token then keeps working when that person leaves, and the access PipesHub has is easy to review.
+</Tip>
+
+### Step 1: Create a personal access token in Drupal Wiki
+
+1. Sign in to Drupal Wiki as the user that will own the token.
+2. Open your user settings and create an API token (**User settings → API-Token**).
+3. Copy the token right away, including its `pat:` prefix (for example `pat:xxxxxxxx`).
+
+<Warning>
+  Drupal Wiki shows the token **only once**. If you lose it, create a new one.
+</Warning>
+
+Drupal Wiki tokens don't expire. A token stops working if it is revoked, or if its user is blocked in Drupal Wiki. To rotate a token, create a new one and paste it into the connector settings in PipesHub.
+
+### Step 2: Authenticate
+
+1. In PipesHub, go to **Workspace Settings → Connectors**, find **Drupal Wiki**, and click **Set up**.
+2. On the **Authenticate** tab, fill in:
+
+   | Field | What to enter |
+   |---|---|
+   | **Instance name** | A name for this connection, for example `Company wiki`. Required. |
+   | **Wiki URL** | The address you use to open your Drupal Wiki, for example `https://wiki.example.com`. It must start with `http://` or `https://`. If you paste the API address instead (ending in `/api/rest`, `/api/spec`, or `/api`), PipesHub removes that ending for you. |
+   | **Personal Access Token** | The token from Step 1, **including** the `pat:` prefix. If you pasted it with a leading `Bearer `, PipesHub removes that word. |
+
+3. Click **Next**. Drupal Wiki uses a token, so there is no **Authorize** tab.
+
+<Warning>
+  **Use the same email address in PipesHub and Drupal Wiki.** Drupal Wiki has no API that reports which user a token belongs to, so PipesHub can't link the admin who created the connector to the token's wiki user. Unlike Jira, Confluence, GitHub Teams, GitLab, and Linear, which link that admin automatically, Drupal Wiki matches every person by email only. If your PipesHub email is different from your Drupal Wiki email, you won't see the synced pages.
+</Warning>
+
+### Step 3: Configure records
+
+On the **Configure records** tab, set how and what to sync.
+
+**Sync settings**
+
+- **Sync strategy**: **Scheduled** (on by default, every 60 minutes) or **Manual**.
+
+**Sync filters** decide what is read from Drupal Wiki:
+
+| Filter | What it does |
+|---|---|
+| **Spaces** | Choose spaces from a searchable list of your wiki's spaces. Use **In** to sync only those spaces, or **Not in** to sync every space except them. Leave empty to sync all spaces the token's user can see. |
+| **Attachment types** | Choose file extensions. Use **In** to sync only those attachment types, or **Not in** to skip them. Applies to attachments only; pages are always synced. Leave empty to sync every attachment. |
+
+**Indexing filters** decide what synced content becomes searchable:
+
+| Setting | Default | What it does |
+|---|---|---|
+| **Enable Manual Indexing** | Off | On: synced records are not indexed until you choose them. Off: every synced record is indexed. |
+| **Pages** | On | Index wiki pages. |
+| **Attachments** | On | Index files attached to pages. |
+
+Click **Save configuration**. When PipesHub shows **Instance is configured and ready to sync!**, choose **Start syncing now**, or **I'll do it later** to start the sync yourself later.
+
+### What the connection test checks
+
+When you set up the connector, PipesHub checks that it can list one user and one space with your token:
+
+- **The token is rejected** (HTTP 401): "Drupal Wiki rejected the personal access token … Check that it is current and its user is not blocked."
+- **The token's user can't list users** (HTTP 403): "The Drupal Wiki token has no access to users … Use a token whose user can read the wiki."
+- **Spaces can't be listed**: "Drupal Wiki could not list spaces …"
+- **A web page comes back instead of the API**: a proxy or single sign-on (SSO) page in front of the wiki answered with HTML. The test fails; let PipesHub reach the wiki's `/api/rest` address directly.
+
+### Self-hosted wikis on a private network
+
+Many Drupal Wikis run on-premises. PipesHub can connect to a wiki on a private IP address, unless the PipesHub deployment has `PIPESHUB_BLOCK_PRIVATE_ADDRESSES` turned on. Link-local and cloud metadata addresses are always refused.
+
+---
+
+## Permissions
+
+Drupal Wiki has no page-level rights: access is set per space. PipesHub copies each space's access rules on every sync, and every page and attachment inherits them from its space.
+
+| Space type in Drupal Wiki | Who can find its pages in PipesHub |
+|---|---|
+| **Open** (readable by all signed-in users, or by anonymous visitors) | Everyone in your PipesHub organization. |
+| **Private** | Only the space's members: each member user, plus each member of a member group. Any role in the space counts as read access. |
+
+- **A private space whose members can't be read** keeps the access it had after the previous sync. PipesHub doesn't widen or remove access when it can't read the member list, and the sync reports the problem.
+- **A space with no members** is still synced, but nobody can find its pages. PipesHub sends the notification "Nobody can see pages in … Add members in Drupal Wiki."
+- **A page shared into another space** is synced only under its home space, and takes its access from that space only.
+- **Disabled users** get no access to private spaces. An open space grants access to the whole organization, so it can't exclude a disabled wiki user who still has a PipesHub account.
+- **Users without an email address** in Drupal Wiki can't be matched to a PipesHub account, so they get no access to private spaces until an email is added for them in Drupal Wiki.
+
+---
+
+## Limitations
+
+- **Deletions aren't picked up by a regular sync.** A page, attachment, or space deleted in Drupal Wiki stays in PipesHub until a full sync runs and finishes without problems. The same applies to spaces you remove with the **Spaces** filter.
+- **No comments.** Page comments aren't synced.
+- **No real-time sync.** Changes arrive on the next scheduled or manual sync. Drupal Wiki webhooks aren't used.
+- **No automatic account linking.** People are matched by email only (see the warning in [Step 2](#step-2-authenticate)).
+- **No agent actions.** There is no Drupal Wiki toolset.
+
+---
+
+## Troubleshooting
+
+<AccordionGroup>
+
+<Accordion title="A sync stops with a personal access token rejected notification" icon="key">
+  The notification is titled with your instance name followed by "personal access token rejected". The token was revoked, or its user was blocked in Drupal Wiki. The sync stops and what already synced is unchanged. Create a new token in Drupal Wiki (**User settings → API-Token**) and update it in the connector settings in PipesHub.
+</Accordion>
+
+<Accordion title="The connection test says the token has no access to users" icon="user-lock">
+  The token's user can't list the wiki's users. Create the token as a user with more rights, such as a wiki administrator.
+</Accordion>
+
+<Accordion title="A private space syncs, but nobody can find its pages" icon="eye-slash">
+  Check the space's members in Drupal Wiki. A space with no members gives nobody access, and PipesHub sends a "with no members" notification. If the sync instead reported that it couldn't read who has access to the space, give the token's user rights to see that space's members.
+</Accordion>
+
+<Accordion title="I can't find pages that other people can" icon="magnifying-glass">
+  Check that your PipesHub email matches your Drupal Wiki email, and that your Drupal Wiki account has an email address and is not disabled. Then check that you are a member of the page's space, directly or through a group.
+</Accordion>
+
+<Accordion title="A deleted page still shows up in search" icon="trash">
+  Deletions are removed only by a full sync that finishes without problems. Start a full sync from the connector in **Workspace Settings → Connectors**.
+</Accordion>
+
+<Accordion title="The sync finished with problems" icon="circle-exclamation">
+  PipesHub keeps syncing when one space, group, or page fails, then sends one notification listing the problems. A space that failed keeps its place, so the next sync picks it up from where it was. Fix the cause named in the notification (often a permission in Drupal Wiki) and run the sync again.
+</Accordion>
+
+</AccordionGroup>
+
+---
+
+## FAQ
+
+<AccordionGroup>
+
+<Accordion title="Can I use OAuth or a username and password instead of a token?">
+  No. Drupal Wiki's API only accepts personal access tokens.
+</Accordion>
+
+<Accordion title="Does the token expire?">
+  No. It works until it is revoked or its user is blocked in Drupal Wiki.
+</Accordion>
+
+<Accordion title="Do I paste the token with or without pat:?">
+  With it. Paste the token exactly as Drupal Wiki shows it, including the `pat:` prefix.
+</Accordion>
+
+<Accordion title="How often does the connector sync?">
+  Every 60 minutes by default with the **Scheduled** strategy, or only when you start it with **Manual**. Each sync reads only the pages changed in each space since that space's last successful sync.
+</Accordion>
+
+<Accordion title="Can I sync only some spaces?">
+  Yes. Use the **Spaces** filter with **In** to pick the spaces to sync, or **Not in** to leave some out.
+</Accordion>
+
+<Accordion title="Are page comments synced?">
+  No. Only page content (title, body, tags, and categories) and attachments are synced.
+</Accordion>
+
+</AccordionGroup>
+
+---
+
+<div className="text-center mt-12 p-6 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl">
+  <h3 className="text-lg font-semibold mb-2">Ready to Get Started?</h3>
+  <p className="text-gray-600 dark:text-gray-400">
+    Connect your Drupal Wiki to PipesHub in a few minutes. Follow the steps above to make your wiki's spaces and pages searchable for the right people.
+  </p>
+</div>

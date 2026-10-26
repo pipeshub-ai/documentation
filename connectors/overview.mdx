@@ -64,8 +64,8 @@ Our platform supports a wide range of connectors organized by ecosystem to help 
 
 | Connector    | Description |
 |--------------|-------------|
-| **Jira Cloud** | Issue tracking, project management, and agile workflows |
-| **Jira Data Center** | Issue tracking and project management for self-hosted Jira |
+| **Jira Cloud** (team & personal) | Issue tracking, project management, and agile workflows |
+| **Jira Data Center** (team & personal) | Issue tracking and project management for self-hosted Jira |
 | **Confluence Cloud** | Team collaboration and knowledge base management |
 | **Confluence Data Center** | Team collaboration and knowledge base for self-hosted Confluence |
 
@@ -78,6 +78,15 @@ Our platform supports a wide range of connectors organized by ecosystem to help 
 | **Slack** | Team messaging and collaboration |
 | **Zammad** | Open-source helpdesk and ticketing system |
 | **Zendesk** | Customer support and ticket management |
+| **[Zoom](/connectors/zoom/zoom)** | Past meetings, participants, and AI Companion meeting transcripts |
+
+---
+
+### CRM & Sales
+
+| Connector | Description |
+|-----------|-------------|
+| **[Salesforce](/connectors/salesforce/salesforce)** | Accounts, contacts, leads, opportunities, cases, tasks, files, and Chatter |
 
 ---
 
@@ -98,14 +107,6 @@ Our platform supports a wide range of connectors organized by ecosystem to help 
 
 ---
 
-### Local storage
-
-| Connector | Description |
-|-----------|-------------|
-| **Local FS** | Index a folder on the connector host; set up under **Personal → Your Connectors**; optional desktop watcher in the Electron app |
-
----
-
 ### Cloud Storage & Infrastructure
 
 | Connector        | Description |
@@ -123,10 +124,18 @@ Our platform supports a wide range of connectors organized by ecosystem to help 
 
 | Connector | Description |
 |-----------|-------------|
-| **GitHub** | Version control, code collaboration, and project management |
-| **GitLab** | Version control, code collaboration, and merge request tracking |
+| **[GitHub](/connectors/github/github)** (GitHub and GitHub Teams) | Version control, code collaboration, issues, and pull requests |
+| **[GitLab](/connectors/gitlab/gitlab)** (GitLab and GitLab Personal) | Version control, code collaboration, and merge request tracking |
 | **Linear** | Modern issue tracking and project management |
 | **Notion** | All-in-one workspace for notes, docs, and projects |
+
+---
+
+### Knowledge Management
+
+| Connector | Description |
+|-----------|-------------|
+| **[Drupal Wiki](/connectors/drupal-wiki/drupal-wiki)** | Spaces, pages, and attachments from a self-hosted or cloud Drupal Wiki, with per-space permissions |
 
 ---
 
@@ -142,7 +151,7 @@ Our platform supports a wide range of connectors organized by ecosystem to help 
 
 ## Security & Compliance
 
-All connectors are built with enterprise-grade security in mind, supporting OAuth 2.0 authentication, data encryption, and compliance with major industry standards including SOC 2, GDPR, and HIPAA where applicable.
+All connectors are built with enterprise-grade security in mind, supporting OAuth 2.0 or token-based authentication (depending on the source), data encryption, and compliance with major industry standards including SOC 2, GDPR, and HIPAA where applicable.
 
 ---
 
@@ -185,9 +194,9 @@ The callback URL must match exactly between PipesHub and the OAuth app for authe
 
 </Accordion>
 
-<Accordion title="What OAuth scopes do Connectors require?">
+<Accordion title="What permissions or OAuth scopes do Connectors require?">
 
-Connectors need **read-only permissions** to sync and index data. When creating your OAuth app in the service's developer console, grant only the scopes listed in the specific connector's documentation page.
+Connectors need **read-only permissions** to sync and index data. Connectors use OAuth 2.0 or token-based authentication, depending on the source. For OAuth, grant only the scopes listed on the connector's documentation page when you create your OAuth app in the service's developer console. For a token, the connector's page says what access the token's user needs.
 
 Using read-only scopes ensures connectors can access your data for indexing but cannot modify or delete anything in your external applications.
 

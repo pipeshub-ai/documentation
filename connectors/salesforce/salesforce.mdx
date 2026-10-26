@@ -34,7 +34,7 @@ The Salesforce connector syncs your CRM data — accounts, contacts, leads, oppo
 
 | Entity | Description |
 |--------|-------------|
-| **Users** | Active Salesforce users with name, email, phone, and title |
+| **Users** | Salesforce users with name, email, phone, and title. Permissions are mapped for active users only |
 | **Roles** | Role hierarchy and role-based permissions |
 | **Groups & Queues** | Public groups and queues used for record access |
 | **Accounts** | Account name, website, industry, owner, type, and rating |
@@ -45,17 +45,21 @@ The Salesforce connector syncs your CRM data — accounts, contacts, leads, oppo
 | **Cases** | Support cases with status, priority, and case comments |
 | **Tasks** | Activities and tasks linked to CRM records |
 | **Files** | Files attached to records (ContentDocument / ContentVersion) |
-| **Chatter** | Chatter feed posts and comments on synced records |
+| **Chatter** | Chatter posts and comments on opportunities and cases |
 
 ### Authentication
 
-In PipesHub the flow has three tabs: **Authenticate Instance** (Redirect/Callback URL, Salesforce Instance URL, an optional Salesforce Login URL, and OAuth client credentials), **Authorize** (sign in to Salesforce), then **Configure Records** (sync strategy and indexing).
+In PipesHub the flow has three tabs: **Authenticate** (instance name, Redirect/Callback URL, Salesforce Instance URL, an optional Salesforce Login URL, and OAuth client credentials), **Authorize** (sign in to Salesforce), then **Configure records** (sync strategy and indexing).
 
 The connector works with production orgs and with sandboxes. For a sandbox, see [Connect a Salesforce sandbox](#connect-a-salesforce-sandbox).
 
 <Note>
   This connector matches people by **email**. Use the **same email** in PipesHub as in Salesforce so permissions and visible records line up.
 </Note>
+
+### Permissions
+
+PipesHub mirrors Salesforce record-level access. For each active Salesforce user, it reads which records that user can access in Salesforce and gives the PipesHub user with the same email the same access. Products, and opportunities, cases and tasks that are not linked to an account, are visible to everyone in your PipesHub org.
 
 ---
 
@@ -69,8 +73,8 @@ You will copy the **Redirect/Callback URL** from PipesHub, create an **External 
 
 1. Open your **user profile** menu (bottom of the left sidebar) → **Workspace Settings**.
 2. Under **Workspace**, select **Connectors**.
-3. Find **Salesforce** and click **+ Setup**.
-4. On **Authenticate Instance**, set **Instance name**, then copy the **Redirect/Callback URL** exactly. You will paste it into Salesforce in Step 5.
+3. Find **Salesforce** and click **Set up**.
+4. On **Authenticate**, enter an **Instance name**, then copy the **Redirect/Callback URL** exactly. You will paste it into Salesforce in Step 5.
 
 <div className="text-center">
   <img
@@ -104,6 +108,10 @@ Sign in to Salesforce with an administrator account, click the **gear icon** in 
 
 In the Setup **Quick Find** box, search for **App Manager** and open it. Click **New External Client App** in the top-right corner.
 
+<Note>
+  From Spring '26, Salesforce disables the creation of new Connected Apps by default. Create an **External Client App** as described here.
+</Note>
+
 <div className="text-center">
   <img
     src="/images/connectors/salesforce/salesforce-3-new_app.png"
@@ -129,10 +137,10 @@ Enter an **External Client App Name** (for example `salesforce-app`), confirm th
 1. Expand the **API (Enable OAuth Settings)** section and turn on **Enable OAuth**.
 2. Paste the **Callback URL** you copied in Step 1 — it must match **exactly**.
 3. Move these scopes into **Selected OAuth Scopes**:
-   - Access the identity URL service (`id`, `profile`, `email`, `address`, `phone`)
    - Manage user data via APIs (`api`)
-   - Manage user data via Web browsers (`web`)
    - Perform requests at any time (`refresh_token`, `offline_access`)
+
+   PipesHub requests only these scopes. If you select others, PipesHub does not use them.
 
 <div className="text-center">
   <img
@@ -144,7 +152,7 @@ Enter an **External Client App Name** (for example `salesforce-app`), confirm th
 
 #### Step 6: Configure Security settings
 
-Under **Security**, enable **Require secret for Web Server Flow** and **Require secret for Refresh Token Flow**. Leave **Issue JSON Web Token (JWT)-based access tokens for named users** unchecked. Click **Create** to save the app.
+Under **Security**, enable **Require secret for Web Server Flow** and **Require secret for Refresh Token Flow**. If **Require Proof Key for Code Exchange (PKCE)** is enabled, leave it on: PipesHub sends PKCE when it signs in. Leave **Issue JSON Web Token (JWT)-based access tokens for named users** unchecked. Click **Create** to save the app.
 
 <div className="text-center">
   <img
@@ -182,7 +190,9 @@ Copy the **Consumer Key** and **Consumer Secret** — these are your **Client ID
 
 #### Step 8: Find your Salesforce Instance URL
 
-Your **Instance URL** is the base domain shown in your browser's address bar when you are in Salesforce — for example `https://yourcompany.my.salesforce.com`.
+Your **Instance URL** is your org's My Domain URL. In Setup, search for **My Domain** in the **Quick Find** box and copy the **Current My Domain URL**, for example `https://yourcompany.my.salesforce.com`.
+
+Don't use the `*.lightning.force.com` address from your browser's address bar, and don't use `https://login.salesforce.com`, which only handles sign-in.
 
 <div className="text-center">
   <img
@@ -192,9 +202,9 @@ Your **Instance URL** is the base domain shown in your browser's address bar whe
   />
 </div>
 
-#### Step 9: Finish Authenticate Instance in PipesHub
+#### Step 9: Finish the Authenticate tab in PipesHub
 
-Return to **Salesforce Configuration** → **Authenticate Instance** and fill in:
+Return to **Salesforce Configuration** → **Authenticate** and fill in:
 
 | Field | Value |
 |-------|-------|
@@ -216,7 +226,7 @@ Confirm the Redirect/Callback URL still matches, then click **Next →**.
 
 #### Step 10: Authorize with Salesforce
 
-On **Authorize**, click **Authenticate Salesforce to Proceed**, sign in to Salesforce, and click **Allow** on the permission screen. When **Authorization status** shows **Connected — you can continue to Configure records**, click **Continue to configuration →**.
+On **Authorize**, click **Authenticate Salesforce to proceed**, sign in to Salesforce, and click **Allow** on the permission screen. When **Authorization status** shows **Connected — you can continue to Configure records**, click **Continue to configuration →**.
 
 <div className="text-center">
   <img
@@ -230,9 +240,9 @@ On **Authorize**, click **Authenticate Salesforce to Proceed**, sign in to Sales
   **Authorize with an administrator account using the same email you use in PipesHub.** A different account can cause missing records or permission issues.
 </Warning>
 
-#### Step 11: Configure Records and save
+#### Step 11: Configure records and save
 
-On **Configure Records**, set **Sync Strategy** (Scheduled or Manual) and **Sync Interval**, toggle **Enable Manual Indexing** if you want to disable automatic indexing, and use **+ Add filter** under **Sync filters** to filter content by **creation date** or **modification date**. Click **Save Configuration**.
+On **Configure records**, set **Sync Strategy** (Scheduled or Manual) and **Sync Interval**, toggle **Enable Manual Indexing** if you want to disable automatic indexing, and use **+ Add filter** under **Sync filters** to filter content by **creation date** or **modification date**. Date filters apply to opportunities, cases, tasks, and files. Users, roles, groups, accounts, contacts, leads, and products are always synced. Click **Save configuration**.
 
 #### Step 12: Start sync
 
@@ -254,7 +264,7 @@ A sandbox signs in at `https://test.salesforce.com` (or at its own My Domain add
 
 1. Sign in to the **sandbox**, not production, and follow Steps 2 to 7 there to create an External Client App and copy its Consumer Key and Consumer Secret.
 2. Find the sandbox's **Instance URL** the same way as in Step 8. A sandbox's My Domain address looks like `https://yourcompany--sandboxname.sandbox.my.salesforce.com`.
-3. In PipesHub, fill in **Authenticate Instance** as in Step 9, with these values:
+3. In PipesHub, fill in **Authenticate** as in Step 9, with these values:
 
 | Field | Value for a sandbox |
 |-------|-------|
@@ -299,7 +309,7 @@ A sandbox signs in at `https://test.salesforce.com` (or at its own My Domain add
 
 **Wrong instance URL**
 
-- Use the base domain from your browser's address bar (for example `https://yourcompany.my.salesforce.com`) — not `https://login.salesforce.com`. For a sandbox, use that sandbox's own My Domain URL.
+- Use the **Current My Domain URL** from **Setup** → **My Domain** (for example `https://yourcompany.my.salesforce.com`). Don't use the `*.lightning.force.com` address or `https://login.salesforce.com`. For a sandbox, use that sandbox's own My Domain URL.
 
 **Sandbox users can't sign in, or the sign-in page is production's**
 
@@ -312,6 +322,7 @@ A sandbox signs in at `https://test.salesforce.com` (or at its own My Domain add
 **Missing records after sync**
 
 - The connector only sees what the authorizing user can see. Confirm that user's profile, role, and sharing rules grant access to the objects you expect.
+- Each PipesHub user sees only the records their Salesforce user can access (see [Permissions](#permissions)). Check that their PipesHub email matches their Salesforce email and that their Salesforce user is active.
 
 **Session expired / invalid**
 

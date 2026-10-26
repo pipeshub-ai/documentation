@@ -74,7 +74,7 @@ Add all the redirect URIs for the clients you plan to use:
 | **LibreChat** | `http://localhost:3080/api/mcp/<server-identifier>/oauth/callback` |
 
 <Warning>
-  Grant your OAuth app every scope the discovery endpoint lists (see [Customizing Default Scopes](#customizing-default-scopes)). Sign-in grants only the requested scopes the app allows and drops the rest, so a scope missing from the app does not fail the login, but the tools that need it are refused.
+  Grant your OAuth app every scope the discovery endpoint lists (see [Customizing Default Scopes](#customizing-default-scopes)). Sign-in grants the requested scopes the app allows and drops the rest, so a scope missing from the app does not fail the login; the tools that need it are refused. If the app allows none of the requested scopes, or a requested scope name is unknown, sign-in fails with `invalid_scope`.
 </Warning>
 
 ### Customizing Default Scopes
@@ -83,7 +83,6 @@ The `/.well-known/oauth-protected-resource/mcp` discovery endpoint lists the sco
 
 | Scope | Used by |
 | --- | --- |
-| `offline_access` | Refresh tokens, so the client stays signed in |
 | `semantic:write` | `pipeshub_search` |
 | `conversation:chat` | `pipeshub_chat` |
 | `agent:read`, `agent:execute` | `pipeshub_agents`, `pipeshub_sources`, `pipeshub_chat` with an agent |
@@ -92,7 +91,9 @@ The `/.well-known/oauth-protected-resource/mcp` discovery endpoint lists the sco
 | `user:read`, `team:read`, `usergroup:read` | `pipeshub_directory` |
 | `code:read` | The `pipeshub_code_*` tools |
 
-The list is limited to the [`MCP_SCOPES`](https://github.com/pipeshub-ai/pipeshub-ai/blob/main/backend/env.template) environment variable on your PipesHub instance, which is also the most any personal access token or OAuth token can hold. Remove a scope from `MCP_SCOPES` to stop clients requesting it.
+Discovery also lists `offline_access`. It is not a tool scope: it lets the client get a refresh token, so it stays signed in instead of signing in again when its access token expires.
+
+The list is limited to the [`MCP_SCOPES`](https://github.com/pipeshub-ai/pipeshub-ai/blob/main/backend/env.template) environment variable on your PipesHub instance, which is also the upper limit on the scopes any personal access token or OAuth token can hold. Remove a scope from `MCP_SCOPES` to stop discovery listing it. Clients that set their own scopes, such as Cursor and LibreChat, still request it, but PipesHub does not grant a scope that `MCP_SCOPES` excludes.
 
 This is the `MCP_SCOPES` value PipesHub ships (`backend/env.template`). It includes every scope above, plus `openid`, `profile`, `email` and `conversation:write` for personal access tokens and OAuth apps; discovery does not list those four:
 

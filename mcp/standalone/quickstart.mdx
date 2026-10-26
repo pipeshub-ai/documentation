@@ -112,7 +112,7 @@ Use `uninstall --dry-run` to preview, or `--client <name>` to undo one agent. Th
 
 `index` works on the git repository that contains the folder you run it in (or the path you give it: `index path/to/repo`).
 
-- **What is sent:** the files `git ls-files --cached --others --exclude-standard` lists, so everything git tracks plus new files that `.gitignore` does not exclude. Binary files, files that are not UTF-8 text, and files over 1 MiB are skipped. A repository can have up to 20,000 files.
+- **What is sent:** the files `git ls-files --cached --others --exclude-standard` lists, so everything git tracks plus new files that `.gitignore` does not exclude. Binary files, symbolic links, files that are not UTF-8 text, and files over 1 MiB are skipped, as are dependency folders and tool caches (`node_modules`, `.venv`, `__pycache__`, `.git`, ...) and artifact folders at the top of the repository (`dist`, `build`, `target`, `out`, `coverage`, `vendor`). A folder that only shares such a name deeper in the tree (`internal/build`, `lib/env`) is indexed. Images, SVG and CSV files are stored but not indexed. A repository can have up to 20,000 files.
 - **Incremental:** only files whose content changed since the last run are sent. Run it again after a large change.
 - **Identity:** a random id is saved once in `.git/pipeshub-repo-id`. Two clones of one repository are two separate repositories in PipesHub.
 - **Result:** a JSON summary with the number of files, the state (`ready`, `failed`) and whether the code tools are listed.

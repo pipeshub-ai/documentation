@@ -6,7 +6,11 @@ icon: "/logo/zendesk.png"
 
 ## Overview
 
-The Zendesk connector makes tickets, their public comments and attachments, and published Help Center articles searchable in PipesHub. It respects ticket access in Zendesk. Internal ticket notes and Help Center articles restricted to a user segment are not synced.
+The Zendesk connector makes tickets, their public comments and attachments, and published Help Center articles and their attachments searchable in PipesHub. Help Center categories and sections become folders. Zendesk agents, admins, groups, and organizations are synced to work out who can see each ticket. Internal ticket notes and Help Center articles restricted to a user segment are not synced.
+
+<Note>
+  The connector signs in with OAuth only. Zendesk is removing API tokens: accounts can't create new ones from October 27, 2026, and all remaining tokens stop working on April 30, 2027. See [Zendesk's announcement](https://support.zendesk.com/hc/en-us/articles/10851263566234-Announcing-the-removal-of-API-tokens-as-an-authentication-method-for-API-requests).
+</Note>
 
 ## Set up Zendesk
 
@@ -14,7 +18,7 @@ You need a **Zendesk admin account** and access to **Workspace Settings** in Pip
 
 ### 1. Copy the redirect URL
 
-In PipesHub, go to **Workspace Settings** → **Connectors** → **Zendesk** → **+ Setup**. On **Authenticate Instance**, name the connection and copy the **Redirect URL**.
+In PipesHub, go to **Workspace Settings** → **Connectors** → **Zendesk** → **Set up**. On the **Authenticate** tab, enter an **Instance name** (required) and copy the **Redirect/Callback URL**.
 
 ### 2. Create an OAuth client in Zendesk
 
@@ -30,7 +34,7 @@ Save the client. Copy its **Identifier** and **Secret**; Zendesk displays the fu
 
 ### 3. Enter the client details in PipesHub
 
-Return to **Authenticate Instance** and enter:
+Return to the **Authenticate** tab. If you have already saved a Zendesk OAuth app in PipesHub, you can pick it from the OAuth app list. Otherwise choose **Create new OAuth app**, give it an **OAuth app name**, and enter:
 
 | Field | Value for `acme.zendesk.com` |
 |-------|-------------------------------|
@@ -40,15 +44,31 @@ Return to **Authenticate Instance** and enter:
 | **Client ID** | The Zendesk client's **Identifier** |
 | **Client Secret** | The Zendesk client's **Secret** |
 
-Replace `acme` with your Zendesk subdomain, then click **Next**.
+Replace `acme` with your Zendesk subdomain, then click **Next**. PipesHub always signs in at `https://<subdomain>.zendesk.com`, so enter your `zendesk.com` subdomain even if your help center uses a custom domain.
+
+<div className="text-center">
+  <img
+    src="/images/connectors/zendesk/ph-zendesk-authenticate.png"
+    alt="Set up Zendesk: Redirect/Callback URL, OAuth app name, Subdomain, Authorize URL, Token URL and client credentials"
+    className="block mx-auto w-2/3"
+  />
+</div>
 
 ### 4. Authorize and start syncing
 
-On **Authorize**, sign in with a **Zendesk admin account** and approve access. On **Configure Records**, choose **Scheduled** or **Manual** sync, adjust filters if needed, and click **Save**. Select **Start syncing now** to begin.
+On the **Authorize** tab, click **Authenticate Zendesk to proceed**, sign in with a **Zendesk admin account**, and approve access. Then click **Continue to configuration →**.
+
+On the **Configure records** tab, choose **Scheduled** (every 60 minutes by default) or **Manual** sync, adjust filters if needed, and click **Save configuration**. In the **Instance is configured and ready to sync!** dialog, select **Start syncing now** to begin.
 
 <Note>
-  Leave **Groups** empty to sync tickets from all groups. The date filters limit tickets and articles. The **Index Tickets**, **Index Attachments**, and **Index Knowledge Base** switches control what appears in search.
+  Leave **Groups** empty to sync tickets from all groups. When you select groups, tickets with no group are included only if you also select **Unassigned**. The **Modified Date** and **Created Date** filters limit tickets and articles. The **Index Tickets**, **Index Attachments** (ticket and article attachments), and **Index Knowledge Base** switches control what appears in search. With **Enable Manual Indexing** on, records sync but aren't indexed until you choose them.
 </Note>
+
+## Permissions
+
+- **Tickets** are visible in PipesHub to Zendesk admins and agents who can see them in Zendesk, for example agents with access to all tickets, members of the ticket's group, the assignee, and agents named as CCs or followers. Once a ticket has a public comment, its requester and CCs can also see it, as can members of the ticket's organization when that organization shares tickets.
+- **Help Center articles**, categories, and sections are visible to everyone in your PipesHub organization, because only published articles with no user-segment restriction are synced.
+- Tickets deleted in Zendesk, and articles that are deleted, archived, unpublished, or later restricted to a user segment, are removed from PipesHub.
 
 ## Troubleshooting
 

@@ -30,6 +30,10 @@ icon: "/logo/mariadb.png"
 
 The MariaDB toolset lets AI agents read schema information and run SQL queries against a MariaDB database. Use it to answer analytical questions, explore table structures, and fetch data in natural language.
 
+<Warning>
+  Authenticate with a database user that can only read (`SELECT` only). Queries that are not plain reads wait for your approval, but a read-only user is the guarantee. See [Use a read-only database user](/toolsets/read-only-database-user).
+</Warning>
+
 ### Key Capabilities
 
 - Ask questions about your data in plain English
@@ -267,6 +271,8 @@ Grant the minimum privileges required for your use case. For read-only analytics
 ```sql
 GRANT SELECT ON test_db.* TO 'username'@'%';
 ```
+
+See [Use a read-only database user](/toolsets/read-only-database-user) for why.
 
 </Accordion>
 

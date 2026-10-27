@@ -1,0 +1,68 @@
+---
+title: "Use a Read-Only Database User"
+description: "Give agents a database account that can only read data"
+icon: "lock"
+---
+
+When you connect a SQL database that an agent can query, use a database user that can only read. Grant it `SELECT` and nothing else.
+
+This applies to:
+
+- The [MariaDB toolset](/toolsets/mariadb/mariadb) and the [Redshift toolset](/toolsets/redshift/redshift)
+- The [MariaDB connector](/connectors/mariadb/mariadb) and the [PostgreSQL connector](/connectors/postgres/postgres)
+
+## Why
+
+The agent writes the SQL it runs. PipesHub checks each query before it runs:
+
+- A single plain read, such as `SELECT`, `SHOW`, `DESCRIBE` or `EXPLAIN`, runs.
+- In a toolset, any other statement waits for your approval in the chat. This includes `INSERT`, `UPDATE`, `DELETE`, `DROP`, more than one statement, and functions that act on the server. Where nobody can approve it, such as in Slack or through the API, it does not run.
+- In a connector, any other statement is blocked.
+
+These checks catch most mistakes, but they cannot know every function in every database. A user that can only read is the guarantee. If the account has no write privileges, the database itself refuses any write.
+
+Each user who authenticates a toolset uses their own database account. Make each of those accounts read-only too.
+
+## Create a read-only user
+
+Run these as an admin user. Replace the user name, password, database and schema with your own.
+
+<Tabs>
+<Tab title="MariaDB / MySQL">
+
+```sql
+CREATE USER 'pipeshub_reader'@'%' IDENTIFIED BY 'a_strong_password';
+GRANT SELECT ON my_database.* TO 'pipeshub_reader'@'%';
+```
+
+</Tab>
+<Tab title="PostgreSQL">
+
+```sql
+CREATE USER pipeshub_reader WITH PASSWORD 'a_strong_password';
+GRANT CONNECT ON DATABASE my_database TO pipeshub_reader;
+GRANT USAGE ON SCHEMA public TO pipeshub_reader;
+GRANT SELECT ON ALL TABLES IN SCHEMA public TO pipeshub_reader;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES TO pipeshub_reader;
+```
+
+Repeat the `USAGE`, `SELECT` and `ALTER DEFAULT PRIVILEGES` lines for each schema. `ALTER DEFAULT PRIVILEGES` covers tables that the user who runs it creates later.
+
+</Tab>
+<Tab title="Amazon Redshift">
+
+```sql
+CREATE USER pipeshub_reader PASSWORD 'A_strong_password1';
+GRANT USAGE ON SCHEMA public TO pipeshub_reader;
+GRANT SELECT ON ALL TABLES IN SCHEMA public TO pipeshub_reader;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES TO pipeshub_reader;
+```
+
+A Redshift password needs 8 to 64 characters, with an uppercase letter, a lowercase letter and a number.
+
+</Tab>
+</Tabs>
+
+<Warning>
+  On Redshift and on PostgreSQL 14 and earlier, every user can create tables in the `public` schema by default. To remove that, run `REVOKE CREATE ON SCHEMA public FROM PUBLIC;`. This applies to all users, so check that no other account relies on it.
+</Warning>

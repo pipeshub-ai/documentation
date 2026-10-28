@@ -1,0 +1,501 @@
+---
+title: "SMB"
+description: "Sync files and folders from SMB 2/3 network shares"
+icon: "/logo/smb.svg"
+---
+
+<div className="not-prose mt-10">
+  <div className="p-6 border border-gray-200 dark:border-gray-700 rounded-xl bg-blue-50 dark:bg-gray-800">
+    <div className="flex items-center gap-3 mb-4">
+      <img 
+        src="/logo/smb.svg" 
+        alt="SMB Logo" 
+        className="w-8 h-8 object-contain flex-shrink-0"
+      />
+      <div className="text-xl font-semibold text-gray-900 dark:text-white">SMB</div>
+    </div>
+    <p className="text-base text-gray-700 dark:text-gray-300 mt-0 mb-5">Sync files and folders from SMB 2/3 network shares</p>
+    <div className="flex flex-wrap items-center gap-2">
+      <span className="px-3 py-1.5 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 rounded-full text-sm font-medium">
+        ✅ Ready
+      </span>
+      <span className="px-3 py-1.5 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-full text-sm font-medium">
+        📖 Documentation Available
+      </span>
+    </div>
+  </div>
+</div>
+
+## What is this?
+
+SMB (Server Message Block) is the protocol behind Windows file sharing. Windows file servers, Samba on Linux, and most NAS devices (Synology, QNAP, TrueNAS and others) use it to share folders over the network. If your company has a mapped drive such as `S:` or a path such as `\\fileserver\Shared`, that's an SMB share.
+
+This connector copies the files in one share into PipesHub so you can **search them from PipesHub chat and the knowledge base**, and use them in agents, just like any other document.
+
+PipesHub only **reads** the share. It never creates, changes, moves or deletes anything on the file server.
+
+### Words you'll see
+
+| Word | Means |
+|------|-------|
+| **File server** | The machine that shares the folders: a Windows server, a Samba server, or a NAS. |
+| **Share** | One shared folder on that server, such as `Shared` in `\\fileserver\Shared`. |
+| **Instance** | One SMB connection in PipesHub. **One instance syncs one share.** Add another instance for each extra share. |
+| **Domain** | The Active Directory (or NetBIOS) domain of the account, such as `CORP`. Leave it empty for a local account on the server. |
+
+### What you need before you start
+
+1. **The server name.** The hostname or IP address of the file server, such as `fileserver.corp.example.com` or `10.0.4.20`. Just the server, without `\\` and without the share name.
+2. **The share name.** For `\\fileserver\Shared` the share is `Shared`.
+3. **An account that can read the share.** A username and password, and the domain if it's a domain account. A dedicated read-only service account is best (see **Which account should I use?** under [Frequently asked questions](#frequently-asked-questions)).
+4. **Network access.** The machine running PipesHub must reach the file server on **TCP port 445**. If PipesHub runs in the cloud and the file server is in your office, you'll need a VPN or a firewall rule. The setup panel shows the IP addresses PipesHub connects from.
+5. **SMB 2 or newer** on the server. Any Windows Server, Samba or NAS from the last decade has it. Servers that only speak SMB1 aren't supported.
+
+<Info>
+  **Team or personal?** An admin can add SMB as a **team** connector (everyone in the organization can search the files) under **Workspace Settings → Connectors**. Any user can add it as a **personal** connector (only they can search the files) under **Workspace Settings → Your connectors**. The setup steps are the same. Read **Who can see the synced files?** under **How syncing works** below before you choose.
+</Info>
+
+---
+
+## Setup
+
+<AccordionGroup type="single" collapsible>
+
+<Accordion title="Setup" defaultOpen>
+
+<div className="mt-4">
+
+### Step 1 — Open SMB in PipesHub
+
+1. Open your profile menu at the bottom of the left sidebar and choose **Workspace Settings**.
+2. Under **Workspace**, click **Connectors** (team connector). For a personal connector, click **Your connectors** under **Personal** instead.
+3. Type `SMB` in the search box.
+4. Click **+ Set up** on the **SMB** card.
+
+<div className="text-center">
+  <img
+    src="/images/connectors/smb/connectors_catalog.png"
+    alt="Connectors page filtered to the SMB card with its Set up button"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+A panel opens on the right with two tabs, **Authenticate** and **Configure records**.
+
+---
+
+### Step 2 — Name the instance
+
+On the **Authenticate** tab, type a name you'll recognise in **Instance name**, for example `Acme shared drive` or `Finance share`. If you later add more shares, this is how you'll tell them apart.
+
+<div className="text-center">
+  <img
+    src="/images/connectors/smb/authenticate_tab.png"
+    alt="Authenticate tab with the instance name and the firewall box"
+    className="block mx-auto w-3/5"
+  />
+</div>
+
+The green **Allow PipesHub through your firewall** box lists the IP addresses PipesHub connects to your file server from. If the server or your network only accepts known addresses, allow these on **TCP port 445**. The copy icon copies an address.
+
+<Info>
+  The box only appears when your PipesHub deployment has its outgoing IP addresses configured. On a self-hosted PipesHub, connections come from the host that runs PipesHub.
+</Info>
+
+---
+
+### Step 3 — Enter the server and account details
+
+Scroll down to the fields under **Basic authentication credentials**.
+
+<div className="text-center">
+  <img
+    src="/images/connectors/smb/authenticate_credentials.png"
+    alt="Server, Port, Domain, Username, Password and Share fields filled in"
+    className="block mx-auto w-3/5"
+  />
+</div>
+
+| Field | What to enter | Example |
+|-------|---------------|---------|
+| **Server** | Hostname or IP address of the file server. No `\\`, no `/`, no share name. | `fileserver.corp.example.com` |
+| **Port** | Leave **445**. Port **139** also works. | `445` |
+| **Domain** *(optional)* | The account's AD or NetBIOS domain. Leave empty for a local account on the server or NAS. | `CORP` |
+| **Username** | The account name only, without the domain. PipesHub sends `DOMAIN\username` for you when **Domain** is set. | `svc-pipeshub` |
+| **Password** | The account's password. It's stored encrypted. | |
+| **Share** | The name of one share, without slashes. | `Shared` |
+
+<Tip>
+  **Turning a path into fields:** for `\\fileserver.corp.example.com\Shared`, **Server** is `fileserver.corp.example.com` and **Share** is `Shared`. If you only want a folder inside the share, such as `\\fileserver\Shared\HR`, keep **Share** as `Shared` and add `HR` as a folder filter in Step 5.
+</Tip>
+
+Click **Next**. PipesHub now connects to the server and opens the share to check your details. If it can't, a red **Couldn't connect to SMB** box tells you why, and you stay on this tab:
+
+<div className="text-center">
+  <img
+    src="/images/connectors/smb/connection_error.png"
+    alt="Couldn't connect to SMB error showing STATUS_LOGON_FAILURE"
+    className="block mx-auto w-3/5"
+  />
+</div>
+
+See [Troubleshooting](#troubleshooting) for what each message means. Fix the field and click **Next** again.
+
+<Note>
+  The check on **Next** only connects to port 445 or 139, so the setup panel doesn't accept other ports. If your file server listens on a non-standard port, see [Troubleshooting](#troubleshooting).
+</Note>
+
+---
+
+### Step 4 — Choose how often to sync
+
+The panel moves to **Configure records**.
+
+<div className="text-center">
+  <img
+    src="/images/connectors/smb/configure_records_tab.png"
+    alt="Configure records tab with Sync strategy and Sync interval"
+    className="block mx-auto w-3/5"
+  />
+</div>
+
+Under **Sync settings**:
+
+- **Sync strategy** — **Scheduled** syncs on its own. **Manual** syncs only when you click **Sync**.
+- **Sync interval** — how often a scheduled sync runs. **1 hour** is the default and a good start.
+
+---
+
+### Step 5 — (Optional) Choose what gets synced
+
+Without filters, PipesHub syncs every file in the share that the account can read. Scroll down to **Indexing & sync filters** if you want less.
+
+**Folders.** The **Folders** filter is already open. Type a folder path inside the share, such as `HR` or `Engineering/Runbooks`, and press **Enter** after each one. Folder names may contain spaces.
+
+<div className="text-center">
+  <img
+    src="/images/connectors/smb/folder_filter.png"
+    alt="Folders filter with HR and Engineering/Runbooks added"
+    className="block mx-auto w-3/5"
+  />
+</div>
+
+- Operator **In** syncs **only** these folders (and everything below them).
+- Operator **Not in** syncs everything **except** these folders.
+- Leave it empty to sync the whole share.
+
+**Other filters.** Click **+ Add filter** for more:
+
+<div className="text-center">
+  <img
+    src="/images/connectors/smb/add_filter_menu.png"
+    alt="Add filter menu showing File Extensions, Modified Date and Created Date"
+    className="block mx-auto w-3/5"
+  />
+</div>
+
+- **File Extensions** — sync only some file types, or skip some. For example *In* `pdf, docx`, or *Not in* `mp4, iso`.
+- **Modified Date** — only files changed after, before or between dates.
+- **Created Date** — only files created after, before or between dates. If the server doesn't report a creation time, the last-modified time is used.
+
+Date filters apply to files only; folders are always kept so the tree stays intact.
+
+**Enable Manual Indexing.** When this is on, files are synced (you can see them in PipesHub) but not indexed for search until you choose them. Leave it off to index everything.
+
+When you're done, click **Save configuration**.
+
+---
+
+### Step 6 — Start syncing
+
+PipesHub opens the SMB page with your new instance and asks if you want to start now.
+
+<div className="text-center">
+  <img
+    src="/images/connectors/smb/ready_to_sync.png"
+    alt="Instance is configured and ready to sync dialog"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+Click **Start syncing now**. If you click **I'll do it later**, turn on the **Sync enabled** switch on the instance card when you're ready:
+
+<div className="text-center">
+  <img
+    src="/images/connectors/smb/instance_card.png"
+    alt="SMB instance card with the Sync enabled switch off"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+Once sync is on, the card shows **Sync** and **Full sync** buttons.
+
+---
+
+### Step 7 — Check progress
+
+Click the **>** arrow on the instance card to open the instance panel.
+
+<div className="text-center">
+  <img
+    src="/images/connectors/smb/instance_overview.png"
+    alt="Instance overview with Records status tiles: 8 total, 8 completed"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+The **Overview** tab shows:
+
+- **Total** — how many files PipesHub found in the share.
+- **Completed** — files that are indexed and searchable.
+- **Failed** — files that couldn't be indexed.
+- **Processing** / **Queued** — files still being indexed.
+- **Manual indexing** — files synced but waiting for you to index them (only with **Enable Manual Indexing** on).
+- **Unsupported** / **Empty** / **Password protected** — files PipesHub can't read the text of.
+- **Sync now** to run a sync right away, and **Manage configuration** to change the credentials, schedule or filters.
+
+That's it. Once **Processing** and **Queued** reach zero, the share is searchable in PipesHub.
+
+</div>
+
+</Accordion>
+
+<Accordion title="How syncing works">
+
+<div className="mt-4">
+
+### Every sync looks at the whole share
+
+SMB has no change feed that PipesHub can read, so each sync lists the share (or the folders you picked) from the top. It compares what it finds with what it already has:
+
+- **New files** are added and indexed.
+- **Changed files** (different size or modified time) are updated and indexed again.
+- **Renamed or moved files** are moved to their new path in PipesHub instead of being added again as new files.
+- **Deleted files** are removed from PipesHub.
+
+Files that haven't changed are skipped, so later syncs are much faster than the first, but they still list every folder. **Sync** and **Full sync** do the same listing for SMB.
+
+PipesHub makes at most **10 requests per second** to your file server per instance, so a sync won't flood it.
+
+### What gets skipped
+
+These are never synced:
+
+- Office lock files (`~$Report.docx`) and system files such as `Thumbs.db`, `desktop.ini` and `.DS_Store`.
+- Folders such as `$RECYCLE.BIN`, `System Volume Information`, `.git` and `node_modules`.
+- Items marked both **hidden** and **system**.
+- Symbolic links and junctions. Folders behind a link aren't walked.
+
+Files on tiered or archive storage that would have to be recalled from the cloud or tape (shown as "offline" in Windows) are synced but **not indexed**, so a sync never triggers a recall. You can index them from PipesHub when you need them.
+
+### If PipesHub can't read a folder
+
+- If the account is **denied access** to a folder inside the share, that folder is skipped and anything PipesHub synced from it before is removed.
+- If a folder can't be listed for another reason (the server dropped the connection, a timeout), PipesHub keeps what it already had from that folder and tries again next sync. Nothing is removed by mistake.
+- If **nothing** in the share can be read, you get a "Sync could not read the share" notification and nothing is removed.
+
+### Who can see the synced files?
+
+<Warning>
+  PipesHub does **not** copy the share's Windows permissions (ACLs). Who can search the files depends only on how the connector was added:
+
+  - **Team** connector — **everyone in your PipesHub organization** can search every file the connector account can read.
+  - **Personal** connector — **only you** can search the files.
+
+  If parts of the share are restricted on the file server, either sync them with a personal connector, leave them out with a folder filter, or use an account that can't read them.
+</Warning>
+
+This doesn't change anything on the file server.
+
+</div>
+
+</Accordion>
+
+<Accordion title="What PipesHub can read">
+
+<div className="mt-4">
+
+### Indexed for search
+
+Supported file types can be content-indexed so you can search inside them:
+
+- Documents — **PDF**, **DOCX**, **PPTX**, **XLSX**, **ODT**, **RTF**
+- E-books — **EPUB**, unless copy-protected (DRM). Their text is searchable, but they can't be previewed in PipesHub; download the book to read it
+- Plain text — **TXT**, **MD**, **CSV**, **JSON**, **XML**, **HTML**
+- Code — **.py**, **.js**, **.ts**, **.java**, and more
+- Images — **JPG**, **PNG**, **GIF**, **WebP**
+
+### Synced but not searched inside
+
+These are stored as records but their contents aren't indexed for search:
+
+- Video and audio
+- Archives (ZIP, RAR, …)
+- Other unsupported binary files
+
+They still show up in results by filename. When you open a file, PipesHub reads it from the share at that moment.
+
+</div>
+
+</Accordion>
+
+</AccordionGroup>
+
+---
+
+## Troubleshooting
+
+<AccordionGroup type="single" collapsible>
+
+<Accordion title="'Server must be a hostname or an IP address, without \\, / or a share name'">
+
+The **Server** field has a full path in it. Put only the server there and the share in **Share**:
+
+- `\\fileserver\Shared` → **Server** `fileserver`, **Share** `Shared`
+- `smb://nas01/Docs` → **Server** `nas01`, **Share** `Docs`
+
+</Accordion>
+
+<Accordion title="'STATUS_LOGON_FAILURE' / 'The attempted logon is invalid'">
+
+The server rejected the username or password.
+
+- Check the password, and that the account isn't locked or expired.
+- For a domain account, put the domain in **Domain** (for example `CORP`) and only the account name in **Username**. Don't type `CORP\svc-pipeshub` in **Username**.
+- For a local account on a NAS or Samba server, leave **Domain** empty.
+- PipesHub signs in with NTLM. If your domain has NTLM turned off and only allows Kerberos, ask your admin to allow NTLM for this account or server.
+
+</Accordion>
+
+<Accordion title="'Could not open share …' with just a path after it">
+
+For example `Could not open share Finanse on fileserver: \\10.0.4.20\Finanse`. The server didn't find a share with that name.
+
+- Check the spelling in **Share**. Use the share name, not a folder inside it.
+- To see a server's shares from Windows, type `\\fileserver` in File Explorer's address bar.
+
+</Accordion>
+
+<Accordion title="'Could not find a server named …'">
+
+The name in **Server** doesn't resolve from the machine running PipesHub.
+
+- Check the spelling, or use the full name (`fileserver.corp.example.com`) or the IP address.
+- A short name that works on your laptop may not resolve inside a Docker container or the cloud. Try the full DNS name or the IP.
+
+</Accordion>
+
+<Accordion title="The check hangs or times out">
+
+PipesHub can't reach the server on port 445.
+
+- Make sure the PipesHub host can reach the file server (VPN, routing, cloud network rules).
+- Allow the addresses from the **Allow PipesHub through your firewall** box on **TCP 445**, on both the network firewall and the server's own firewall.
+- Many internet providers and cloud networks block port 445 to the internet. A VPN or a private link between PipesHub and the server is the usual fix.
+
+</Accordion>
+
+<Accordion title="'The connection check only uses port 445 or 139'">
+
+You entered a port other than 445 or 139. The check on **Next** only connects to those two ports, so setup can't continue with another one, even though the message mentions saving.
+
+Use port 445 (or 139). Most servers listen on 445; if yours doesn't, ask your admin to also expose SMB on 445 to PipesHub, for example with a firewall port forward. Personal connectors can never use another port.
+
+</Accordion>
+
+<Accordion title="Self-hosted: the server is refused because its address is private">
+
+If your PipesHub deployment sets `PIPESHUB_BLOCK_PRIVATE_ADDRESSES=true`, connectors may not reach private network addresses (such as `10.x.x.x` or `192.168.x.x`), which is where most file servers live. Leave the setting empty unless several organizations that don't trust each other share your deployment. Loopback (`localhost`, `127.0.0.1`) and link-local addresses are always refused.
+
+</Accordion>
+
+<Accordion title="Sync is on but some files or folders are missing">
+
+- Check your **Folders**, **File Extensions** and date filters.
+- Make sure the connector account can open the missing folder. Folders it's denied are skipped.
+- The file may be on the skip list (see **How syncing works → What gets skipped**), or behind a symbolic link or junction.
+- Give the first sync time to finish on a large share.
+
+</Accordion>
+
+<Accordion title="Files don't show up in search">
+
+- Check that the file type is supported for content indexing.
+- Wait for **Processing** and **Queued** to reach zero on the instance **Overview**.
+- If **Enable Manual Indexing** is on, files wait in **Manual indexing** until you index them.
+- Offline (tiered storage) files are synced but not indexed until you choose them.
+- Make sure the file isn't password-protected.
+
+</Accordion>
+
+<Accordion title="It used to work, but now it doesn't">
+
+Usually the account's password changed or expired.
+
+1. Open the instance panel and click **Manage configuration**.
+2. Go to the **Authenticate** tab and enter the new password. PipesHub asks you to turn sync off before it saves new credentials; accept.
+3. Click **Next**, then **Save configuration**, and turn **Sync enabled** back on.
+
+</Accordion>
+
+</AccordionGroup>
+
+---
+
+## Frequently asked questions
+
+<AccordionGroup type="single" collapsible>
+
+<Accordion title="Which account should I use?">
+  Create a dedicated service account (for example `svc-pipeshub`) with **read-only** access to the share, a password that doesn't expire, and no interactive sign-in. Read access to the share and the NTFS folders inside it is enough; PipesHub never writes. Avoid using a personal or admin account.
+</Accordion>
+
+<Accordion title="Can I sync more than one share?">
+  Yes. Each instance syncs one share. On the SMB page, click **+ Add another instance** and repeat the setup with the next share name.
+</Accordion>
+
+<Accordion title="Can I sync just one folder inside a share?">
+  Yes. Put the share name in **Share**, then add the folder path (for example `HR/Policies`) to the **Folders** filter with the **In** operator.
+</Accordion>
+
+<Accordion title="Does PipesHub respect the share's Windows permissions?">
+  No. The connector doesn't read file or folder ACLs. A team connector makes every synced file searchable by everyone in your PipesHub organization; a personal connector makes them searchable only by you. Use folder filters, separate instances, or a narrower service account to keep restricted folders out.
+</Accordion>
+
+<Accordion title="Does PipesHub change anything on the file server?">
+  No. It only lists folders and reads files. Files are opened so others can keep editing them, so a sync doesn't lock anyone out.
+</Accordion>
+
+<Accordion title="Which servers work?">
+  Any server that speaks SMB 2.0.2 or newer (up to 3.1.1): Windows Server and Windows desktop shares, Samba, and NAS devices such as Synology, QNAP and TrueNAS. SMB1-only servers aren't supported. Azure file shares also speak SMB, but for those the [Azure File Shares connector](/connectors/azure-files/azure-files) is usually easier.
+</Accordion>
+
+<Accordion title="Does it pick up changes right away?">
+  No. Changes are picked up on the next scheduled sync, or when you click **Sync**. There are no live change notifications for SMB.
+</Accordion>
+
+<Accordion title="What happens when I rename or move a file?">
+  On the next sync, PipesHub moves the record to the file's new path. A few servers don't report file IDs; there, a rename shows up as a new file plus a deleted one.
+</Accordion>
+
+<Accordion title="What happens if I delete a file on the share?">
+  On the next sync, PipesHub notices it's gone and removes it from search.
+</Accordion>
+
+<Accordion title="Can I click through to the file on the server?">
+  No. SMB files have no web link. Open the file from PipesHub's search results or record view; PipesHub reads it from the share when you open it.
+</Accordion>
+
+<Accordion title="Is the password stored safely?">
+  Yes. PipesHub stores it encrypted, and it isn't shown in logs or to other users.
+</Accordion>
+
+</AccordionGroup>
+
+---
+
+## Useful links
+
+- **SMB protocol (Microsoft)** — [https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-smb2/56066a30-52a3-438d-8538-ba3a5050002a](https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-smb2/56066a30-52a3-438d-8538-ba3a5050002a)
+- **Samba** — [https://www.samba.org/](https://www.samba.org/)
+- **Azure File Shares connector** — [Azure File Shares](/connectors/azure-files/azure-files)

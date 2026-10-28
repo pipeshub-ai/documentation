@@ -46,43 +46,43 @@ icon: "/logo/local-fs.svg"
 
 ## What is this?
 
-**Local FS** lets you point PipesHub at a **folder on your computer** so you can **search the files in it from PipesHub chat and the knowledge base** — just like any other connector.
+**Local FS** lets you point PipesHub at a **folder on your computer** so you can **search the files in it from PipesHub chat and the knowledge base**.
 
-Three things to know up front:
+Four things to know up front:
 
+- It works through the **PipesHub desktop app**. The desktop app on your computer reads the folder and sends the files to PipesHub. The PipesHub server never opens the folder itself.
 - PipesHub only **reads** the folder. It doesn't move, rename, copy, or delete anything.
-- There's **no login**. No password, no API key, no cloud account. You just give it a folder path.
+- There's **no login**. No password, no API key, no cloud account. You just pick a folder.
 - It's a **personal** connector — you set it up under **Workspace Settings → Your Connectors**, and the files you index are searchable by **you** inside PipesHub. It is not shared with the rest of your team.
 
 ### Words you'll see
 
 | Word | Means |
 |------|-------|
-| **Folder** | A regular folder on your machine (or on the machine running PipesHub). |
+| **Folder** | A regular folder on the computer where the PipesHub desktop app runs. |
 | **Instance** | One Local FS setup pointing at one folder. You can have several — one per folder. |
-| **Sync** | The moment PipesHub reads the folder and updates what it knows about your files. |
+| **Sync** | The moment PipesHub asks the desktop app what changed in the folder and updates what it knows about your files. |
 
-### One thing to check first — *which* computer?
+### One thing to know first — the folder belongs to one computer
 
-The folder needs to be readable by the **machine running the PipesHub connector**, which isn't always the same as the laptop in front of you.
+Each Local FS instance belongs to the computer where you **first turn sync on**. From then on:
 
-| How you run PipesHub | What "the folder" means |
-|------|---------|
-| **PipesHub on your own laptop** | A normal folder path on your laptop, e.g. `/Users/you/Documents/notes`. |
-| **PipesHub Desktop app** | Same — a folder on your laptop. |
-| **PipesHub in Docker / Kubernetes** | A folder that has been **mounted into the container**, e.g. host `/data` mounted as `/data` → use `/data`. |
+- PipesHub only syncs that instance while the **desktop app is open and signed in on that computer**. If the app is closed or the computer is off, syncs are skipped and pick up where they left off when it's back.
+- The file contents are also read from that computer when PipesHub indexes them, so indexing pauses while it's offline too.
+- You can't move an instance to another computer. To sync a folder on a different computer, set up a new instance there.
 
-If you're using Docker or a server deployment and you're not sure, ask whoever set PipesHub up. If it's just on your laptop, you're fine — pick any folder.
-
-<Info>
-  Quick check for Docker users: `docker compose exec <connectors-service> ls /path/you/will/use`. If that lists your files, you're good. If it says "No such file" or "Permission denied", the folder isn't mounted yet.
-</Info>
+A folder on a server, or one mounted into a Docker or Kubernetes container, can't be synced with Local FS — only folders the desktop app can see.
 
 ### What you need before you start
 
-1. A PipesHub account where you can open **Workspace Settings** (profile menu at the bottom of the main sidebar) and see **Your Connectors** under the **Personal** section.
-2. A folder you want to make searchable.
-3. About 2 minutes. There's no cloud setup at all.
+1. The **PipesHub desktop app**, installed and signed in on the computer that has the folder. Local FS can't be set up from a web browser. The app is available for Windows and Linux. These links download the current release; every installer is also on the [latest release](https://github.com/pipeshub-ai/pipeshub-ai/releases/latest).
+   - **Windows** — [PipesHub-win-x64.exe](https://github.com/pipeshub-ai/pipeshub-ai/releases/latest/download/PipesHub-win-x64.exe)
+   - **Windows (ARM)** — [PipesHub-win-arm64.exe](https://github.com/pipeshub-ai/pipeshub-ai/releases/latest/download/PipesHub-win-arm64.exe)
+   - **Linux** — [AppImage](https://github.com/pipeshub-ai/pipeshub-ai/releases/latest/download/PipesHub-linux-x64.AppImage) or [.deb](https://github.com/pipeshub-ai/pipeshub-ai/releases/latest/download/PipesHub-linux-x64.deb)
+   - **Linux (ARM)** — [AppImage](https://github.com/pipeshub-ai/pipeshub-ai/releases/latest/download/PipesHub-linux-arm64.AppImage) or [.deb](https://github.com/pipeshub-ai/pipeshub-ai/releases/latest/download/PipesHub-linux-arm64.deb)
+
+2. A PipesHub account where you can open **Workspace Settings** (profile menu at the bottom of the main sidebar) and see **Your Connectors** under the **Personal** section.
+3. A folder you want to make searchable.
 
 ---
 
@@ -94,9 +94,9 @@ If you're using Docker or a server deployment and you're not sure, ask whoever s
 
 <div className="mt-4">
 
-### Step 1 — Open Local FS in PipesHub
+### Step 1 — Open Local FS in the PipesHub desktop app
 
-1. In the main app, open your **user profile** menu at the bottom of the left sidebar, then choose **Workspace Settings**.
+1. In the **desktop app**, open your **user profile** menu at the bottom of the left sidebar, then choose **Workspace Settings**.
 2. In the workspace settings sidebar, under **Personal**, click **Your Connectors**.
 3. Find the **Local FS** card.
 4. Click **+ Setup** on the card.
@@ -113,6 +113,10 @@ A panel slides in from the right with two tabs: **Authenticate Instance** and **
 
 <Info>
   Local FS is a **personal** connector — set it up from **Workspace Settings → Your Connectors**, not **Workspace Settings → Connectors** (team scope). Open Workspace Settings from the profile menu at the bottom of the main sidebar; do not use the **Personal** section of the main app sidebar (that area is for actions like toolsets, not connector setup).
+</Info>
+
+<Info>
+  In a web browser, clicking **+ Setup** on Local FS shows **Desktop app required** instead of the panel. Open the desktop app and start again there.
 </Info>
 
 ---
@@ -153,13 +157,13 @@ The panel moves you to the **Configure Records** tab. This is the only tab where
 Under **Sync settings** there are two choices:
 
 - **Sync Strategy**
-  - **Scheduled** — PipesHub rescans the folder on its own. (Recommended.)
-  - **Manual** — only rescans when you press **Sync** / **Full sync** yourself.
-- **Sync Interval** — how often a scheduled sync runs. **1 Hour** is a good starting point.
+  - **Scheduled** — PipesHub syncs on its own at the interval you pick, while the desktop app is open.
+  - **Manual** — only syncs when you press **Sync** / **Full sync** yourself. The first sync still starts when you turn on **Sync Enabled**.
+- **Sync Interval** — how often a scheduled sync runs. The default, **1 Hour**, is a good starting point.
 
 Under **Additional settings**:
 
-- **Local folder** — the **path to the folder** you want to index. Use **Choose folder** if a picker is shown, or type the path directly. Make sure it's a path the **PipesHub connector** can see (see "Which computer?" above).
+- **Local folder** — the folder you want to index. Click **Choose folder** to pick it, or type the full path.
 - **Include subfolders** — leave this on to index everything inside the folder. Turn it off to index only the files at the top level.
 - **Batch size** — leave it as the default unless someone has told you otherwise.
 
@@ -167,9 +171,9 @@ Under **Additional settings**:
   Not sure what to pick? **Scheduled**, **1 Hour**, **Include subfolders ON**, batch size as-is — that's the right answer for most people.
 </Info>
 
-<Warning>
-  Just turning the connector "on" later won't read your files by itself. PipesHub still needs either a **manual sync** or a **schedule** to actually walk the folder. Step 6 covers running a sync.
-</Warning>
+<Note>
+  Each folder can only be synced by one instance on a computer. Picking a folder that another Local FS instance on this computer already syncs is refused.
+</Note>
 
 ---
 
@@ -187,21 +191,21 @@ Scroll to **Indexing & sync filters** and click **+ Add filter**.
   />
 </div>
 
-Common filters:
+The available filters:
 
 | Filter | What it does | When to use it |
 |---|---|---|
-| **File Extensions** | Only sync certain file types. Comma-separated, e.g. `pdf, docx, txt`. | You only want documents — not images, videos, archives. |
-| **Modified Date** | Only sync files changed after / before / between certain dates. | You want to skip very old files. |
-| **Created Date** | Same idea as Modified Date but for the original creation time. | Same idea, different timestamp. |
+| **File Extensions** | Only sync certain file types. Pick the types from the list, e.g. `.pdf`, `.docx`, `.txt`. | You only want documents — not images, videos, archives. |
+| **Modified Date** | Only sync files changed **Is after**, **Is before** or **Is between** the dates you pick. | You want to skip very old files. |
+| **Enable Manual Indexing** | Files are synced but not indexed until you choose them. | You want to pick which files become searchable. |
 
-Each filter has an operator — usually **In** ("only these") or **Not In** ("everything except these").
+**File Extensions** has two operators: **In** ("only these") and **Not in** ("everything except these").
 
 Quick examples:
 
-- **PDFs only** — *File Extensions* · *In* · `pdf`
-- **Skip images and archives** — *File Extensions* · *Not In* · `jpg, png, gif, zip`
-- **Last year only** — *Modified Date* · *After* · pick a date
+- **PDFs only** — *File Extensions* · *In* · `.pdf`
+- **Skip videos and archives** — *File Extensions* · *Not in* · `.mp4`, `.mov`, `.zip`
+- **Recent files only** — *Modified Date* · *Is after* · pick a date
 
 When you're done, click **Save Configuration** at the bottom of the panel.
 
@@ -228,11 +232,15 @@ Right now the row shows **Sync Paused** — nothing is happening yet.
 1. Find the **Sync Enabled** toggle on the right of the row.
 2. Click it on.
 
-The status flips to **Sync Enabled** and PipesHub is ready to scan your folder.
+The status flips to **Sync Enabled**, this computer becomes the instance's owner, and the **first sync starts right away**. You don't need to press **Sync** yourself.
+
+<Warning>
+  Turn sync on from the desktop app on the computer that has the folder. A web browser, or the desktop app on a different computer, can't turn it on.
+</Warning>
 
 ---
 
-### Step 6 — Run the first sync and watch progress
+### Step 6 — Watch progress
 
 Click anywhere on the instance row to open the **Overview** panel on the right.
 
@@ -244,17 +252,15 @@ Click anywhere on the instance row to open the **Overview** panel on the right.
   />
 </div>
 
-If you picked **Manual** sync strategy in Step 3, click **Sync** or **Full sync** here to kick off the first crawl. If you picked **Scheduled**, the next sync will run at the interval you set (or click **Sync** if you don't want to wait).
-
 In the panel you can see:
 
 - **Total** — how many files PipesHub has found.
 - **Completed** — files that are fully indexed and searchable.
 - **Processing** — files being read right now.
 - **Queued** / **Not Started** — files waiting their turn.
-- **Failed** — files PipesHub couldn't read (usually a permission issue, or a corrupt/protected file).
-- **Sync** / **Full sync** — re-run a sync any time. **Full sync** rescans everything; **Sync** picks up only what's changed.
-- **Manage Configuration** — re-opens the two tabs from Steps 2–4 if you want to change the folder or filters later.
+- **Failed** — files PipesHub couldn't read (usually a corrupt or protected file, or a file over 100 MB).
+- **Sync** / **Full sync** — re-run a sync any time. **Sync** picks up only what's changed; **Full sync** rescans the whole folder.
+- **Manage Configuration** — re-opens the two tabs from Steps 2–4 if you want to change the folder or filters later. Settings can only be changed in the desktop app; in a web browser this view is read-only.
 
 That's it! 🎉 Once **Processing** and **Queued** drop to zero, your folder is fully searchable in PipesHub.
 
@@ -266,28 +272,34 @@ That's it! 🎉 Once **Processing** and **Queued** drop to zero, your folder is 
 
 <div className="mt-4">
 
+### The desktop app keeps track of changes
+
+While it's open, the desktop app watches the folder and keeps a list of every file added, edited, renamed, moved or deleted. If the app was closed, it compares the folder with what it saw last time when it starts again, so changes made in the meantime aren't missed.
+
+Nothing is sent until PipesHub runs a sync. A sync asks the desktop app for that list of changes, and PipesHub then fetches the contents of each new or edited file from the desktop app to index it.
+
 ### First sync (full scan)
 
-The first time, PipesHub walks **every file** in the folder you chose (and every subfolder, if you left that option on). Bigger folders take longer:
+The first time, the desktop app walks **every file** in the folder you chose (and every subfolder, if you left that option on) and sends the list to PipesHub. Bigger folders take longer, since every file is read once.
 
-| Number of files | Roughly how long |
-|-----------------|------------------|
-| Under 1,000 | A few minutes |
-| 1,000 – 10,000 | 10 – 30 minutes |
-| 10,000 – 100,000 | 30 minutes – 2 hours |
-| Over 100,000 | Several hours |
-
-Tip: filtering by file extension (e.g. PDFs only) makes the first sync dramatically faster.
+Tip: filtering by file extension (e.g. PDFs only) makes the first sync faster.
 
 ### Later syncs (just what changed)
 
-After the first sync, PipesHub only looks at **what's different** since last time:
+After the first sync, PipesHub only gets **what's different** since last time:
 
 - New files — added to search.
 - Edited files — re-indexed.
+- Renamed or moved files — updated in place, without re-indexing if the contents didn't change.
 - Deleted files — removed from search.
 
 These are usually quick.
+
+**Full sync** walks the whole folder again, like the first sync. Use it if search seems out of step with the folder.
+
+### Files that are skipped
+
+The desktop app ignores system and temporary files such as `.DS_Store`, `Thumbs.db`, `desktop.ini`, editor swap files and `.tmp` files, and the contents of `.git`, `node_modules`, `__pycache__` and `.venv` folders. Shortcuts and symbolic links are not followed.
 
 ### Who can see the synced files?
 
@@ -295,12 +307,14 @@ Local FS is registered as a **personal** connector. Only **your** PipesHub user 
 
 ### Scheduled vs Manual
 
-**Scheduled** runs on its own at the interval you picked. Set it once and forget about it.
+**Scheduled** runs on its own at the interval you picked, as long as the desktop app is open on the computer that owns the instance. Set it once and forget about it.
 
 **Manual** only runs when you click **Sync** or **Full sync**. Useful when:
 
 - You just dropped a batch of files into the folder and want them searchable now.
 - You're testing filter changes.
+
+You can click **Sync** or **Full sync** from the desktop app or from a web browser, but the desktop app must be open on the computer that owns the instance.
 
 </div>
 
@@ -314,9 +328,9 @@ Local FS is registered as a **personal** connector. Only **your** PipesHub user 
 
 These get parsed so you can search the actual contents:
 
-- Documents — **PDF**, **DOCX**, **PPTX**, **XLSX**, **ODT**, **RTF**
+- Documents — **PDF**, **DOCX**, **DOC**, **PPTX**, **PPT**, **XLSX**, **XLS**
 - E-books — **EPUB**, unless copy-protected (DRM). Their text is searchable, but they can't be previewed in PipesHub; download the book to read it
-- Plain text — **TXT**, **MD**, **CSV**, **JSON**, **XML**, **HTML**
+- Plain text and data — **TXT**, **MD**, **MDX**, **CSV**, **TSV**, **JSON**, **YAML**, **HTML**
 - Code — **.py**, **.js**, **.ts**, **.java**, and most others
 - Images — **JPG**, **JPEG**, **PNG**, **WebP**, **SVG**, **HEIC**, **HEIF**
 
@@ -324,12 +338,13 @@ These get parsed so you can search the actual contents:
 
 These show up by **filename and metadata**, but their contents aren't indexed:
 
+- Other document formats — **ODT**, **RTF**, **XML**, …
 - Images — **GIF**
 - Video and audio
 - Archives (ZIP, RAR, …)
 - Other binary files
 
-Password-protected PDFs and Office files can't be indexed unless they're unlocked.
+Password-protected PDFs and Office files can't be indexed unless they're unlocked. Files over **100 MB** can't be read from the desktop app and show as **Failed**.
 
 </div>
 
@@ -343,13 +358,30 @@ Password-protected PDFs and Office files can't be indexed unless they're unlocke
 
 <AccordionGroup type="single" collapsible>
 
-<Accordion title="The connector says it can't find my folder">
+<Accordion title="Sync is skipped or says the desktop is offline">
 
-This almost always means the path is on **your laptop** but PipesHub is running **somewhere else** (Docker, a server, Kubernetes).
+Local FS only syncs while the desktop app is open and signed in on the computer that owns the instance.
 
-- If you're using Docker: the folder must be **mounted** into the container. Test with `docker compose exec <connectors-service> ls /your/path`.
-- Check Windows vs Mac/Linux path style matches the OS the connector is running on (e.g. don't paste `C:\Users\...` into a Linux container).
-- Make sure the user the connector runs as has **read permission** on the folder.
+- Open the PipesHub desktop app on that computer and sign in.
+- If the instance shows **Desktop offline**, it belongs to a computer that isn't connected. Clicking **Sync** shows a message naming that computer. Open the app there, not on a different computer.
+- Skipped syncs aren't lost — the next sync picks up every change made in the meantime.
+
+</Accordion>
+
+<Accordion title="The connector says it can't find or read my folder">
+
+- The folder may have been renamed, moved, or deleted. Open the instance in the desktop app, click **Manage Configuration**, choose the folder again, and save.
+- If the folder is on an external drive or network share, make sure it's connected.
+- Make sure your user account on that computer can open the folder.
+
+Files already indexed stay in search until the folder is back.
+
+</Accordion>
+
+<Accordion title="I can't turn sync on">
+
+- Turn sync on from the **desktop app**, not a web browser.
+- If the instance was first enabled on another computer, it belongs to that computer and can only be turned on there. To sync from this computer, set up a new instance here.
 
 </Accordion>
 
@@ -357,16 +389,16 @@ This almost always means the path is on **your laptop** but PipesHub is running 
 
 - The folder might genuinely be empty, or all the files might live in subfolders while **Include subfolders** is off.
 - Your filters might be excluding everything — open **Manage Configuration** and double-check.
-- Confirm the files exist where you think they do (`ls` on Mac/Linux, File Explorer on Windows) on the **machine running the connector**.
+- The files might all be skipped types (see **Files that are skipped** under **How syncing works**).
 
 </Accordion>
 
 <Accordion title="Some files synced but they don't appear in search">
 
-- Allow a minute or two for indexing to finish — large files take longer.
+- Allow a minute or two for indexing to finish — large files take longer. The desktop app must stay open while files are being indexed.
 - Check the file type is one PipesHub can read inside (see **What PipesHub can read**).
-- Password-protected PDFs and Office files won't be indexed.
-- Files showing in **Failed** on the Overview panel will tell you why — usually a permissions problem.
+- Password-protected PDFs and Office files won't be indexed, and files over 100 MB fail.
+- If **Enable Manual Indexing** is on, files are synced but not indexed until you choose them.
 
 </Accordion>
 
@@ -374,16 +406,13 @@ This almost always means the path is on **your laptop** but PipesHub is running 
 
 - Make sure **Sync Strategy** is set to **Scheduled** and **Sync Interval** has a value.
 - Confirm **Sync Enabled** on the instance card is on (not paused).
-- Check the connector process is running and healthy.
+- Make sure the desktop app is open and signed in on the computer that owns the instance. Scheduled syncs are skipped while it isn't.
 
 </Accordion>
 
-<Accordion title="It worked locally but broke after a deploy">
+<Accordion title="I can't rename or move the synced folder">
 
-If you moved PipesHub to a new server or container, the old folder path probably doesn't exist there.
-
-- Re-mount your folder in the new environment (or copy the files).
-- Open the instance, click **Manage Configuration**, update **Local folder** to the new path, and save.
+While the desktop app is running with sync on, your operating system (especially Windows) may block renaming or moving the folder, because the app is watching it. Turn sync off for that instance, or quit the desktop app, then try again.
 
 </Accordion>
 
@@ -396,7 +425,7 @@ If you moved PipesHub to a new server or container, the old folder path probably
 <AccordionGroup type="single" collapsible>
 
 <Accordion title="Does PipesHub modify or delete my files?">
-  No. The connector only **reads** files to build search records. It never writes back to your folder.
+  No. The desktop app only **reads** files to build search records. It never writes back to your folder.
 </Accordion>
 
 <Accordion title="Can I share the indexed files with my team?">
@@ -408,7 +437,15 @@ If you moved PipesHub to a new server or container, the old folder path probably
 </Accordion>
 
 <Accordion title="Can I connect more than one folder?">
-  Yes. On the Local FS instance page click **+ Add Another Instance**, give it a different name, and point it at a different path. Each instance has its own filters and its own on/off toggle.
+  Yes. On the Local FS instance page click **+ Add another instance**, give it a different name, and point it at a different folder. Each instance has its own filters and its own on/off toggle.
+</Accordion>
+
+<Accordion title="Can I sync a folder on a server or in Docker?">
+  No. Local FS only reads folders through the PipesHub desktop app, so the folder must be on the computer running the desktop app.
+</Accordion>
+
+<Accordion title="I got a new computer. How do I move my instance?">
+  Instances can't be moved. Set up a new Local FS instance in the desktop app on the new computer, and delete the old one.
 </Accordion>
 
 <Accordion title="Is the folder path stored anywhere sensitive?">

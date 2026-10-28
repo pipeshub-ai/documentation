@@ -49,7 +49,12 @@ When you set up this connector, PipesHub will read the blobs from the containers
 ### What you need before you start
 
 1. An Azure account with access to a Storage account.
-2. Permission to view the storage account's **Access keys** (usually Owner or Contributor role).
+2. One way for PipesHub to sign in. It only lists and reads files, so give it no more than that:
+   - **A SAS connection string** (recommended) for the Blob service, with only **Read** and **List** permissions.
+   - **An account key connection string** from **Access keys**. This works too, but the key gives full read, write and delete access to everything in the storage account.
+   - **Microsoft Entra ID**: an app registration with a client secret and the **Storage Blob Data Reader** role.
+
+   Both connection strings need permission to view the storage account's keys (usually Owner or Contributor role).
 3. A PipesHub account where you can add connectors.
 
 That's it. You don't need to install anything.
@@ -64,9 +69,21 @@ That's it. You don't need to install anything.
 
 <div className="mt-4">
 
-### Step 1 — Get the connection string from Azure
+### Step 1 — Get a credential from Azure
 
-The **connection string** is one long password-like line that tells PipesHub how to reach your storage. We just need to copy it.
+The **connection string** is one long password-like line that tells PipesHub how to reach your storage. We just need to copy it. A read-only SAS connection string is the safest choice. To sign in with an app registration instead, see [Microsoft Entra ID](/connectors/azure-blob/azure-blob#microsoft-entra-id) below.
+
+#### Read-only SAS connection string (recommended)
+
+1. Go to [https://portal.azure.com](https://portal.azure.com), sign in, and open the storage account that holds your containers.
+2. In the left menu, click **Security + networking → Shared access signature**.
+3. Under **Allowed services**, tick **Blob** only.
+4. Under **Allowed resource types**, tick **Service**, **Container** and **Object**.
+5. Under **Allowed permissions**, tick **Read** and **List** only.
+6. Set the **End** date. When the SAS expires, syncing stops until you paste a new connection string.
+7. Click **Generate SAS and connection string**, then copy the **Connection string**.
+
+#### Account key connection string
 
 1. Go to [https://portal.azure.com](https://portal.azure.com) and sign in.
 2. In the search bar at the top, type **Storage accounts** and click it.
@@ -87,8 +104,15 @@ The **connection string** is one long password-like line that tells PipesHub how
 You now have the connection string in your clipboard. Don't close the tab yet — if something goes wrong you'll want to come back.
 
 <Warning>
-  Treat this string like a password. Anyone who gets it can read (and change) your storage. Don't paste it into chat, email, or a public file.
+  Treat either string like a password. Anyone who gets an account key connection string can read, change and delete everything in your storage account. Don't paste it into chat, email, or a public file.
 </Warning>
+
+#### Microsoft Entra ID
+
+1. In the Azure portal, register an app in **Microsoft Entra ID** and create a **client secret** for it.
+2. On the storage account, open **Access control (IAM)** and give the app the **Storage Blob Data Reader** role.
+3. Note the app's **Directory (tenant) ID**, **Application (client) ID** and the client secret's value.
+4. Note the storage account's blob endpoint, for example `https://<account>.blob.core.windows.net`. It is on the storage account's **Endpoints** page.
 
 ---
 
@@ -116,17 +140,25 @@ The panel opens on the first tab, **Authenticate Instance**.
 </div>
 
 1. In **Instance name**, type a short name so you can recognise it later (for example `Azure blob` or `Marketing files`).
-2. Scroll to **Connection String**.
-3. Paste the string you copied from Azure.
+2. **Authentication method** — leave it on **Connection String**, or pick **Microsoft Entra ID**. You can only choose this when you create the instance.
+3. For **Connection String**, paste the string you copied from Azure. For **Microsoft Entra ID**, fill in **Blob Endpoint**, **Tenant ID**, **Client ID** and **Client Secret**.
 4. Click **Next →** at the bottom.
 
 <Info>
   The eye icon next to the Connection String field hides and shows the value. Use it if you need to double-check what you pasted.
 </Info>
 
+<Info>
+  The box at the top of the panel recommends the least-privileged credential. It also warns that Azure permissions (role assignments, SAS scope, access policies) are not applied: everyone with access to the connector can search every file it syncs, and a **Team** connector shares them with your whole organisation.
+</Info>
+
 <Warning>
-  If you see "authentication failed", the string probably has extra spaces or got cut off. Go back to Azure, click **Copy** on the connection string again, and paste it fresh.
+  If saving fails with "The AccountKey in the connection string is not a valid storage account key", the string has extra spaces or got cut off. Go back to Azure, copy the connection string again, and paste it fresh.
 </Warning>
+
+<Note>
+  The blob endpoint can't point to this PipesHub server (such as `localhost`), a link-local or a cloud metadata address. If your PipesHub deployment has `PIPESHUB_BLOCK_PRIVATE_ADDRESSES` turned on, a private address is refused too.
+</Note>
 
 ---
 
@@ -169,8 +201,8 @@ A small menu opens with the fields you can filter by:
   />
 </div>
 
-- **Container Names** — pick specific containers
-- **Folders** — include or exclude folders inside a container, as paths from the container root (e.g. `reports`, which covers `reports/2026/q1.pdf` too)
+- **Container Names** — pick specific containers (**In**), or leave some out (**Not In**). Search matches the start of a container name.
+- **Folders** — include or exclude folders inside a container, as paths from the container root (e.g. `reports`, which covers `reports/2026/q1.pdf` too). Press Enter after each folder.
 - **File Extensions** — pick file types (e.g. PDFs only)
 - **Modified Date** — only files changed after / before / between dates
 - **Created Date** — only files created after / before / between dates
@@ -188,7 +220,7 @@ Common examples:
 - **Only one container** — field: *Container Names* · operator: *In* · pick the container
 
 <Info>
-  If you don't add any filters, PipesHub will sync every file it can read. That's fine for small accounts.
+  If you don't add any filters, PipesHub will sync every file in every container the credentials can list. That's fine for small accounts. On a **Team** connector, everyone in your organisation can then search all of them, so pick only containers the whole organisation may read.
 
   When you narrow filters later, PipesHub removes the files they now leave out, search results included:
 
@@ -196,6 +228,8 @@ Common examples:
   - **File Extensions** and dates: files left out are removed once a sync has listed everything in scope from start to finish (the whole container, or each included folder when **Folders** is set to **In**).
   - **Container Names:** with *In*, only the containers you pick sync; with *Not In*, every container except those. A container the filter newly leaves out stops syncing, and the files already synced from it are removed on the next sync.
 </Info>
+
+Leave **Enable Manual Indexing** off. When it's on, synced files are not indexed for search until you choose them.
 
 When you're done, click **Save Configuration** at the bottom of the panel.
 
@@ -219,6 +253,8 @@ Right now it says **Sync Paused**. To start syncing:
 2. Click it.
 
 The status changes to **Syncing** and PipesHub starts reading your files.
+
+When you turn sync on, PipesHub first tests the connection. It lists the containers (when **Container Names** is empty), lists a blob in a selected container, and checks that it can create a download link. If something is missing, sync stays off and the error names the step that failed: **Cannot list containers**, **Cannot list blobs in** a container, or **Cannot create download links for files**, followed by Azure's reason. A selected container that no longer exists doesn't stop sync; the sync removes its files.
 
 ---
 
@@ -276,17 +312,36 @@ After the first sync, PipesHub still lists everything in scope: the whole contai
 - Updated files — refreshed.
 - Unchanged files — counted as still there and skipped.
 - Deleted files — their records are deleted from PipesHub and they leave search, once a sync has listed everything in scope from start to finish without an error. If a listing fails, deleted files aren't removed on that sync; the next complete listing removes them. Files a narrowed **Folders** filter leaves out don't wait: they're removed on the next sync.
+- Moved or renamed files — keep their record and aren't indexed again. A file stored without a Content-MD5 hash (some large uploads have none) is indexed again after a move.
+- Copied files — a copy of a file that is still there gets its own record.
+- Files changed while a sync is running — picked up by the next sync.
+- A deleted container — removed with its files, once Azure reports that the container doesn't exist. A sign-in, permission or network error never counts as deleted.
+- Files in the **Archive** tier — synced, but not indexed, because Azure can't read them until they're rehydrated. After you rehydrate one to the Hot or Cool tier, the next sync indexes it.
+- Folder marker blobs and Data Lake Storage Gen2 directories — shown as folders, not as empty files.
 
 Later syncs are faster than the first because unchanged files aren't downloaded again, but the listing still grows with the number of blobs.
+
+### When something goes wrong during a sync
+
+PipesHub never removes anything because of a sign-in, permission or network error.
+
+- **A container can't be read** — the other containers still sync, the sync is marked as failed, and you get a **Some containers failed to sync** notification with Azure's reason. No deleted files are removed in any container on that sync; the next sync tries again.
+- **The container list can't be read** (with **Container Names** empty) — the sync fails, nothing is removed, and you get a **Could not list containers** notification.
+- **Azure refuses the credentials** (an expired SAS, a rotated account key, a changed Entra ID client secret or a removed role) — nothing is removed, and you get a **Credentials rejected** notification with Azure's reason.
+- **Some files can't be synced** — the rest still sync, you get a **Some files failed to sync** notification, and the next sync tries those files again.
 
 ### Who can see the synced files?
 
 When you set up the connector you picked a scope:
 
 - **Personal** — only you can search the files inside PipesHub.
-- **Team** — everyone in your organisation can search them.
+- **Team** — everyone in your organisation can search them. With **Container Names** empty, that is every container the credentials can list.
 
-This only controls PipesHub. It does **not** change access in Azure.
+This only controls PipesHub. It does **not** change access in Azure. Azure permissions (role assignments, SAS scope, access policies) are not read, so they don't limit who can search a file in PipesHub.
+
+### Opening files
+
+Search results and citations open the file in PipesHub, not in the Azure portal. PipesHub streams the file from Azure, whichever credential you use.
 
 </div>
 
@@ -329,18 +384,32 @@ They still show up in results by filename.
 
 <AccordionGroup type="single" collapsible>
 
-<Accordion title="I get an 'authentication failed' error">
+<Accordion title="I get an 'authentication failed' or 'Credentials rejected' error">
 
 - Go back to Azure, click **Copy** on the Connection string again, and paste it fresh in PipesHub.
 - Check you didn't paste an extra space or line break.
-- If the connection string was recently rotated in Azure, you need the new one.
+- If the account key was recently rotated in Azure, or the SAS has expired, you need a new connection string.
+- With Microsoft Entra ID, check the tenant ID, client ID and client secret, that the secret hasn't expired, and that the app still has the **Storage Blob Data Reader** role.
 - Make sure the storage account still exists.
+
+</Accordion>
+
+<Accordion title="Turning sync on fails with 'Cannot list ...' or 'Cannot create download links'">
+
+The connection test names the step that failed, followed by Azure's reason:
+
+- **Cannot list containers** — the credential can't list the storage account's containers. Pick the containers in **Container Names**, or create a SAS with the **Service** resource type.
+- **Cannot list blobs in** a container — allow **List** on the SAS, and the **Container** resource type.
+- **Cannot create download links for files** — the credential can't sign download links. With Microsoft Entra ID, check that the app has the **Storage Blob Data Reader** role.
+
+A SAS also needs **Read** and the **Object** resource type, or files fail to download and index.
 
 </Accordion>
 
 <Accordion title="I can't see my containers in the filter">
 
 - Double-check the connection string is the right one.
+- Search matches the start of a container name, so type the beginning of the name.
 - Make sure the storage account has containers (blob containers, not file shares).
 - Some storage accounts have firewall rules — ask your Azure admin to allow PipesHub.
 
@@ -357,7 +426,7 @@ They still show up in results by filename.
 <Accordion title="Sync is very slow">
 
 - Add filters (container names, file extensions, date range) to sync only what you need.
-- Very large accounts (millions of files) will always take several hours on the first run. Later syncs are fast.
+- Very large accounts (millions of files) will always take several hours on the first run. Later syncs are faster, because unchanged files aren't downloaded again.
 
 </Accordion>
 
@@ -366,16 +435,17 @@ They still show up in results by filename.
 - Check the indexed file types listed above. JPG, PNG, and WebP image content is searchable; GIF, video, audio, and archives are stored without content indexing.
 - Wait a bit — big files take longer to index.
 - Make sure the file isn't password-protected.
+- A file in the Azure **Archive** tier isn't indexed. Opening it says "This file is in the Archive tier in Azure. Rehydrate it to the Hot or Cool tier to read it." After you rehydrate it, the next sync indexes it.
 
 </Accordion>
 
 <Accordion title="It used to work, but now it doesn't">
 
-Usually this means the Azure access keys were changed.
+Usually this means the Azure access keys were changed, the SAS expired, or the Entra ID client secret changed. You get a **Credentials rejected** notification, and nothing synced so far is removed.
 
-- Go back to Step 1 and copy the new connection string.
+- Go back to Step 1 and copy the new connection string (or create a new client secret).
 - In PipesHub, open the instance panel and click **Manage Configuration**.
-- Paste the new string on the Authenticate Instance tab and save.
+- Paste the new credentials on the Authenticate Instance tab and save.
 
 </Accordion>
 
@@ -392,7 +462,7 @@ Usually this means the Azure access keys were changed.
 </Accordion>
 
 <Accordion title="Does PipesHub change anything in Azure?">
-  No. The connector only **reads** files. It doesn't upload, move, rename, or delete anything.
+  No. The connector only **reads** files. It doesn't upload, move, rename, or delete anything. An account key connection string would still allow changes, so prefer a read-only SAS or Entra ID.
 </Accordion>
 
 <Accordion title="What happens if I delete a file in Azure?">
@@ -403,6 +473,10 @@ Usually this means the Azure access keys were changed.
   Yes. Add a **Folders** filter with the folder's path from the container root, for example `reports`, and set it to **In**. Subfolders are included. Set it to **Not In** to sync everything except that folder.
   
   If you change the folders later, files the filter now leaves out are removed from PipesHub on the next sync.
+</Accordion>
+
+<Accordion title="Do Azure permissions apply in PipesHub?">
+  No. Azure role assignments, SAS scope and access policies are not read. Who can search the files is set by the connector scope: only you (**Personal**) or your whole organisation (**Team**).
 </Accordion>
 
 <Accordion title="Is the connection string encrypted?">
@@ -418,3 +492,5 @@ Usually this means the Azure access keys were changed.
 - **Azure Portal** — [https://portal.azure.com](https://portal.azure.com)
 - **Azure Blob Storage docs** — [https://learn.microsoft.com/azure/storage/blobs/](https://learn.microsoft.com/azure/storage/blobs/)
 - **What is a connection string?** — [https://learn.microsoft.com/azure/storage/common/storage-configure-connection-string](https://learn.microsoft.com/azure/storage/common/storage-configure-connection-string)
+- **Shared access signatures (SAS)** — [https://learn.microsoft.com/azure/storage/common/storage-sas-overview](https://learn.microsoft.com/azure/storage/common/storage-sas-overview)
+- **Assign the Storage Blob Data Reader role** — [https://learn.microsoft.com/azure/storage/blobs/assign-azure-role-data-access](https://learn.microsoft.com/azure/storage/blobs/assign-azure-role-data-access)

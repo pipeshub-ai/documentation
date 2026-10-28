@@ -28,7 +28,7 @@ icon: "/logo/rss.svg"
 
 ## Overview
 
-The RSS connector ingests items from **public RSS 2.0 and Atom** feeds you configure. It polls each feed URL, normalizes entries, and optionally **fetches full article text** from each item’s link for richer search indexing. No OAuth or credentials are required—only reachable `http://` or `https://` feed URLs.
+The RSS connector ingests items from **public RSS 2.0 and Atom** feeds you configure. It polls each feed URL, normalizes entries, and optionally **fetches full article text** from each item’s link for richer search indexing. No OAuth or credentials are required—only reachable `http://` or `https://` feed URLs on public addresses. Feeds on private, loopback or cloud-metadata addresses are refused. To sync a feed from an internal host, an administrator lists that host name in the `WEB_CONNECTOR_ALLOWED_HOSTS` environment variable (comma-separated); link-local and cloud-metadata addresses stay blocked.
 
 You can add **multiple feeds** in one connector by listing several URLs (comma- or newline-separated). Duplicate URLs are removed automatically.
 
@@ -79,7 +79,7 @@ On the **Configure Records** tab, set the following fields:
 | **Sync Strategy** | **Scheduled** runs the connector at a fixed interval. **Manual** syncs only when triggered from connector settings. |
 | **Sync Interval** | Frequency for scheduled syncs (default 1 hour). |
 | **Feed URLs** | **Required.** RSS or Atom feed URLs (e.g., `https://blog.example.com/rss.xml`). Separate multiple feeds with commas or newlines. Invalid or non-HTTP(S) entries are skipped; duplicates are removed. |
-| **Max Articles Per Feed** | Maximum recent articles to process per feed on each sync (1–500, default 50). |
+| **Max Articles Per Feed** | Maximum recent articles to process per feed on each sync (1–500, default 50). For a paged feed, later pages are read until this limit is reached. |
 | **Fetch Full Content** | When **enabled** (default), the connector opens each item's link and extracts the full article text. When **disabled**, only the feed-provided summary is indexed — faster but less complete. |
 
 <div className="text-center">
@@ -90,9 +90,13 @@ On the **Configure Records** tab, set the following fields:
   />
 </div>
 
-<Note>
-Depending on your workspace configuration, you may also see **manual sync filters** and **indexing toggles** to control which records are indexed for search. These can be managed later from the **All Records** section.
-</Note>
+In the **Indexing** section, you can also set:
+
+| Field | Description |
+|--------|-------------|
+| **Enable Manual Indexing** | Off by default. When on, new and changed articles are synced but not indexed until you start indexing yourself from **All Records**. Articles already indexed stay indexed. |
+
+When you save, PipesHub fetches every feed URL and checks that it is an RSS or Atom feed. If any URL is not, the error names each failing URL and the reason. Fix or remove it and save again.
 
 ### Step 4: Save and start syncing
 
@@ -121,16 +125,22 @@ Depending on your workspace configuration, you may also see **manual sync filter
 
 ### What the connector does
 
-- **Feed fetch:** Downloads each configured feed URL over HTTP(S) with standard browser-like headers and parses RSS 2.0 or Atom.
-- **Items:** Processes recent entries up to **max articles per feed**.
+- **Feed fetch:** Downloads each configured feed URL over HTTP(S) with standard browser-like headers and parses RSS 2.0 or Atom. Paged feeds (`rel="next"` links) are followed for up to 10 pages.
+- **Items:** Processes recent entries up to **max articles per feed**. Each entry is identified by its ID in the feed (its guid), so two feeds that reuse the same short IDs keep separate articles. An entry without a link is still synced, using the feed's text.
+- **Changes:** An article whose text changes is re-indexed. A change to only its title or link is saved without re-indexing.
 - **Content:** With **Fetch full content** on, opens each article URL and extracts readable text where possible; otherwise uses the feed-provided description or summary.
-- **Permissions:** **Team** scope grants organization-level read access to synced records. **Personal** scope makes records visible only to the user who created the connector; if the creator can't be identified at sync time, the connector falls back to organization-level read access.
-- **Sync:** Supports **scheduled** and **manual** sync; scheduled runs help keep news and blog feeds fresh without operator action.
+- **Permissions:** **Team** scope grants organization-level read access to synced records. **Personal** scope makes records visible only to the user who created the connector.
+- **Sync:** Supports **scheduled** and **manual** sync; scheduled runs help keep news and blog feeds fresh without operator action. Each sync reads every feed again and writes only new or changed entries.
+- **Older entries:** Articles that drop off a feed as new ones are published stay searchable in PipesHub. A full sync keeps them too.
+- **Removed feeds:** When you remove a URL from **Feed URLs**, the next sync deletes that feed's articles from PipesHub.
+- **Failed feeds:** If a feed can't be read (for example, it times out or returns an error), its articles are kept and the sync continues with the other feeds. You get a notification naming the failing feeds and the reason. If no feed can be read, the sync fails.
 
 ### Key limitations
 
 - **Public feeds only:** Feeds that require login, cookies, or non-standard auth are not supported.
 - **Feed and article availability:** Some publishers block automated clients, rate-limit aggressively, or serve incomplete summaries. The connector cannot guarantee access to every article page when **Fetch full content** is enabled.
+- **Enclosures:** Files attached to entries, such as podcast audio or PDFs, are not synced.
+- **Size limit:** Feed and article pages larger than 10 MB are skipped.
 - **Not real-time:** Indexing reflects the last successful sync; very high-frequency updates may still appear slightly delayed based on your schedule.
 
 </Accordion>
@@ -145,7 +155,7 @@ Depending on your workspace configuration, you may also see **manual sync filter
 
 <Accordion title="Why are some of my feed URLs ignored?">
 
-Only URLs that start with **`http://`** or **`https://`** are used after splitting on commas and newlines. Empty lines and duplicates are dropped. If every URL is invalid, setup will fail validation—fix the list and save again.
+Only URLs that start with **`http://`** or **`https://`** are used after splitting on commas and newlines. Empty lines and duplicates are dropped. If every URL is invalid, setup will fail validation—fix the list and save again. A URL that loads but is not an RSS or Atom feed (for example, a web page or a sitemap) is also rejected when you save.
 
 </Accordion>
 
@@ -163,7 +173,19 @@ The article site may block scraping, require JavaScript-only rendering, or retur
 
 <Accordion title="How are permissions applied?">
 
-For **team** scope, synced records are readable by everyone in your organization. For **personal** scope, the user who created the connector is set as **owner**; if the creator can't be identified at sync time, the connector falls back to organization-level read access.
+For **team** scope, synced records are readable by everyone in your organization. For **personal** scope, only the user who created the connector can read them.
+
+</Accordion>
+
+<Accordion title="An article was removed from the feed. Why is it still in PipesHub?">
+
+Feeds list only recent entries, so an entry that drops off a feed has usually not been deleted by the publisher. PipesHub keeps it. To remove all articles of a feed, remove its URL from **Feed URLs**; the next sync deletes them.
+
+</Accordion>
+
+<Accordion title="What happens when a feed is down?">
+
+The feed's articles stay in PipesHub, the other feeds sync as usual, and you get a notification naming the feed. The next sync tries the feed again.
 
 </Accordion>
 

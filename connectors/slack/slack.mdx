@@ -40,7 +40,7 @@ Slack ships as **two separate connectors**. Pick the one that matches how you wa
 | **Who sets it up** | A workspace administrator, once for the whole organization | Each user, for their own account |
 | **Authentication** | **Bot User OAuth Token** (`xoxb-…`) from a Slack app | **OAuth 2.0** with a Slack app's Client ID and Client Secret (user token, `xoxp-…`) |
 | **What it can see** | Public channels, plus private channels the bot has been invited to | Everything the authorizing user can see — public and private channels, DMs, and group DMs |
-| **Permissions in PipesHub** | Per-channel: public channels are readable by all workspace members, private channels only by their Slack members | Only the authorizing user can read the synced records |
+| **Permissions in PipesHub** | Per-channel: public channels are readable by all non-guest workspace members and by guests in that channel; private channels only by their Slack members. The PipesHub user who set up the connector can read every synced channel. See [Who can read what](/connectors/slack/slack#who-can-read-slack-workspace-records-in-pipeshub) | Only the authorizing user can read the synced records |
 | **Users and groups** | All workspace members and user groups are synced | Only the authorizing user is synced |
 
 <Note>
@@ -62,6 +62,10 @@ Slack ships as **two separate connectors**. Pick the one that matches how you wa
 <Info>
   Messages posted close together are grouped into short conversational bursts before indexing, so a back-and-forth exchange is retrieved as one coherent piece of context rather than isolated one-liners.
 </Info>
+
+<Note>
+  The **Slack Workspace** connector does not sync DMs, group DMs, canvases, lists, pins, bookmarks or huddle transcripts.
+</Note>
 
 ---
 
@@ -133,24 +137,18 @@ Enter an **App name** (for example `slack-app`), select the **Workspace** you wa
 
 1. In the left sidebar, open **OAuth & Permissions**.
 2. Scroll to **Scopes → Bot Token Scopes** and click **Add an OAuth Scope**.
-3. Add every scope below:
+3. Add the scopes below. The first seven are required; `channels:join` and `usergroups:read` are optional.
 
 ```
 channels:read
 channels:history
-channels:join
 groups:read
 groups:history
-mpim:read
-mpim:history
-im:read
-im:history
 users:read
 users:read.email
-users.profile:read
 files:read
+channels:join
 usergroups:read
-usergroups.users:read
 ```
 
 <div className="text-center">
@@ -162,13 +160,10 @@ usergroups.users:read
 </div>
 
 <Info>
-  What each group of scopes is used for:
-  - `channels:*` / `groups:*` — read public and private channel metadata and message history
-  - `channels:join` — lets the bot join public channels on its own, so you don't have to invite it to each one
-  - `im:*` / `mpim:*` — read DM and group-DM metadata
-  - `users:read`, `users:read.email`, `users.profile:read` — map Slack users to PipesHub accounts by email, and resolve `@mentions` to names
-  - `files:read` — fetch files shared in messages
-  - `usergroups:read`, `usergroups.users:read` — sync Slack user groups and their members
+  What each scope is used for:
+  - **Required:** `channels:read`, `channels:history`, `groups:read`, `groups:history` (read public and private channels and their history), `users:read`, `users:read.email` (map Slack users to PipesHub accounts by email, and resolve `@mentions` to names), `files:read` (fetch files shared in messages). When you save, PipesHub checks the token's scopes; if one of these is missing, the save fails with a message naming it.
+  - **Optional:** `channels:join` lets the bot join public channels on its own. Without it, public channels the bot isn't in are skipped. `usergroups:read` syncs Slack user groups; without it, user groups aren't synced.
+  - **Not needed:** `im:*` and `mpim:*`. This connector never reads DMs or group DMs, so you can leave them out. `users.profile:read` and `usergroups.users:read` are not checked by this connector.
 </Info>
 
 ### Step 5: Install the app to your workspace
@@ -245,6 +240,10 @@ Back on **OAuth & Permissions**, copy the **Bot User OAuth Token** — it starts
 
 On the **Configure Records** tab, choose your **Sync Strategy** (Scheduled or Manual) and adjust the sync and indexing filters. See [Connector Settings](/connectors/slack/slack#connector-settings) for what each filter does. Click **Save Configuration**.
 
+<Note>
+  When you save, PipesHub checks the token with Slack. The save fails with a message that says why if the token is malformed, if Slack refuses it (for example `invalid_auth`, `token_revoked` or `account_inactive`), or if a required scope is missing.
+</Note>
+
 <div className="text-center">
   <img
     src="/images/connectors/slack-team/slack-9-pipeshub-configuration-1.png"
@@ -267,7 +266,7 @@ Once PipesHub confirms the instance is ready, you can start the sync immediately
 
 ### Channel access for the bot
 
-- **Public channels** — the bot joins them on its own thanks to the `channels:join` scope, so no manual action is needed.
+- **Public channels** — with the `channels:join` scope, the bot joins them on its own, so no manual action is needed. Without it, invite the bot to each public channel you want synced; the others are skipped and named in a warning after each sync.
 - **Private channels** — Slack never grants an app access automatically. Invite the bot from inside each private channel you want synced:
 
 ```
@@ -277,7 +276,7 @@ Once PipesHub confirms the instance is ready, you can start the sync immediately
 Replace `slack-app` with the name you gave the app in Step 3.
 
 <Info>
-  DMs and group DMs are **not** synced by the team connector, even though the bot holds `im:*` and `mpim:*` scopes. Use the **Individual Setup** if you need personal conversations indexed.
+  DMs and group DMs are **not** synced by the team connector, even if the bot holds `im:*` and `mpim:*` scopes. Use the **Individual Setup** if you need personal conversations indexed.
 </Info>
 
 </div>
@@ -547,7 +546,9 @@ When disabled, thread replies are not indexed for search by default.
 
 ### Index Bot Messages
 
-**Slack Workspace (Team) only.** Controls messages posted by bots and apps. When disabled, standalone bot messages — and threads whose parent message was posted by a bot — are skipped.
+**Slack Workspace (Team) only.** Controls messages posted by bots and apps. When disabled, standalone bot messages — and threads whose parent message was posted by a bot — are skipped at sync time. Unlike the other indexing filters, no record is created for them. Bot replies inside a thread started by a person are still synced.
+
+Turning it back on only brings in bot messages that a later sync reads: new ones, or those inside **Sync Messages From** on a full sync.
 
 ### Index Direct Messages
 
@@ -583,15 +584,28 @@ Runs in phases: users (and, for the team connector, user groups) → channels �
 
 ### Incremental sync
 
-Each channel keeps its own checkpoint, so later runs fetch only messages posted since that channel's last successful sync. Threads are checked separately, so replies added to an older conversation are still picked up.
+Each channel keeps its own checkpoint, so later runs fetch only messages posted since that channel's last successful sync.
+
+For the **Slack Workspace** connector, each scheduled sync also re-checks threads started in at least the last 24 hours (or since the previous check, if that is earlier, but never before **Sync Messages From**) for new replies. A new reply to a thread started before that is picked up by a **full sync** only.
 
 ### What incremental sync does not catch
 
-Slack's history API returns messages by the time they were **created**, not the time they were last modified. Edits to a message older than the current sync window aren't detected — the connector sees new messages and new thread replies, not retroactive edits.
+Slack's history API returns messages by the time they were **created**, not the time they were last modified. For the **Slack Workspace** connector:
+
+- A scheduled sync does not see edits, deletions or new reactions on messages it already synced.
+- A full sync picks up edits and reactions on messages inside **Sync Messages From**, and removes deleted messages and channels. An edited message is re-indexed; re-reading an unchanged message does not re-index it.
+- Archived channels are not listed, so later syncs don't read them. What was already synced from them stays until a full sync, which treats an archived channel like a deleted one.
 
 ### Rate limits
 
-Slack rate-limits its API per method. The connector paces its own calls to stay under those limits, which is why large workspaces sync gradually rather than all at once.
+Slack rate-limits its API per method. The connector paces its own calls to stay under those limits, which is why large workspaces sync gradually rather than all at once. A call Slack rate-limits (HTTP 429) is retried after Slack's `Retry-After`; if it still fails, the channel's checkpoint doesn't move past it and the next sync tries again.
+
+### Failures and notices (Slack Workspace)
+
+- **Slack token refused:** if Slack refuses the token during a sync, the sync stops and the connector shows one **Slack token refused** notice. Data already in PipesHub is left as it was.
+- **Some Slack channels were not synced:** channels the app cannot read (it isn't a member and cannot join) are named in one warning per sync — the first five, then "and N more". Invite the app with `/invite`, or add `channels:join` for public channels.
+- **Slack channels could not be listed:** if Slack doesn't return the full channel list, you get an error notice. The channels it did list are synced, and the next sync tries again.
+- **Partial reads:** if a channel's history or a thread's replies were only partly read, that channel's checkpoint stays where it was and the next sync retries. Nothing is removed on a full sync where a read failed.
 
 </Accordion>
 
@@ -614,6 +628,22 @@ Slack rate-limits its API per method. The connector paces its own calls to stay 
 **`missing_scope`**
 
 - A required scope wasn't granted. Add it in **OAuth & Permissions**, then **reinstall the app** — scope changes only take effect after reinstalling.
+
+**"The Slack token is missing these scopes" when saving (Team)**
+
+- The token lacks one of the required bot scopes listed in [Step 4](/connectors/slack/slack#step-4-add-bot-token-scopes). Add the scopes named in the message under **Bot Token Scopes**, reinstall the app, and paste the new token.
+
+**"Slack token refused" notice (Team)**
+
+- Slack refused the token during a sync, so the sync stopped. The token was revoked, the app was removed from the workspace, or the workspace is inactive. Reinstall the app, then paste its current **Bot User OAuth Token** into the connector's settings.
+
+**"Some Slack channels were not synced" warning (Team)**
+
+- The app cannot read the channels named in the warning. Run `/invite @your-app-name` in each one, or add the `channels:join` scope (public channels only) and reinstall the app.
+
+**A new reply to an old thread doesn't show up (Team)**
+
+- Scheduled syncs re-check only threads started in about the last 24 hours. Run a full sync to pick up replies to older threads inside **Sync Messages From**.
 
 **`bad_redirect_uri` or `redirect_uri_mismatch` (Individual)**
 
@@ -647,6 +677,7 @@ With **token rotation** turned on, Slack's access tokens expire after about 12 h
 **Users are missing from the sync (Team)**
 
 - Members without an email address on their Slack profile are skipped, because PipesHub matches people by email. Bots are cached for mention resolution but are not created as users.
+- Deactivated members get no access. Slack Connect (external) users are not returned by Slack's user list, so they get no access in PipesHub.
 
 **Nothing synced beyond a certain date**
 
@@ -667,6 +698,17 @@ With **token rotation** turned on, Slack's access tokens expire after about 12 h
 Use **Slack Workspace** when an administrator wants channel history available across the organization, with permissions mirroring Slack's own channel membership. Use **Slack** (Individual) when a user wants their own view indexed, including DMs and group DMs, visible only to them.
 
 They aren't mutually exclusive — running both gives shared channel history plus personal conversations.
+
+</Accordion>
+
+<Accordion title="Who can read Slack Workspace records in PipesHub?" id="who-can-read-slack-workspace-records-in-pipeshub">
+
+Access follows the channel. Messages, threads and files get the access of the channel they were posted in.
+
+- **Public channel:** every non-guest workspace member, plus guests (multi- and single-channel) who are in that channel. Guests never get other public channels.
+- **Private channel:** its Slack members, matched by email.
+- **The PipesHub user who set up the connector** can read every channel the connector syncs, including private channels the bot was invited to. A bot token has no Slack account to link to that user, so PipesHub grants them access to everything the token reads.
+- **No access:** members without an email on their Slack profile, deactivated members, and Slack Connect (external) users, whom Slack's user list does not return.
 
 </Accordion>
 

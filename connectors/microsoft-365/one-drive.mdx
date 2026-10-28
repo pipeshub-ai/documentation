@@ -31,7 +31,7 @@ icon: "/logo/one-drive.png"
 
 OneDrive is Microsoft's cloud storage service that lets you store, sync, and share files across all your devices, often bundled with Microsoft 365. 
 
-The OneDrive connector uses OAuth 2.0 via Microsoft Graph API with Application Permissions, allowing background access to organizational files and folders without requiring individual user sign-ins. It signs in with a client certificate, which also lets it read from the SharePoint API which files share the access of their folder.
+The OneDrive connector uses OAuth 2.0 via Microsoft Graph API with Application Permissions, allowing background access to organizational files and folders without requiring individual user sign-ins. It signs in with a client certificate, which also lets it read from the SharePoint API for granular permissions.
 
 <Note>
 Set up a connector with a client secret before certificates were required? It keeps working. See [Switch to certificate sign-in](#switch-to-certificate-sign-in) to move it to a certificate.
@@ -350,14 +350,14 @@ In PipesHub, go to **Workspace Settings > Connectors**, open the OneDrive connec
 <Step title="Upload the certificate and private key">
 - Upload `certificate.crt` under **Client Certificate**
 - Upload `privatekey.key` under **Private Key (PKCS#8)**
-- Remove **Client Secret**
+- Remove **Client Secret** (optional)
 - Leave **Client ID**, **Tenant ID** and **Has Admin Consent** as they are
-- Next
+- Click *Next*
 
 <div style={{ textAlign: "center" }}>
   <img
     src="/images/connectors/microsoft365/onedrive/certificates-configured.png"
-    alt="Dialog: Connector is currently enabled, Disable & Proceed to save the new credentials"
+    alt="Dialog: Certificates configured"
     style={{ display: 'block', margin: '0 auto' }}
     width="90%"
   />
@@ -369,7 +369,7 @@ PipesHub checks the credentials first. If the connector is enabled, it then asks
 </Step>
 
 <Step title="Enable the connector">
-Save the configuration and enable the connector again. **Switch to certificate sign-in** no longer shows, and the next sync reads should work with more granular permissions.
+Once the connector is enabled. **Switch to certificate sign-in** no longer shows, and the next sync reads more granular permissions via Sharepoint.
 </Step>
 
 </Steps>

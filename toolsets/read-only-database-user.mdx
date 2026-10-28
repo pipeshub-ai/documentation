@@ -46,7 +46,7 @@ GRANT SELECT ON ALL TABLES IN SCHEMA public TO pipeshub_reader;
 ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES TO pipeshub_reader;
 ```
 
-Repeat the `USAGE`, `SELECT` and `ALTER DEFAULT PRIVILEGES` lines for each schema. `ALTER DEFAULT PRIVILEGES` covers only tables that the user who runs it creates later. If another role creates your tables, such as a migration user, run it once more for each such role with `FOR ROLE <role>` after `ALTER DEFAULT PRIVILEGES`.
+Repeat the `USAGE`, `SELECT` and `ALTER DEFAULT PRIVILEGES` lines for each schema. `ALTER DEFAULT PRIVILEGES` covers only tables that the user who runs it creates later. If another role creates your tables, such as a migration user, run it once more for each such role with `FOR ROLE <role>` after `ALTER DEFAULT PRIVILEGES`. This needs a superuser or a member of that role. Otherwise, have each of those roles run the original line itself.
 
 </Tab>
 <Tab title="Amazon Redshift">
@@ -58,7 +58,7 @@ GRANT SELECT ON ALL TABLES IN SCHEMA public TO pipeshub_reader;
 ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES TO pipeshub_reader;
 ```
 
-Repeat the `USAGE`, `SELECT` and `ALTER DEFAULT PRIVILEGES` lines for each schema. `ALTER DEFAULT PRIVILEGES` covers only tables that the user who runs it creates later. If another user creates your tables, such as a migration user, run it once more for each such user with `FOR USER <user>` after `ALTER DEFAULT PRIVILEGES`.
+Repeat the `USAGE`, `SELECT` and `ALTER DEFAULT PRIVILEGES` lines for each schema. `ALTER DEFAULT PRIVILEGES` covers only tables that the user who runs it creates later. If another user creates your tables, such as a migration user, run it once more for each such user with `FOR USER <user>` after `ALTER DEFAULT PRIVILEGES`. Only a superuser can do this. Otherwise, have each of those users run the original line itself.
 
 A Redshift password needs 8 to 64 characters, with an uppercase letter, a lowercase letter and a number.
 

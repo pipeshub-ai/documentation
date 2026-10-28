@@ -87,7 +87,7 @@ Download the installer from the [pgAdmin Downloads page](https://www.pgadmin.org
 Create a dedicated read-only role for PipesHub. Run these as a superuser (e.g. `postgres`) against the target database:
 
 ```sql
-CREATE USER pipeshub_user WITH PASSWORD 'a_strong_password';
+CREATE USER pipeshub_user WITH PASSWORD '<password>';
 GRANT CONNECT ON DATABASE bird_mini_dev TO pipeshub_user;
 GRANT USAGE ON SCHEMA public TO pipeshub_user;
 GRANT SELECT ON ALL TABLES IN SCHEMA public TO pipeshub_user;
@@ -99,7 +99,7 @@ The connector also reads schema metadata from `information_schema` and `pg_catal
 Agents can run SQL queries against this database, so keep this user read-only. See [Use a read-only database user](/toolsets/read-only-database-user).
 
 <Info>
-  Replace `pipeshub_user` and `a_strong_password` with your own values, and repeat the `USAGE`/`SELECT`/`ALTER DEFAULT PRIVILEGES` grants for each schema you plan to sync.
+  Replace `pipeshub_user` and `<password>` with your own values, and repeat the `USAGE`/`SELECT`/`ALTER DEFAULT PRIVILEGES` grants for each schema you plan to sync.
 </Info>
 
 </Accordion>

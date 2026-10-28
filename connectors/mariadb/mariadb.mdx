@@ -85,7 +85,7 @@ Enter your password when prompted. If you reach the `MariaDB [(none)]>` prompt, 
 Create a dedicated read-only user for PipesHub. Run these as `root` (or any user with `CREATE USER` and `GRANT` privileges) against the target database:
 
 ```sql
-CREATE USER 'pipeshub_user'@'%' IDENTIFIED BY 'a_strong_password';
+CREATE USER 'pipeshub_user'@'%' IDENTIFIED BY '<password>';
 GRANT SELECT ON test_db.* TO 'pipeshub_user'@'%';
 FLUSH PRIVILEGES;
 ```
@@ -95,7 +95,7 @@ The connector also reads schema metadata from `information_schema`, which is ava
 Agents can run SQL queries against this database, so keep this user read-only. See [Use a read-only database user](/toolsets/read-only-database-user).
 
 <Info>
-  Replace `pipeshub_user`, `a_strong_password`, and `test_db` with your own values. Use `'pipeshub_user'@'localhost'` instead of `'%'` if PipesHub connects from the same host as the database.
+  Replace `pipeshub_user`, `<password>`, and `test_db` with your own values. Use `'pipeshub_user'@'localhost'` instead of `'%'` if PipesHub connects from the same host as the database.
 </Info>
 
 </Accordion>

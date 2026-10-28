@@ -22,9 +22,12 @@ icon: "/logo/nextcloud.svg"
   </div>
 </div>
 
+
 ## Overview
 
 Nextcloud is a self-hosted file sync and share platform that provides secure collaboration and content management. This connector allows you to sync files and folders from your personal Nextcloud account using App Passwords for secure authentication.
+
+Only you, the PipesHub user who creates the connector, can search what it syncs. That includes files other people shared with you in Nextcloud.
 
 ---
 
@@ -36,23 +39,24 @@ Nextcloud is a self-hosted file sync and share platform that provides secure col
 
 ### WebDAV Client
 
-This connector uses the **Nextcloud WebDAV API** for file operations. WebDAV (Web Distributed Authoring and Versioning) is a standard protocol that allows you to access, manage, and sync files over HTTP.
+This connector uses the **Nextcloud WebDAV API** for file operations. WebDAV (Web Distributed Authoring and Versioning) is a standard protocol that allows you to access, manage, and sync files over HTTP. It follows changes with the **Nextcloud Activity API**.
 
 ### APIs Documentation
 
 - **Nextcloud WebDAV Documentation:** [https://docs.nextcloud.com/server/latest/user_manual/en/files/access_webdav.html](https://docs.nextcloud.com/server/latest/user_manual/en/files/access_webdav.html)
+- **Nextcloud Activity API:** [https://github.com/nextcloud/activity/blob/master/docs/endpoint-v2.md](https://github.com/nextcloud/activity/blob/master/docs/endpoint-v2.md)
 - **Nextcloud Developer Manual:** [https://docs.nextcloud.com/server/latest/developer_manual/](https://docs.nextcloud.com/server/latest/developer_manual/)
 
 ### Concept of Cursor
 
 A **cursor** (activity ID) is used to track changes between syncs.
 
-1. When you first sync, the connector fetches all files and folders using WebDAV PROPFIND.
-2. After the sync completes, the connector saves the latest activity ID as a cursor. If the sync can't list the drive or can't read or save a file or folder, nothing is removed and files that did sync stay synced. If one file the sync no longer keeps can't be removed, the others still are, and only that file stays. Either way no cursor is saved, and the next sync starts over as a full sync.
-3. Instead of re-downloading the entire file list to check for changes, the connector queries the Activity API with this cursor.
-4. The API returns only the files and folders that have been added, modified, or deleted since the last sync.
+1. The first sync is a full sync: it lists your whole drive, folder by folder. Just before the listing starts, it reads the newest activity ID, so a change you make while the listing runs is picked up by the next sync.
+2. When the listing and the removal of what's gone are both done, that activity ID is saved as the cursor. If the sync can't list the drive or can't read or save a file or folder, nothing is removed and files that did sync stay synced. If one file the sync no longer keeps can't be removed, the others still are, and only that file stays. Either way no cursor is saved, and the next sync starts over as a full sync.
+3. Later syncs ask the Activity API only for what happened after the cursor: files and folders added, changed, renamed, moved, deleted, restored, or shared with you and unshared.
+4. A sync that starts more than a day after the last full sync is a full sync again. It catches anything the activity feed didn't report.
 
-This makes syncing highly efficient as you only process the differences.
+This makes syncing efficient, as most syncs only process the differences.
 
 </Accordion>
 
@@ -90,6 +94,11 @@ This guide will walk you through generating an App Password to connect your Next
 <img src="/images/connectors/nextcloud/n4.png" alt="Create App Password" style={{ display: 'block', margin: '0 auto' }} width="90%" />
 
 6. **Important:** Copy this password immediately as it will only be shown once.
+7. In the **Devices & sessions** list, the new app password's menu has an **Allow filesystem access** option. It is on by default: leave it on. Without it, Nextcloud lets the password sign in but shows no files, and PipesHub refuses to turn the connector on.
+
+<Warning>
+  Use an app password, not your Nextcloud login password. PipesHub can't tell the two apart, and it sends the password with every request.
+</Warning>
 
 ### Step 4: Save Your Credentials
 
@@ -114,8 +123,8 @@ Nextcloud is a **personal** connector — each user connects their own Nextcloud
 On the **Authenticate** tab, enter:
 
 - **Instance Name:** A label for this Nextcloud connection (e.g., "My Nextcloud").
-- **Base URL:** Your Nextcloud instance URL, without a trailing slash (e.g., `https://cloud.example.com`).
-- **Username:** Your Nextcloud username.
+- **Base URL:** Your Nextcloud instance URL, without a trailing slash (e.g., `https://cloud.example.com`). If Nextcloud is installed under a sub-path, include it (e.g., `https://example.com/nextcloud`), but not `/remote.php/...`.
+- **Username:** The name you sign in to Nextcloud with. An email address or an LDAP login works too: the connector asks Nextcloud for your user ID.
 - **App Password / Token:** The App Password generated in the previous accordion.
 
 <img
@@ -125,11 +134,21 @@ On the **Authenticate** tab, enter:
   width="90%"
 />
 
-<Warning>
-  **Email must match.** Use a Nextcloud account whose email matches the email on your PipesHub account. A mismatch breaks permission resolution and you will not see your synced records in search.
-</Warning>
+<Note>
+  **The Base URL must use `https://`.** It can't contain `?`, `#`, or a user name and password. PipesHub never connects to its own server (`localhost`), link-local addresses or cloud metadata addresses. If the PipesHub deployment sets `PIPESHUB_BLOCK_PRIVATE_ADDRESSES`, private network addresses are refused too. Redirects to another address are refused, including from `http://` to `https://` on the same host, so enter the URL Nextcloud ends up on.
 
-Click **Save** to store the credentials. Saving doesn't contact Nextcloud. The app password is checked when you turn the connector on. If Nextcloud rejects it, turning the connector on fails with a message telling you to create a new app password (see **Invalid Credentials** under Troubleshooting below).
+  If your Nextcloud is only reachable over plain `http://` on a network you trust, the PipesHub administrator can allow it by setting `PIPESHUB_NEXTCLOUD_ALLOW_INSECURE_HTTP=true` on the server. The app password is then sent unencrypted.
+</Note>
+
+<Note>
+  **Your Nextcloud email doesn't need to match.** Synced files are searchable only by the PipesHub user who created the connector, whatever email the Nextcloud account has.
+</Note>
+
+Click **Save** to store the credentials. Saving doesn't contact Nextcloud. The connection is checked when you turn the connector on:
+
+- If Nextcloud rejects the app password, turning the connector on fails with a message telling you to create a new app password (see **Invalid Credentials** under Troubleshooting below).
+- If the app password signs in but has no filesystem access, turning the connector on fails and tells you to turn on **Allow filesystem access**.
+- If the Nextcloud Activity app is turned off, the connector still turns on, but every sync lists the whole drive (see **Activity App Missing** under Troubleshooting).
 
 </Accordion>
 
@@ -147,7 +166,7 @@ Sync settings control how the connector pulls data from Nextcloud.
 
 **Sync Interval:** For scheduled syncs, the cadence in minutes (default: 60).
 
-**Batch Size:** Number of items processed per batch when committing to PipesHub (default: 100). Lower this if you hit memory pressure on very large libraries.
+**Batch Size:** Number of items saved to PipesHub at a time: 25, 50 or 100 (default: 50). Lower this if you hit memory pressure on very large libraries.
 
 <img
   src="/images/connectors/nextcloud/nc3.png"
@@ -167,20 +186,29 @@ Filters split into two categories:
 
 | Filter | Default | What it does |
 |---|---|---|
-| **Modified Date** | No restriction | Filter files and folders by last-modified date. Use a preset (Last 7/14/30/90/180/365 days) or a custom range (`is_after`, `is_before`, `is_between`). |
-| **Created Date** | No restriction | Shown in the filter list, but not applied: Nextcloud's WebDAV listing has no creation time, so this filter has no effect. |
+| **Modified Date** | No restriction | Filter files by last-modified date. Use a preset (Last 7/14/30/90/180/365 days) or a custom range (`is_after`, `is_before`, `is_between`). |
 | **File Extensions** | All extensions | Include or exclude specific file types (e.g., `pdf`, `docx`). Folders are always traversed regardless of this filter so the hierarchy stays intact. |
 
-**Changing the filters later.** When you narrow the filters, the next sync removes from PipesHub the files they now leave out, search results included. Sync filters can be edited only while the connector is turned off, and saving them doesn't start a sync. The next sync, when you turn the connector back on or start one by hand, is a full sync: it lists your whole drive, saves every file the filters keep, then removes the rest. Until it finishes, the left-out files stay searchable. Changing the **Created Date** filter removes nothing, because the connector doesn't apply it.
+There is no Created Date filter. Nextcloud's WebDAV listing has a creation time only when the app that uploaded the file sent one, so it can't be filtered on.
 
-**When a sync step fails.** If the drive can't be read in full, a kept file can't be saved, or the stored records can't be read, nothing is removed on that sync. If one file can't be removed, the others still are, and only that file stays. Either way no cursor is saved, so the next sync is a full sync again and finishes the job.
+A file someone shared with you with **Allow download** turned off is never synced. Nextcloud refuses to send its content, and the owner chose that it shouldn't leave Nextcloud. If the owner turns download off later, the file is removed from PipesHub.
+
+**Changing the filters later.** When you narrow the filters, the next sync removes from PipesHub the files they now leave out, search results included. Sync filters can be edited only while the connector is turned off, and saving them doesn't start a sync. The next sync, when you turn the connector back on or start one by hand, is a full sync: it lists your whole drive, saves every file the filters keep, then removes the rest. Until it finishes, the left-out files stay searchable.
+
+**When a sync step fails.** If the drive can't be read in full, a kept file can't be saved, or the stored records can't be read, nothing is removed on that sync. If one file can't be removed, the others still are, and only that file stays. Either way no cursor is saved, so the next sync is a full sync again and finishes the job. A folder Nextcloud can't open is different: see **Folders Nextcloud Can't Read** under Troubleshooting.
 
 <img
   src="/images/connectors/nextcloud/nc2.png"
-  alt="Nextcloud connector sync filters: modified date, created date, and file extensions"
+  alt="Nextcloud connector sync filters"
   style={{ display: 'block', margin: '0 auto' }}
   width="90%"
 />
+
+### Indexing Filters
+
+| Filter | Default | What it does |
+|---|---|---|
+| **Enable Manual Indexing** | Off | When on, new and changed files are synced but not indexed until you choose to index them. Folders are not affected. |
 
 Once your settings are configured, click **Save Configuration**. PipesHub confirms the instance is ready with a final dialog — *"Instance is configured and ready to sync"* — offering two choices: **I'll do it later** or **Start syncing now**.
 
@@ -201,29 +229,31 @@ Once your settings are configured, click **Save Configuration**. PipesHub confir
 The `NextcloudConnector` inherits from `BaseConnector` and implements smart synchronization with automatic detection of sync mode. It implements the standard lifecycle methods:
 
 - `init`
+- `test_connection_and_access`
 - `run_sync`
 - `_run_full_sync_internal`
 - `_run_incremental_sync_internal`
-- `_process_nextcloud_items_generator`
+- `stream_record`
+- `reindex_records`
 
 ### Connector Initialization
 
 The `init` method:
-1. Validates credentials from configuration
-2. Creates a Nextcloud REST client with username and app password
-3. Retrieves current user information
-4. Initializes the data source for WebDAV operations
+1. Reads the Base URL, username and app password from the connector's configuration
+2. Checks the Base URL (see the https rules under **Connect Nextcloud to PipesHub**)
+3. Creates a Nextcloud REST client with username and app password
+4. Reads your Nextcloud user ID and profile from `/ocs/v1.php/cloud/user`
 
 ### Smart Sync Strategy
 
-**`run_sync`** - Automatically determines sync type:
-1. **User Identity** (The account owner)
-2. **Record Group** (The "Personal Drive")
-3. **Files and Folders** (Smart sync based on cursor state)
+**`run_sync`** runs in this order:
+1. **Access:** Links the connector to the PipesHub user who created it, and to nobody else
+2. **Record Group:** Creates or updates the drive that holds your files
+3. **Files and Folders:** A full or incremental sync, based on the cursor
 
 The system uses a **sync point** (cursor) stored in the database:
-- **Full Sync:** If no cursor exists, performs complete WebDAV PROPFIND
-- **Incremental Sync:** If cursor exists, queries Activity API for changes only
+- **Full Sync:** If no cursor exists, or the last full sync finished more than a day ago, lists the whole drive
+- **Incremental Sync:** Otherwise, queries the Activity API for changes only
 
 ---
 
@@ -231,19 +261,20 @@ The system uses a **sync point** (cursor) stored in the database:
 
 ### Identity Resolution
 
-The sync begins by authenticating with the provided username and app password. The system:
-1. Validates the connection with a test WebDAV request
-2. Retrieves user email from Nextcloud (if available)
-3. Uses username as the primary identifier
+The connector signs in with the username and app password and asks Nextcloud for the signed-in user's ID. That ID, not the name typed into the form, is used in every WebDAV path, so an email or LDAP login works.
 
-If the Nextcloud profile can't be read (for example, during a brief server outage), the sync saves nothing and tries again next time, rather than guessing who owns your files. A profile that loads but has no email address is different: the connector then uses `{username}@nextcloud.local` as the owner's email.
+If the Nextcloud profile can't be read (for example, during a brief server outage), the sync saves nothing and tries again next time, rather than guessing whose files these are.
+
+### Who Can See Synced Files
+
+Synced files are searchable only by the PipesHub user who created the connector. The email in the Nextcloud profile is used only in log lines and never gives anyone access. Every full sync removes any other user's link to the connector, which earlier versions could create.
 
 ### Drive Creation
 
 Once the user is identified, the system creates a "Record Group":
-* **Name:** "Nextcloud - `{Username}`"
+* **Name:** "`{Nextcloud user ID}`'s Files"
 * **Type:** Drive
-* **Permission:** The user is assigned as the **OWNER**
+* **Access:** Every file and folder inherits access from the connector, so only the creator can see them
 
 ---
 
@@ -251,68 +282,71 @@ Once the user is identified, the system creates a "Record Group":
 
 ### Workflow Overview
 
-1. **Cursor Check:** The connector checks the activity sync point to determine if a previous sync has occurred.
+1. **Cursor Check:** The connector checks the activity sync point to determine if a previous sync has occurred, and when the last full sync finished.
 
 2. **Data Fetching:**
-   * **Full Sync:** If no cursor exists, uses WebDAV PROPFIND with `Depth: infinity` to fetch the entire directory tree.
-   * **Incremental Sync:** If a cursor exists, queries the Activity API for changes since the last sync.
+   * **Full Sync:** Lists the drive one folder at a time (a WebDAV `PROPFIND` with `Depth: 1` per folder, up to 8 folders at once), asking only for the properties it uses.
+   * **Incremental Sync:** Queries the Activity API for changes since the cursor.
 
 3. **Hierarchical Processing:** Entries are sorted by depth (folders before files) to ensure parent records exist before children are processed.
 
-4. **Generator Processing:** Results are processed through `_process_nextcloud_items_generator` for memory-efficient batch handling.
-
 ### Detailed Process
 
-#### Initial Sync
+#### Full Sync
 
-1. **WebDAV PROPFIND:** Fetches all files and folders recursively from the user's root directory.
+1. **Folder-by-folder listing:** Starts at your home folder and lists each folder below it. A folder renamed or moved while the listing runs is found by its file ID and listed where it is now.
 
 2. **For Each Item:**
    - **Metadata Extraction:** Collects file/folder properties:
-     - File ID (unique identifier)
+     - File ID (unique identifier; records are keyed by it, so a rename or move keeps the same record)
      - Path (full WebDAV path)
      - ETag (version identifier for change detection)
      - Size (file size in bytes)
      - Modified Time (last modification timestamp)
+     - Creation Time (only when the uploading app sent one; otherwise the time the connector first saw the file, kept across edits)
      - Resource Type (file or folder)
    - **Parent Resolution:** Extracts parent path and looks up parent record ID
    - **MIME Type Detection:** Determines file type from extension or content-type header
-   - **Permission Assignment:** Assigns OWNER permission to the authenticated user
+   - **Link:** Each record links to `/index.php/f/{file ID}` on your Nextcloud
 
-3. **Change Detection:** Compares ETag and modified timestamps with existing database records to identify:
-   - New files/folders
-   - Modified content
-   - Moved items
-   - Metadata changes
+3. **Change Detection:** Compares the ETag, name and parent with the stored record:
+   - New files/folders are saved and indexed
+   - Changed content is saved and indexed again
+   - A rename or move is saved in place and isn't indexed again
 
-4. **Batch Processing:** Items are batched (default 100 per batch) and sent to:
-   - `data_entities_processor.on_new_records` - For new items
-   - `data_entities_processor.on_record_content_update` - For content modifications
-   - `data_entities_processor.on_record_metadata_update` - For metadata changes
+4. **Batch Processing:** New records are saved in batches of the **Batch Size** setting.
 
-5. **Removing what the sync no longer keeps:** After the whole drive is listed and every kept file and folder is saved, the connector removes the records of everything it didn't keep. A file deleted in Nextcloud is missing from the WebDAV listing. A file the sync filters now leave out is still listed but skipped, so it's never saved. If the listing fails, a kept file can't be read or saved, or the stored records can't be read, this step is skipped and nothing is removed on that sync. If one record can't be removed, the others still are, and only that record stays.
-6. **Cursor Initialization:** The connector saves the latest activity ID as the cursor for incremental syncs only after both the listing and the removal finish. Otherwise no cursor is saved, and the next sync is a full sync again.
+5. **Folders Nextcloud can't open:** External storage that is offline, or a share whose server is down, is listed by Nextcloud as an empty folder it can't open. The connector skips such a folder, keeps what it synced from it before, syncs the rest of the drive, and tells you which folders it skipped. If your home folder itself can't be opened, the app password has no filesystem access: the sync stops, nothing is removed, and you're told what to turn on.
+
+6. **Removing what the sync no longer keeps:** After the whole drive is listed and every kept file and folder is saved, the connector removes the records of everything it didn't keep. A file deleted in Nextcloud is missing from the listing. A file the sync filters now leave out is still listed but skipped, so it's never saved. Nextcloud sometimes leaves a mount out of a listing altogether right after its storage goes offline, so before removing something the listing left out, the connector checks its stored path: it's removed only if Nextcloud answers "not found" there, or has a different file there. Otherwise it and everything stored below it are kept, and you're told. If the listing fails, a kept file can't be read or saved, or the stored records can't be read, this step is skipped and nothing is removed on that sync. If one record can't be removed, the others still are, and only that record stays.
+
+7. **Cursor:** The activity ID read before the listing is saved as the cursor only after both the listing and the removal finish. Otherwise no cursor is saved, and the next sync is a full sync again.
+
+The first full sync after the sync points are cleared (the first sync, a filter change, or a full sync started from the connector page) saves every record again, even unchanged ones.
 
 #### Incremental Sync
 
 Nextcloud uses the **Activity API** to track changes:
 
-1. **Event Listening:** Monitors activity stream for file/folder activities:
+1. **Activity feed:** Reads every activity stream, so a file shared with you or unshared is seen too. The activity types used are:
    - `file_created` - New files added
    - `file_changed` - File content modified
-   - `file_deleted` - Files removed
+   - `file_renamed` - Files renamed or moved
+   - `file_deleted` and `file_trashed` - Files removed
    - `file_restored` - Deleted files restored
+   - `shared` - A file or folder shared with you, or the share removed
 
-2. **Path Extraction:** Parses activity objects to extract affected file paths.
+2. **Pages:** Nextcloud returns at most 200 activities per page. The connector reads page after page until Nextcloud says there are no more, moving the cursor after each page it applied. A sync stops reading new pages after 10 minutes and the next sync carries on from there.
 
-3. **Targeted Fetching:** For modified items:
-   - Fetches fresh metadata using WebDAV PROPFIND
-   - Re-processes permissions
-   - Updates database records
+3. **Grouped activities:** Nextcloud merges related events (several uploads at once) into one activity. The connector applies every file the activity lists, not only the first.
 
-4. **Deletion Handling:** Removes deleted files from PipesHub. Deleting a folder removes everything that was inside it too, and restoring a folder from the Nextcloud trash brings everything it held back into PipesHub.
+4. **Targeted Fetching:** For each changed item, fetches fresh metadata with a WebDAV `PROPFIND` and saves it. A folder that was created, copied, restored, or newly shared with you is saved with everything inside it, since Nextcloud logs one activity for the folder and none for its contents.
 
-5. **Activity Cursor Update:** After processing all events, saves the latest activity ID for the next incremental sync cycle.
+5. **Share changes:** A share and an unshare look the same in the feed, so the connector looks the file up by its ID. If it's in your drive, it's saved; if not, it's removed from PipesHub.
+
+6. **Deletion Handling:** Removes deleted files from PipesHub. Deleting a folder removes everything that was inside it too.
+
+7. **Filters:** A changed file that no longer passes the sync filters (for example, renamed to an excluded extension) is removed from PipesHub.
 
 #### When Something Fails
 
@@ -321,8 +355,8 @@ The connector doesn't move the cursor past changes it couldn't apply:
 - **Activity feed unavailable:** If Nextcloud's activity feed can't be read (an outage, or a rate limit that outlasts the retries), the cursor stays where it was. The next sync reads the same changes again, deletions included.
 - **A file that is already gone:** If Nextcloud answers "not found" (HTTP 404) for a changed file, the connector treats the file as already deleted or moved, and the cursor moves on as usual. The deletion or move is in the activity feed too.
 - **A file or deletion that fails another way:** If fetching or saving a changed file fails for another reason (a server error such as HTTP 503, a listing that can't be read, or a network error), or a deletion can't be applied, the cursor stays where it was. The next sync reads that page of changes again.
-- **The limit:** A page is held for at most 5 syncs. On syncs 1 to 4 the cursor stays where it was. On the 5th, the connector moves the cursor on, so one broken file can't hold up later changes. The warning on each held sync and the error on the 5th name what failed and why: the path of each changed file, and the path and ID of each deletion (up to 20 names, then a count of the rest). After that, a changed file that failed is read again only when it next changes in Nextcloud.
-- **Deletions keep being retried:** A deleted file never changes again, so a deletion that still fails on the 5th sync goes into a list of pending deletions, saved together with the cursor. A file that Nextcloud lists again during that sync (because it was restored or recreated) isn't queued. Every sync retries that list first, before reading new changes, and looks the file up in Nextcloud by its ID before deleting, so a file or folder that was moved is still found:
+- **The limit:** A page is held for at most 5 syncs. On syncs 1 to 4 the cursor stays where it was. On the 5th, the connector moves the cursor on, so one broken file can't hold up later changes, and you get a notification titled **some Nextcloud changes not applied**. The log line on each held sync and on the 5th names what failed and why: the path of each changed file, and the path and ID of each deletion (up to 20 names, then a count of the rest).
+- **Changes keep being retried:** The changed files and deletions that still failed on the 5th sync are saved together with the cursor. Every sync retries them first, before reading new changes, until they apply. A changed file that Nextcloud answers "not found" for leaves the list. A file that Nextcloud lists again during that sync (because it was restored or recreated) isn't queued for deletion. Each queued deletion is checked by looking the file up in Nextcloud by its ID first, so a file or folder that was moved is still found:
   - if Nextcloud no longer has it (or it's in the trash), the deletion is applied;
   - if Nextcloud still has it, anywhere in your files, the deletion is dropped and it stays. For a folder that still has files indexed inside it (including one whose own record is already gone), the folder is first saved where it is now, whether it moved or is back where it was, and those files are linked back under it. The deletion is dropped only once that save works; if any part of it fails, the deletion stays on the list and the next sync tries again;
   - if the lookup can't be made right now, or its answer can't be read, the connector falls back to the file's saved location in PipesHub, but only while PipesHub still has a record for it:
@@ -333,49 +367,13 @@ The connector doesn't move the cursor past changes it couldn't apply:
 
   A deletion also leaves the list when nothing from that file or folder is left in PipesHub. Until a deletion is applied, the file stays searchable.
 
----
-
-## Sharing and Permissions Sync
-
-### Simplified Personal Model
-
-Since this is a personal connector:
-
-1. **Default Ownership:** The authenticated user is assigned **OWNER** permissions for all files and folders
-2. **Share Information:** The connector can detect shares via Nextcloud's OCS Share API
-3. **Permission Types:** Maps Nextcloud permissions (READ, UPDATE, DELETE, SHARE) to PipesHub permission types
-
-### Nextcloud Permission Mapping
-
-* **Permission 31 (ALL):** Maps to OWNER
-* **Permissions with DELETE or UPDATE:** Maps to WRITE
-* **Permission with READ only:** Maps to READ
-
----
-
-## Incremental Sync with Activity API
-
-### Activity-Based Change Detection
-
-The incremental sync uses Nextcloud's Activity API to efficiently detect changes:
-
-1. **Activity Query:** Fetches activities since last sync cursor
-2. **Activity Types Processed:**
-   * `file_created`: New files added
-   * `file_changed`: File content modified
-   * `file_deleted`: Files removed
-   * `file_restored`: Deleted files restored
-
-3. **Path Extraction:** Parses activity objects to extract affected file paths
-4. **Targeted Updates:** Only fetches fresh metadata for changed files
-5. **Cursor Update:** Saves latest activity ID for next incremental sync
-
 ### Performance Optimization
 
 * **Path Cache:** Maintains in-memory map of paths to record IDs
-* **Batch Processing:** Groups updates into configurable batch sizes
+* **Stored records read once:** A full sync reads the stored records in pages of 1,000, not one query per file
+* **Batch Processing:** Groups new records into batches of the **Batch Size** setting
 * **Rate Limiting:** Sends at most 50 requests per second. When Nextcloud answers with a rate limit (HTTP 429), a temporary server error, or the connection fails, the request is retried up to 3 times. The wait before each retry is a random delay that grows with each attempt: up to 1 second, then 2, then 4, never more than 60 seconds. If Nextcloud sends a `Retry-After` header with a number of seconds, the connector waits that long instead, up to 60 seconds. A `Retry-After` given as a date, or no header at all (usual for server errors), uses the growing delay.
-* **Concurrent Batches:** Processes up to 5 batches simultaneously
+* **Memory:** A full sync holds the drive's listing in memory, about 6 KB per file: about 60 MB for 10,000 files.
 
 </Accordion>
 
@@ -385,8 +383,8 @@ The incremental sync uses Nextcloud's Activity API to efficiently detect changes
 
 The connector provides authenticated file downloads:
 
-1. **WebDAV Download:** Uses authenticated WebDAV GET requests
-2. **Streaming Response:** Files are streamed to avoid memory issues with large files
+1. **Found by ID:** The file is looked up in Nextcloud by its file ID, so a file that moved is still found, and a different file at its old path is never sent instead
+2. **Streaming Response:** Files are streamed to avoid memory issues with large files, and an empty file downloads as an empty file
 3. **Folder Handling:** Folders cannot be downloaded (only individual files)
 
 ### Usage
@@ -394,18 +392,21 @@ The connector provides authenticated file downloads:
 * Files can be downloaded through the `stream_record` method
 * No public signed URLs (authentication required for all downloads)
 * Maintains security by requiring valid credentials for every download
+* After Nextcloud rejects the app password, previews and downloads are refused straight away, with a message to reconnect the connector, and the password isn't sent again
 
 ### Supported Features
 
 | Feature | Supported | Notes |
-|---------|-----------|-------|
-| File Sync | ✅ | Full WebDAV support |
+|---|---|---|
+| File Sync | ✅ | Full WebDAV support, files shared with you included |
 | Folder Sync | ✅ | Hierarchical structure maintained |
-| Incremental Sync | ✅ | Activity API-based |
+| Incremental Sync | ✅ | Activity API-based, with a full sync at least once a day |
 | File Extension Filters | ✅ | Include/exclude by extension |
-| Date Filters | ✅ | Modified date only; the Created Date filter isn't applied |
-| Permission Sync | ✅ | Personal account ownership |
+| Date Filters | ✅ | Modified date only |
+| Manual Indexing | ✅ | **Enable Manual Indexing** indexing filter |
+| Permission Sync | ➖ | Not needed: only the connector's creator can see what it syncs |
 | File Download | ✅ | Authenticated streaming |
+| Folder Selection | ❌ | The whole drive is synced; narrow it with the filters |
 | Webhook Support | ❌ | Use scheduled sync instead |
 | Real-time Sync | ❌ | Scheduled only |
 
@@ -429,6 +430,8 @@ The connector provides authenticated file downloads:
 
 You also get a notification titled **Nextcloud app password rejected** with the same message. If the password is revoked while the connector is on, syncs stop and you get the same notification. Files already synced and the sync position stay as they are.
 
+Once Nextcloud has rejected the password, the connector stops sending it, for syncs and previews alike, until you turn the connector off and on again. Nextcloud's brute-force protection counts every rejected sign-in against PipesHub's address, and after a few it slows down every request from that address, including those of other people's Nextcloud connectors.
+
 **Solutions:**
 1. Verify your username is correct
 2. Ensure you're using an **App Password**, not your main password
@@ -440,14 +443,60 @@ You also get a notification titled **Nextcloud app password rejected** with the 
    3. Enter the new app password in the connector's settings and click **Save**.
    4. Turn the connector back on. This is when the password is checked, and syncing starts again.
 
+### App Password Cannot Read Files
+
+**Symptom:** Turning the connector on fails, or you get a notification titled **Nextcloud app password cannot read files**:
+
+> The Nextcloud app password does not allow filesystem access, so no files could be read and nothing was changed.
+
+**Solution:** In Nextcloud (**Personal settings > Security > Devices & sessions**), turn on **Allow filesystem access** for this app password, or create a new one and enter it in the connector's settings.
+
+### Synced Data Removed (Remote Wipe)
+
+If you or a Nextcloud admin chose **Wipe device** for the app password in Nextcloud, the connector removes everything it synced, tells Nextcloud the wipe is done, and sends a notification titled **synced Nextcloud data removed**. Nextcloud then deletes the app password. To sync again, create a new app password, enter it in the connector's settings and turn the connector back on.
+
 ### Base URL Incorrect
 
-**Symptom:** Connection test fails or 404 errors
+**Symptom:** Turning the connector on fails with a message about the server URL, or with 404 errors
 
 **Solutions:**
-1. Ensure Base URL includes protocol (e.g., `https://`)
-2. Verify the Nextcloud instance is accessible from your network
-3. Check for any proxy or firewall restrictions
+1. Ensure the Base URL starts with `https://` (see the note under **Connect Nextcloud to PipesHub** for plain `http://`)
+2. Use the URL Nextcloud ends up on after any redirects
+3. Include the sub-path Nextcloud is installed under, if any, but not `/remote.php/dav` or `/remote.php/webdav`
+4. Verify the Nextcloud instance is accessible from the PipesHub server
+5. Check for any proxy or firewall restrictions
+
+</Accordion>
+
+<Accordion title="Sync Notifications" icon="bell">
+
+### Nextcloud Sync Failed
+
+**Symptom:** A notification titled **Nextcloud sync failed**, with the reason.
+
+The sync couldn't finish: for example, Nextcloud was in maintenance mode, the drive couldn't be listed, or a file couldn't be saved. Nothing is removed on a failed sync, and the next sync tries again. If it keeps failing, check that Nextcloud is reachable from the PipesHub server.
+
+### Folders Nextcloud Can't Read
+
+**Symptom:** A notification titled **some Nextcloud folders could not be read**, naming the folders.
+
+These are usually external storage that is offline, or a folder shared with you from another Nextcloud server that is down. What was synced from them is kept as it is, and they are read again at the next full sync, within a day. Files in them may be out of date until then.
+
+### Activity App Missing
+
+**Symptom:** A notification titled **Nextcloud Activity app missing**.
+
+The Nextcloud Activity app is turned off, so changes can't be followed one by one. Each sync lists the whole drive instead, which is slower. Ask the Nextcloud admin to enable the Activity app.
+
+### Some Changes Not Applied
+
+**Symptom:** A notification titled **some Nextcloud changes not applied**.
+
+Some changes failed on 5 syncs in a row. They are retried on every sync until they apply; until then those files may be missing or out of date. See **When Something Fails** under **Synchronization Process**.
+
+### Changes Arrive Only Once a Day
+
+If, in Nextcloud's notification settings, you limit notifications about creation and changes to your favorite files, Nextcloud's activity feed reports only changes to favorites. Other changes then reach PipesHub only with the daily full sync.
 
 </Accordion>
 
@@ -459,15 +508,16 @@ You also get a notification titled **Nextcloud app password rejected** with the 
 1. Adjust batch size - smaller batches for limited memory, larger for better throughput
 2. Configure file extension filters to exclude unnecessary file types
 3. Use date filters to limit scope of sync
-4. Check rate limiting settings and adjust if needed
+4. Make sure the Nextcloud Activity app is enabled, so most syncs read only the changes
 
 ### High Memory Usage
 
+A full sync needs about 6 KB of memory per file in the drive.
+
 **Solutions:**
-1. Reduce batch size from default 100 to 50 or lower
-2. Limit concurrent batch processing
-3. Enable file extension filters to reduce total file count
-4. Consider splitting large folder structures across multiple connectors
+1. Reduce batch size to 25
+2. Enable file extension filters to reduce total file count
+3. Consider splitting large folder structures across multiple Nextcloud accounts
 
 </Accordion>
 
@@ -493,14 +543,14 @@ You also get a notification titled **Nextcloud app password rejected** with the 
 ### Monitoring
 
 - **Monitor First Sync:** The initial full sync may take time depending on your file count
-- **Test Connection:** Always test the connection after configuration changes
+- **Watch Notifications:** Failed syncs, unreadable folders and changes that couldn't be applied are all reported as notifications
 - **Check Logs:** Regularly review sync logs for errors or warnings
 
 ### Security
 
 - **Use App Passwords:** Always use generated app passwords rather than your main Nextcloud password
 - **Revoke Unused Tokens:** Regularly review and revoke unused app passwords in Nextcloud Security settings
-- **Secure Transmission:** All API calls use HTTPS for encrypted communication
+- **Secure Transmission:** The Base URL must use HTTPS unless the PipesHub administrator allows plain HTTP
 
 </Accordion>
 
@@ -508,11 +558,11 @@ You also get a notification titled **Nextcloud app password rejected** with the 
 
 There are three common causes:
 
-1. **Email mismatch** - The email used during connector authentication doesn't match your PipesHub account email. This causes permission issues preventing you from accessing synced data.
-   - **Fix:** Reconfigure the connector and authenticate using the same email as your PipesHub account.
+1. **Someone else created the connector** - Only the PipesHub user who created a Nextcloud connector can search what it syncs.
+   - **Fix:** Create your own Nextcloud connector with your own app password.
 
 2. **Records show in "All Records" but not in search** - Documents display in the All Records section but don't appear in search query results.
-   - **Fix:** Verify sync filters in the connector settings and ensure indexing has completed. Check that the data matches your search query criteria.
+   - **Fix:** Verify sync filters in the connector settings and ensure indexing has completed. If **Enable Manual Indexing** is on, new files aren't indexed until you choose them. Check that the data matches your search query criteria.
 
 3. **Data not yet indexed** - The connector is still syncing or hasn't completed the initial indexing process.
    - **Fix:** Go to **Settings > Connectors**, check the sync status, and wait for indexing to complete.

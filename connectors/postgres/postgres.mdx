@@ -99,7 +99,7 @@ The connector also reads schema metadata from `information_schema` and `pg_catal
 Agents can run SQL queries against this database, so keep this user read-only. See [Use a read-only database user](/toolsets/read-only-database-user).
 
 <Info>
-  Replace `pipeshub_user` and `<password>` with your own values, and repeat the `USAGE`/`SELECT`/`ALTER DEFAULT PRIVILEGES` grants for each schema you plan to sync.
+  Replace `pipeshub_user` and `<password>` with your own values, and repeat the `USAGE`/`SELECT`/`ALTER DEFAULT PRIVILEGES` grants for each schema you plan to sync. `ALTER DEFAULT PRIVILEGES` covers only tables that the user who runs it creates later. If another role creates your tables, such as your application or migration user, run it once more for each such role with `FOR ROLE <role>` after `ALTER DEFAULT PRIVILEGES`.
 </Info>
 
 </Accordion>

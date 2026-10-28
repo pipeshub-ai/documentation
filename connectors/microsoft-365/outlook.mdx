@@ -1,6 +1,6 @@
 ---
 title: "Outlook"
-description: "Email and calendar management connector"
+description: "Organization-wide email connector"
 icon: "/logo/outlook.png"
 ---
 
@@ -14,7 +14,7 @@ icon: "/logo/outlook.png"
       />
       <div className="text-xl font-semibold text-gray-900 dark:text-white">Microsoft Outlook</div>
     </div>
-    <p className="text-base text-gray-700 dark:text-gray-300 mt-0 mb-5">Email and calendar management</p>
+    <p className="text-base text-gray-700 dark:text-gray-300 mt-0 mb-5">Organization-wide email</p>
     <div className="flex flex-wrap items-center gap-2">
       <span className="px-3 py-1.5 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 rounded-full text-sm font-medium">
         ✅ Ready
@@ -139,7 +139,7 @@ Follow the steps below: first register an app in Azure and grant permissions, th
 3. Add:
    - `User.Read.All`
    - `Mail.Read`
-   - `MailboxSettings.Read`
+   - `Group.Read.All`
 4. Click **Add permissions**.
 
 <div className="text-center">
@@ -151,7 +151,7 @@ Follow the steps below: first register an app in Azure and grant permissions, th
 </div>
 
 <Info>
-  Application permissions let the connector access org mail data without each user signing in interactively.
+  Application permissions let the connector access org mail data without each user signing in interactively. When you save the connector, PipesHub checks all three permissions and names any that is missing.
 </Info>
 
 #### Step 5: Grant admin consent
@@ -237,6 +237,10 @@ When on, automatic indexing is disabled for synced records so you control indexi
 
 Use **+ Add filter** to limit what is synced. Types include **Users**, **Standard Folders**, **Custom Folders**, **Groups**, and **Received Date**. Remove a constraint with **Clear**.
 
+<Note>
+  **Deleted Items** is not synced by default. To sync it, select it in the **Standard Folders** filter.
+</Note>
+
 <div className="text-center">
   <img
     src="/images/connectors/outlook/enterprise/outlook-connector-filters.png"
@@ -311,6 +315,11 @@ The Outlook connector syncs the following data:
 - **Mail folders** — Standard and custom folder hierarchy  
 - **Group conversations** — When **Index Group Conversations** is enabled  
 
+### Whose mail is synced
+
+- Mail is synced only for Microsoft 365 users who also have a PipesHub account with the **same email address**. Add or invite users in PipesHub to include their mailboxes.
+- Users without an Exchange Online mailbox (for example, no Exchange licence) are skipped. They are not reported as failures.
+
 ## Useful Links
 
 - **Azure Portal:** [portal.azure.com](https://portal.azure.com)  
@@ -335,7 +344,7 @@ The Outlook connector syncs the following data:
 
 **Insufficient privileges**
 
-- Ensure `User.Read.All`, `Mail.Read`, and `MailboxSettings.Read` are added as **application** permissions.  
+- Ensure `User.Read.All`, `Mail.Read`, and `Group.Read.All` are added as **application** permissions.  
 - Confirm **admin consent** shows as granted; allow several minutes for propagation.
 
 **Tenant / account type**

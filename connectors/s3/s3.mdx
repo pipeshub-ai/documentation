@@ -51,7 +51,7 @@ The connector indexes the following content for AI-powered search:
 - **Files**: Supported file types stored in S3 buckets, including documents and images
 - **Folders**: Directory structure and organization
 - **Metadata**: File names, sizes, modification dates, MIME types
-- **Permissions**: Access control based on bucket and object permissions
+- **Access**: Who can search the synced files is set by the connector scope (Personal or Team), not by S3 object permissions
 
 ---
 
@@ -65,11 +65,24 @@ The connector indexes the following content for AI-powered search:
 
 ### Setup Overview
 
-The S3 connector provides access to your AWS S3 buckets through Access Key authentication. It syncs files, folders, and metadata, enabling comprehensive search and access across your S3 content.
+The S3 connector reads your AWS S3 buckets with an AWS access key, or with an IAM role it assumes. It syncs files, folders, and metadata, enabling comprehensive search and access across your S3 content.
 
 ### Authentication
 
-The S3 connector uses **AWS Access Key ID and Secret Access Key** for authentication. This method allows secure programmatic access to your S3 buckets without requiring OAuth setup.
+The S3 connector supports two authentication methods:
+
+- **ACCESS_KEY** (default): an **AWS Access Key ID and Secret Access Key** with read-only access to the buckets to sync. The steps below set this up.
+- **IAM Role (AssumeRole)**: PipesHub reads S3 with temporary credentials from STS `AssumeRole`. See [Advanced: IAM Role Authentication](#advanced-iam-role-authentication).
+
+The connector only lists and reads objects. It never writes to your buckets, so give it read-only access:
+
+| Permission | On | Needed for |
+|------------|----|------------|
+| `s3:ListBucket` | Each bucket to sync | Listing objects |
+| `s3:GetBucketLocation` | Each bucket to sync | Detecting the bucket's region |
+| `s3:GetObject` | The objects in each bucket (`arn:aws:s3:::bucket-name/*`) | Reading file content |
+| `s3:ListAllMyBuckets` | `*` | Discovering buckets and loading the **Bucket Names** filter options |
+| `kms:Decrypt` | The KMS key | Only for buckets encrypted with SSE-KMS |
 
 <Info>
   Access Key authentication is simpler to set up than OAuth but requires you to manage AWS IAM credentials. Ensure you follow AWS security best practices when creating and storing access keys.
@@ -123,7 +136,7 @@ The S3 connector uses **AWS Access Key ID and Secret Access Key** for authentica
 2. **Set Permissions:**
    - Select **"Attach policies directly"**
    - Search for and select **"AmazonS3ReadOnlyAccess"** policy
-   - This policy provides read-only access to all S3 buckets
+   - This policy provides read-only access to all S3 buckets. It does not include `kms:Decrypt`, so for buckets encrypted with SSE-KMS also allow `kms:Decrypt` on the KMS key
 
 <Info>
   For more granular control, you can create a custom IAM policy that restricts access to specific buckets. See the "Advanced: Custom IAM Policy" section below for details.
@@ -214,16 +227,19 @@ A panel called **S3 Configuration** opens on the right. It has two tabs: **Authe
 Fill in the fields from top to bottom:
 
 1. **Instance name** — type any name you like (for example `S3`). This is just a label so you can recognise it later.
-2. **Access Key** — paste the **Access Key ID** you copied from AWS in Step 3.
-3. **Secret Key** — paste the **Secret Access Key** you copied from AWS in Step 3.
-4. Click **Next →** (bottom right).
+2. **Authentication method** — leave it on **ACCESS_KEY**. To use a role instead, pick **IAM Role (AssumeRole)** and follow [Advanced: IAM Role Authentication](#advanced-iam-role-authentication). You can only choose this when you create the instance.
+3. **Access Key** — paste the **Access Key ID** you copied from AWS in Step 3.
+4. **Secret Key** — paste the **Secret Access Key** you copied from AWS in Step 3.
+5. Click **Next →** (bottom right).
 
 <Warning>
   Paste the keys exactly as you copied them. Extra spaces or line breaks will make the connection fail.
 </Warning>
 
 <Info>
-  The two links at the top (**S3 Access Key Setup** and **Pipeshub Documentation**) are just help links. You can ignore them if you've already followed Steps 1–3.
+  The box at the top lists the read-only permissions the key needs. It also warns that with a **Team** connector, everyone in your organization can search every bucket it syncs. With **Bucket Names** empty, that is every bucket the key can list.
+
+  The links below it (**S3 Read-Only Policy Examples**, **S3 IAM Role (AssumeRole) Setup** and **Pipeshub Documentation**) are just help links. You can ignore them if you've already followed Steps 1–3.
 </Info>
 
 ### Step 6: Choose how often S3 should sync
@@ -249,11 +265,10 @@ Still on the same tab, scroll down to **Indexing & sync filters**. Filters let y
 
 1. **Enable Manual Indexing** — leave this **off**. (Turning it on stops PipesHub from automatically indexing new files for search.)
 2. Click **+ Add filter** to add a filter. You'll see these options:
-   - **Bucket Names** — pick which S3 buckets to include or exclude. PipesHub loads your bucket list automatically — just select from the dropdown.
+   - **Bucket Names** — pick which S3 buckets to include or exclude. PipesHub loads your bucket list automatically — just select from the dropdown. Search matches the start of a bucket name. Leave it empty to sync every bucket the key can list.
    - **Folders** — include or exclude folders inside a bucket, as paths from the bucket root, e.g. `reports` (which covers `reports/2026/q1.pdf` too).
    - **File Extensions** — include or exclude specific file types. Type them comma-separated, e.g. `pdf, docx, txt`.
-   - **Modified Date** — only sync files changed after / before / between the dates you choose.
-   - **Created Date** — same idea, but based on when the file was first uploaded to S3.
+   - **Modified Date** — only sync files changed after / before / between the dates you choose. S3 records only when an object was last written, so there is no Created Date filter. A Created Date filter saved on an older version was moved into **Modified Date**.
 3. Click **Save Configuration** (bottom right) when you're done.
 
 <Info>
@@ -282,6 +297,8 @@ Right now the card says **Sync Paused** — nothing is being synced yet.
 2. Click the toggle so it turns **on**.
 
 That's it — PipesHub will now start pulling files from S3.
+
+When you turn sync on, PipesHub first tests the connection. It checks that the key can list and read objects in the buckets the sync uses (the buckets in **Bucket Names**, or the buckets the key can list), inside the **Folders** filter's folders if you set them. If it can read none of them, sync stays off and the error names the missing permission, for example `s3:ListBucket` or `s3:GetObject` on a bucket. If it can read only some of the selected buckets or folders, you get a warning naming the others, and the readable ones sync.
 
 <Info>
   Want to connect a second AWS account? Click **+ Add Another Instance** in the top-right and repeat Steps 5–8 with the new account's keys.
@@ -351,32 +368,37 @@ Here's a basic example policy for a single bucket:
 
 ### Enhanced Custom Policy (Multiple Buckets)
 
-For production use with multiple buckets and additional permissions, use this comprehensive policy:
+For production use with multiple buckets, use this policy:
 
 ```json
 {
     "Version": "2012-10-17",
     "Statement": [
         {
-            "Sid": "VisualEditor0",
+            "Sid": "ListBuckets",
             "Effect": "Allow",
             "Action": [
-                "s3:GetObject",
                 "s3:ListBucket",
-                "s3:GetBucketLocation",
-                "s3:GetObjectVersion",
-                "s3:GetObjectAttributes",
-                "s3:GetObjectTagging"
+                "s3:GetBucketLocation"
             ],
             "Resource": [
-                "arn:aws:s3:::*/*",
                 "arn:aws:s3:::your-bucket-name-1",
                 "arn:aws:s3:::your-bucket-name-2",
                 "arn:aws:s3:::your-bucket-name-3"
             ]
         },
         {
-            "Sid": "VisualEditor1",
+            "Sid": "ReadObjects",
+            "Effect": "Allow",
+            "Action": "s3:GetObject",
+            "Resource": [
+                "arn:aws:s3:::your-bucket-name-1/*",
+                "arn:aws:s3:::your-bucket-name-2/*",
+                "arn:aws:s3:::your-bucket-name-3/*"
+            ]
+        },
+        {
+            "Sid": "DiscoverBuckets",
             "Effect": "Allow",
             "Action": "s3:ListAllMyBuckets",
             "Resource": "*"
@@ -386,7 +408,7 @@ For production use with multiple buckets and additional permissions, use this co
 ```
 
 <Info>
-  Replace the bucket names in the Resource array (`your-bucket-name-1`, `your-bucket-name-2`, `your-bucket-name-3`) with your actual bucket names. The `arn:aws:s3:::*/*` allows access to all objects in the specified buckets.
+  Replace the bucket names in the Resource arrays (`your-bucket-name-1`, `your-bucket-name-2`, `your-bucket-name-3`) with your actual bucket names. The `/*` entries allow reading the objects in those buckets only. For buckets encrypted with SSE-KMS, also allow `kms:Decrypt` on the KMS key.
 </Info>
 
 **Steps to apply custom policy:**
@@ -396,6 +418,53 @@ For production use with multiple buckets and additional permissions, use this co
 3. Name the policy (e.g., "PipesHub-S3-ReadOnly-SpecificBuckets")
 4. Attach the policy to your IAM user instead of the managed policy
 
+## Advanced: IAM Role Authentication
+
+With **IAM Role (AssumeRole)**, PipesHub reads S3 with temporary credentials from STS `AssumeRole` instead of a long-lived key with S3 access. Choose it in **Authentication method** when you create the instance, then fill in:
+
+- **Access Key** and **Secret Key**: a base key that may only call `sts:AssumeRole`. PipesHub uses it only to call STS. Give it no S3 access.
+- **Role ARN**: the role in the bucket's account that PipesHub assumes, for example `arn:aws:iam::123456789012:role/pipeshub-s3-reader`.
+- **External ID** (optional): must match the `sts:ExternalId` condition in the role's trust policy.
+
+PipesHub never falls back to the server's default AWS credentials for this connector.
+
+**1. Policy for the base key.** Attach this to the IAM user that owns the base key:
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": "sts:AssumeRole",
+      "Resource": "arn:aws:iam::<BUCKET_ACCOUNT_ID>:role/<ROLE_NAME>"
+    }
+  ]
+}
+```
+
+**2. Trust policy on the role.** Remove the `Condition` block if you don't use an external ID:
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": { "AWS": "arn:aws:iam::<BASE_KEY_ACCOUNT_ID>:user/<BASE_KEY_USER>" },
+      "Action": "sts:AssumeRole",
+      "Condition": { "StringEquals": { "sts:ExternalId": "<EXTERNAL_ID>" } }
+    }
+  ]
+}
+```
+
+**3. Permission policy on the role.** Give the role one of the read-only policies above.
+
+<Info>
+  The STS session name is `pipeshub-s3-<connectorId>`, so CloudTrail shows which connector made each call. PipesHub renews the temporary credentials before they expire. If STS refuses the role (wrong ARN, wrong external ID, or a trust policy that does not name the base key), turning on sync fails with the STS `AccessDenied` message.
+</Info>
+
 ## Supported Features
 
 The S3 connector syncs the following data from your AWS S3 buckets:
@@ -403,7 +472,7 @@ The S3 connector syncs the following data from your AWS S3 buckets:
 - **Buckets**: All accessible buckets in your AWS account
 - **Files**: All file types with their metadata (name, size, modification date, MIME type)
 - **Folders**: Directory structure and organization using S3 prefixes
-- **Permissions**: Access control based on bucket and object-level permissions
+- **Access**: Access to synced files is set by the connector scope (Personal or Team)
 
 ## Data Sync Behavior
 
@@ -411,7 +480,8 @@ The S3 connector syncs the following data from your AWS S3 buckets:
 
 The first sync performs a complete scan of your configured S3 buckets:
 
-- **Bucket Discovery**: Lists all accessible buckets in your AWS account (or uses configured bucket filters)
+- **Bucket Discovery**: Lists all accessible buckets in your AWS account (or uses configured bucket filters). When **Bucket Names** is empty and the bucket list can't be fetched, the sync fails and you get a notification
+- **Unreadable Buckets**: A bucket the key can list but not read is skipped, so it doesn't show up in PipesHub as an empty bucket; files synced from it earlier are kept. One notification per sync names all skipped buckets: a warning when **Bucket Names** is empty (choose the buckets to sync there), an error when you picked them
 - **Region Detection**: Automatically detects and caches the region for each bucket
 - **Full Object Listing**: Fetches all objects from selected buckets using pagination (with a **Folders** filter set to **In**, only the objects in the included folders)
 - **Metadata Extraction**: Extracts file names, sizes, modification dates, MIME types, and paths
@@ -438,9 +508,12 @@ The first sync performs a complete scan of your configured S3 buckets:
 After the initial sync, each sync still lists every object in scope (the whole bucket, or each included folder when a **Folders** filter is set to **In**), but downloads and indexes only the ones that changed:
 
 - **Full Listing**: Without a **Folders** filter, each sync lists the whole bucket, page by page. With **Folders** set to **In**, it lists each included folder; with **Not In**, it lists the whole bucket and skips the excluded folders. Listing costs much less than downloading, but its time still grows with the number of objects listed.
-- **Change Detection**: Objects whose `LastModified` is older than the last sync are counted as still present and skipped; new and changed objects are processed.
+- **Change Detection**: Objects whose `LastModified` is older than the last sync are counted as still present and skipped; new and changed objects are processed. A file moved or renamed with unchanged content keeps its record and isn't indexed again.
 - **Sync Point Tracking**: Stores the last sync timestamp per bucket and folder.
-- **Pagination Resume**: Uses continuation tokens to resume an interrupted listing.
+- **Pagination Resume**: Uses continuation tokens to resume an interrupted listing. If S3 no longer accepts a saved token, the bucket is listed again from the start in the same sync, and you get a notification.
+- **Throttling**: Throttled requests (`503 SlowDown`) and server errors are retried with backoff, up to 3 times.
+- **Failed Buckets**: If a bucket can't be listed, its files are kept, the other buckets still sync, and you get one notification naming the failed buckets. The next sync retries them. If a bucket fails inside PipesHub (for example, saving its records), the other buckets still sync, and then the sync is marked as failed.
+- **Deleted Buckets**: A bucket deleted in S3 is removed from PipesHub, with its files, once S3 reports it missing on two syncs in a row.
 - **Deletions**: After a complete listing of everything in scope, files that are no longer there, and files a **File Extensions** or date filter now leaves out, are removed from PipesHub.
 - **Safe Removal**: If a listing failed, or resumed partway from an earlier interrupted sync, those files aren't removed on that sync, even if the listing reached the last page. The next complete listing removes them.
 - **Narrowed Folders**: Files a narrowed **Folders** filter leaves out are removed on the next sync, even if its listing is incomplete.
@@ -450,7 +523,7 @@ After the initial sync, each sync still lists every object in scope (the whole b
 1. The connector reads the sync point for each bucket and folder (stored in our database).
 2. It lists the bucket with `ListObjectsV2` (with **Folders** set to **In**, each included folder in turn), following continuation tokens to the last page.
 3. It processes objects that are new or changed since `last_sync_time`, and skips the rest.
-4. It saves the newest timestamp it saw as the next sync point.
+4. It saves the next sync point: the newest timestamp it saw, but no later than 15 minutes before the listing started. A file changed while the listing ran is then picked up on the next sync.
 5. After a complete listing, it removes the records of objects the listing no longer returned, and of objects an extension or date filter now leaves out (these are still listed, but skipped before they count as kept).
 6. If the **Folders** filter was narrowed, it also removes the records of files the filter now leaves out, whether or not the listing was complete.
 
@@ -462,13 +535,13 @@ After the initial sync, each sync still lists every object in scope (the whole b
 
 The connector respects AWS IAM permissions and PipesHub access controls:
 
-- **IAM-Based Access**: Only syncs buckets and objects the IAM user has permission to access
-- **Bucket Policies**: Respects S3 bucket policies and access control lists (ACLs)
+- **IAM-Based Access**: Only syncs buckets and objects the IAM user (or role) has permission to access
+- **Bucket Policies**: Bucket policies and ACLs limit what the key can read; they are not copied to PipesHub users
 - **PipesHub Scope**: 
-  - **Personal Scope**: Only the connector creator can access synced content
-  - **Team Scope**: All organization users have read access to synced content
+  - **Personal Scope**: Only the connector creator can access synced content. If the creator can't be looked up when a full sync starts, the sync stops and notifies you; existing access is unchanged and the next sync tries again
+  - **Team Scope**: All organization users have read access to synced content. With **Bucket Names** empty, that is every bucket the key can list
 - **Permission Inheritance**: Files inherit permissions from their parent bucket (Record Group)
-- **Access Control**: Users see only content they have permission to view in both AWS and PipesHub
+- **Downloads**: Preview and download use a presigned S3 link that is valid for 5 minutes
 
 ### Sync Frequency
 
@@ -529,10 +602,11 @@ The connector respects AWS IAM permissions and PipesHub access controls:
    - `s3:ListBucket` - To list objects in each bucket
    - `s3:GetBucketLocation` - To detect bucket regions
    - `s3:GetObject` - To download object content
+   - `kms:Decrypt` - Only for buckets encrypted with SSE-KMS
 2. Check that the bucket policy allows access from your IAM user
 3. Ensure the bucket exists and is in the same AWS account
-4. Verify bucket region matches your AWS region configuration
-5. Review IAM policy JSON to ensure ARNs are correct
+4. Review IAM policy JSON to ensure ARNs are correct. `s3:ListBucket` goes on the bucket ARN, `s3:GetObject` on `bucket-name/*`
+5. Check the **Buckets skipped: access denied** notification: it names every bucket the key couldn't read in that sync. Grant access, or leave those buckets out with the **Bucket Names** filter
 
 **No buckets appearing:**
 
@@ -548,6 +622,7 @@ The connector respects AWS IAM permissions and PipesHub access controls:
 4. Check AWS CloudTrail logs for permission errors
 5. Verify the IAM user is in the same AWS account as the buckets
 6. Try refreshing the bucket list in the filter configuration
+7. When searching the dropdown, type the start of the bucket name: search matches name prefixes only
 
 **No data syncing:**
 
@@ -607,7 +682,7 @@ The connector respects AWS IAM permissions and PipesHub access controls:
 - "Credentials invalid" errors
 
 *Solutions:*
-1. Access keys don't expire automatically, but they can be rotated or deleted
+1. Access keys don't expire automatically, but they can be rotated or deleted. With **IAM Role (AssumeRole)**, PipesHub renews the temporary role credentials itself; only the base key needs updating if you rotate it
 2. If access keys were rotated in AWS, update credentials in PipesHub immediately
 3. Check if the IAM user or access keys were deleted in AWS IAM console
 4. Re-authenticate by updating credentials in connector settings
@@ -660,7 +735,7 @@ This connector is designed for **Amazon S3** and uses the AWS S3 API. It support
 
 - **All AWS S3 Regions**: Works with buckets in any AWS region worldwide
 - **Standard S3 Storage Classes**: Standard, Standard-IA, One Zone-IA, Intelligent-Tiering
-- **S3-Compatible Services**: Should work with MinIO and other S3-compatible storage (with proper endpoint configuration)
+- **S3-Compatible Services**: This connector has no custom endpoint setting. For MinIO, use the separate MinIO connector
 
 **Not Supported:**
 - S3 Glacier and Glacier Deep Archive (requires restore process)
@@ -668,7 +743,7 @@ This connector is designed for **Amazon S3** and uses the AWS S3 API. It support
 - Requester Pays buckets (not currently supported)
 
 <Info>
-  The connector uses the standard S3 API and should work with S3-compatible services like MinIO, but is primarily tested and optimized for AWS S3.
+  The connector uses the standard S3 API and connects to AWS S3 endpoints only. For MinIO, use the MinIO connector.
 </Info>
 
 ## FAQ
@@ -727,7 +802,7 @@ This connector is designed for **Amazon S3** and uses the AWS S3 API. It support
   2. **Skips Unchanged Objects**: Objects not modified since the last sync are counted as present and not downloaded again
   3. **Processes Changes**: Downloads and indexes only new or modified objects
   4. **Removes Deletions**: After a complete listing, removes files that are no longer there
-  5. **Updates Timestamp**: Saves the newest timestamp for the next sync
+  5. **Updates Timestamp**: Saves the newest timestamp it saw for the next sync, but no later than 15 minutes before the listing started
   
   Skipping unchanged objects is what makes later syncs faster than the first. The listing itself still covers everything in scope.
 </Accordion>
@@ -748,6 +823,8 @@ This connector is designed for **Amazon S3** and uses the AWS S3 API. It support
   
   If a listing fails, or resumes partway from an earlier interrupted sync, the file isn't removed on that sync, even if the listing reaches the last page. The next complete listing removes it.
   
+  If you delete a whole bucket, its files are removed once S3 reports the bucket missing on two syncs in a row.
+
   **Note**: S3 versioning doesn't keep a deleted file visible. Once the current version is a delete marker, the listing no longer returns the key, so the file is removed.
 </Accordion>
 
@@ -759,7 +836,7 @@ This connector is designed for **Amazon S3** and uses the AWS S3 API. It support
   - **SSE-C**: Server-side encryption with customer-provided keys (not supported)
   - **Client-side encryption**: Files encrypted before upload (not supported)
   
-  Ensure your IAM user has the necessary KMS permissions if using SSE-KMS.
+  Ensure your IAM user (or role) has `kms:Decrypt` on the KMS key if using SSE-KMS.
 </Accordion>
 
 <Accordion title="How do I sync only specific folders in a bucket?">

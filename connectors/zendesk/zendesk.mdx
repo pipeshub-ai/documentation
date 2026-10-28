@@ -9,7 +9,7 @@ icon: "/logo/zendesk.png"
 The Zendesk connector makes tickets, their public comments and attachments, and published Help Center articles and their attachments searchable in PipesHub. Help Center categories and sections become folders. Zendesk agents, admins, groups, and organizations are synced to work out who can see each ticket. Internal ticket notes and Help Center articles restricted to a user segment are not synced.
 
 <Note>
-  The connector signs in with OAuth only. Zendesk is removing API tokens: accounts can't create new ones from October 27, 2026, and all remaining tokens stop working on April 30, 2027. See [Zendesk's announcement](https://support.zendesk.com/hc/en-us/articles/10851263566234-Announcing-the-removal-of-API-tokens-as-an-authentication-method-for-API-requests).
+  The connector signs in with OAuth only. Zendesk is removing Support API tokens (used by the Ticketing and Help Center APIs): accounts can't create new ones from October 27, 2026, and all remaining Support API tokens stop working on April 30, 2027. Messaging and Chat API tokens are not affected. See [Zendesk's announcement](https://support.zendesk.com/hc/en-us/articles/10851263566234-Announcing-the-removal-of-API-tokens-as-an-authentication-method-for-API-requests).
 </Note>
 
 ## Set up Zendesk
@@ -67,7 +67,7 @@ On the **Configure records** tab, choose **Scheduled** (every 60 minutes by defa
 ## Permissions
 
 - **Tickets** are visible in PipesHub to Zendesk admins and agents who can see them in Zendesk, for example agents with access to all tickets, members of the ticket's group, the assignee, and agents named as CCs or followers. Once a ticket has a public comment, its requester and CCs can also see it, as can members of the ticket's organization when that organization shares tickets.
-- **Help Center articles**, categories, and sections are visible to everyone in your PipesHub organization, because only published articles with no user-segment restriction are synced.
+- **Help Center articles**, categories, and sections are visible to everyone in your PipesHub organization, because only published articles with no user-segment restriction are synced. This also applies when your whole Help Center is restricted to signed-in users: PipesHub doesn't read that setting, so everyone in your PipesHub organization can still find those articles.
 - Tickets deleted in Zendesk, and articles that are deleted, archived, unpublished, or later restricted to a user segment, are removed from PipesHub.
 
 ## Troubleshooting

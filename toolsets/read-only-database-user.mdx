@@ -25,13 +25,13 @@ Each user who authenticates a toolset uses their own database account. Make each
 
 ## Create a read-only user
 
-Run these as an admin user. Replace the user name, password, database and schema with your own.
+Run these as an admin user. Replace the user name, `<password>`, database and schema with your own.
 
 <Tabs>
 <Tab title="MariaDB / MySQL">
 
 ```sql
-CREATE USER 'pipeshub_reader'@'%' IDENTIFIED BY 'a_strong_password';
+CREATE USER 'pipeshub_reader'@'%' IDENTIFIED BY '<password>';
 GRANT SELECT ON my_database.* TO 'pipeshub_reader'@'%';
 ```
 
@@ -39,24 +39,26 @@ GRANT SELECT ON my_database.* TO 'pipeshub_reader'@'%';
 <Tab title="PostgreSQL">
 
 ```sql
-CREATE USER pipeshub_reader WITH PASSWORD 'a_strong_password';
+CREATE USER pipeshub_reader WITH PASSWORD '<password>';
 GRANT CONNECT ON DATABASE my_database TO pipeshub_reader;
 GRANT USAGE ON SCHEMA public TO pipeshub_reader;
 GRANT SELECT ON ALL TABLES IN SCHEMA public TO pipeshub_reader;
 ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES TO pipeshub_reader;
 ```
 
-Repeat the `USAGE`, `SELECT` and `ALTER DEFAULT PRIVILEGES` lines for each schema. `ALTER DEFAULT PRIVILEGES` covers tables that the user who runs it creates later.
+Repeat the `USAGE`, `SELECT` and `ALTER DEFAULT PRIVILEGES` lines for each schema. `ALTER DEFAULT PRIVILEGES` covers only tables that the user who runs it creates later. If another role creates your tables, such as a migration user, run it once more for each such role with `FOR ROLE <role>` after `ALTER DEFAULT PRIVILEGES`.
 
 </Tab>
 <Tab title="Amazon Redshift">
 
 ```sql
-CREATE USER pipeshub_reader PASSWORD 'A_strong_password1';
+CREATE USER pipeshub_reader PASSWORD '<password>';
 GRANT USAGE ON SCHEMA public TO pipeshub_reader;
 GRANT SELECT ON ALL TABLES IN SCHEMA public TO pipeshub_reader;
 ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES TO pipeshub_reader;
 ```
+
+Repeat the `USAGE`, `SELECT` and `ALTER DEFAULT PRIVILEGES` lines for each schema. `ALTER DEFAULT PRIVILEGES` covers only tables that the user who runs it creates later. If another user creates your tables, such as a migration user, run it once more for each such user with `FOR USER <user>` after `ALTER DEFAULT PRIVILEGES`.
 
 A Redshift password needs 8 to 64 characters, with an uppercase letter, a lowercase letter and a number.
 

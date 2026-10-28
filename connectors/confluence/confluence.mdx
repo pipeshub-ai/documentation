@@ -279,7 +279,7 @@ Next, the **Granular scopes** tab. Add these read permissions:
 | `read:user:confluence` | View user details |
 | `read:group:confluence` | View groups and memberships |
 | `read:permission:confluence` | View content restrictions and permissions |
-| `read:audit-log:confluence` | View audit records |
+| `read:audit-log:confluence` | View audit records. Optional but recommended: used only to find restriction changes (see **Permission handling**) |
 | `read:folder:confluence` | View folder data |
 | `read:email-address:confluence` | View user email addresses |
 
@@ -515,7 +515,7 @@ Use this method when you want the fastest setup and only need a single user acco
 2. The connector panel opens as a right-side drawer with three tabs: **Authenticate Instance**, **Authorize**, and **Configure Records**.
 3. On the **Authenticate Instance** tab, pick **API Token** in the **Authentication method** dropdown.
 4. Enter:
-   - **Base URL** — your Confluence site URL (e.g., `https://your-domain.atlassian.net`; no trailing slash)
+   - **Base URL** — your Confluence site URL (e.g., `https://your-domain.atlassian.net`)
    - **Email** — your Atlassian account email (the account that created the API token)
    - **API Token** — the token you copied in Step 1
 5. Click **Next**. PipesHub validates the credentials and advances directly to the **Configure Records** tab (the **Authorize** tab is skipped for API Token because the token authenticates on its own).
@@ -602,13 +602,12 @@ The Confluence connector syncs the following data from your Confluence Cloud wor
 - **Spaces** — all accessible spaces and their configurations
 - **Pages** — full page content with formatting preserved
 - **Blog Posts** — all blog post content and metadata
-- **Comments** — comments on pages and blog posts
+- **Comments** — footer and inline comments, indexed inside their page or blog post
 - **Attachments** — files attached to pages and blog posts
 - **Users** — user profiles and account information
 - **Groups** — user groups and memberships
 - **Permissions** — content restrictions and space permissions
 - **Folders** — folder structure and organization
-- **Audit Logs** — activity records for compliance
 
 <Info>
   This connector works with **Confluence Cloud** only. If you run Confluence on your own servers, use the [Confluence Data Center connector](/connectors/confluence/confluence-data-center).
@@ -645,13 +644,30 @@ The Confluence connector syncs the following data from your Confluence Cloud wor
 - Confirm the token was copied correctly — no leading/trailing whitespace
 - The token may have been revoked or expired; create a new one at [id.atlassian.com/manage-profile/security/api-tokens](https://id.atlassian.com/manage-profile/security/api-tokens)
 - Verify the **Email** field matches the Atlassian account that created the token
-- Verify the **Base URL** matches your Confluence site (must include `https://`, no trailing slash, match `*.atlassian.net`)
+- Verify the **Base URL** matches your Confluence site (must include `https://` and match `*.atlassian.net`)
 
 **Base URL format issues (API Token):**
 - Must include the protocol: `https://`
-- Must **not** include a trailing slash — use `https://acme.atlassian.net`, not `https://acme.atlassian.net/`
 - Must match the actual Confluence Cloud site (usually `*.atlassian.net`)
-- Do not include paths like `/wiki` or `/spaces/...`
+- A trailing slash or a trailing `/wiki` is fine: `https://acme.atlassian.net/wiki` works the same as `https://acme.atlassian.net`
+- Do not include longer paths like `/wiki/spaces/...`
+
+**Error when creating, enabling, saving or testing the connector:**
+PipesHub checks the credentials at each of these steps and fails right away with a specific message:
+- **Credentials rejected (401):** check the email and API token, or reconnect the OAuth app
+- **Missing OAuth scopes:** the message names the missing scopes. Add them to the app in Atlassian Developer Console, then reconnect
+- **Can't read Confluence (403):** the account signed in but has no Confluence access. Give it Confluence access and permission to view the spaces to sync
+- **No site found (404):** no Confluence site at that URL. Use the form `https://yourcompany.atlassian.net`
+- **Site unreachable:** Confluence did not answer. Check the URL, or try again in a few minutes
+
+**Sync failure notices:**
+- When a sync ends with anything that failed, partial failures included, PipesHub sends one notice to the connector's creator and the org admins listing what didn't finish. Successful syncs send nothing
+- A scheduled or startup sync that can't start also sends a notice
+- A lasting condition, such as no access to the audit log, is reported when it first appears, not on every sync
+
+**Rate limits:**
+- The connector paces its requests (at most 10 per second with an API token, 6 per second with OAuth) and retries rate-limited requests, waiting as long as Atlassian's `Retry-After` header asks
+- If the OAuth app's hourly quota runs out, the sync stops cleanly and the notice says when the quota resets. The next sync resumes from the last saved batch. Until then, opening a record's preview returns `429` with a `Retry-After` header
 
 **Authorization failed (OAuth):**
 - Verify you're signing in with an account that has Confluence access
@@ -700,6 +716,19 @@ The Confluence connector syncs the following data from your Confluence Cloud wor
 - Each sync also re-checks the 24 hours before the previous sync, so edits made around then aren't missed. This look-back never goes earlier than a **Modified Date** `Is After` date you set
 - Syncs every attachment of a page or blog post, however many it has. If the attachment list can't be read in full, the attachments already read are kept, and the space's page or blog post checkpoint doesn't move, so the next sync reads that time window again. That includes a temporary failure (such as a timeout or rate limit) on the list's first request, in which case the connector uses the attachments that came with the page or blog post in the search results. If the first request fails for a lasting reason, such as the list not being found, the connector uses those search-result attachments and the checkpoint moves on as usual
 - Reduces API calls and sync duration
+- The sync point moves only after each batch is saved, so a sync that stops early resumes from the last saved batch
+
+### Comments
+- Pages and blog posts are indexed with their footer and inline comments inside the page, not as separate items. The **Index Page Comments** and **Index Blogpost Comments** settings control whether comments are included
+- A new or edited comment re-indexes its page or blog post
+- Pages indexed before this format switch to it when they next change; there is no mass re-index
+
+### Completeness
+- Deleted attachments and deleted folders are removed
+- Attachments added or updated on a page that itself didn't change are picked up
+- A full sync that couldn't read part of Confluence removes nothing, and the next sync retries it once
+- A space that fails doesn't stop the sync of other spaces
+- Images too big to inline in the page are kept as separate file records
 
 ### Deleted, trashed and hidden content
 Each sync lists what the connector's account can see in every synced space, separately for pages and blog posts: current and archived pages, and current blog posts.
@@ -719,6 +748,18 @@ Each sync lists what the connector's account can see in every synced space, sepa
 - Attachments and comments of a restricted page are restricted the same way as the page. When a page becomes restricted, or stops being restricted, its stored attachments and comments (and their replies) follow
 - A page restricted to a group PipesHub hasn't synced yet stays restricted; the group's members get access once the group syncs and the page is read again
 - If a space's permissions, a group's members, or a page's restrictions can't be read for a temporary reason, PipesHub keeps what it already has and tries again on the next sync. A failed read never opens a page to its whole space and never removes access
+- Restriction changes are found from the audit log. If the audit log can't be read (the account isn't a Confluence admin, or the OAuth app lacks `read:audit-log:confluence`), they are found by re-checking the page, blog post and folder listings instead
+- Restrictions are read in full, including those with more than 100 users or groups
+- Groups deleted in Confluence and users removed from the site lose access
+- Guests and external collaborators are marked as guests
+- "All licensed users" and admin space permissions map to the matching Confluence groups, not to the whole organization. Anonymous access to a space gives everyone in the organization read access
+- Space permissions of users whose email is hidden are kept
+- A page moved without a new version gets its new parent and access
+
+### Known limits
+- An attachment deleted without a page edit stays until the page changes or a full sync runs, because Confluence search doesn't return deleted content. Deleted comments behave the same way
+- A page restricted to a group created during a sync gets that group's access when the page next changes
+- Atlassian returns at most 10,000 users from its user list. Users past that limit are not synced, and the sync notice says so
 
 </Accordion>
 

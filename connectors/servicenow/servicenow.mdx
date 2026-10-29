@@ -1,6 +1,6 @@
 ---
 title: "ServiceNow"
-description: "Knowledge Base and service management connector"
+description: "Knowledge Base connector for ServiceNow"
 icon: "/logo/servicenow.png"
 ---
 
@@ -28,32 +28,53 @@ icon: "/logo/servicenow.png"
 
 ## Overview
 
-The ServiceNow connector syncs **Knowledge Base** content from your instance into PipesHub using **OAuth 2.0**. It can index articles, categories, knowledge bases, and related metadata so your team can search across ServiceNow documentation alongside other connectors.
+The ServiceNow connector syncs **Knowledge Management** content from your instance into PipesHub: knowledge bases, categories, articles with their feedback comments and inline images, and article attachments. It also syncs the users and groups it needs to give each article the same readers it has in ServiceNow.
+
+PipesHub indexes the articles that ServiceNow's own knowledge search shows, and lets each person search only the articles ServiceNow lets them read. See [What is indexed](#what-is-indexed) and [Access and permissions](#access-and-permissions).
 
 ### What gets synced
 
 | Entity | Description |
 |--------|-------------|
-| **Users** | Profiles and context used for permissions and visibility |
-| **Groups** | Group memberships relevant to KB access |
-| **Knowledge bases** | KB definitions and configuration |
-| **Categories** | Article categories and hierarchy |
-| **Articles** | Knowledge articles and body content |
-| **Attachments** | Files attached to knowledge articles |
+| **Knowledge bases** | Active knowledge bases the integration user can read |
+| **Categories** | The category tree of each synced knowledge base |
+| **Articles** | The current published version of each article: title, number, body (HTML or wiki), inline images, feedback comments, and a helpful/rating summary |
+| **Attachments** | Files attached to an article, as separate file records with the article's readers |
+| **Users** | Active users with an email address, matched to PipesHub accounts by email |
+| **Groups** | Active user groups (with their child groups), plus roles, companies, departments and locations, so user criteria can grant to them |
+
+Incidents, catalog items and other ServiceNow tables are not synced.
 
 ### Authentication
 
-The connector uses **OAuth 2.0** with a **three-step** flow in PipesHub: **Authenticate Instance** (credentials + redirect URL), **Authorize** (browser sign-in to ServiceNow), then **Configure Records** (sync strategy and related options). The admin who completes **Authorize** should use the **same email** as their PipesHub account so permissions line up.
+Pick the sign-in type in **Authentication method** on the first setup tab. Whatever the type, the connector reads ServiceNow as one ServiceNow user, the **integration user** (see [Step 4](#step-4-choose-the-integration-user-and-its-roles)).
+
+| Type in PipesHub | What it is | Fields | Integration user |
+|------------------|------------|--------|------------------|
+| **OAuth 2.0** | OAuth 2.0 authorization code. Recommended | Instance URL, Authorize URL, Token URL, Client ID, Client Secret | The user who signs in on the **Authorize** tab |
+| **Basic authentication** | ServiceNow user name and password | Instance URL, Username, Password | That user |
+| **API Token** | A ServiceNow REST API key, sent in the `x-sn-apikey` header | Instance URL, ServiceNow API key | The user the key belongs to |
+| **Custom** | OAuth 2.0 client credentials (no browser sign-in) | Instance URL, Client ID, Client Secret | The **OAuth application user** set on the OAuth application |
+
+<div className="text-center">
+  <img
+    src="/images/connectors/servicenow/servicenow-connector-auth-types.png"
+    alt="ServiceNow setup — Authentication method selector with OAuth 2.0, Basic authentication, API Token and Custom"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+With **OAuth 2.0** the setup has three tabs: **Authenticate**, **Authorize** (sign in to ServiceNow and allow access), then **Configure records**. The other types have no **Authorize** tab. The OAuth steps are below; for the other types, see [Other sign-in types](#other-sign-in-types).
 
 <Warning>
-  Creating the OAuth application in ServiceNow and registering the redirect URL requires **ServiceNow admin** access. If you change Client ID, Client Secret, or Redirect URL in ServiceNow, update the connector in PipesHub and complete **Authorize** again.
+  Creating the OAuth application in ServiceNow requires **admin** access. If you change the Client ID, Client Secret or Redirect URL in ServiceNow, update the connector in PipesHub and complete **Authorize** again.
 </Warning>
 
 ---
 
 ## Configuration Guide
 
-Register an OAuth API endpoint in ServiceNow, then add the connector under **Workspace Settings** in PipesHub. Copy the **Redirect URL** from PipesHub into ServiceNow **before** submitting the OAuth app—the values must match **exactly** (including scheme, host, path, and trailing slashes).
+Register an OAuth API endpoint in ServiceNow, choose the integration user, then add the connector under **Workspace Settings** in PipesHub. Copy the **Redirect/Callback URL** from PipesHub into ServiceNow **before** you submit the OAuth application. The two values must match **exactly** (scheme, host, path and trailing slash).
 
 ### How to configure and enable the ServiceNow connector
 
@@ -89,16 +110,16 @@ Register an OAuth API endpoint in ServiceNow, then add the connector under **Wor
   />
 </div>
 
-#### Step 2: Authenticate Instance — instance name and Redirect URL
+#### Step 2: Authenticate tab — instance name and Redirect/Callback URL
 
-1. In **ServiceNow Configuration**, stay on **Authenticate Instance**.
+1. In **Set up ServiceNow**, stay on the **Authenticate** tab and keep **Authentication method** on **OAuth 2.0**.
 2. Set **Instance name** (for example `ServiceNow knowledge`).
-3. Copy the **Redirect URL** from the read-only field. In **System OAuth** → **Application Registry** in ServiceNow, paste this URL into your OAuth application’s allowed redirect list **exactly** as shown (use the copy control in PipesHub if one is available).
+3. Copy the **Redirect/Callback URL** from the read-only field. It has the form `https://{your-pipeshub-host}/connectors/oauth/callback/ServiceNow`. You paste it into ServiceNow in Step 3.
 
 <div className="text-center">
   <img
     src="/images/connectors/servicenow/servicenow-connector-redirect-url.png"
-    alt="ServiceNow Configuration — Redirect URL to register in ServiceNow"
+    alt="ServiceNow setup — Redirect/Callback URL to register in ServiceNow"
     className="block mx-auto w-11/12"
   />
 </div>
@@ -107,8 +128,8 @@ Use the in-panel **ServiceNow OAuth Setup** and **Pipeshub Documentation** links
 
 #### Step 3: Create the OAuth application in ServiceNow
 
-1. Sign in to your ServiceNow instance (for example `https://dev12345.service-now.com`) as an administrator.
-2. Open **Application Registry**: filter navigator **Application Registry**, or **System OAuth** → **Application Registry**.
+1. Sign in to your ServiceNow instance (for example `https://acme.service-now.com`) as an administrator.
+2. Open **Application Registry**: type **Application Registry** in the filter navigator, or go to **System OAuth** → **Application Registry**.
 3. Click **New** → **Create an OAuth API endpoint for external clients**.
 
 <div className="text-center">
@@ -135,12 +156,13 @@ Use the in-panel **ServiceNow OAuth Setup** and **Pipeshub Documentation** links
   />
 </div>
 
-4. Configure the application, including:
-   - **Name** — e.g. `PipesHub KB Connector`
-   - **Redirect URL** — the **exact** URL you copied from PipesHub in Step 2 (must match character-for-character)
+4. Configure the application:
+   - **Name** — for example `PipesHub KB Connector`
+   - **Redirect URL** — the **exact** URL you copied from PipesHub in Step 2
    - **Client ID** / **Client Secret** — generated by ServiceNow; copy both for Step 5
    - **Accessible from** — typically **All application scopes**
-   - **Refresh token lifespan** — e.g. `8640000` seconds (~100 days) if your policy allows
+   - **Access token lifespan** — the default (1,800 seconds) is fine. PipesHub refreshes the token when it expires during a sync
+   - **Refresh token lifespan** — for example `8640000` seconds (100 days). When the refresh token expires, you must run **Authorize** again
 
 <div className="text-center">
   <img
@@ -158,7 +180,7 @@ Use the in-panel **ServiceNow OAuth Setup** and **Pipeshub Documentation** links
   />
 </div>
 
-5. **Submit** the record. Copy **Client ID** and **Client Secret** again from the form if needed.
+5. **Submit** the record. Open it again to copy **Client ID** and **Client Secret** if needed.
 
 <div className="text-center">
   <img
@@ -172,22 +194,42 @@ Use the in-panel **ServiceNow OAuth Setup** and **Pipeshub Documentation** links
   Treat the **Client Secret** like a password. Anyone with it can call your OAuth endpoint until you rotate it in ServiceNow and update PipesHub.
 </Warning>
 
-#### Step 4: Verify admin roles (ServiceNow)
+#### Step 4: Choose the integration user and its roles
 
-The user who completes **Authorize** in PipesHub should have permission to access the knowledge data you intend to sync (often **`admin`** or **`impersonator`** / **`impersonate`** depending on your instance and security model).
+The connector reads ServiceNow as the **integration user**: with OAuth, the user who completes **Authorize** in Step 6. That user's roles decide what PipesHub can sync and how exactly it can copy ServiceNow's access rules.
 
-1. Open **System Security** → **Users** and select that user.
-2. Confirm roles such as **`admin`** or impersonation-related roles per your organization’s standards.
+| Roles | Result |
+|-------|--------|
+| **`admin`** (recommended) | Everything is synced. Deleted articles are removed on the next sync. Instance knowledge settings are read, so access matches your configuration |
+| **`knowledge_admin`** + **`user_admin`** (minimum) | Every knowledge base and article, every user criterion and every user, group and role membership can be read. Deleted articles are removed by the daily check instead of on the next sync. The instance's knowledge settings and portal are hidden from this user, so the connector uses the safer defaults listed below |
+| Anything less (for example only `knowledge` or `knowledge_manager`) | The tables that say who may read what are closed to the user. The connection test fails and names them (see [Troubleshooting](#troubleshooting)) |
+
+When the connector starts, it tests the connection: it reads one row of every table a sync needs, and fails with the list of tables the integration user cannot read. When the user is not an admin, the test passes and you get one warning notice, **`<instance name>`: the integration user can read less than an admin**, that lists what the user cannot read.
+
+When the integration user cannot read the instance's knowledge settings (true for `knowledge_admin` + `user_admin`), the connector uses the value that grants less:
+
+- `glide.knowman.block_access_with_no_user_criteria`: treated as **true**, so a knowledge base with no user criteria is open only to admins, knowledge admins, its owner and its managers.
+- `glide.knowman.apply_article_read_criteria`: treated as **true**, so contributors are held to an article's own Can Read and Cannot Read.
+- The knowledge portal URL: links open the default portal `/kb`.
+
+To check the roles:
+
+1. Open **System Security** → **Users** and select the integration user.
+2. On the **Roles** tab, confirm `admin`, or `knowledge_admin` and `user_admin`.
 
 <div className="text-center">
   <img
     src="/images/connectors/servicenow/admin_roles.png"
-    alt="ServiceNow user roles for connector administrator"
+    alt="ServiceNow user roles for the integration user"
     className="block mx-auto w-11/12"
   />
 </div>
 
-#### Step 5: Complete Authenticate Instance in PipesHub
+<Note>
+  The integration user must be **active**. An inactive ServiceNow user cannot sign in, so its token stops working.
+</Note>
+
+#### Step 5: Complete the Authenticate tab in PipesHub
 
 From your instance hostname, derive:
 
@@ -195,35 +237,29 @@ From your instance hostname, derive:
 - **ServiceNow Authorize URL** — `https://your-instance.service-now.com/oauth_auth.do`
 - **ServiceNow Token URL** — `https://your-instance.service-now.com/oauth_token.do`
 
-On **Authenticate Instance**, pick a saved **OAuth app** if your workspace lists one, or enter a new **Client ID** and **Client Secret** from Step 3 together with the three URLs above. Confirm the **Redirect URL** still matches ServiceNow.
+On the **Authenticate** tab, pick a saved **OAuth app** if your workspace lists one, or enter a new **Client ID** and **Client Secret** from Step 3 together with the three URLs above. Confirm the **Redirect/Callback URL** still matches ServiceNow. The connector asks for the `useraccount` scope.
+
+The **Instance URL** must be the instance address only: `https://`, a host name, and no path, query, fragment, user name or password. Custom domains work. The **Authorize URL** and **Token URL** must be on the same host as the instance. Addresses on this server, link-local and cloud metadata addresses are refused. ServiceNow redirects are not followed, so a URL that redirects (for example to a single sign-on page) fails with a message saying it is not the instance's REST API.
 
 <div className="text-center">
   <img
     src="/images/connectors/servicenow/servicenow-connector-config-1.png"
-    alt="ServiceNow Configuration — Authenticate Instance, instance name and documentation"
+    alt="ServiceNow setup — instance name and Authentication method set to OAuth 2.0"
     className="block mx-auto w-11/12"
   />
 </div>
 
-<div className="text-center">
-  <img
-    src="/images/connectors/servicenow/servicenow-connector-config-2.png"
-    alt="ServiceNow Configuration — OAuth 2.0 credential fields"
-    className="block mx-auto w-11/12"
-  />
-</div>
-
-Click **Next →** to open the **Authorize** tab.
+Click **Next** to open the **Authorize** tab.
 
 #### Step 6: Authorize tab
 
-1. Click **Authenticate ServiceNow to Proceed** (or the equivalent primary button). Complete sign-in and consent in the provider window.
-2. **Continue to configuration →** stays disabled until authentication succeeds. When you see a success state (for example **Connected – you can continue to Configure records**), click **Continue to configuration →**.
+1. Click **Authenticate ServiceNow to proceed**. Sign in to ServiceNow **as the integration user** from Step 4 and allow access.
+2. **Continue to configuration →** stays disabled until authentication succeeds. When you see **Connected — you can continue to Configure records**, click **Continue to configuration →**.
 
 <div className="text-center">
   <img
     src="/images/connectors/servicenow/servicenow-connector-authenticate.png"
-    alt="ServiceNow Configuration — Authorize tab before authentication"
+    alt="ServiceNow setup — Authorize tab before authentication"
     className="block mx-auto w-11/12"
   />
 </div>
@@ -231,30 +267,32 @@ Click **Next →** to open the **Authorize** tab.
 <div className="text-center">
   <img
     src="/images/connectors/servicenow/servicenow-connector-authenticated.png"
-    alt="ServiceNow Configuration — Authorize tab after successful connection"
+    alt="ServiceNow setup — Authorize tab after successful connection"
     className="block mx-auto w-11/12"
   />
 </div>
 
 <Warning>
-  **Authorize using the same email as your PipesHub account.** A different identity often causes permission or visibility issues in PipesHub.
+  **Sign in as the integration user.** The connector syncs only what that user can read. A user without the roles in Step 4 makes the sync stop, or sync less.
 </Warning>
 
-#### Step 7: Configure Records
+#### Step 7: Configure records
 
-On **Configure Records**, set **Sync strategy** (for example **Scheduled** or **Manual**) and **Sync interval** when scheduled (for example **1 Hour**). Then click **Save Configuration**.
+On the **Configure records** tab, set **Sync strategy** (**Scheduled** or **Manual**) and, when scheduled, **Sync interval** (default **1 hour**). Add [filters](#filters) only if you need to narrow the scope. Then click **Save configuration** (**← Back** returns to the previous tab).
 
 <div className="text-center">
   <img
     src="/images/connectors/servicenow/servicenow-connector-configure-records.png"
-    alt="ServiceNow Configuration — Configure Records, sync settings"
+    alt="ServiceNow setup — Configure records, sync strategy and sync interval"
     className="block mx-auto w-11/12"
   />
 </div>
 
+There is no realtime sync. Changes appear on the next scheduled run, or when you click **Sync** or **Full sync** on the instance card.
+
 #### Step 8: Start syncing and monitor
 
-After save, you may see **Instance is configured and ready to sync** — choose **Start Syncing Now** or **I'll do it later**. On the ServiceNow connector page, use **Sync Enabled** and the sync actions on the instance card as needed.
+After saving, start the first sync with **Sync now**, or later from the instance card (**Sync** or **Full sync**). Use **Manage configuration** to change the sign-in, sync settings or filters.
 
 <div className="text-center">
   <img
@@ -264,26 +302,242 @@ After save, you may see **Instance is configured and ready to sync** — choose 
   />
 </div>
 
+### Other sign-in types
+
+For every type, choose the integration user and its roles as in [Step 4](#step-4-choose-the-integration-user-and-its-roles), and enter the **Instance URL** with the rules in [Step 5](#step-5-complete-the-authenticate-tab-in-pipeshub). After the **Authenticate** tab, continue with [Step 7](#step-7-configure-records). PipesHub checks the credentials when you enable the connector and shows ServiceNow's reason if they are refused.
+
+<Tabs>
+
+<Tab title="Basic authentication">
+
+1. In ServiceNow, use (or create) the integration user and give it a password. Do not use a personal account.
+2. In PipesHub, on the **Authenticate** tab, choose **Basic authentication** and enter **ServiceNow Instance URL**, **Username** and **Password**.
+
+<div className="text-center">
+  <img
+    src="/images/connectors/servicenow/servicenow-connector-basic-auth.png"
+    alt="ServiceNow setup — Basic authentication with Instance URL, Username and Password"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+If ServiceNow refuses the password during a sync, the sync stops at once instead of retrying, so it does not lock the account.
+
+</Tab>
+
+<Tab title="API Token (API key)">
+
+ServiceNow accepts an API key only on the APIs an access policy allows. In ServiceNow, as an admin:
+
+1. Create a **REST API Key** for the integration user (**System Web Services** → **API Access Policies** → **REST API Key**). Copy the key.
+2. Create an **Inbound Authentication Profile** (**System Web Services** → **API Access Policies** → **Inbound Authentication Profile**) of type API key that reads the key from the `x-sn-apikey` header.
+3. Create **REST API Access Policies** (**System Web Services** → **API Access Policies** → **REST API Access Policies**) for the **Table API** and the **Attachment API** that use that profile.
+
+<Warning>
+  An access policy replaces the authentication ServiceNow accepts on that API. Add the profiles for **Basic** and **OAuth** to the same policies as well. A policy that lists only the API key profile breaks every other integration that calls the Table or Attachment API with a password or an OAuth token.
+</Warning>
+
+4. In PipesHub, on the **Authenticate** tab, choose **API Token** and enter **ServiceNow Instance URL** and **ServiceNow API key**.
+
+<div className="text-center">
+  <img
+    src="/images/connectors/servicenow/servicenow-connector-api-key.png"
+    alt="ServiceNow setup — API Token with Instance URL and ServiceNow API key"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+If ServiceNow refuses the key during a sync, the sync stops at once instead of retrying.
+
+</Tab>
+
+<Tab title="Custom (client credentials)">
+
+The connector gets its token with the OAuth 2.0 client credentials grant and acts as the OAuth application's user. In ServiceNow, as an admin:
+
+1. Create the OAuth application as in [Step 3](#step-3-create-the-oauth-application-in-servicenow). A Redirect URL is not used.
+2. On the application, set **OAuth Application User** to the integration user.
+3. Set the system property `glide.oauth.inbound.client.credential.grant_type.enabled` to `true`. Without it, ServiceNow refuses the client credentials grant.
+4. In PipesHub, on the **Authenticate** tab, choose **Custom** and enter **ServiceNow Instance URL**, **Client ID** and **Client Secret**.
+
+<div className="text-center">
+  <img
+    src="/images/connectors/servicenow/servicenow-connector-client-credentials.png"
+    alt="ServiceNow setup — Custom (client credentials) with Instance URL, Client ID and Client Secret"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+PipesHub gets a new token before the current one expires, and once more if ServiceNow rejects a token during a sync. The token is never stored.
+
+</Tab>
+
+</Tabs>
+
+---
+
+## What is indexed
+
+PipesHub indexes an article when its current version is what ServiceNow's knowledge search shows:
+
+- the workflow state is **Published**,
+- the article is **active**,
+- **Valid to** is empty or today or later (UTC), and
+- its knowledge base is **active**.
+
+Drafts, articles in review, pending retirement or retired, outdated versions, expired articles, inactive articles and articles in an inactive knowledge base are not indexed. A stored article that stops meeting these rules is removed from PipesHub. An inactive category changes nothing: its articles stay.
+
+Each article is one record, keyed by its **number** (for example `KB0010001`). When you publish a new version, the same record is updated with the new version's content; old versions are never indexed. The record links to the article on your knowledge portal (`/{portal}?id=kb_article_view&sysparm_article=KB0010001`), which always opens the current version.
+
+What an article's content includes:
+
+- **Title, number and body.** HTML articles are converted to Markdown. Wiki articles are indexed from their rendered wiki page.
+- **Inline images.** Images pasted into the article editor, or attached to the article and shown in its body, are embedded in the indexed article: up to **20 images** and **20 MB** per article, and **10 MB** per image. Images beyond those limits, images on other sites or attached to other records, and images that cannot be read stay links.
+- **Feedback comments.** Comments from article feedback are indexed with the article, as threads with the commenter's name. Flagged feedback, and the feedback **Reason** and **Work notes** fields, are not indexed.
+- **Feedback summary.** How many readers found the article helpful, and its average star rating.
+- **Attachments.** Files attached to the article are separate file records. A file keeps its record across article versions as long as its name and content do not change.
+
 <Note>
-  Initial sync duration depends on how many knowledge articles, categories, and users are in scope. Incremental sync typically relies on change fields such as `sys_updated_on` on synced tables.
+  **After upgrading PipesHub:** articles were previously stored per version. The first sync after the upgrade moves them to one record per article number and attachments to one record per file, re-reads every user once, and re-indexes every article and attachment once. Existing records keep their IDs. Expect that sync to take as long as an initial sync.
 </Note>
 
-## Supported Features
+### When changes appear
 
-The ServiceNow connector syncs the following data:
+| Change in ServiceNow | When PipesHub shows it |
+|----------------------|------------------------|
+| Article created, edited or published as a new version | Next sync |
+| Article retired, made inactive, moved back to draft, or moved to another category or knowledge base | Next sync |
+| Feedback comment added or deleted, or an inline image changed | Next sync (the connector checks feedback and images separately, because they do not change the article's **Updated** time) |
+| Attachment added, replaced or deleted | Next sync |
+| **Valid to** date passed | The first sync of the next day (UTC) |
+| Article deleted | Next sync when the integration user is an admin; otherwise within a day |
+| Knowledge base made inactive | Next sync: the knowledge base and everything in it are removed. When it is active again, it is read in full |
+| Category deleted | Next sync |
+| Group membership, role or user criteria changed | Next sync |
+| User made inactive, deleted, or left without an email address | Next sync for a change to the user; within a day for a deleted user. The user loses access |
 
-- **Users** — User profiles and permissions context  
-- **Groups** — Group memberships used for access  
-- **Knowledge bases** — KB structures and settings  
-- **Categories** — Article categories and hierarchy  
-- **Articles** — Knowledge article content  
-- **Attachments** — Files attached to articles  
+Each incremental sync reads what changed since the last one, using the **Updated** time (`sys_updated_on`) with a two-minute overlap so nothing written around the checkpoint is missed. Once a day, and on every **Full sync**, PipesHub also compares its stored articles with the full list of current articles and removes the ones that are gone.
+
+A sync that could not read part of ServiceNow removes nothing for what it could not read. An article that fails to sync is retried on the next run, and the stored copy stays until then.
+
+---
+
+## Access and permissions
+
+PipesHub gives each article the readers ServiceNow gives it. People are matched by **email**: a ServiceNow user can search an article in PipesHub when they sign in to PipesHub with the same email address as their ServiceNow user. ServiceNow users without an email address are not synced and get no access.
+
+### Who can read an article
+
+An article is readable in PipesHub by:
+
+1. **Privileged users:** everyone with the `admin` or `knowledge_admin` role, the knowledge base's **Owner**, and its **Managers**. They read every article of the knowledge base, without user criteria.
+2. **The article's ownership group:** the active members and the manager of the group in the article's **Ownership group** field. This applies to that article only, not the knowledge base.
+3. **Contributors:** users who match the knowledge base's **Can Contribute** user criteria and no **Cannot Contribute** criteria. A knowledge base's **Cannot Read** never stops a contributor.
+4. **Readers:** users who match the knowledge base's **Can Read** criteria and none of its **Cannot Read** criteria, **and**, when the article has its own **Can Read**, also match that, **and** do not match the article's **Cannot Read**.
+
+An article's own Can Read always narrows its knowledge base; it never adds readers. When `glide.knowman.apply_article_read_criteria` is **true**, contributors are held to the article's own Can Read and Cannot Read too. When it is false or unset, contributors read every article.
+
+The `knowledge_manager` and `knowledge` roles, and being an article's author, give no read access on their own (ServiceNow does the same).
+
+Attachments, inline images and feedback have exactly the readers of their article.
+
+### How user criteria are evaluated
+
+| Criterion field | Who matches |
+|-----------------|-------------|
+| **Users** | The listed active users |
+| **Groups** | Active members of the listed active groups and of their active child groups |
+| **Roles** | Users who have the role directly, through a group, or through a role that contains it |
+| **Companies**, **Departments**, **Locations** | Users with exactly that value. Child departments, locations and companies do not count |
+| **Match All** | Users must match every populated field. Otherwise, any field is enough |
+| No field set | Every user |
+
+Inactive criteria, inactive groups and inactive users match nobody.
+
+### Default criteria on new knowledge bases
+
+ServiceNow adds these criteria to every new knowledge base:
+
+| Default criterion | Where | What PipesHub does |
+|-------------------|-------|--------------------|
+| **Any User** | Can Read | Every synced user can read the knowledge base's articles |
+| **Guest User** | Cannot Read, Cannot Contribute | While unedited, it matches only ServiceNow's guest user, who has no PipesHub account, so it denies nobody in PipesHub. An edited copy counts as a [scripted criterion](#scripted-criteria) |
+| **Has at least one role apart from snc_internal** | Can Contribute | Evaluated while its script is unedited: active users with at least one active role are contributors. When the **Explicit Roles** plugin (`com.glide.explicit_roles`) is active, it is users with `snc_internal` and at least one other role. If the plugin state cannot be read, the criterion grants nobody. An edited script counts as a [scripted criterion](#scripted-criteria) |
+
+### Scripted criteria
+
+PipesHub does not run user criteria scripts. Apart from the two unedited defaults above:
+
+- **Can Read or Can Contribute with a script:** only the criterion's fields grant access. With **Match All**, the criterion grants nobody.
+- **Cannot Read or Cannot Contribute with a script:** PipesHub cannot tell whom the script denies, so it denies everyone the criterion may cover. The privileged users and the ownership group always keep access. Contributors keep it too, unless the criterion is a Cannot Contribute, or an article's Cannot Read while `glide.knowman.apply_article_read_criteria` is true.
+
+A script that is only the default comment block counts as no script. If an article ends up with fewer readers than in ServiceNow, check its knowledge base and article criteria for scripts and replace them with field conditions where you can.
+
+The end-of-sync notice (**`<instance name>`: sync finished with problems**) says how many user criteria use a script, and how many articles have no reader in PipesHub because of them. It repeats only when the numbers change.
+
+### Knowledge bases with no criteria
+
+A knowledge base with no **Can Read** and no **Can Contribute** criteria is readable only by the privileged users, unless `glide.knowman.block_access_with_no_user_criteria` is explicitly **false** on your instance. Then every synced user can read it. When the property is unset or cannot be read, PipesHub keeps the knowledge base closed.
+
+### When access rules cannot be read
+
+If a user criterion, group membership or role table cannot be read, the sync stops, sends the notice **`<instance name>`: cannot read `<table>`**, and removes nothing. If a single criterion cannot be read or is hidden from the integration user, the articles it governs keep the access they had and are checked again on the next sync. A failed read never opens an article to more people.
+
+### Not supported
+
+- Public knowledge bases for users who are not signed in (guest access).
+- Knowledge bases in application scopes the integration user cannot administer, and domain separation. These are untested.
+- The article **Roles** field (used only when `glide.knowman.search.apply_role_based_security` is `true`) is not applied.
+
+---
+
+## Filters
+
+The **Configure records** tab has these filters. Leave them empty to sync every knowledge base the integration user can read. The **Knowledge bases** and **Categories** lists show the active knowledge bases and categories, with search; categories are shown as `Knowledge base › Parent › Category`.
+
+<div className="text-center">
+  <img
+    src="/images/connectors/servicenow/servicenow-connector-filters.png"
+    alt="ServiceNow setup — Indexing and sync filters: Enable Manual Indexing, the Add filter menu with Knowledge bases, Categories, Modified Date and Created Date, and the Index articles and Index attachments toggles"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+
+| Filter | Type | Behaviour |
+|--------|------|-----------|
+| **Knowledge bases** | Sync | Sync only these knowledge bases (**In**) or all but these (**Not in**) |
+| **Categories** | Sync | Sync only articles in these categories and their sub-categories (**In**), or skip them (**Not in**). **Not in** keeps articles with no category; **In** drops them |
+| **Modified Date** | Sync | Sync only articles last updated in this range (UTC) |
+| **Created Date** | Sync | Sync only articles whose current version was created in this range (UTC). Every published edit creates a new version, so this is the date of the last publish, not of the first version |
+| **Enable Manual Indexing** | Indexing | Records are synced but indexed only when you start indexing them |
+| **Index articles** | Indexing | Index knowledge articles. Applies to new and changed articles |
+| **Index attachments** | Indexing | Index article attachments. Applies to new and changed attachments |
+
+Saving a filter change queues a full sync. When you narrow a filter, that sync removes the records that are now out of scope, with their attachments. When you widen it, that sync reads what was left out. Changing **Index articles** or **Index attachments** does not un-index or re-index records already stored; it applies as articles and attachments are next added or changed.
+
+---
+
+## Current limitations
+
+- **Rate limits.** The connector sends at most 10 requests per second and retries a request up to 3 times on a timeout, `429` or `5xx`, waiting as long as `Retry-After` asks, up to 60 seconds. ServiceNow rate limit rules count per hour, so a `429` can ask to wait up to an hour. When it asks for more than 60 seconds, the sync stops and sends no more requests until the limit resets. While the limit lasts, opening a record's preview returns `429` with a `Retry-After` header at once. To avoid this, exclude the integration user from your REST API rate limit rules (**System Web Services** → **Rate Limit Rules**) or raise its limit.
+- **Sign-in refused during a sync.** With **OAuth**, the connector refreshes the token once and retries; with **Custom**, it gets a new token once. If ServiceNow refuses again, the sync stops until you re-authorize or fix the credentials. With **Basic authentication** and **API Token**, the sync stops at the first refusal, so it cannot lock the account.
+- **Inline images:** at most 20 images and 20 MB per article, 10 MB per image. The rest stay links.
+- **After a rate-limit stop.** The first sync after you enable the connector, and ordinary scheduled or manual syncs, continue where they stopped. A **Full sync** you start, or the full sync a filter change queues, runs again from the beginning.
+- **Not realtime.** There is no webhook sync.
+- **Knowledge only.** Incidents, problems, catalog items and other tables are not synced.
+- **Scripted user criteria** are not evaluated. See [Scripted criteria](#scripted-criteria).
+- **Non-admin integration user.** Deleted articles are found by the daily check instead of on the next sync, and instance knowledge settings fall back to the defaults in [Step 4](#step-4-choose-the-integration-user-and-its-roles).
+- **ServiceNow's criteria cache.** A user criterion edited in ServiceNow can take a few minutes to apply in ServiceNow itself; PipesHub reads what ServiceNow returns at sync time.
+
+---
 
 ## Useful Links
 
-- **ServiceNow documentation:** [https://www.servicenow.com/docs/](https://www.servicenow.com/docs/) — search your product family for **OAuth**, **Application Registry**, and **external OAuth clients**  
-- **ServiceNow Developer:** [https://developer.servicenow.com/](https://developer.servicenow.com/)  
-- **PipesHub:** **Workspace Settings** → **Connectors** → **ServiceNow** for the live **Redirect URL** and connector health  
+- **ServiceNow documentation:** [https://www.servicenow.com/docs/](https://www.servicenow.com/docs/) — search for **Application Registry**, **user criteria** and **knowledge base access**
+- **Inbound REST API rate limiting:** [https://www.servicenow.com/docs/r/zurich/api-reference/rest-api-explorer/inbound-REST-API-rate-limiting.html](https://www.servicenow.com/docs/r/zurich/api-reference/rest-api-explorer/inbound-REST-API-rate-limiting.html)
+- **ServiceNow Developer:** [https://developer.servicenow.com/](https://developer.servicenow.com/)
+- **PipesHub:** **Workspace Settings** → **Connectors** → **ServiceNow** for the live **Redirect/Callback URL** and connector status
 
 ---
 
@@ -297,36 +551,65 @@ The ServiceNow connector syncs the following data:
 
 **Invalid client credentials**
 
-- Re-check **Client ID** and **Client Secret** from ServiceNow with no extra spaces.  
-- Confirm the OAuth application is **active** and not expired or rotated without updating PipesHub.
+- Re-check **Client ID** and **Client Secret** from ServiceNow, with no extra spaces.
+- Confirm the OAuth application is **active** and its secret was not rotated without updating PipesHub.
 
 **Redirect / callback mismatch**
 
-- The Redirect URL in PipesHub must **exactly** match the value saved on the ServiceNow OAuth application (scheme, host, path, trailing slash).  
+- The **Redirect/Callback URL** in PipesHub must **exactly** match the value on the ServiceNow OAuth application (scheme, host, path, trailing slash).
 - After any change, save in both places and run **Authorize** again.
-
-**Authorization failed**
-
-- Confirm the authorizing user has the roles your organization requires for KB access.  
-- Ensure the account is not locked and can open the same instance URL you configured.
 
 **Incorrect instance or OAuth URLs**
 
-- Instance URL pattern: `https://instance-name.service-now.com` (no trailing slash).  
-- Authorize URL ends with `/oauth_auth.do`; token URL ends with `/oauth_token.do`.
+- Instance URL pattern: `https://instance-name.service-now.com` (no trailing slash). See the rules in [Step 5](#step-5-complete-the-authenticate-tab-in-pipeshub).
+- Authorize URL ends with `/oauth_auth.do`; Token URL ends with `/oauth_token.do`. Both must be on the instance's host.
 
-**Token expired or sync stopped**
+**Error when enabling or starting the connector**
 
-- Refresh token lifetime is controlled in ServiceNow OAuth settings.  
-- Use **Re-authenticate with provider** (or equivalent) in PipesHub when tokens are rotated or revoked.
+PipesHub tests the connection when the connector starts and shows the reason. If a scheduled sync cannot start, the connector's creator and the org admins get the notice **`<instance name>`: could not start** with the same reason.
 
-**Permission denied for articles**
+| Message | What to do |
+|---------|------------|
+| *The ServiceNow integration user cannot read these tables: … Give it the admin role, or at least the knowledge_admin and user_admin roles, then try again.* | Give the integration user the roles in [Step 4](#step-4-choose-the-integration-user-and-its-roles) |
+| *ServiceNow at `<host>` refused the connector's sign-in (HTTP 401: …).* | With OAuth, re-authorize on the **Authorize** tab. With the other types, check the credentials on the **Authenticate** tab |
+| *ServiceNow at `<host>` redirected the request (HTTP 3xx), so this URL is not the instance's REST API.* | Enter the instance's own address, such as `https://<instance>.service-now.com` |
+| *ServiceNow at `<host>` did not answer with its REST API; the instance may be hibernating.* | Wake the instance (developer instances hibernate when unused), then try again |
+| *ServiceNow at `<host>` answered HTTP 4xx: … Check the instance URL.* | The address answers, but not as a ServiceNow instance. Check the URL |
+| *ServiceNow at `<host>` answered HTTP 5xx: … Try again later.* | The instance had an error. Try again later |
+| *Could not reach ServiceNow at `<host>`. Check the instance URL.* | The host name does not resolve or does not answer. Check the URL and that PipesHub can reach the instance |
+| *The ServiceNow instance URL must …* / *The ServiceNow instance URL is not allowed: …* | Fix the URL as the message says. See [Step 5](#step-5-complete-the-authenticate-tab-in-pipeshub) |
+| *The ServiceNow Token URL must be on the instance's address, …* (or Authorize URL) | Use the instance's host for the Authorize and Token URLs |
 
-- Verify KB and table ACLs for the admin / integration user.  
-- Check group membership and knowledge base visibility in ServiceNow.
+**Notices**
+
+PipesHub sends these notices to the connector's creator and the org admins. Each title starts with the connector's instance name. A sync that stops removes nothing it did not read, and the next sync reads what it missed.
+
+| Notice | Cause | What to do |
+|--------|-------|------------|
+| **needs to be re-authorized** — *ServiceNow refused the connector's sign-in (HTTP 401: …)* | The token or credentials stopped working: the refresh token expired or was revoked, the OAuth application, password or API key changed, or the integration user is inactive or locked out. With OAuth the notice has a **Re-authorize ServiceNow** action | With OAuth, sign in again on the **Authorize** tab. With the other types, update the credentials on the **Authenticate** tab |
+| **cannot read `<table>`** — *The ServiceNow integration user cannot read the table `<table>` …, which decides who may read knowledge articles.* | A table of user criteria, users, groups, memberships, roles, companies, departments or locations is closed to the integration user, or an access rule hides all its rows | Give the user the admin role, or knowledge_admin and user_admin, then sync again |
+| **sync paused, ServiceNow rate limit reached** — *A ServiceNow rate limit rule is used up until HH:MM UTC, so the sync stopped.* | An hourly REST API rate limit rule ran out. The notice says whether the next sync after that time continues where this one stopped or runs the full sync again | Nothing. To avoid it, exclude the integration user from your REST API rate limit rules |
+| **sync failed** — *The sync stopped: …* | Any other error. The sync is retried on its next run | If it repeats, check the connector logs |
+| **the integration user can read less than an admin** | The integration user is not an admin, or cannot read the knowledge settings or the Service Portal settings. The notice lists which | For a complete sync, give the integration user the admin role. See [Step 4](#step-4-choose-the-integration-user-and-its-roles) |
+| **sync finished with problems** — *The sync finished, but: …* | The sync completed, but skipped something. The list can include: articles that could not be synced, or whose attachments, feedback or user criteria could not be read (retried on the next sync); knowledge bases that kept their stored access because their user criteria could not be read; active users with no email address; articles with no reader in PipesHub; user criteria that use a script or are hidden from the integration user; records that could not be removed | Fix the cause named in each line. Lines about your ServiceNow setup (users without email, scripted criteria, articles with no reader) are repeated only when they change |
+
+**Articles missing from search**
+
+- Check that the article is published, active, not past **Valid to**, and in an active knowledge base. See [What is indexed](#what-is-indexed).
+- Check the [filters](#filters) on the **Configure records** tab.
+- Check that the person signs in to PipesHub with the same email as their ServiceNow user, and that the user has an email in ServiceNow.
+- Check the article's and knowledge base's user criteria for scripts. See [Scripted criteria](#scripted-criteria).
+
+**A knowledge base is visible only to admins**
+
+- It has no Can Read and no Can Contribute criteria, and `glide.knowman.block_access_with_no_user_criteria` is not explicitly false (or the integration user cannot read it). Add Can Read criteria, for example **Any User**. See [Knowledge bases with no criteria](#knowledge-bases-with-no-criteria).
+
+**First sync after an upgrade is slow**
+
+- Expected once: every article and attachment is re-indexed under its new record key. See [What is indexed](#what-is-indexed).
 
 <Warning>
-  If you change Client ID, Secret, or Redirect URL in ServiceNow, update **Authenticate Instance** in PipesHub and complete **Authorize** again.
+  If you change the Client ID, Client Secret or Redirect URL in ServiceNow, update the **Authenticate** tab in PipesHub and complete **Authorize** again.
 </Warning>
 
 </Accordion>
@@ -341,20 +624,19 @@ The ServiceNow connector syncs the following data:
 
 ### Initial sync
 
-- Pulls users, groups, knowledge bases, categories, and articles in configured scope  
-- Respects ServiceNow permissions when indexing for search  
-- Duration scales with catalog size  
+- Reads users, groups, roles and memberships, then active knowledge bases, their categories, and the current published articles with their attachments.
+- Duration depends on the number of articles and users, and on your rate limit rules.
 
 ### Incremental sync
 
-- Typically driven by timestamps such as **`sys_updated_on`**  
-- Fetches new or changed records since the last successful run  
+- Runs on your **Sync interval** when the strategy is **Scheduled**. Reads what changed since the last sync, with a two-minute overlap.
+- Picks up new feedback and changed inline images, which do not change the article itself.
+- Re-checks the access of articles that have their own user criteria or an ownership group when user criteria, memberships, roles, users or the knowledge settings changed since the last sync, and at least once a day.
+- Once a day (UTC), removes expired articles and compares the stored articles with ServiceNow's current list.
 
-### User context and impersonation
+### Full sync
 
-- The connector authenticates with OAuth using the administrator (or integration user) you authorize in **Authorize**.  
-- Depending on your ServiceNow configuration and roles (for example **`admin`** or **`impersonate`**), the platform may access knowledge data on behalf of other users while still enforcing **ACLs** and knowledge visibility.  
-- Align this behavior with your security team’s standards for production.
+- Reads everything again and runs the comparison. A full sync that could not read part of ServiceNow removes nothing.
 
 </Accordion>
 
@@ -362,11 +644,7 @@ The ServiceNow connector syncs the following data:
 
 ## ServiceNow version compatibility
 
-This connector is validated on recent **ServiceNow** releases (for example **Zurich** onward). OAuth 2.0 and Table APIs are generally stable across versions, but always test in a subproduction instance before production rollout.
-
-<Info>
-  If your instance uses stricter OAuth or SSO policies, involve your ServiceNow platform team when registering the redirect URL and token lifetimes.
-</Info>
+This connector is validated on **ServiceNow Zurich**. It uses the Table and Attachment REST APIs and OAuth 2.0, which are stable across releases, but test in a sub-production instance before a production rollout.
 
 ---
 
@@ -376,16 +654,22 @@ This connector is validated on recent **ServiceNow** releases (for example **Zur
 
 <Accordion title="Queries not returning results. What could be wrong?">
 
-There are three common causes:
+1. **Email mismatch** — The person's PipesHub email differs from their ServiceNow user's email, or the ServiceNow user has no email.
+2. **Not indexed** — The article is not published, is inactive or expired, or its knowledge base is inactive.
+3. **Access** — ServiceNow does not let that person read the article, or a scripted criterion denies them in PipesHub.
+4. **Still syncing** — Open **Workspace Settings** → **Connectors** → **ServiceNow** and wait for the sync to finish.
 
-1. **Email mismatch** — The email used during **Authorize** does not match your PipesHub account email.  
-   - **Fix:** Re-run **Authorize** with the same email as your PipesHub account (see Step 6).
+</Accordion>
 
-2. **Records in All Records but not in search** — Indexing or filters may exclude content.  
-   - **Fix:** Review **Configure Records** and connector filters; wait for indexing to finish.
+<Accordion title="Why does the integration user need admin?">
 
-3. **Data not yet indexed** — Initial or incremental sync still running.  
-   - **Fix:** Open **Workspace Settings** → **Connectors** → **ServiceNow**, inspect the instance status and sync actions, and wait for completion.
+PipesHub copies ServiceNow's access rules, so it must read the user criteria, group memberships and role assignments of every user, not only the articles. `knowledge_admin` with `user_admin` is the minimum. `admin` also lets PipesHub read the deletion log and the instance's knowledge settings, so deletions appear sooner and access matches your settings exactly.
+
+</Accordion>
+
+<Accordion title="Are drafts or old versions searchable?">
+
+No. PipesHub indexes only the current published version, the same set ServiceNow's knowledge search shows.
 
 </Accordion>
 

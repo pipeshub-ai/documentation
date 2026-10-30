@@ -26,474 +26,251 @@ icon: "/logo/azure-files.svg"
   </div>
 </div>
 
-## What is this?
 
-Azure File Shares is Microsoft's cloud version of a shared network drive — the kind of thing your company might call the "S: drive" or "team share".
+Azure File Shares is Microsoft's cloud version of a shared network drive, the kind your company might call the "S: drive" or "team share". This connector brings the files from your shares into PipesHub, so you can search them and ask questions about them in chat. PipesHub only reads your files. It never changes, moves or deletes anything in Azure.
 
-This connector copies those files into PipesHub so you can **search them from the PipesHub chat and knowledge base**, just like any other document.
+<Warning>
+  PipesHub does not copy the share or folder permissions you set in Azure. Who can search the synced files depends only on how you set up the connector:
 
-You do **not** move or delete anything in Azure. PipesHub only reads the files.
+  - **Team connector**: everyone in your organization can search every file it syncs. Use it only for shares the whole organization may read.
+  - **Personal connector**: only you can search the files.
+</Warning>
 
-### How Azure organises your files
+## Before you start
 
-Three words you'll see again and again:
+- An Azure account that can open the storage account that holds your file shares. A **storage account** is your top-level Azure storage; a **file share** is one shared drive inside it.
+- One way for PipesHub to sign in to Azure. Pick one:
+  - **A SAS connection string** (recommended). A SAS (shared access signature) is a password-like key that you limit to reading and listing files, and that stops working on a date you choose. Creating one needs a role that can see the storage account's keys, such as Owner or Contributor.
+  - **Microsoft Entra ID**. PipesHub signs in as an app you register in Azure, with the **Storage File Data Privileged Reader** role. You need the rights to register apps and assign roles.
+- A PipesHub account that can add connectors.
 
-| Word | Means |
-|------|-------|
-| **Storage account** | Your top-level Azure storage. Like a house. |
-| **File share** | One shared drive. You can have many per storage account. |
-| **Directory / file** | Regular folders and files, just like on your laptop. |
+## Step 1: Get a credential in Azure
 
-When you set up this connector, PipesHub will read the files from the shares you pick.
+<Tabs>
+<Tab title="SAS connection string (recommended)">
 
-### What you need before you start
+<Steps>
+  <Step title="Open your storage account">
+    Go to [portal.azure.com](https://portal.azure.com), sign in, search for **Storage accounts** and open the one that holds your file shares.
+  </Step>
+  <Step title="Open Shared access signature">
+    In the left menu, click **Security + networking**, then **Shared access signature**.
+  </Step>
+  <Step title="Choose what the SAS allows">
+    - **Allowed services**: tick **File** only.
+    - **Allowed resource types**: tick **Service**, **Container** and **Object**.
+    - **Allowed permissions**: tick **Read** and **List** only.
+    - **End**: pick the date the SAS stops working. After that date, syncing stops until you paste a new connection string.
+  </Step>
+  <Step title="Copy the connection string">
+    Click **Generate SAS and connection string**, then copy the **Connection string**. Keep it somewhere safe; Azure shows it only once.
+  </Step>
+</Steps>
 
-1. An Azure account with access to a Storage account that contains file shares.
-2. One way for PipesHub to sign in. It only lists and reads files, so give it no more than that:
-   - **A SAS connection string** (recommended) for the File service, with only **Read** and **List** permissions.
-   - **An account key connection string** from **Access keys**. This works too, but the key gives full read, write and delete access to everything in the storage account.
-   - **Microsoft Entra ID**: an app registration with a client secret and the **Storage File Data Privileged Reader** role.
+</Tab>
+<Tab title="Microsoft Entra ID">
 
-   Both connection strings need permission to view the storage account's keys (usually Owner or Contributor role).
-3. A PipesHub account where you can add connectors.
+<Steps>
+  <Step title="Register an app">
+    In the Azure portal, open **Microsoft Entra ID** → **App registrations** → **New registration**, give the app a name and register it. On the app's **Overview** page, copy the **Directory (tenant) ID** and the **Application (client) ID**.
+  </Step>
+  <Step title="Create a client secret">
+    In the app, open **Certificates & secrets** → **New client secret**. Copy the secret's **Value** right away; Azure hides it later.
+  </Step>
+  <Step title="Give the app read access">
+    Open your storage account → **Access control (IAM)** → **Add role assignment**. Choose the **Storage File Data Privileged Reader** role and assign it to the app.
+  </Step>
+  <Step title="Copy the file endpoint">
+    On the storage account, open **Settings** → **Endpoints** and copy the **File service** address. It looks like `https://<account>.file.core.windows.net`.
+  </Step>
+</Steps>
 
-That's it. You don't need to install anything.
+<Note>
+  Azure may not let an Entra ID app list the shares in a storage account. If the **File Share Names** list stays empty in Step 2, PipesHub can't find your shares this way; use a SAS connection string instead.
+</Note>
 
----
+</Tab>
+</Tabs>
 
-## Setup
+<Accordion title="Using an account key connection string instead">
+  An account key connection string also works, but it gives full read, write and delete access to everything in the storage account. Use it only if you can't create a SAS.
 
-<AccordionGroup type="single" collapsible>
+  1. Open your storage account and click **Security + networking** → **Access keys**.
+  2. Under **key1**, click **Show** next to **Connection string**, then copy it.
 
-<Accordion title="Setup" defaultOpen>
-
-<div className="mt-4">
-
-### Step 1 — Get a credential from Azure
-
-The **connection string** is one long password-like line that tells PipesHub how to reach your storage. We just need to copy it. A read-only SAS connection string is the safest choice. To sign in with an app registration instead, see [Microsoft Entra ID](#microsoft-entra-id) below.
-
-#### Read-only SAS connection string (recommended)
-
-1. Go to [https://portal.azure.com](https://portal.azure.com), sign in, and open the storage account that holds your file share.
-2. In the left menu, click **Security + networking → Shared access signature**.
-3. Under **Allowed services**, tick **File** only.
-4. Under **Allowed resource types**, tick **Service**, **Container** and **Object**.
-5. Under **Allowed permissions**, tick **Read** and **List** only.
-6. Set the **End** date. When the SAS expires, syncing stops until you paste a new connection string.
-7. Click **Generate SAS and connection string**, then copy the **Connection string**.
-
-#### Account key connection string
-
-1. Go to [https://portal.azure.com](https://portal.azure.com) and sign in.
-2. In the search bar at the top, type **Storage accounts** and click it.
-3. Click the storage account that holds your file share.
-4. In the left menu, click **Security + networking → Access keys**.
-
-<div className="text-center">
   <img
     src="/images/connectors/azure-files/storage_account_access_keys.png"
-    alt="Azure Access keys page"
-    className="block mx-auto w-11/12"
+    alt="Azure portal Access keys page with the key1 connection string and its Show button"
+    style={{ display: 'block', margin: '0 auto' }}
+    width="95%"
   />
-</div>
 
-5. Under **key1**, click **Show** next to **Connection string**.
-6. Click the **copy** icon next to it.
-
-You now have the connection string in your clipboard. Don't close the tab yet — if something goes wrong you'll want to come back.
-
-<Info>
-  The same Access keys page is used for Azure Blob and Azure File Shares. If you already set up Azure Blob on this storage account with an account key connection string, you can reuse it here. A SAS made for the File service only does not work for Azure Blob.
-</Info>
+  If someone later rotates the key in Azure, syncing stops until you paste the new connection string.
+</Accordion>
 
 <Warning>
-  Treat either string like a password. Anyone who gets an account key connection string can read, change and delete everything in your storage account. Don't paste it into chat, email, or a public file.
+  Treat the connection string and client secret like passwords. Don't paste them into chat, email or a shared file.
 </Warning>
 
-#### Microsoft Entra ID
-
-1. In the Azure portal, register an app in **Microsoft Entra ID** and create a **client secret** for it.
-2. On the storage account, open **Access control (IAM)** and give the app the **Storage File Data Privileged Reader** role.
-3. Note the app's **Directory (tenant) ID**, **Application (client) ID** and the client secret's value.
-4. Note the storage account's file endpoint, for example `https://<account>.file.core.windows.net`. It is on the storage account's **Endpoints** page.
-
-<Note>
-  Azure does not let an Entra ID app list the shares in a storage account, so the **File Share Names** list may stay empty. A sync with no shares picked lists them first and fails. To sync every share, use a SAS connection string.
-</Note>
-
----
-
-### Step 2 — Open Azure Files in PipesHub
-
-1. In PipesHub, look at the left sidebar.
-2. Under **Workspace**, click **Connectors**.
-3. In the list, find **Azure Files**.
-4. Click **Setup** on its tile.
-
-A panel slides in from the right. This is where you enter your details.
-
----
-
-### Step 3 — Paste your connection string
-
-The panel opens on the first tab, **Authenticate Instance**.
-
-<div className="text-center">
-  <img
-    src="/images/connectors/azure-files/authenticate_tab.png"
-    alt="Authenticate Instance tab with Connection String field"
-    className="block mx-auto w-11/12"
-  />
-</div>
-
-1. In **Instance name**, type a short name so you can recognise it later (for example `Azure files` or `Team share`).
-2. **Authentication method** — leave it on **Connection String**, or pick **Microsoft Entra ID**. You can only choose this when you create the instance.
-3. For **Connection String**, paste the string you copied from Azure. For **Microsoft Entra ID**, fill in **File Endpoint**, **Tenant ID**, **Client ID** and **Client Secret**.
-4. Click **Next →** at the bottom.
-
-<Info>
-  The eye icon next to the Connection String field hides and shows the value. Use it if you need to double-check what you pasted.
-</Info>
-
-<Info>
-  The box at the top of the panel recommends the least-privileged credential. It also warns that share-level and NTFS folder permissions are not applied: everyone with access to the connector can search every file it syncs, and a **Team** connector shares them with your whole organisation.
-</Info>
-
-<Warning>
-  If saving fails with "The AccountKey in the connection string is not a valid storage account key", the string has extra spaces or got cut off. Go back to Azure, copy the connection string again, and paste it fresh.
-</Warning>
-
-<Note>
-  The file endpoint must be a public `https://` address. A connection string or File Endpoint that points to plain `http` or to a private address is refused when you turn sync on.
-</Note>
-
----
-
-### Step 4 — Choose how often to sync
-
-The panel moves you to the second tab, **Configure Records**.
-
-<div className="text-center">
-  <img
-    src="/images/connectors/azure-files/configure_tab.png"
-    alt="Configure Records tab with Sync settings"
-    className="block mx-auto w-11/12"
-  />
-</div>
-
-Under **Sync settings** there are two choices:
-
-- **Sync Strategy** — leave as **Scheduled** if you want PipesHub to update on its own. Pick **Manual** if you want to press a button every time.
-- **Sync Interval** — how often PipesHub checks Azure for new files. **1 Hour** is a good starting point.
-
-<Info>
-  Not sure? Keep **Scheduled** and **1 Hour**. You can change it later.
-</Info>
-
----
-
-### Step 5 — (Optional) Narrow down what gets synced
-
-If your file shares have lots of files you don't need, you can tell PipesHub to skip some.
-
-Scroll to **Indexing & sync filters**. Click **+ Add filter** on the right.
-
-A small menu opens with the fields you can filter by:
-
-<div className="text-center">
-  <img
-    src="/images/connectors/azure-files/filter_fields.png"
-    alt="+ Add filter menu showing File Share Names, File Extensions, Modified Date, Created Date"
-    className="block mx-auto w-11/12"
-  />
-</div>
-
-- **File Share Names** — pick specific shares (**In**), or leave some out (**Not In**). Search matches the start of a share name.
-- **Folders** — include or exclude folders inside each share, as paths from the share root, e.g. `reports/2026`. Press Enter after each folder.
-- **File Extensions** — pick file types (e.g. PDFs only)
-- **Modified Date** — only files changed after / before / between dates
-- **Created Date** — only files created after / before / between dates
-
-Folders are always kept by the extension and date filters, so the folder tree stays complete.
-
-You only need filters if one of these is true:
-
-- You want only **certain shares** or **certain folders** (not all of them).
-- You want only **some file types** (e.g. PDFs, not images).
-- You want only **recent files** (say, the last year).
-
-Common examples:
-
-- **PDFs only** — field: *File Extensions* · operator: *In* · value: `pdf`
-- **Skip images** — field: *File Extensions* · operator: *Not In* · value: `jpg, png, gif`
-- **Only one share** — field: *File Share Names* · operator: *In* · pick the share
-
-<Info>
-  If you don't add any filters, PipesHub will sync every file in every share the credentials can list. That's fine for small shares. On a **Team** connector, everyone in your organisation can then search all of them, so pick only shares the whole organisation may read.
-</Info>
-
-Leave **Enable Manual Indexing** off. When it's on, synced files are not indexed for search until you choose them.
-
-When you're done, click **Save Configuration** at the bottom of the panel.
-
----
-
-### Step 6 — Turn sync on
-
-You're now on the **Azure Files** instance page. You'll see one row (your new instance).
-
-<div className="text-center">
-  <img
-    src="/images/connectors/azure-files/instance_card.png"
-    alt="Azure Files instance card — sync not yet enabled"
-    className="block mx-auto w-11/12"
-  />
-</div>
-
-Right now it says **Sync Paused**. To start syncing:
-
-1. Find the **Sync Enabled** toggle on the right side of the row.
-2. Click it.
-
-The status changes to **Syncing** and PipesHub starts reading your files.
-
-When you turn sync on, PipesHub first tests the connection. It lists the shares (when **File Share Names** is empty), lists each selected share's top folder, and reads one file. If something is missing, sync stays off and the error names it: **List** on the storage account, **List** on a share, or **Read**. A selected share that no longer exists doesn't stop sync; the sync removes its files.
-
----
-
-### Step 7 — Check progress
-
-Click anywhere on the row to open the **Overview** panel on the right.
-
-<div className="text-center">
-  <img
-    src="/images/connectors/azure-files/instance_panel.png"
-    alt="Overview panel with Records Status tiles"
-    className="block mx-auto w-11/12"
-  />
-</div>
-
-Here you can see:
-
-- **Total** — how many files PipesHub has found.
-- **Failed** — files it couldn't read (usually permission or file-type issues).
-- **Processing** — files it's still reading right now.
-- **Not Started** — files waiting their turn.
-- **Sync** / **Full sync** buttons — press if you want to run a sync right now.
-- **Manage Configuration** — open the setup panel again to change credentials or filters.
-
-You can close the panel and come back any time — the sync keeps running in the background.
-
-That's it! 🎉 Your Azure file shares are now searchable in PipesHub.
-
-</div>
-
-</Accordion>
-
-<Accordion title="How syncing works">
-
-<div className="mt-4">
-
-### First sync (full scan)
-
-The very first time, PipesHub reads **everything** in the shares you chose. Big shares take longer:
-
-| Number of files | Roughly how long |
-|-----------------|------------------|
-| Under 1,000 | 5 – 15 minutes |
-| 1,000 – 10,000 | 15 – 60 minutes |
-| 10,000 – 100,000 | 1 – 3 hours |
-| Over 100,000 | Several hours or more |
-
-Tip: using filters (e.g. PDFs only) makes the first sync much faster.
-
-### Later syncs (just what's new)
-
-Azure Files has no change feed, so every sync walks the shares again, but PipesHub only processes **what changed**:
-
-- New files — added.
-- Updated files — refreshed.
-- Unchanged files — skipped.
-- Moved or renamed files and folders — keep their record and aren't indexed again. A renamed folder takes everything below it along.
-- Deleted files and folders — removed from search. A deleted folder takes everything below it.
-- Files a filter now leaves out, and shares taken out of **File Share Names** — removed from PipesHub.
-- A deleted share — removed with its files. If it was picked in **File Share Names**, you get one notification; remove it from the filter if it's gone for good.
-
-These later syncs are usually quick, even for big shares.
-
-### When something goes wrong during a sync
-
-PipesHub only removes files after it has read a whole share. It never removes anything because of a sign-in, permission, network or throttling error.
-
-- **A folder or share can't be read** — its files are kept, the other shares still sync, and you get a notification naming the share. If no share could be read, the sync is marked as failed.
-- **The share list can't be read** (with **File Share Names** empty) — the sync fails, nothing is removed, and you get a notification. The next sync tries again.
-- **Azure refuses the credentials** (an expired SAS, a rotated account key, or a changed Entra ID client secret) — the sync stops, nothing is removed, and you get a **Credentials rejected** notification. Opening a synced file asks you to reconnect the connector.
-- **Throttling** — throttled and failed requests are retried, up to 3 times, and Azure's `Retry-After` wait is honoured.
-
-### Who can see the synced files?
-
-When you set up the connector you picked a scope:
-
-- **Personal** — only you can search the files inside PipesHub.
-- **Team** — everyone in your organisation can search them. With **File Share Names** empty, that is every share the credentials can list.
-
-This only controls PipesHub. It does **not** change access in Azure. Share-level permissions and NTFS folder permissions are not read, so they don't limit who can search a file in PipesHub.
-
-### Opening files
-
-Search results and citations open the file in PipesHub, not in the Azure portal. PipesHub streams the file from Azure, whichever credential you use.
-
-</div>
-
-</Accordion>
-
-<Accordion title="What PipesHub can read">
-
-<div className="mt-4">
-
-### Indexed for search
-
-Supported file types can be content-indexed so you can search inside them:
-
-- Documents — **PDF**, **DOCX**, **PPTX**, **XLSX**, **ODT**, **RTF**
-- E-books — **EPUB**, unless copy-protected (DRM). Their text is searchable, but they can't be previewed in PipesHub; download the book to read it
-- Plain text — **TXT**, **MD**, **CSV**, **JSON**, **XML**, **HTML**
-- Code — **.py**, **.js**, **.ts**, **.java**, and more
-- Images — **JPG**, **PNG**, **WebP**
-
-### Synced but not searched inside
-
-These are stored as records but their contents aren't indexed for search:
-
-- GIF images
-- Video and audio
-- Archives (ZIP, RAR, …)
-- Other unsupported binary files
-
-They still show up in results by filename.
-
-</div>
-
-</Accordion>
-
-</AccordionGroup>
-
----
+## Step 2: Connect Azure Files in PipesHub
+
+<Steps>
+  <Step title="Find the connector">
+    For a team connector, click **Workspace** → **Connectors** in the sidebar. For a personal connector, go to **Personal** → **Your connectors**. Search for **Azure Files** and click **Set up**.
+
+    <img
+      src="/images/connectors/azure-files/pipeshub-find-connector.png"
+      alt="Connectors page with Azure Files found by search and its Set up button"
+      style={{ display: 'block', margin: '0 auto' }}
+      width="95%"
+    />
+  </Step>
+  <Step title="Confirm a team connector">
+    When you set up a team connector, PipesHub reminds you that everyone in your organization will see the synced files. Click **Continue with team connector** if that is what you want, or **Set up personal connector** to keep the files to yourself.
+
+    <img
+      src="/images/connectors/azure-files/pipeshub-team-warning.png"
+      alt="Dialog: Everyone in your organization will see this data, with Cancel, Continue with team connector and Set up personal connector buttons"
+      style={{ display: 'block', margin: '0 auto' }}
+      width="65%"
+    />
+  </Step>
+  <Step title="Fill in the Authenticate tab">
+    1. **Instance name**: a name you'll recognize later, such as `Team share`.
+    2. **Authentication method**: pick **Connection String** or **Microsoft Entra ID**. You can't change this after the connector is created.
+    3. Fill in the credential from Step 1:
+       - **Connection String**: paste the connection string.
+       - **Microsoft Entra ID**: fill in **File Endpoint**, **Tenant ID**, **Client ID** and **Client Secret**.
+    4. Click **Next**.
+
+    <Tabs>
+      <Tab title="Connection String">
+        <img
+          src="/images/connectors/azure-files/pipeshub-authenticate-connection-string.png"
+          alt="Authenticate tab with Instance name, Authentication method set to Connection String, and the Connection String field"
+          style={{ display: 'block', margin: '0 auto' }}
+          width="60%"
+        />
+      </Tab>
+      <Tab title="Microsoft Entra ID">
+        <img
+          src="/images/connectors/azure-files/pipeshub-authenticate-entra-id.png"
+          alt="Authenticate tab with Authentication method set to Microsoft Entra ID and the File Endpoint, Tenant ID, Client ID and Client Secret fields"
+          style={{ display: 'block', margin: '0 auto' }}
+          width="60%"
+        />
+      </Tab>
+    </Tabs>
+  </Step>
+  <Step title="Set up the Configure records tab">
+    Choose how often to sync and, if you like, which files to sync. The defaults (**Scheduled**, every **1 hour**, no filters) work for most people. See [Choose what to sync](#choose-what-to-sync) for each setting.
+
+    <img
+      src="/images/connectors/azure-files/pipeshub-configure-records.png"
+      alt="Configure records tab with Sync strategy, Sync interval, Enable Manual Indexing and Sync filters with Add filter"
+      style={{ display: 'block', margin: '0 auto' }}
+      width="60%"
+    />
+  </Step>
+  <Step title="Save and start syncing">
+    Click **Save configuration**, then **Start syncing now**. If you click **I'll do it later**, turn on **Sync enabled** on the connector's card when you're ready.
+
+    <img
+      src="/images/connectors/azure-files/pipeshub-ready-to-sync.png"
+      alt="Dialog: Instance is configured and ready to sync, with I'll do it later and Start syncing now buttons"
+      style={{ display: 'block', margin: '0 auto' }}
+      width="55%"
+    />
+
+    Before the first sync, PipesHub checks that it can list your shares and read a file. If something is missing, sync stays off and the message tells you which permission to add (see [Troubleshooting](#troubleshooting)).
+  </Step>
+</Steps>
+
+To use more than one storage account, set up the connector again for each one.
+
+## Choose what to sync
+
+All of these are on the **Configure records** tab. Add a sync filter with **Add filter**, and remove it with **Clear**.
+
+| Setting | What it does |
+|---------|--------------|
+| **Sync strategy** | **Scheduled** syncs on its own. **Manual** syncs only when you start it. |
+| **Sync interval** | How often a scheduled sync runs. 1 hour is the default. |
+| **Enable Manual Indexing** | **Off** (default): every synced file becomes searchable. **On**: files are synced but not made searchable until you choose them. |
+| **File Share Names** | Pick the shares to sync, or the shares to skip. Leave it empty to sync every share the credential can see. Search matches the start of a share name. |
+| **Folders** | Sync only some folders (**In**) or skip them (**Not In**). Type each folder as a path from the top of the share, such as `reports/2026`, and press Enter. Leave it empty to sync the whole share. |
+| **File Extensions** | Sync only some file types, such as `pdf` and `docx`, or skip some, such as images. |
+| **Modified Date** | Sync only files changed before, after or between dates. |
+| **Created Date** | Sync only files created before, after or between dates. |
+
+<Tip>
+  Filters make the first sync faster. On a team connector, use **File Share Names** to pick only the shares your whole organization may read.
+</Tip>
+
+The file type and date filters never hide folders, so the folder tree in PipesHub stays complete.
+
+## What gets synced and how it stays up to date
+
+- **What you get**: the files and folders in the shares you picked, with their folder structure. Documents (PDF, Word, PowerPoint, Excel, OpenDocument, RTF, EPUB), text files (TXT, Markdown, CSV, JSON, XML, HTML), code files and images (JPG, PNG, WebP) are searchable by their content. Other files, such as video, audio, GIFs and ZIP archives, are found by name only.
+- **How often**: on your sync interval, or when you start a sync. The first sync reads everything and can take hours for a big share. Later syncs only process what changed, so they are much faster.
+- **Edits**: changed files are refreshed on the next sync.
+- **Moves and renames**: a moved or renamed file or folder keeps its place in PipesHub and is not processed again. Renaming a folder carries everything inside it along.
+- **Deletes**: files, folders and shares you delete in Azure disappear from PipesHub on the next sync. So do files a new filter leaves out, and shares you take out of **File Share Names**.
+- **Safe on errors**: PipesHub removes files only after it has read a whole share. If a share can't be read, or Azure refuses the credential, nothing is removed and you get a notification. The next sync tries again.
+- **Opening files**: search results and citations open the file inside PipesHub, not in the Azure portal.
+- **Not synced**: Azure share permissions and folder (NTFS) permissions. Blob containers in the same storage account; use the [Azure Blob connector](/connectors/azure-blob/azure-blob) for those.
 
 ## Troubleshooting
 
-<AccordionGroup type="single" collapsible>
+<AccordionGroup>
 
-<Accordion title="I get an 'authentication failed' or 'rejected the credentials' error">
-
-- Go back to Azure, click **Copy** on the Connection string again, and paste it fresh in PipesHub.
-- Check you didn't paste an extra space or line break.
-- If the account key was recently rotated in Azure, or the SAS has expired, you need a new connection string.
-- With Microsoft Entra ID, check the tenant ID, client ID and client secret, and that the secret hasn't expired.
-- Make sure the storage account still exists.
-
+<Accordion title='Saving fails with "The AccountKey in the connection string is not a valid storage account key"'>
+  The connection string has extra spaces or got cut off when you copied it. Copy it again from Azure and paste it fresh.
 </Accordion>
 
-<Accordion title="Turning sync on fails with 'the credential needs the ... permission'">
+<Accordion title='Sync does not turn on: "the credential needs the ... permission"'>
+  The message names what the credential is missing:
 
-The connection test names what's missing:
+  - **List (service level)**: it can't list the storage account's shares. Pick your shares in **File Share Names**, or create a SAS with the **Service** resource type.
+  - **List**: it can't list a share. Create a SAS with the **List** permission and the **Container** resource type.
+  - **Read**: it can't read files. Create a SAS with the **Read** permission and the **Object** resource type.
 
-- **List (service level)** — the credential can't list the storage account's shares. Pick the shares in **File Share Names**, or create a SAS with the **Service** resource type.
-- **List** — the credential can't list a share. Allow **List** on the SAS, and the **Container** resource type.
-- **Read** — the credential can list but not read files. Allow **Read** on the SAS, and the **Object** resource type.
-
-With Microsoft Entra ID, check that the app has the **Storage File Data Privileged Reader** role on the storage account.
-
+  With Microsoft Entra ID, check that the app has the **Storage File Data Privileged Reader** role on the storage account.
 </Accordion>
 
-<Accordion title="I can't see my shares in the filter">
+<Accordion title='It used to work, but now I get "Credentials rejected"'>
+  The SAS has expired, someone rotated the account key, or the Entra ID client secret changed or expired. Nothing synced so far is removed.
 
-- Double-check the connection string is the right one.
-- Search matches the start of a share name, so type the beginning of the name.
-- Make sure the storage account actually has **file shares** (the icons look like folders — not blob containers).
-- With Microsoft Entra ID, Azure doesn't allow listing shares, so the list may be empty.
-- Some storage accounts have firewall rules — ask your Azure admin to allow PipesHub.
-
+  Create a new credential (Step 1). In PipesHub, open the connector, click **Manage configuration**, paste the new credential on the **Authenticate** tab and save. Files you open in PipesHub before then ask you to reconnect the connector.
 </Accordion>
 
-<Accordion title="Sync is on but I see 0 files">
-
-- Give it a minute. The first sync on a large share takes time.
-- Check your filters — they might be excluding everything.
-- Make sure the connection string's storage account actually has files.
-
+<Accordion title="My shares don't appear in the File Share Names list">
+  - Type the beginning of the share's name; the search matches from the start.
+  - Check that the storage account has **file shares**, not only blob containers.
+  - With Microsoft Entra ID, Azure may not allow listing shares. Use a SAS connection string instead.
+  - The storage account may have a firewall. Ask your Azure admin to allow PipesHub to reach it.
 </Accordion>
 
-<Accordion title="Sync is very slow">
-
-- Add filters (share names, file extensions, date range) to sync only what you need.
-- Very large shares (millions of files) will always take several hours on the first run. Later syncs are fast.
-
+<Accordion title="Sync is on but no files appear">
+  - Give the first sync time; large shares take a while.
+  - Check your filters. Together they may leave nothing to sync.
+  - If you get a notification that a share couldn't be read, check the credential's permissions on that share.
 </Accordion>
 
-<Accordion title="Files don't show up in search">
-
-- Check that the file type is supported for content indexing; supported images can be indexed, while video and audio are not searchable by content.
-- Wait a bit — big files take longer to index.
-- Make sure the file isn't password-protected.
-
-</Accordion>
-
-<Accordion title="It used to work, but now it doesn't">
-
-Usually this means the Azure access keys were changed, the SAS expired, or the Entra ID client secret changed. You get a **Credentials rejected** notification, and nothing synced so far is removed.
-
-- Go back to Step 1 and copy the new connection string (or create a new client secret).
-- In PipesHub, open the instance panel and click **Manage Configuration**.
-- Paste the new credentials on the Authenticate Instance tab and save.
-
+<Accordion title="A file shows up but its content isn't searchable">
+  - Video, audio, GIFs and archives are found by name only.
+  - Password-protected and copy-protected (DRM) files can't be read.
+  - If **Enable Manual Indexing** is on, choose the file for indexing first.
+  - Large files take longer to process; check again later.
 </Accordion>
 
 </AccordionGroup>
 
----
-
-## Frequently asked questions
-
-<AccordionGroup type="single" collapsible>
-
-<Accordion title="Can I connect more than one storage account?">
-  Yes. On the Azure Files instance page click **+ Add Another Instance** and repeat the steps with the new connection string.
+<Accordion title="Details for administrators">
+  - **Permissions**: the connector only lists and reads. A SAS needs the File service, the Service, Container and Object resource types, and the Read and List permissions. Entra ID needs the Storage File Data Privileged Reader role on the storage account. A SAS made for the File service only does not work for the Azure Blob connector, but an account key connection string works for both.
+  - **Connection test**: when sync is turned on, PipesHub lists the shares (only if **File Share Names** is empty), lists the top folder of each selected share, and reads one file. A selected share that no longer exists does not block sync; the next sync removes its files and sends one notification. Remove the share from the filter if it is gone for good.
+  - **Endpoints**: the connection string's file endpoint and the **File Endpoint** field must be public `https://` addresses. Plain `http` and private network addresses are refused when you turn sync on.
+  - **Failures during a sync**: if one share or folder can't be read, its files are kept, the other shares still sync, and you get a notification naming the share. If no share can be read, or the share list can't be read, the sync is marked as failed. Throttled requests are retried.
+  - **Storage**: PipesHub stores the connection string and client secret encrypted, and never shows them in logs or to other users.
+  - **References**: [Azure Files](https://learn.microsoft.com/azure/storage/files/), [shared access signatures](https://learn.microsoft.com/azure/storage/common/storage-sas-overview), [connection strings](https://learn.microsoft.com/azure/storage/common/storage-configure-connection-string), [Entra ID for Azure Files over REST](https://learn.microsoft.com/azure/storage/files/authorize-oauth-rest).
 </Accordion>
-
-<Accordion title="Does PipesHub change anything in Azure?">
-  No. The connector only **reads** files. It doesn't upload, move, rename, or delete anything. An account key connection string would still allow changes, so prefer a read-only SAS or Entra ID.
-</Accordion>
-
-<Accordion title="What happens if I delete a file in Azure?">
-  On the next sync that reads the whole share, PipesHub notices it's gone and removes it from search. Deleting a folder removes everything below it; deleting a share removes the share and its files.
-</Accordion>
-
-<Accordion title="Can I sync just one folder inside a share?">
-  Yes. Add a **Folders** filter set to **Include** with the folder's path from the share root, for example `reports/2026`. The folders above it are synced too, so the tree stays complete.
-</Accordion>
-
-<Accordion title="Do Azure share or NTFS permissions apply in PipesHub?">
-  No. Share-level permissions and NTFS folder permissions are not read. Who can search the files is set by the connector scope: only you (**Personal**) or your whole organisation (**Team**).
-</Accordion>
-
-<Accordion title="Is the connection string encrypted?">
-  Yes. PipesHub stores it as a secret — it's not visible in logs or to other users.
-</Accordion>
-
-<Accordion title="What's the difference between Azure Files and Azure Blob?">
-  Both live in the same storage account. **Blob** is object storage (flat — uses prefixes to look like folders). **Files** is a real file share with real folders, usually mounted as a network drive. Pick the connector that matches where your files actually live.
-</Accordion>
-
-</AccordionGroup>
-
----
-
-## Useful links
-
-- **Azure Portal** — [https://portal.azure.com](https://portal.azure.com)
-- **Azure Files docs** — [https://learn.microsoft.com/azure/storage/files/](https://learn.microsoft.com/azure/storage/files/)
-- **What is a connection string?** — [https://learn.microsoft.com/azure/storage/common/storage-configure-connection-string](https://learn.microsoft.com/azure/storage/common/storage-configure-connection-string)
-- **Shared access signatures (SAS)** — [https://learn.microsoft.com/azure/storage/common/storage-sas-overview](https://learn.microsoft.com/azure/storage/common/storage-sas-overview)
-- **Microsoft Entra ID for Azure Files over REST** — [https://learn.microsoft.com/azure/storage/files/authorize-oauth-rest](https://learn.microsoft.com/azure/storage/files/authorize-oauth-rest)

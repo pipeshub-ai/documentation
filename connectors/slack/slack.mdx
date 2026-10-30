@@ -36,7 +36,7 @@ Slack ships as **two separate connectors**. Pick the one that matches how you wa
 
 | | **Slack Workspace** (Team) | **Slack** (Individual) |
 |---|---|---|
-| **Where to find it** | Workspace Settings → **Workspace** → **Connectors** | Workspace Settings → **Personal** → **Your Connectors** |
+| **Where to find it** | Workspace settings → **Workspace** → **Connectors** | Workspace settings → **Personal** → **Your Connectors** |
 | **Who sets it up** | A workspace administrator, once for the whole organization | Each user, for their own account |
 | **Authentication** | **Bot User OAuth Token** (`xoxb-…`) from a Slack app | **OAuth 2.0** with a Slack app's Client ID and Client Secret (user token, `xoxp-…`) |
 | **What it can see** | Public channels, plus private channels the bot has been invited to | Everything the authorizing user can see — public and private channels, DMs, and group DMs |
@@ -80,7 +80,7 @@ The **Slack Workspace** connector syncs public and private channels for your ent
 ### Prerequisites
 
 - Permission to create and install a Slack app in your workspace (a workspace owner or admin may need to approve the installation).
-- PipesHub administrator access to **Workspace Settings → Connectors**.
+- PipesHub administrator access to **Workspace settings → Connectors**.
 
 ### Authentication
 
@@ -217,12 +217,12 @@ Back on **OAuth & Permissions**, copy the **Bot User OAuth Token** — it starts
 
 ### Step 8: Configure the connector in PipesHub
 
-1. Navigate to **Workspace Settings** → under **Workspace** in the sidebar → **Connectors**.
+1. Navigate to **Workspace settings** → under **Workspace** in the sidebar → **Connectors**.
 
 <div className="text-center">
   <img
     src="/images/connectors/common/go_to_workspace_settings.png"
-    alt="Go to Workspace Settings"
+    alt="Go to Workspace settings"
     className="block mx-auto w-11/12"
   />
 </div>
@@ -309,12 +309,12 @@ This connector uses **OAuth 2.0** with a **user token** (`xoxp-…`). You create
 
 ### Step 1: Copy the Redirect/Callback URL from PipesHub
 
-1. Navigate to **Workspace Settings** → under **Personal** in the sidebar → **Your Connectors**.
+1. Navigate to **Workspace settings** → under **Personal** in the sidebar → **Your Connectors**.
 
 <div className="text-center">
   <img
     src="/images/connectors/common/go_to_workspace_settings.png"
-    alt="Go to Workspace Settings"
+    alt="Go to Workspace settings"
     className="block mx-auto w-11/12"
   />
 </div>
@@ -383,7 +383,7 @@ Go to the [Slack API app dashboard](https://api.slack.com/apps), click **Create 
 </Warning>
 
 <Info>
-  Planning to use the Slack **toolset** as well? It has its own callback path (`.../toolsets/oauth/callback/Slack`). Add that URL here too so both can authorize against the same Slack app.
+  Planning to use the Slack **action** as well? It has its own callback path (`.../toolsets/oauth/callback/Slack`). Add that URL here too so both can authorize against the same Slack app.
 </Info>
 
 ### Step 4: Add User Token Scopes
@@ -670,15 +670,15 @@ They aren't mutually exclusive — running both gives shared channel history plu
 
 </Accordion>
 
-<Accordion title="What's the difference between the Slack Connector and the Slack Toolset?">
+<Accordion title="What's the difference between the Slack Connector and the Slack Action?">
 
-| Aspect | Slack Connector | Slack Toolset |
+| Aspect | Slack Connector | Slack Action |
 |--------|----------------|---------------|
 | **Purpose** | Sync and index Slack conversations for search | Enable agents to perform Slack actions |
 | **Data Flow** | One-way (import data into PipesHub) | Two-way (read and write via API) |
 | **When to Use** | Query and search past conversations, files, and threads | Send messages, reply in threads, manage channels |
 
-**Example:** Use the **Slack Connector** to search what a team decided last quarter. Use the **Slack Toolset** to let an agent post the answer back into a channel.
+**Example:** Use the **Slack Connector** to search what a team decided last quarter. Use the **Slack action** to let an agent post the answer back into a channel.
 
 </Accordion>
 

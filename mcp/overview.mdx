@@ -87,7 +87,7 @@ This is the `MCP_SCOPES` value PipesHub ships (`backend/env.template`). It cover
 MCP_SCOPES=openid,profile,email,offline_access,semantic:write,conversation:write,conversation:chat,kb:read,kb:write,kb:upload,team:read,user:read,usergroup:read,config:read,agent:read,agent:execute,connector:read,code:read
 ```
 
-Leave `kb:write` and `kb:upload` out to stop agents creating collections and uploading: tokens without them are not offered those tools. Other tools that can act, such as `pipeshub_chat` with an agent whose toolsets take actions, are governed by their own scopes.
+Leave `kb:write` and `kb:upload` out to stop agents creating collections and uploading: tokens without them are not offered those tools. Other tools that can act, such as `pipeshub_chat` with an agent whose actions can change data in other apps, are governed by their own scopes.
 
 An instance that sets `MCP_SCOPES` in its `.env` keeps that list after an upgrade until you edit it. After you add the two scopes and restart, new personal access tokens get them, and the built-in PipesHub agent app (device login) adds them to its allowed scopes on the next discovery request. Tokens already issued keep their scopes: mint a new token, or sign the agent in again.
 

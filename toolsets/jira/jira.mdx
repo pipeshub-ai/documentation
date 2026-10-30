@@ -1,5 +1,5 @@
 ---
-title: "Jira Cloud Toolset"
+title: "Jira Cloud actions"
 description: "Issue tracking and project management integration for AI agents"
 icon: "/logo/jira.png"
 ---
@@ -12,7 +12,7 @@ icon: "/logo/jira.png"
         alt="Jira Logo" 
         className="w-8 h-8 object-contain flex-shrink-0"
       />
-      <div className="text-xl font-semibold text-gray-900 dark:text-white">Jira Cloud Toolset</div>
+      <div className="text-xl font-semibold text-gray-900 dark:text-white">Jira Cloud actions</div>
     </div>
     <p className="text-base text-gray-700 dark:text-gray-300 mt-0 mb-5">Issue tracking, project management, and team collaboration</p>
     <div className="flex flex-wrap items-center gap-2">
@@ -28,10 +28,10 @@ icon: "/logo/jira.png"
 
 ## Overview
 
-The Jira toolset enables AI agents to interact with your Jira workspace. Agents can create issues, search tickets, add comments, update issues, and more. This toolset is ideal for automating project management workflows and integrating Jira into conversational AI experiences.
+The Jira action enables AI agents to interact with your Jira workspace. Agents can create issues, search tickets, add comments, update issues, and more. This action is ideal for automating project management workflows and integrating Jira into conversational AI experiences.
 
 <Info>
-  This page is for **Jira Cloud**, the version Atlassian hosts for you. If you run Jira on your own servers, use the [Jira Data Center toolset](/toolsets/jira/jira-data-center) instead.
+  This page is for **Jira Cloud**, the version Atlassian hosts for you. If you run Jira on your own servers, use the [Jira Data Center action](/toolsets/jira/jira-data-center) instead.
 </Info>
 
 ### Key Capabilities
@@ -70,7 +70,7 @@ Parameters marked `?` are optional.
 
 ## Configuration Guide
 
-The Jira toolset supports **two authentication methods**. In both, an admin first configures the shared instance under **Workspace Settings → Actions**, then each user connects their personal account under **Your actions**.
+The Jira action supports **two authentication methods**. In both, an admin first configures the shared instance under **Workspace settings → Actions**, then each user connects their personal account under **Your actions**.
 
 | Method | Best for |
 |--------|----------|
@@ -97,7 +97,7 @@ The Jira toolset supports **two authentication methods**. In both, an admin firs
 
 1. Click **Create** in the top-right corner.
 2. Select **OAuth 2.0 integration**.
-3. Enter a name (e.g., `PipesHub Jira Toolset`).
+3. Enter a name (e.g., `PipesHub Jira actions`).
 4. For **Access type**, select **Resource-level**.
 5. Accept the developer terms and click **Create**.
 
@@ -110,21 +110,21 @@ The Jira toolset supports **two authentication methods**. In both, an admin firs
 </div>
 
 <Warning>
-  **You must select "Resource-level" access type.** PipesHub does not ask for a site URL — the toolset uses the exact site each user authorizes during the OAuth step. If you choose **Account-level**, authentication will not work.
+  **You must select "Resource-level" access type.** PipesHub does not ask for a site URL — the action uses the exact site each user authorizes during the OAuth step. If you choose **Account-level**, authentication will not work.
 </Warning>
 
 #### Step 3: Get the Redirect URI from PipesHub
 
 Before configuring the Callback URL in Atlassian, copy the Redirect URI from PipesHub.
 
-1. In PipesHub, go to **Workspace Settings** → **Actions**.
-2. Find **Jira** in the list and click **+ Setup** for a new instance.
+1. In PipesHub, go to **Workspace settings** → **Actions**.
+2. Find **Jira** in the list and click **Set up** for a new instance.
 3. Copy the **Redirect URI** shown in the dialog.
 
 <div className="text-center">
   <img
     src="/images/toolsets/jira/pipeshub-config.png"
-    alt="PipesHub Configure Jira toolset — copy the Redirect URI"
+    alt="PipesHub Configure Jira action — copy the Redirect URI"
     className="block mx-auto w-11/12"
   />
 </div>
@@ -219,9 +219,9 @@ Before configuring the Callback URL in Atlassian, copy the Redirect URI from Pip
   />
 </div>
 
-#### Step 7: Admin — configure the toolset in Actions
+#### Step 7: Admin — configure the action in Actions
 
-1. In PipesHub, return to **Workspace Settings** → **Actions**, find **Jira**, and reopen the setup dialog.
+1. In PipesHub, return to **Workspace settings** → **Actions**, find **Jira**, and reopen the setup dialog.
 2. Confirm the **Redirect URI** matches the Callback URL you saved in Atlassian in Step 4.
 3. Enter:
    - **Instance Name** (e.g., `Jira Production`)
@@ -241,11 +241,11 @@ Before configuring the Callback URL in Atlassian, copy the Redirect URI from Pip
   Client ID and Client Secret are the org's OAuth app credentials. Atlassian issues per-user tokens when each user authenticates in the next step.
 </Info>
 
-#### Step 8: Authenticate the toolset
+#### Step 8: Authenticate the action
 
 Authentication uses the same OAuth flow in either location:
 
-- **Admins** can authenticate the shared instance directly under **Workspace Settings → Actions**.
+- **Admins** can authenticate the shared instance directly under **Workspace settings → Actions**.
 - **Users** can authenticate their own personal instance under **Your actions** (in the **Personal** section of the sidebar).
 
 1. On the Jira tile (in **Actions** or **Your actions**), click **Authenticate with OAuth**.
@@ -279,12 +279,12 @@ Authentication uses the same OAuth flow in either location:
 
 1. Go to the **Home** page.
 2. Next to **Agents**, click **+** to create a new agent.
-3. Give the agent a name, drag the **Jira** toolset onto the canvas, connect it to the **Agent** node with your model and chat input/output, then create the agent.
+3. Give the agent a name, drag the **Jira** action onto the canvas, connect it to the **Agent** node with your model and chat input/output, then create the agent.
 
 <div className="text-center">
   <img
     src="/images/toolsets/jira/create_agent.png"
-    alt="Agent builder with Jira toolset connected"
+    alt="Agent builder with Jira action connected"
     className="block mx-auto w-11/12"
   />
 </div>
@@ -295,16 +295,16 @@ Authentication uses the same OAuth flow in either location:
 
 The API Token method has a clear org/user split:
 - **Admin** configures only the **Atlassian Site URL** under **Actions** (org-level field).
-- **Each user** then opens **Your actions** and enters their own **Email** + **API Token** to authenticate the toolset for themselves.
+- **Each user** then opens **Your actions** and enters their own **Email** + **API Token** to authenticate the action for themselves.
 
-This is different from the connector — here every user that wants to use the toolset needs their own API token, since each agent action runs under that user's identity.
+This is different from the connector — here every user that wants to use the action needs their own API token, since each agent action runs under that user's identity.
 
 #### Step 1: Each user generates an API token in Atlassian
 
-Each user that will use the toolset must generate their own API token.
+Each user that will use the action must generate their own API token.
 
 1. Sign in to [id.atlassian.com/manage-profile/security/api-tokens](https://id.atlassian.com/manage-profile/security/api-tokens).
-2. Click **Create API token** (not **Create API token with scopes**). PipesHub uses the token with your site URL, which only works for tokens without scopes. Set a meaningful label (e.g., `PipesHub Jira Toolset`), choose an expiry (Atlassian requires one, at most one year), then click **Create**.
+2. Click **Create API token** (not **Create API token with scopes**). PipesHub uses the token with your site URL, which only works for tokens without scopes. Set a meaningful label (e.g., `PipesHub Jira actions`), choose an expiry (Atlassian requires one, at most one year), then click **Create**.
 
 <div className="text-center">
   <img
@@ -328,12 +328,12 @@ Each user that will use the toolset must generate their own API token.
   The API token is shown only once. If you close the dialog without copying it, create a new token.
 </Warning>
 
-#### Step 2: Admin — configure the toolset instance in Actions
+#### Step 2: Admin — configure the action instance in Actions
 
 The admin sets up only the **org-level** field (the Atlassian Site URL). No credentials are entered here — those come from each user in the next step.
 
-1. In PipesHub, go to **Workspace Settings** → **Actions**.
-2. Find **Jira** and click **+ Setup** for a new instance.
+1. In PipesHub, go to **Workspace settings** → **Actions**.
+2. Find **Jira** and click **Set up** for a new instance.
 3. In the dialog, choose **API Token** as the authentication method, then enter only:
    - **Instance Name** (e.g., `Jira Production`)
    - **Atlassian Site URL** — your Jira site URL (e.g., `https://your-domain.atlassian.net`; no trailing slash)
@@ -353,7 +353,7 @@ The admin sets up only the **org-level** field (the Atlassian Site URL). No cred
 
 #### Step 3: Each user — add Email + API Token in Your actions
 
-Each user that wants to use the toolset must complete this step with their own credentials.
+Each user that wants to use the action must complete this step with their own credentials.
 
 1. In PipesHub, open **Your actions** (in the **Personal** section of the sidebar).
 2. Find the Jira instance and open it.
@@ -370,7 +370,7 @@ Each user that wants to use the toolset must complete this step with their own c
   />
 </div>
 
-The Jira tile in **Your actions** now shows **Authenticated**. The toolset is connected for this user only — every other user must repeat Step 3 with their own email + token.
+The Jira tile in **Your actions** now shows **Authenticated**. The action is connected for this user only — every other user must repeat Step 3 with their own email + token.
 
 <Warning>
   The **Email** must match the Atlassian account that owns the API token. Using a different email causes authentication to fail.
@@ -380,12 +380,12 @@ The Jira tile in **Your actions** now shows **Authenticated**. The toolset is co
 
 1. Go to the **Home** page.
 2. Next to **Agents**, click **+** to create a new agent.
-3. Give the agent a name, drag the **Jira** toolset onto the canvas, connect it to the **Agent** node with your model and chat input/output, then create the agent.
+3. Give the agent a name, drag the **Jira** action onto the canvas, connect it to the **Agent** node with your model and chat input/output, then create the agent.
 
 <div className="text-center">
   <img
     src="/images/toolsets/jira/create_agent.png"
-    alt="Agent builder with Jira toolset connected"
+    alt="Agent builder with Jira action connected"
     className="block mx-auto w-11/12"
   />
 </div>
@@ -413,15 +413,15 @@ Choose **OAuth** for the simplest per-user experience. Choose **API Token** when
 
 </Accordion>
 
-<Accordion title="What's the difference between Jira Connector and Jira Toolset?">
+<Accordion title="What's the difference between Jira Connector and Jira Action?">
 
-| Aspect | Jira Connector | Jira Toolset |
+| Aspect | Jira Connector | Jira Action |
 |--------|----------------|--------------|
 | **Purpose** | Sync and index Jira data for search | Enable agents to perform actions in Jira |
 | **Data Flow** | One-way (import data into PipesHub) | Two-way (read and write via API) |
 | **When to Use** | Query/search issues, projects, comments | Create issues, update tickets, add comments |
 
-**Example:** Use **Jira Connector** to search and retrieve existing ticket information. Use **Jira Toolset** to let agents create new issues or update ticket status.
+**Example:** Use **Jira Connector** to search and retrieve existing ticket information. Use **Jira action** to let agents create new issues or update ticket status.
 
 </Accordion>
 

@@ -1,5 +1,5 @@
 ---
-title: "Agent Setup Guide"
+title: "Agent setup guide"
 description: "Step-by-step guide to creating and configuring AI agents"
 icon: "wrench"
 ---
@@ -7,8 +7,8 @@ icon: "wrench"
 <div className="not-prose mt-10">
   <div className="p-6 border border-gray-200 dark:border-gray-700 rounded-xl bg-blue-50 dark:bg-gray-800">
     <div className="flex items-center gap-3 mb-4">
-      <span className="text-4xl">🛠️</span>
-      <div className="text-xl font-semibold text-gray-900 dark:text-white">Agent Setup Guide</div>
+      <Icon icon="wrench" size={32} />
+      <div className="text-xl font-semibold text-gray-900 dark:text-white">Agent setup guide</div>
     </div>
     <p className="text-base text-gray-700 dark:text-gray-300 my-0">Create your first AI agent with the visual flow builder</p>
   </div>
@@ -19,11 +19,11 @@ icon: "wrench"
 Before creating an agent, ensure you have:
 
 1. **AI Models Configured** - At least one LLM provider set up in your organization. Agent mode in chat needs a reasoning-capable model; configure it under **Workspace > AI models**
-2. **Toolsets Configured** (optional) - Any external toolsets you want the agent to use
+2. **Actions Configured** (optional) - Any external actions you want the agent to use
 3. **Knowledge Sources** (optional) - Connectors or collections for document search
 
 <Warning>
-  Toolsets must be authenticated before they can be added to an agent. If you plan to use Jira, Slack, or other external toolsets, configure them first in **Workspace > Actions** (or **Your actions** for your own sign-in).
+  Actions must be authenticated before they can be added to an agent. If you plan to use Jira, Slack, or other external actions, configure them first in **Workspace > Actions** (or **Your actions** for your own sign-in).
 </Warning>
 
 ---
@@ -32,14 +32,22 @@ Before creating an agent, ensure you have:
 
 Agents live in the chat sidebar. Open **Chat** and look under **My agents**: it lists the agents you can use.
 
+<div className="text-center">
+  <img
+    src="/images/product/agents/my-agents-sidebar.png"
+    alt="Chat sidebar with two agents under My agents and the plus button to create one"
+    className="block mx-auto w-1/2"
+  />
+</div>
+
 ---
 
 ## Step 2: Create New Agent
 
 1. In the chat sidebar, click **+** next to **My agents**. The **Agent Builder** opens with the **Create agent** dialog.
 2. Enter a **Name** and choose the **Agent type**:
-   - **User agent**: a personal agent. Each user signs in to the toolsets with their own account.
-   - **Service agent**: an org-wide agent that uses toolset credentials stored on the agent. It searches knowledge with its creator's access.
+   - **User agent**: a personal agent. Each user signs in to the actions with their own account.
+   - **Service agent**: an org-wide agent that uses action credentials stored on the agent. It searches knowledge with its creator's access.
 3. Click **Create agent**.
 
 <div className="text-center">
@@ -66,7 +74,7 @@ The **Agent Builder** opens with a visual flow canvas. You'll see the **Agent** 
 
 ### Configure the Agent node
 
-1. Click **Edit prompts** on the Agent node to open the configuration dialog
+1. Click **Edit prompts** (the pencil icon) on the Agent node to open the **Configure agent prompts** dialog
 2. Fill in the following fields:
 
 | Field | Description | Example |
@@ -78,17 +86,17 @@ The **Agent Builder** opens with a visual flow canvas. You'll see the **Agent** 
 <div className="text-center">
   <img
     src="/images/agents/agent-core-config.png"
-    alt="Agent Core Configuration Dialog"
+    alt="Configure agent prompts dialog with system prompt, instructions and starting message"
     className="block mx-auto w-11/12"
   />
 </div>
 
 3. If a connected model supports reasoning, set **Default reasoning effort**. It is the fallback used when the user does not choose one in chat.
 4. Optionally turn **Send user & organization context** off if the agent should not receive the user's name, email or organization.
-5. Click **"Save changes"** to apply the configuration
+5. Click **Save** in the dialog. The builder's **Save changes** button then saves the agent
 
 <Info>
-  The **System prompt** is crucial for defining your agent's behavior. Be specific about what the agent should and shouldn't do, its tone, and any constraints.
+  The **System prompt** defines your agent's behavior. Be specific about what the agent should and shouldn't do, its tone, and any constraints.
 </Info>
 
 ---
@@ -119,64 +127,64 @@ The agent's model powers its intelligence. If you do not connect one, the Agent 
 </div>
 
 <Info>
-  **Reasoning models** are LLM models with reasoning capabilities enabled, allowing the agent to think through complex problems step-by-step before responding. Agent mode in chat and the **Default reasoning effort** setting need one.
+  **Reasoning models** are models with reasoning capabilities enabled, allowing the agent to think through complex problems step-by-step before responding. Agent mode in chat and the **Default reasoning effort** setting need one.
 </Info>
 ---
 
-## Step 5: Add Toolsets (Optional)
+## Step 5: Add Actions (Optional)
 
-Toolsets give your agent the ability to interact with external applications.
+Actions give your agent the ability to interact with external applications.
 
-### Viewing Available Toolsets
+### Viewing Available Actions
 
 1. In the left palette, expand the **"Tools"** section
-2. Authenticated toolsets are listed with the number of tools each provides:
+2. Authenticated actions are listed with the number of tools each provides:
 
 
 <div className="text-center">
   <img
     src="/images/agents/sidebar-toolsets.png"
-    alt="Toolsets in Sidebar"
+    alt="Tools section of the palette with web search providers and an app's actions"
     className="block mx-auto w-11/12"
   />
 </div>
 
-### Adding Toolsets to Your Agent
+### Adding Actions to Your Agent
 
 You have two options for adding tools:
 
-**Option 1: Drag Entire Toolset**
-- **Drag** the entire toolset onto the canvas to add all its tools
-- **Connect** the toolset node to the **Toolsets** section of the Agent node
+**Option 1: Drag Entire Action**
+- **Drag** the entire action onto the canvas to add all its tools
+- **Connect** the action node to the **Toolsets** section of the Agent node (the builder still uses that label)
 
 **Option 2: Drag Individual Tools**
-- Expand a toolset to see its individual tools
+- Expand an action to see its individual tools
 - **Drag** specific tools you need onto the canvas
 - This gives you more control over which tools the agent can use
 
 <div className="text-center">
   <img
     src="/images/agents/add-toolset-to-flow.png"
-    alt="Add Toolset to Agent Flow"
+    alt="Collection and web search nodes connected to the Knowledge and Toolsets sections of the Agent node"
     className="block mx-auto w-11/12"
   />
 </div>
 
 ### Managing Tools
 
-- **Remove individual tool**: Click the remove button on the right side of any tool in the toolset node
-- **Remove entire toolset**: Click the delete button in the top-right corner of the toolset node
+- **Remove individual tool**: Click the remove button on the right side of any tool in the action node
+- **Remove entire action**: Click the delete button in the top-right corner of the action node
 
 ### Adding MCP servers, skills and API actions (Optional)
 
-The palette also has **MCP servers** and **Skills** sections, and API actions appear with the toolsets. Drag them onto the canvas and connect them to the matching **MCP servers**, **Skills** or **Toolsets** section of the Agent node. Skills come from **Your skills**; if a section is empty, create or set up the item first.
+The palette also has **MCP servers** and **Skills** sections, and API actions appear under **Tools** next to the app actions. Drag them onto the canvas and connect them to the matching **MCP servers**, **Skills** or **Toolsets** section of the Agent node. Skills come from **Your skills**; if a section is empty, create or set up the item first.
 
 ### Service agents
 
-In the create dialog you can choose **Service agent** instead of **User agent**. A service agent is shared with your whole organization and uses agent-level toolset credentials, so set each toolset's credentials with the key icon in the palette. An existing agent can be converted with **Convert to service agent** (this cannot be undone).
+In the create dialog you can choose **Service agent** instead of **User agent**. A service agent is shared with your whole organization and uses agent-level action credentials, so set each action's credentials with the key icon in the palette. An existing agent can be converted with **Convert to service agent** (this cannot be undone).
 
 <Info>
-  See the individual [Toolset Documentation](/toolsets/overview) for complete details on each toolset's tools and capabilities.
+  See the individual [Action Documentation](/toolsets/overview) for complete details on each action's tools and capabilities.
 </Info>
 
 ---
@@ -194,7 +202,7 @@ Give your agent access to your indexed documents and collections.
 <div className="text-center">
   <img
     src="/images/agents/sidebar-knowledge.png"
-    alt="Knowledge Sources in Sidebar"
+    alt="Knowledge section of the palette with Apps and Collections"
     className="block mx-auto w-11/12"
   />
 </div>
@@ -212,7 +220,7 @@ The **Internal Retrieval** tool is a built-in utility that searches across all y
 <div className="text-center">
   <img
     src="/images/agents/save-agent.png"
-    alt="Agent builder header with the Agent Name field and the save button"
+    alt="Agent builder header with the Name field and the Save changes button"
     className="block mx-auto w-11/12"
   />
 </div>
@@ -241,17 +249,17 @@ The **Internal Retrieval** tool is a built-in utility that searches across all y
 
 <AccordionGroup>
 
-<Accordion title="Toolset not appearing in sidebar">
+<Accordion title="Action not appearing in sidebar">
 
 **Possible causes:**
-- The toolset is not configured in Workspace > Actions
-- The toolset is not authenticated (OAuth flow not completed)
+- The action is not configured in Workspace > Actions
+- The action is not authenticated (OAuth flow not completed)
 
 **Solution:**
 1. Go to **Workspace > Actions** (or **Your actions**)
-2. Find the toolset and configure it
+2. Find the action and configure it
 3. Complete the authentication flow
-4. Return to the Agent Builder - the toolset should now appear
+4. Return to the Agent Builder - the action should now appear
 
 </Accordion>
 
@@ -259,12 +267,12 @@ The **Internal Retrieval** tool is a built-in utility that searches across all y
 
 **Possible causes:**
 - Reasoning model not properly configured or reasoning not enabled
-- Toolset authentication expired
+- Action authentication expired
 - System prompt causing issues
 
 **Solution:**
 1. Check that your LLM provider is properly configured with reasoning enabled in **Workspace > AI models**
-2. Re-authenticate any toolsets that may have expired tokens
+2. Re-authenticate any actions that may have expired tokens
 3. Simplify the system prompt and test again
 
 </Accordion>
@@ -304,7 +312,7 @@ The **Internal Retrieval** tool is a built-in utility that searches across all y
 
 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
   <a href="/toolsets/overview" className="block p-4 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
-    <h3 className="text-lg font-semibold mb-2">Configure Toolsets</h3>
+    <h3 className="text-lg font-semibold mb-2">Configure Actions</h3>
     <p className="text-gray-600 dark:text-gray-400">Set up external service integrations</p>
   </a>
   <a href="/agent-guide/overview" className="block p-4 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">

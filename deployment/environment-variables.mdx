@@ -1,12 +1,12 @@
 ---
-title: "Environment Variables"
+title: "Environment variables"
 description: "Settings in the Docker Compose .env file: what each one does, its default, and which ones you must set"
 icon: "sliders"
 ---
 
 A Docker Compose install reads its settings from `.env` in the install directory (`./pipeshub` by default). The installer writes that file and generates the secrets. The full list with comments is `deployment/docker-compose/env.template` in the [pipeshub-ai repository](https://github.com/pipeshub-ai/pipeshub-ai/blob/main/deployment/docker-compose/env.template).
 
-The **Default** column is the value Docker Compose uses when the variable is not in `.env`. "Empty" means the service's built-in behaviour applies.
+The default given for each variable is the value Docker Compose uses when the variable is not in `.env`. "Empty" means the service's built-in behaviour applies.
 
 ## Applying a change
 
@@ -40,150 +40,150 @@ The installer generates all of these. Set them yourself only if you write `.env`
 
 ## Core
 
-| Variable | Default | What it does |
-|---|---|---|
-| `NODE_ENV` | `production` | Set `production` on any real deployment. `env.template` ships `development`; the installer writes `production`. |
-| `LOG_LEVEL` | `info` | Log level for the services. |
-| `FRONTEND_PUBLIC_URL` | Empty | Public HTTPS URL people use to open PipesHub. Used for OAuth callbacks and email links. |
-| `APP_PORT` | `3000` | Host port Docker publishes. |
-| `ALLOWED_ORIGINS` | Empty | Browser origins allowed to call the API, comma-separated. |
-| `IMAGE_TAG` | `latest` | Image tag for the app and sandbox images. `env.template` and the `slim` and `eval` installs use `slim`. |
-| `COMPOSE_PROJECT_NAME` | `pipeshub-ai` | Docker Compose project. Volume names start with it. The installer writes it; `--stop` and `--uninstall` read it. |
-| `COMPOSE_PROFILES` | `graph-neo4j,sandbox` in `env.template` | Which optional containers start. See [Backends](#backends). |
-| `TELEMETRY_COLLECTION_FLAG` | Empty (on) | `false` turns off telemetry collection in every service. |
-| `LOG_MAX_SIZE`, `LOG_MAX_FILE` | `20m`, `15` | Docker log rotation for the app container. |
+| Variable | What it does |
+|---|---|
+| `NODE_ENV` | Set `production` on any real deployment. `env.template` ships `development`; the installer writes `production`. Default: `production`. |
+| `LOG_LEVEL` | Log level for the services. Default: `info`. |
+| `FRONTEND_PUBLIC_URL` | Public HTTPS URL people use to open PipesHub. Used for OAuth callbacks and email links. Default: empty. |
+| `APP_PORT` | Host port Docker publishes. Default: `3000`. |
+| `ALLOWED_ORIGINS` | Browser origins allowed to call the API, comma-separated. Default: empty. |
+| `IMAGE_TAG` | Image tag for the app and sandbox images. `env.template` and the `slim` and `eval` installs use `slim`. Default: `latest`. |
+| `COMPOSE_PROJECT_NAME` | Docker Compose project. Volume names start with it. The installer writes it; `--stop` and `--uninstall` read it. Default: `pipeshub-ai`. |
+| `COMPOSE_PROFILES` | Which optional containers start. See [Backends](#backends). Default: `graph-neo4j,sandbox` in `env.template`. |
+| `TELEMETRY_COLLECTION_FLAG` | `false` turns off telemetry collection in every service. Default: empty (on). |
+| `LOG_MAX_SIZE`, `LOG_MAX_FILE` | Docker log rotation for the app container. Default: `20m`, `15`. |
 
 ## Signing secrets and tokens
 
-| Variable | Default | What it does |
-|---|---|---|
-| `JWT_SECRET`, `SCOPED_JWT_SECRET`, `COOKIE_SECRET` | Empty | Seed the signing secrets on a fresh install only. Otherwise they are generated on first start and stored; later values are ignored. |
-| `ROTATE_SIGNING_SECRETS` | Empty | Written by `./install.sh --rotate-signing-secrets`. See [Rotate signing secrets](/deployment/signing-secrets). |
-| `ACCESS_TOKEN_EXPIRY` | `24h` | Lifetime of an access token. |
-| `REFRESH_TOKEN_EXPIRY` | `720h` | Lifetime of a refresh token. |
-| `PASSWORD_RESET_LINK_EXPIRY` | `20m` | Lifetime of a password-reset link. |
-| `MCP_SCOPES` | All scopes, including `code:read` | OAuth scopes for MCP access, comma-separated. If you set it, include `code:read`, or first-run setup stops with "Scopes not allowed for this app: code:read". |
-| `PIPESHUB_ENABLE_DCR` | Empty (off) | `true` turns on OAuth dynamic client registration (RFC 7591). |
-| `PIPESHUB_ENABLE_DEVICE_GRANT` | Empty (on) | `false` turns off the OAuth device authorization grant (RFC 8628). |
-| `HIDE_SECRET_CONFIG` | `false` | `true` masks secrets, including sign-in and OAuth app secrets, in settings responses until revealed. |
+| Variable | What it does |
+|---|---|
+| `JWT_SECRET`, `SCOPED_JWT_SECRET`, `COOKIE_SECRET` | Seed the signing secrets on a fresh install only. Otherwise they are generated on first start and stored; later values are ignored. Default: empty. |
+| `ROTATE_SIGNING_SECRETS` | Written by `./install.sh --rotate-signing-secrets`. See [Rotate signing secrets](/deployment/signing-secrets). Default: empty. |
+| `ACCESS_TOKEN_EXPIRY` | Lifetime of an access token. Default: `24h`. |
+| `REFRESH_TOKEN_EXPIRY` | Lifetime of a refresh token. Default: `720h`. |
+| `PASSWORD_RESET_LINK_EXPIRY` | Lifetime of a password-reset link. Default: `20m`. |
+| `MCP_SCOPES` | OAuth scopes for MCP access, comma-separated. If you set it, include `code:read`, or first-run setup stops with "Scopes not allowed for this app: code:read". Default: all scopes, including `code:read`. |
+| `PIPESHUB_ENABLE_DCR` | `true` turns on OAuth dynamic client registration (RFC 7591). Default: empty (off). |
+| `PIPESHUB_ENABLE_DEVICE_GRANT` | `false` turns off the OAuth device authorization grant (RFC 8628). Default: empty (on). |
+| `HIDE_SECRET_CONFIG` | `true` masks secrets, including sign-in and OAuth app secrets, in settings responses until revealed. Default: `false`. |
 
 ## Rate limits and proxies
 
 See [Rate limits and API errors](/additional-resources/rate-limits-and-errors) for how each limit counts.
 
-| Variable | Default | What it does |
-|---|---|---|
-| `MAX_REQUESTS_PER_MINUTE` | `2000` | Requests per minute for each signed-in user (else each IP) across the API. Not in `env.template`. Without Docker Compose the built-in default is `1000`. |
-| `MAX_AUTH_REQUESTS_PER_MINUTE` | `10` | Sign-in, OTP and password requests per minute for each account. One IP may send six times this across all accounts. |
-| `MAX_OAUTH_CLIENT_REQUESTS_PER_MINUTE` | `1000` | Requests per minute to OAuth app, personal access token, service account and OAuth token routes. Not in `env.template`. |
-| `TRUST_PROXY` | Empty | Which reverse proxies to trust for the client IP. Behind one proxy (Nginx, Caddy, Traefik) use `1`, or list the proxy addresses or CIDRs. Never use `true`. |
+| Variable | What it does |
+|---|---|
+| `MAX_REQUESTS_PER_MINUTE` | Requests per minute for each signed-in user (else each IP) across the API. Not in `env.template`. Without Docker Compose the built-in default is `1000`. Default: `2000`. |
+| `MAX_AUTH_REQUESTS_PER_MINUTE` | Sign-in, OTP and password requests per minute for each account. One IP may send six times this across all accounts. Default: `10`. |
+| `MAX_OAUTH_CLIENT_REQUESTS_PER_MINUTE` | Requests per minute to OAuth app, personal access token, service account and OAuth token routes. Not in `env.template`. Default: `1000`. |
+| `TRUST_PROXY` | Which reverse proxies to trust for the client IP. Behind one proxy (Nginx, Caddy, Traefik) use `1`, or list the proxy addresses or CIDRs. Never use `true`. Default: empty. |
 
 ## Backends
 
 Each backend variable must agree with `COMPOSE_PROFILES`. A backend whose profile is missing is not running, and a profile with no matching backend starts a container nothing uses.
 
-| Variable | Default | Profile | What it does |
-|---|---|---|---|
-| `DATA_STORE` | `neo4j` | `graph-neo4j` or `graph-arango` | Graph database: `neo4j` or `arangodb`. |
-| `KV_STORE_TYPE` | `redis` | `kv-etcd` for `etcd` | Key-value store for configuration: `redis` or `etcd`. |
-| `MESSAGE_BROKER` | `redis` | `broker-kafka` for `kafka` | Message broker: `redis` (Redis Streams) or `kafka`. |
-| `VECTOR_COLLECTION_STRATEGY` | `single` | — | `single` puts all records in one Qdrant collection; `per_connector_type` uses one per connector type. Do not change it on an existing install: the services stop at startup. |
+| Variable | What it does |
+|---|---|
+| `DATA_STORE` | Graph database: `neo4j` or `arangodb`. Default: `neo4j`. Profile: `graph-neo4j` or `graph-arango`. |
+| `KV_STORE_TYPE` | Key-value store for configuration: `redis` or `etcd`. Default: `redis`. Profile: `kv-etcd` for `etcd`. |
+| `MESSAGE_BROKER` | Message broker: `redis` (Redis Streams) or `kafka`. Default: `redis`. Profile: `broker-kafka` for `kafka`. |
+| `VECTOR_COLLECTION_STRATEGY` | `single` puts all records in one Qdrant collection; `per_connector_type` uses one per connector type. Do not change it on an existing install: the services stop at startup. Default: `single`. |
 
 Other profiles: `sandbox` (coding sandbox; leave it out for `eval`), `search-searxng` (needs `SEARXNG_SECRET`) and `fetch-crawl4ai` (needs `CRAWL4AI_API_TOKEN`). See [Web Search](/web-search).
 
 ### Redis Streams
 
-| Variable | Default | What it does |
-|---|---|---|
-| `REDIS_STREAMS_RETENTION_MODE` | `after_ack` | `after_ack` trims a stream only behind its consumers. `maxlen` caps every stream and drops unconsumed events past the cap. |
-| `REDIS_STREAMS_MAXLEN` | `500000` | Cap for streams with no consumer group, or for every stream with `maxlen`. |
-| `FAIR_SCHEDULING_LANE_COUNT` | `8` | Indexing lanes. Every service must use the same count. |
-| `FAIR_SCHEDULING_LANE_ASSIGNMENT` | `assigned` | `assigned` gives each connector the least busy lane; `hash` picks a lane from the connector id. |
-| `MAX_DELIVERY_ATTEMPTS` | `3` | Deliveries before a message is dead-lettered. |
+| Variable | What it does |
+|---|---|
+| `REDIS_STREAMS_RETENTION_MODE` | `after_ack` trims a stream only behind its consumers. `maxlen` caps every stream and drops unconsumed events past the cap. Default: `after_ack`. |
+| `REDIS_STREAMS_MAXLEN` | Cap for streams with no consumer group, or for every stream with `maxlen`. Default: `500000`. |
+| `FAIR_SCHEDULING_LANE_COUNT` | Indexing lanes. Every service must use the same count. Default: `8`. |
+| `FAIR_SCHEDULING_LANE_ASSIGNMENT` | `assigned` gives each connector the least busy lane; `hash` picks a lane from the connector id. Default: `assigned`. |
+| `MAX_DELIVERY_ATTEMPTS` | Deliveries before a message is dead-lettered. Default: `3`. |
 
 ## Memory and databases
 
-| Variable | Default | What it does |
-|---|---|---|
-| `APP_MEMORY_LIMIT` | `10G` | Memory cap for the app container. The installer sets it from the machine's memory less 4 GB, between 6 GB and 32 GB. Indexing and parsing concurrency is sized from it, so it is the main throughput setting. |
-| `APP_MEMSWAP_LIMIT` | `16G` | Memory plus swap cap for the app container. Keep it at or above `APP_MEMORY_LIMIT`. |
-| `QDRANT_MEMORY_LIMIT` | `6G` | Memory cap for Qdrant. Search slows when the index outgrows it. |
-| `MONGO_CACHE_GB` | `1` | MongoDB WiredTiger cache. |
-| `MONGO_MEMORY_LIMIT` | `2G` | Memory cap for MongoDB. Raise it together with `MONGO_CACHE_GB`. |
-| `MONGO_GLIBC_TUNABLES` | `glibc.pthread.rseq=0` | Set `glibc.pthread.rseq=1` if MongoDB keeps exiting with code 139. |
-| `MONGO_IMAGE_TAG` | `8.0.17` | MongoDB image. MongoDB 8 data cannot be read by 7, so do not downgrade an existing volume. |
+| Variable | What it does |
+|---|---|
+| `APP_MEMORY_LIMIT` | Memory cap for the app container. The installer sets it from the machine's memory less 4 GB, between 6 GB and 32 GB. Indexing and parsing concurrency is sized from it, so it is the main throughput setting. Default: `10G`. |
+| `APP_MEMSWAP_LIMIT` | Memory plus swap cap for the app container. Keep it at or above `APP_MEMORY_LIMIT`. Default: `16G`. |
+| `QDRANT_MEMORY_LIMIT` | Memory cap for Qdrant. Search slows when the index outgrows it. Default: `6G`. |
+| `MONGO_CACHE_GB` | MongoDB WiredTiger cache. Default: `1`. |
+| `MONGO_MEMORY_LIMIT` | Memory cap for MongoDB. Raise it together with `MONGO_CACHE_GB`. Default: `2G`. |
+| `MONGO_GLIBC_TUNABLES` | Set `glibc.pthread.rseq=1` if MongoDB keeps exiting with code 139. Default: `glibc.pthread.rseq=0`. |
+| `MONGO_IMAGE_TAG` | MongoDB image. MongoDB 8 data cannot be read by 7, so do not downgrade an existing volume. Default: `8.0.17`. |
 
 ## Indexing and parsing
 
 Leave these unset unless you are tuning a known bottleneck. Empty values let the services size themselves from the CPU and memory limits.
 
-| Variable | Default | What it does |
-|---|---|---|
-| `MAX_CONCURRENT_PARSING`, `MAX_CONCURRENT_INDEXING`, `MAX_PENDING_INDEXING_TASKS` | Empty | Caps on parsing and indexing concurrency. Set a number only to cap. |
-| `INDEXING_UVICORN_WORKERS`, `PARSING_UVICORN_WORKERS`, `DOCLING_UVICORN_WORKERS` | `1` | Worker processes for those services. |
-| `QUERY_UVICORN_WORKERS` | Empty | Worker processes for the query service. |
-| `CONNECTOR_UVICORN_WORKERS` | `1` | Worker processes for the connector service. Raising it can run duplicate syncs at once. |
-| `UVICORN_WORKER_HEALTHCHECK_TIMEOUT_SECONDS` | `60` | Seconds a worker may stop answering before it is replaced. |
-| `LOCAL_DOCLING_PARSE_WORKERS`, `PDF_OCR_DETECTION_WORKERS` | `1` | Local Docling and OCR-detection workers. |
-| `ENABLE_PDFPLUMBER_PROCESSOR` | `false` | Read text PDFs with the local PdfPlumber parser. |
-| `PDF_DOCLING_MAX_PAGES` | `30` | Text PDFs longer than this go to PdfPlumber; `0` sends every text PDF there. |
-| `PARSE_POOL_WORKERS` | Empty | Processes that parse large text, code and CSV files. Empty derives it from the CPU limit; `0` uses threads. |
-| `CODE_FILE_MAX_SIZE_MB` | Empty (5) | Largest code-repository file read as code or text. |
-| `CONNECTOR_SYNC_MAX_CONCURRENT` | `8` | Most connector syncs running at once. |
-| `CONNECTOR_SYNC_DELETE_STOP_WAIT_SEC` | `15` | How long a connector delete waits for its running sync to stop. |
-| `MAX_TABLE_ROWS_FOR_LLM` | `1000` | Table-row threshold for processing with the language model. |
-| `EXCEL_MAX_TABLE_ROWS_TO_INDEX` | `20000` | Most rows indexed from one Excel table. |
-| `EXCEL_HEADER_GENERATION_SAMPLE_SCAN_LIMIT` | `500` | Rows scanned to generate Excel table headers. |
-| `EMBEDDING_SERVER_MAX_CONCURRENCY`, `EMBEDDING_BATCH_CONCURRENCY` | Empty | Caps on the bundled embedding server. |
-| `EMBEDDING_SERVER_QUERY_RESERVED_SLOTS` | Empty (1) | Embedding slots kept for search queries. |
-| `EMBEDDING_SERVER_MODEL_IDLE_SECONDS` | Empty (900) | Seconds before an unused local embedding model is unloaded; `0` keeps it loaded. |
-| `PARSE_MAX_ORG_SHARE` | Empty (0.5) | Share of a parse pool one organization may hold while another waits. |
+| Variable | What it does |
+|---|---|
+| `MAX_CONCURRENT_PARSING`, `MAX_CONCURRENT_INDEXING`, `MAX_PENDING_INDEXING_TASKS` | Caps on parsing and indexing concurrency. Set a number only to cap. Default: empty. |
+| `INDEXING_UVICORN_WORKERS`, `PARSING_UVICORN_WORKERS`, `DOCLING_UVICORN_WORKERS` | Worker processes for those services. Default: `1`. |
+| `QUERY_UVICORN_WORKERS` | Worker processes for the query service. Default: empty. |
+| `CONNECTOR_UVICORN_WORKERS` | Worker processes for the connector service. Raising it can run duplicate syncs at once. Default: `1`. |
+| `UVICORN_WORKER_HEALTHCHECK_TIMEOUT_SECONDS` | Seconds a worker may stop answering before it is replaced. Default: `60`. |
+| `LOCAL_DOCLING_PARSE_WORKERS`, `PDF_OCR_DETECTION_WORKERS` | Local Docling and OCR-detection workers. Default: `1`. |
+| `ENABLE_PDFPLUMBER_PROCESSOR` | Read text PDFs with the local PdfPlumber parser. Default: `false`. |
+| `PDF_DOCLING_MAX_PAGES` | Text PDFs longer than this go to PdfPlumber; `0` sends every text PDF there. Default: `30`. |
+| `PARSE_POOL_WORKERS` | Processes that parse large text, code and CSV files. Empty derives it from the CPU limit; `0` uses threads. Default: empty. |
+| `CODE_FILE_MAX_SIZE_MB` | Largest code-repository file read as code or text. Default: empty (5). |
+| `CONNECTOR_SYNC_MAX_CONCURRENT` | Most connector syncs running at once. Default: `8`. |
+| `CONNECTOR_SYNC_DELETE_STOP_WAIT_SEC` | How long a connector delete waits for its running sync to stop. Default: `15`. |
+| `MAX_TABLE_ROWS_FOR_LLM` | Table-row threshold for processing with the language model. Default: `1000`. |
+| `EXCEL_MAX_TABLE_ROWS_TO_INDEX` | Most rows indexed from one Excel table. Default: `20000`. |
+| `EXCEL_HEADER_GENERATION_SAMPLE_SCAN_LIMIT` | Rows scanned to generate Excel table headers. Default: `500`. |
+| `EMBEDDING_SERVER_MAX_CONCURRENCY`, `EMBEDDING_BATCH_CONCURRENCY` | Caps on the bundled embedding server. Default: empty. |
+| `EMBEDDING_SERVER_QUERY_RESERVED_SLOTS` | Embedding slots kept for search queries. Default: empty (1). |
+| `EMBEDDING_SERVER_MODEL_IDLE_SECONDS` | Seconds before an unused local embedding model is unloaded; `0` keeps it loaded. Default: empty (900). |
+| `PARSE_MAX_ORG_SHARE` | Share of a parse pool one organization may hold while another waits. Default: empty (0.5). |
 
 `env.template` also lists `GOVERNOR_*` and `INDEXING_SPLIT_LEASE_POOLS` resource-governor settings. Leave them empty.
 
 ## Search and answers
 
-| Variable | Default | What it does |
-|---|---|---|
-| `TARGETED_RETRIEVAL` | Empty (on) | Agents read only the relevant part of a record. `false` turns it off. On by default since 1.0. |
-| `TIMELINE_SUMMARIES` | Empty (on) | Timeline search over date ranges. `false` turns it off. On by default since 1.0. |
-| `HIGH_ACCURACY_MODE` | `false` | `true` turns on features that spend more compute per question, and named-entity extraction while indexing. |
-| `PIPESHUB_AGENT_MAX_TURN_OUTPUT_CHARS` | Empty (1000000) | Most characters one agent turn may stream before it is stopped. `0` removes the limit. |
-| `PIPESHUB_ACCESSIBLE_RECORDS_CACHE`, `PIPESHUB_ACCESSIBLE_RECORDS_CACHE_TTL` | Empty (on), `300` | Cache of the records a user can access, and its lifetime in seconds. |
+| Variable | What it does |
+|---|---|
+| `TARGETED_RETRIEVAL` | Agents read only the relevant part of a record. `false` turns it off. On by default since 1.0. Default: empty (on). |
+| `TIMELINE_SUMMARIES` | Timeline search over date ranges. `false` turns it off. On by default since 1.0. Default: empty (on). |
+| `HIGH_ACCURACY_MODE` | `true` turns on features that spend more compute per question, and named-entity extraction while indexing. Default: `false`. |
+| `PIPESHUB_AGENT_MAX_TURN_OUTPUT_CHARS` | Most characters one agent turn may stream before it is stopped. `0` removes the limit. Default: empty (1000000). |
+| `PIPESHUB_ACCESSIBLE_RECORDS_CACHE`, `PIPESHUB_ACCESSIBLE_RECORDS_CACHE_TTL` | Cache of the records a user can access, and its lifetime in seconds. Default: empty (on), `300`. |
 
 ## Code graph
 
-| Variable | Default | What it does |
-|---|---|---|
-| `CODE_GRAPH_ENABLED` | `true` | `false` indexes code for search only, with no code graph. |
-| `CODE_GRAPH_BACKFILL` | `false` | `true` re-indexes, on the next start, repositories indexed before the current code-graph version. |
-| `CODE_FILE_CLASSIFICATION` | `true` | Per-file classification of code with the language model. |
-| `CODE_EDGE_BUILD_RECONCILE_INTERVAL_SECONDS` | Empty (600) | How often the connector service looks for repositories that still need a graph build. |
-| `CODE_EDGE_FULL_REBUILD_INTERVAL_SECONDS` | Empty (604800) | Full rebuild of each repository's graph, in seconds (7 days). |
-| `CODE_EDGE_BUILD_MAX_CONCURRENT`, `CODE_EDGE_BUILD_MAX_PER_ORG` | Empty (2, 1) | Graph builds at once per connector process, and per organization. |
-| `CODE_EDGE_BUILD_MAX_BLOCKS` | Empty (300000) | Largest repository one build loads. |
-| `CODE_EDGE_BUILD_MAX_FAILURES` | Empty (6) | Failed attempts before a build is marked failed. |
+| Variable | What it does |
+|---|---|
+| `CODE_GRAPH_ENABLED` | `false` indexes code for search only, with no code graph. Default: `true`. |
+| `CODE_GRAPH_BACKFILL` | `true` re-indexes, on the next start, repositories indexed before the current code-graph version. Default: `false`. |
+| `CODE_FILE_CLASSIFICATION` | Per-file classification of code with the language model. Default: `true`. |
+| `CODE_EDGE_BUILD_RECONCILE_INTERVAL_SECONDS` | How often the connector service looks for repositories that still need a graph build. Default: empty (600). |
+| `CODE_EDGE_FULL_REBUILD_INTERVAL_SECONDS` | Full rebuild of each repository's graph, in seconds (7 days). Default: empty (604800). |
+| `CODE_EDGE_BUILD_MAX_CONCURRENT`, `CODE_EDGE_BUILD_MAX_PER_ORG` | Graph builds at once per connector process, and per organization. Default: empty (2, 1). |
+| `CODE_EDGE_BUILD_MAX_BLOCKS` | Largest repository one build loads. Default: empty (300000). |
+| `CODE_EDGE_BUILD_MAX_FAILURES` | Failed attempts before a build is marked failed. Default: empty (6). |
 
 ## Network and security
 
-| Variable | Default | What it does |
-|---|---|---|
-| `PIPESHUB_BLOCK_PRIVATE_ADDRESSES` | Empty | `true` refuses AI model endpoints and connector servers on private or internal addresses. Use it when organizations that do not trust each other share one deployment. |
-| `WEB_CONNECTOR_ALLOWED_HOSTS` | Empty | Internal host names the Web and RSS connectors may crawl, comma-separated. |
-| `CONNECTOR_EGRESS_IPS` | Empty | Public IPs shown in connector forms for firewall allow-lists. Empty looks them up once; `none` hides them. |
-| `PIPESHUB_NEXTCLOUD_ALLOW_INSECURE_HTTP` | Empty | `true` lets the Nextcloud connector use an `http://` URL. |
-| `MCP_ALLOW_CUSTOM_STDIO` | `false` | `true` allows custom STDIO MCP servers, which run an admin-entered command inside the app container. |
-| `SANDBOX_ALLOW_NETWORK` | `false` | `true` gives agent-generated code network access. Private and cloud-metadata addresses stay blocked. |
-| `SANDBOX_EGRESS_ALLOW_CIDRS` | Empty | Private ranges sandboxed code may still reach, such as a package mirror. |
-| `WEB_FETCH_RENDER_JS` | Empty | `off` stops chat from rendering pages in the headless browser. |
-| `SEARXNG_SECRET` | Empty | Required with the `search-searxng` profile. |
-| `CRAWL4AI_API_TOKEN` | Empty | Required with the `fetch-crawl4ai` profile. |
+| Variable | What it does |
+|---|---|
+| `PIPESHUB_BLOCK_PRIVATE_ADDRESSES` | `true` refuses AI model endpoints and connector servers on private or internal addresses. Use it when organizations that do not trust each other share one deployment. Default: empty. |
+| `WEB_CONNECTOR_ALLOWED_HOSTS` | Internal host names the Web and RSS connectors may crawl, comma-separated. Default: empty. |
+| `CONNECTOR_EGRESS_IPS` | Public IPs shown in connector forms for firewall allow-lists. Empty looks them up once; `none` hides them. Default: empty. |
+| `PIPESHUB_NEXTCLOUD_ALLOW_INSECURE_HTTP` | `true` lets the Nextcloud connector use an `http://` URL. Default: empty. |
+| `MCP_ALLOW_CUSTOM_STDIO` | `true` allows custom STDIO MCP servers, which run an admin-entered command inside the app container. Default: `false`. |
+| `SANDBOX_ALLOW_NETWORK` | `true` gives agent-generated code network access. Private and cloud-metadata addresses stay blocked. Default: `false`. |
+| `SANDBOX_EGRESS_ALLOW_CIDRS` | Private ranges sandboxed code may still reach, such as a package mirror. Default: empty. |
+| `WEB_FETCH_RENDER_JS` | `off` stops chat from rendering pages in the headless browser. Default: empty. |
+| `SEARXNG_SECRET` | Required with the `search-searxng` profile. Default: empty. |
+| `CRAWL4AI_API_TOKEN` | Required with the `fetch-crawl4ai` profile. Default: empty. |
 
 ## Air-gapped hosts
 
-| Variable | Default | What it does |
-|---|---|---|
-| `HF_HUB_OFFLINE`, `TRANSFORMERS_OFFLINE` | Empty | Set both to `1` on a host with no internet that already has the models, such as the `latest` image. Leave them empty on `slim`, which downloads the embedding model on first use. |
+| Variable | What it does |
+|---|---|
+| `HF_HUB_OFFLINE`, `TRANSFORMERS_OFFLINE` | Set both to `1` on a host with no internet that already has the models, such as the `latest` image. Leave them empty on `slim`, which downloads the embedding model on first use. Default: empty. |
 
 See [Private Cloud & On-Premises](/deployment/vendor/private).
 
@@ -193,7 +193,7 @@ These are read by `install.sh` itself, for scripted installs. They are not writt
 
 | Variable | What it does |
 |---|---|
-| `PIPESHUB_DEPLOY_TYPE` | `slim`, `full` or `eval`. See [System Requirements](/deployment/system-requirements#deployment-types). |
+| `PIPESHUB_DEPLOY_TYPE` | `slim`, `full` or `eval`. See [System requirements](/deployment/system-requirements#deployment-types). |
 | `PIPESHUB_GRAPH_DB`, `PIPESHUB_BROKER`, `PIPESHUB_KV_STORE` | `neo4j` or `arango`; `redis` or `kafka`; `redis` or `etcd`. |
 | `PIPESHUB_VERSION` | Image tag, same as `--version`. |
 | `PIPESHUB_NO_PULL` | `1` or `true`, same as `--no-pull`. |
@@ -208,6 +208,6 @@ These are read by `install.sh` itself, for scripted installs. They are not writt
 
 ## Related
 
-- [System Requirements](/deployment/system-requirements)
+- [System requirements](/deployment/system-requirements)
 - [Upgrading to 1.0](/deployment/upgrade-to-1-0)
 - [Kubernetes (Helm)](/deployment/kubernetes)

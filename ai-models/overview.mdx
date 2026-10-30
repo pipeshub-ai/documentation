@@ -1,15 +1,16 @@
 ---
-title: "AI Models Overview"
+title: "AI models overview"
 description: "Connect PipesHub to LLM and embedding providers to power AI features across your workspace"
+icon: "brain"
 ---
 
-The AI Models page is where workspace admins connect PipesHub to one or more AI providers. Once configured, these models power every AI feature in the platform — answering questions in chat, summarising documents, and running AI agents. You can connect as many providers as you need and switch between them at any time.
+The AI Models page is where workspace admins connect PipesHub to one or more AI providers. Once configured, these models power every AI feature in the platform: answering questions in chat, summarising documents, and running AI agents. You can connect as many providers as you need and switch between them at any time.
 
-You need at least one **LLMs** provider configured before any AI feature in your workspace will work. Embedding models are used for document search and are configured separately.
+You need at least one LLM provider configured before any AI feature in your workspace will work. Embedding models are used for document search and are configured separately.
 
-## How to navigate to this page
+## Open the AI models settings
 
-Open the **left sidebar** → **Workspace Settings** → **AI models**. The page opens on **Model providers** with the **For LLMs** tab selected.
+Open the **left sidebar** → **Workspace settings** → **AI models**. The page opens on **Model providers** with the **For LLMs** tab selected.
 
 <div style={{ textAlign: "center" }}>
   <img
@@ -23,11 +24,11 @@ Open the **left sidebar** → **Workspace Settings** → **AI models**. The page
 Only workspace **admins** and **owners** can access the AI Models settings page.
 </Note>
 
-## Add your first LLMs model
+## Add your first LLM
 
 <Steps>
   <Step title="Open AI Models settings">
-    Open the left sidebar → **Workspace Settings** → **AI models**.
+    Open the left sidebar → **Workspace settings** → **AI models**.
   </Step>
   <Step title="Go to the For LLMs tab">
     The page opens on **Model providers** with the **For LLMs** tab selected.
@@ -50,48 +51,48 @@ Only workspace **admins** and **owners** can access the AI Models settings page.
     Enter the credentials required for your provider (API key, endpoint URL, etc.). See the [provider reference](#provider-reference) below.
   </Step>
   <Step title="Set optional fields (if needed)">
-    - **Model Friendly Name** — a human-readable label shown in chat (e.g. "My GPT-5"). Optional.
-    - **Context Length** — the model's context window in tokens, from 1,024 to 20,000,000. Leave it empty and PipesHub assumes 128,000.
-    - **Multimodal** toggle — enable if this model can accept image input. On by default.
-    - **Reasoning** toggle — enable for chain-of-thought / o-series style models. On by default.
+    - **Model Friendly Name**: a human-readable label shown in chat (e.g. "My GPT-5"). Optional.
+    - **Context Length**: the model's context window in tokens, from 1,024 to 20,000,000. Leave it empty and PipesHub assumes 128,000.
+    - **Multimodal**: turn on if this model can accept image input. On by default.
+    - **Reasoning**: turn on for models that reason before answering. On by default.
   </Step>
   <Step title="Save and validate">
     Click **Add model**. PipesHub runs a live health check to validate your credentials.
   </Step>
   <Step title="First model becomes the default">
-    If this is the first LLMs model you've added, it is automatically set as the default model used by all AI features.
+    If this is the first LLM you've added, it is automatically set as the default model used by all AI features.
   </Step>
 </Steps>
 
 ## Provider reference
 
-The table below lists every supported LLMs provider, the fields you must fill in, and example model name strings.
+The table below lists every supported LLM provider, the fields you must fill in, any optional fields, and example model names.
 
-| Provider | Required fields | Optional fields | Example model names |
-|---|---|---|---|
-| [**OpenAI**](/ai-models/llm/openai) | API Key, Model Name | Base URL, Organization ID | `gpt-6-luna`, `gpt-6.1-sol`, `gpt-6-astra` |
-| [**Anthropic**](/ai-models/llm/anthropic) | API Key, Model Name | — | `claude-opus-5-5`, `claude-sonnet-5-5`, `claude-haiku-5-5` |
-| [**Gemini**](/ai-models/llm/gemini) | API Key, Model Name | — | `gemini-3-flash-preview`, `gemini-3.1-pro-preview` |
-| [**Vertex AI**](/ai-models/llm/vertex-ai) | GCP Project ID, Service Account JSON, Model Name | Region (default `us-central1`) | `gemini-3.8-flash`, `gemini-3.5-flash` |
-| [**Azure OpenAI**](/ai-models/llm/azure-openai) | Endpoint URL, API Key, Deployment Name, Model Name | — | `gpt-5`, `gpt-5-mini`, `gpt-5-nano` |
-| [**Azure AI**](/ai-models/llm/azure-ai) | Endpoint URL, API Key, Model Name | — | `gpt-5.1`, `claude-sonnet-4-5`, `DeepSeek-V3.1` |
-| [**Cohere**](/ai-models/llm/cohere) | API Key, Model Name | — | `command-a-03-2025` |
-| [**Mistral**](/ai-models/llm/mistral) | API Key, Model Name | — | `mistral-large-latest` |
-| [**Groq**](/ai-models/llm/groq) | API Key, Model Name | — | `meta-llama/llama-4-scout-17b-16e-instruct` |
-| [**xAI**](/ai-models/llm/xai) | API Key, Model Name | — | `grok-3-latest` |
-| [**MiniMax**](/ai-models/llm/minimax) | API Key, Model Name | — | `MiniMax-M2.7`, `MiniMax-M2.7-highspeed` |
-| [**Fireworks**](/ai-models/llm/fireworks) | API Key, Model Name | — | `accounts/fireworks/models/kimi-k2-instruct` |
-| [**Together**](/ai-models/llm/together) | API Key, Model Name, Endpoint URL | — | `deepseek-ai/DeepSeek-V3` |
-| [**OpenRouter**](/ai-models/llm/openrouter) | API Key, Model Name | — | `anthropic/claude-sonnet-5.5`, `openai/gpt-6-luna` |
-| [**LiteLLM Proxy**](/ai-models/llm/litellm-proxy) | Endpoint URL (default `http://host.docker.internal:4000`), API Key, Model Name | — | The `model_name` from your proxy config |
-| [**OpenAI Compatible**](/ai-models/llm/openai-compatible) | Endpoint URL, API Key, Model Name | — | `deepseek-ai/DeepSeek-V3` |
-| [**Ollama**](/ai-models/llm/ollama) | Model Name | API Key, Endpoint URL | `gemma4:latest`, `hf.co/unsloth/gpt-oss-20b-GGUF:F16` |
-| [**LM Studio**](/ai-models/llm/lm-studio) | Endpoint URL (default `http://host.docker.internal:1234/v1`), Model Name | API Key | `lmstudio-community/Meta-Llama-3.1-8B-Instruct-GGUF` |
-| [**Amazon Bedrock**](/ai-models/llm/bedrock) | AWS Region, Model Name, Provider | AWS Access Key ID, AWS Secret Access Key, Custom Provider Name | `us.anthropic.claude-sonnet-5-5`, `us.amazon.nova-2-lite-v1:0` |
+| Provider | Required fields |
+|---|---|
+| [**OpenAI**](/ai-models/llm/openai) | API Key, Model Name<br/>Optional: Base URL, Organization ID<br/>Examples: `gpt-6-luna`, `gpt-6.1-sol`, `gpt-6-astra` |
+| [**Anthropic**](/ai-models/llm/anthropic) | API Key, Model Name<br/>Examples: `claude-opus-5-5`, `claude-sonnet-5-5`, `claude-haiku-5-5` |
+| [**Gemini**](/ai-models/llm/gemini) | API Key, Model Name<br/>Examples: `gemini-3-flash-preview`, `gemini-3.1-pro-preview` |
+| [**Vertex AI**](/ai-models/llm/vertex-ai) | GCP Project ID, Service Account JSON, Model Name<br/>Optional: Region (default `us-central1`)<br/>Examples: `gemini-3.8-flash`, `gemini-3.5-flash` |
+| [**Azure OpenAI**](/ai-models/llm/azure-openai) | Endpoint URL, API Key, Deployment Name, Model Name<br/>Examples: `gpt-5`, `gpt-5-mini`, `gpt-5-nano` |
+| [**Azure AI**](/ai-models/llm/azure-ai) | Endpoint URL, API Key, Model Name<br/>Examples: `gpt-5.1`, `claude-sonnet-4-5`, `DeepSeek-V3.1` |
+| [**Cohere**](/ai-models/llm/cohere) | API Key, Model Name<br/>Example: `command-a-03-2025` |
+| [**Mistral**](/ai-models/llm/mistral) | API Key, Model Name<br/>Example: `mistral-large-latest` |
+| [**Groq**](/ai-models/llm/groq) | API Key, Model Name<br/>Example: `meta-llama/llama-4-scout-17b-16e-instruct` |
+| [**xAI**](/ai-models/llm/xai) | API Key, Model Name<br/>Example: `grok-3-latest` |
+| [**MiniMax**](/ai-models/llm/minimax) | API Key, Model Name<br/>Examples: `MiniMax-M2.7`, `MiniMax-M2.7-highspeed` |
+| [**Fireworks**](/ai-models/llm/fireworks) | API Key, Model Name<br/>Example: `accounts/fireworks/models/kimi-k2-instruct` |
+| [**Together**](/ai-models/llm/together) | API Key, Model Name, Endpoint URL<br/>Example: `deepseek-ai/DeepSeek-V3` |
+| [**OpenRouter**](/ai-models/llm/openrouter) | API Key, Model Name<br/>Examples: `anthropic/claude-sonnet-5.5`, `openai/gpt-6-luna` |
+| [**LiteLLM Proxy**](/ai-models/llm/litellm-proxy) | Endpoint URL (default `http://host.docker.internal:4000`), API Key, Model Name<br/>Example: the `model_name` from your proxy config |
+| [**OpenAI Compatible**](/ai-models/llm/openai-compatible) | Endpoint URL, API Key, Model Name<br/>Example: `deepseek-ai/DeepSeek-V3` |
+| [**Ollama**](/ai-models/llm/ollama) | Model Name<br/>Optional: API Key, Endpoint URL<br/>Examples: `gemma4:latest`, `hf.co/unsloth/gpt-oss-20b-GGUF:F16` |
+| [**LM Studio**](/ai-models/llm/lm-studio) | Endpoint URL (default `http://host.docker.internal:1234/v1`), Model Name<br/>Optional: API Key<br/>Example: `lmstudio-community/Meta-Llama-3.1-8B-Instruct-GGUF` |
+| [**Amazon Bedrock**](/ai-models/llm/bedrock) | AWS Region, Model Name, Provider<br/>Optional: AWS Access Key ID, AWS Secret Access Key, Custom Provider Name<br/>Examples: `us.anthropic.claude-sonnet-5-5`, `us.amazon.nova-2-lite-v1:0` |
 
-> **Azure OpenAI — Deployment Name:** This is the name you assigned when deploying the model in Azure AI Studio, not the model ID itself.
+> **Azure OpenAI, Deployment Name:** This is the name you assigned when deploying the model in Azure AI Studio, not the model ID itself.
 >
-> **Azure AI — Endpoint URL format:** Use `https://<resource>.inference.ai.azure.com/anthropic` for Claude models, or `https://<resource>.cognitiveservices.azure.com/openai/v1/` for OpenAI, DeepSeek, and other models.
+> **Azure AI, Endpoint URL format:** Use `https://<resource>.inference.ai.azure.com/anthropic` for Claude models, or `https://<resource>.cognitiveservices.azure.com/openai/v1/` for OpenAI, DeepSeek, and other models.
 >
 > **OpenAI:** Leave **Base URL** blank to use the official OpenAI API. **Organization ID** (`org-...`) is sent as the `OpenAI-Organization` header when set.
 >
@@ -107,11 +108,11 @@ The table below lists every supported LLMs provider, the fields you must fill in
 
 After saving, your model appears under **Configured models**. Each row has the following actions:
 
-- **Edit** — update credentials or settings without deleting the configuration.
-- **Set as Default** — make this model the one used by all AI features by default.
-- **Delete** — permanently remove the configuration. You will be asked to type the model's name to confirm.
+- **Edit**: update credentials or settings without deleting the configuration.
+- **Set as default**: make this model the one used by all AI features by default.
+- **Delete**: permanently remove the configuration. You will be asked to type the model's name to confirm.
 
-## Troubleshooting
+## LLM troubleshooting
 
 If the health check fails when you save a model, the dialog shows the check's message word for word. The one exception is an embedding model refused because content is indexed with another model; see [Changing the embedding model in use](#changing-the-embedding-model-in-use).
 
@@ -136,11 +137,11 @@ These are the messages a chat model's check returns. Embedding, image, speech an
 **An endpoint this deployment won't call (400).** The health check tests the endpoint before every other check and before sending anything to the provider. It checks the endpoint's text first, with no lookup:
 - An endpoint that isn't an http or https URL: "Model endpoint '&lt;endpoint&gt;' must be an http(s) URL."
 - A link-local or cloud metadata IP address (such as `169.254.169.254`), or the name `metadata.google.internal`: "Model endpoint '&lt;endpoint&gt;' is a link-local or cloud metadata address, which is never allowed."
-- Only when `PIPESHUB_BLOCK_PRIVATE_ADDRESSES` is on: a private IP address, `localhost`, a one-word service name, or a name ending in `.internal`, `.local`, `.localhost` or `.svc` (for example `host.docker.internal`): "Model endpoint '&lt;endpoint&gt;' is a private or internal address, which this deployment does not allow (PIPESHUB_BLOCK_PRIVATE_ADDRESSES)."
+- Only when <code>PIPESHUB_<wbr/>BLOCK_<wbr/>PRIVATE_<wbr/>ADDRESSES</code> is on: a private IP address, `localhost`, a one-word service name, or a name ending in `.internal`, `.local`, `.localhost` or `.svc` (for example `host.docker.internal`): "Model endpoint '&lt;endpoint&gt;' is a private or internal address, which this deployment does not allow (PIPESHUB_<wbr/>BLOCK_<wbr/>PRIVATE_<wbr/>ADDRESSES)."
 
 A name that passes the text check is then looked up. If it resolves to a blocked address, the message says "resolves to":
 - A link-local, unspecified or cloud metadata address: "Model endpoint '&lt;endpoint&gt;' resolves to a link-local, unspecified or cloud metadata address, which is never allowed."
-- Only when `PIPESHUB_BLOCK_PRIVATE_ADDRESSES` is on, a private address: "Model endpoint '&lt;endpoint&gt;' resolves to a private or internal address, which this deployment does not allow (PIPESHUB_BLOCK_PRIVATE_ADDRESSES)."
+- Only when <code>PIPESHUB_<wbr/>BLOCK_<wbr/>PRIVATE_<wbr/>ADDRESSES</code> is on, a private address: "Model endpoint '&lt;endpoint&gt;' resolves to a private or internal address, which this deployment does not allow (PIPESHUB_<wbr/>BLOCK_<wbr/>PRIVATE_<wbr/>ADDRESSES)."
 
 If the lookup finds nothing, the check also fails with a 400:
 - No address for the name: "Model endpoint '&lt;endpoint&gt;' does not resolve: no address was found for its host name."
@@ -154,8 +155,8 @@ The Ollama address the deployment sets in `OLLAMA_API_URL` is exempt from the pr
 - No model name (400): "No valid model names found in configuration"
 - A context length outside 1,024 to 20,000,000 tokens (400): "Context length &lt;value&gt; is not a usable window. Set it to the model's context window in tokens (between 1,024 and 20,000,000), or leave it empty to assume 128,000."
 - A default reasoning effort that isn't a valid choice (400): "This model's default reasoning effort is '&lt;value&gt;', which isn't a valid choice. Set it to low, medium, high or max, or remove it to use the platform default."
-- PipesHub has no internet access for a cloud provider (500): "Cannot reach cloud LLM providers from PipesHub. The container may not have outbound internet access. Cloud LLMs and external connectors require container egress; air-gapped installs should use local models (Ollama, LM Studio). See deployment/docker-compose/ADVANCED_DEPLOYMENT.md#container-outbound-connectivity."
-- The provider took too long (504): "LLM health check timed out. For cloud providers, verify your API key and that PipesHub containers can reach the internet. See deployment/docker-compose/ADVANCED_DEPLOYMENT.md#container-outbound-connectivity." If the dialog's own request times out before any response arrives, the dialog shows "Request timed out while validating the model. Cloud providers need outbound internet from the PipesHub container — see deployment/docker-compose/ADVANCED_DEPLOYMENT.md#container-outbound-connectivity."
+- PipesHub has no internet access for a cloud provider (500): "Cannot reach cloud LLM providers from PipesHub. The container may not have outbound internet access. Cloud LLMs and external connectors require container egress; air-gapped installs should use local models (Ollama, LM Studio). See deployment/<wbr/>docker-compose/<wbr/>ADVANCED_DEPLOYMENT.md#<wbr/>container-outbound-connectivity."
+- The provider took too long (504): "LLM health check timed out. For cloud providers, verify your API key and that PipesHub containers can reach the internet. See deployment/<wbr/>docker-compose/<wbr/>ADVANCED_DEPLOYMENT.md#<wbr/>container-outbound-connectivity." If the dialog's own request times out before any response arrives, the dialog shows "Request timed out while validating the model. Cloud providers need outbound internet from the PipesHub container — see deployment/<wbr/>docker-compose/<wbr/>ADVANCED_DEPLOYMENT.md#<wbr/>container-outbound-connectivity."
 
 **The provider answered, but the chat model failed the check (400):**
 - The model answered with no text: "Model accepted the request but returned an empty response"
@@ -170,13 +171,11 @@ For either image message, turn off **Multimodal** for this model, or choose a mo
 
 Embedding, image, speech and speech-to-text models get the same endpoint messages as a chat model, and the same messages for a rejected key, a missing model and an unreachable endpoint. These messages differ by model type:
 
-| Message or check | Chat | Embedding | Image, speech, speech-to-text |
-|---|---|---|---|
-| "&lt;provider&gt; refused these &lt;kind&gt; settings. …" (400) and "Couldn't connect to &lt;provider&gt; with these &lt;kind&gt; settings. …" (500) | "chat model" | "embedding model" | "image model", "speech model" or "speech-to-text model" |
-| "No valid model names found in configuration" | 400 | 400 | 500 |
-| Timeout (504) | "LLM health check timed out. …" | "Embedding health check timed out. …" | No timeout message of its own |
-| Context length, default reasoning effort, empty response and test image checks | Yes | No | No |
-| Image embedding checks | No | Only with **Multimodal** on | No |
+- **"&lt;provider&gt; refused these &lt;kind&gt; settings. …" (400) and "Couldn't connect to &lt;provider&gt; with these &lt;kind&gt; settings. …" (500):** &lt;kind&gt; is "chat model", "embedding model", "image model", "speech model" or "speech-to-text model".
+- **"No valid model names found in configuration":** 400 for chat and embedding models; 500 for image, speech and speech-to-text models.
+- **Timeout (504):** chat models get "LLM health check timed out. …"; embedding models get "Embedding health check timed out. …". Image, speech and speech-to-text models have no timeout message of their own.
+- **Context length, default reasoning effort, empty response and test image checks:** chat models only.
+- **Image embedding checks:** embedding models only, and only with **Multimodal** on.
 
 The embedding timeout message in full: "Embedding health check timed out. If this is the first run, the model may still be downloading. Please wait for the download to complete and try again."
 
@@ -204,11 +203,11 @@ If a chat stops answering after a key expires or a model is removed at the provi
 
 Embedding models convert documents and search queries into numerical vectors so PipesHub can find semantically similar content. They power document indexing, semantic search, and retrieval across your workspace. At least one embedding model must be configured before you can index documents or use search.
 
-PipesHub ships with **BAAI/bge-large-en-v1.5** built-in as the system default — it works out of the box with no configuration required. Connect an external provider only if you need a different model.
+PipesHub ships with **BAAI/bge-large-en-v1.5** built-in as the system default. It works out of the box with no configuration required. Connect an external provider only if you need a different model.
 
-### How to navigate to this page
+### Open the embedding settings
 
-Open the **left sidebar** → **Workspace Settings** → **AI models**. Click the **For embedding** tab.
+Open the **left sidebar** → **Workspace settings** → **AI models**. Click the **For embedding** tab.
 
 <Note>
 Only workspace **admins** and **owners** can access the AI Models settings page.
@@ -218,7 +217,7 @@ Only workspace **admins** and **owners** can access the AI Models settings page.
 
 <Steps>
   <Step title="Open AI Models settings">
-    Open the left sidebar → **Workspace Settings** → **AI models**.
+    Open the left sidebar → **Workspace settings** → **AI models**.
   </Step>
   <Step title="Go to the For embedding tab">
     Click the **For embedding** tab in the capability row.
@@ -233,9 +232,9 @@ Only workspace **admins** and **owners** can access the AI Models settings page.
     Enter the credentials required for your provider. See the [provider reference](#embedding-provider-reference) below.
   </Step>
   <Step title="Set optional fields (if needed)">
-    - **Model Friendly Name** — a human-readable label for this configuration.
-    - **Output Dimensions** — override the vector size (1–65,536). Leave blank to use the model default. Only supported by select models (e.g. OpenAI text-embedding-3-* series).
-    - **Multimodal** toggle — enable if this model can embed images as well as text (off by default).
+    - **Model Friendly Name**: a human-readable label for this configuration.
+    - **Output Dimensions**: override the vector size (1–65,536). Leave blank to use the model default. Only supported by select models (e.g. OpenAI text-embedding-3-* series).
+    - **Multimodal**: turn on if this model can embed images as well as text (off by default).
   </Step>
   <Step title="Save and validate">
     Click **Add model**. PipesHub runs a live health check to validate your credentials.
@@ -247,32 +246,32 @@ Only workspace **admins** and **owners** can access the AI Models settings page.
 
 ### Embedding provider reference
 
-| Provider | Required fields | Optional fields | Example model names |
-|---|---|---|---|
-| **Default (System)** | None — works out of the box | — | `BAAI/bge-large-en-v1.5` |
-| [**OpenAI**](/ai-models/embedding/openai) | API Key, Model Name | Base URL, Organization ID, Output Dimensions | `text-embedding-3-small`, `text-embedding-3-large` |
-| [**Gemini**](/ai-models/embedding/gemini) | API Key, Model Name | — | `gemini-embedding-001` |
-| [**Vertex AI**](/ai-models/embedding/vertex-ai) | GCP Project ID, Service Account JSON, Model Name | Region (default `us-central1`) | `gemini-embedding-001`, `gemini-embedding-2` |
-| [**Azure OpenAI**](/ai-models/embedding/azure-openai) | Endpoint URL, API Key, Deployment Name, Model Name | — | `text-embedding-3-small` |
-| [**Azure AI**](/ai-models/embedding/azure-ai) | Endpoint URL, API Key, Model Name | — | `text-embedding-ada-002`, `embed-v-4-0` |
-| [**Cohere**](/ai-models/embedding/cohere) | API Key, Model Name | — | `embed-v4.0` |
-| [**Mistral**](/ai-models/embedding/mistral) | API Key, Model Name | — | `mistral-embed` |
-| [**Fireworks**](/ai-models/embedding/fireworks) | API Key, Model Name, Endpoint URL | — | `nomic-ai/nomic-embed-text-v1.5` |
-| [**Together**](/ai-models/embedding/together) | API Key, Model Name, Endpoint URL | — | `togethercomputer/m2-bert-80M-32k-retrieval` |
-| [**OpenRouter**](/ai-models/embedding/openrouter) | API Key, Model Name | — | `openai/text-embedding-3-small` |
-| [**LiteLLM Proxy**](/ai-models/embedding/litellm-proxy) | Endpoint URL (default `http://host.docker.internal:4000`), API Key, Model Name | — | The `model_name` from your proxy config |
-| [**OpenAI Compatible**](/ai-models/embedding/openai-compatible) | Endpoint URL, API Key, Model Name | — | `text-embedding-3-small` |
-| [**Ollama**](/ai-models/embedding/ollama) | Model Name | Endpoint URL | `mxbai-embed-large` |
-| [**LM Studio**](/ai-models/embedding/lm-studio) | Endpoint URL (default `http://host.docker.internal:1234/v1`), Model Name | API Key | `nomic-ai/nomic-embed-text-v1.5-GGUF` |
-| [**Sentence Transformers**](/ai-models/embedding/sentence-transformer) | Model Name | — | `all-MiniLM-L6-v2` |
-| [**HuggingFace**](/ai-models/embedding/huggingface) | Model Name | — | `sentence-transformers/all-MiniLM-L6-v2` |
-| [**Jina AI**](/ai-models/embedding/jina) | API Key, Model Name | — | `jina-embeddings-v3` |
-| [**Voyage**](/ai-models/embedding/voyage) | API Key, Model Name | — | `voyage-3.5` |
-| [**Amazon Bedrock**](/ai-models/embedding/bedrock) | AWS Region, Model Name, Provider | AWS Access Key ID, AWS Secret Access Key, Custom Provider Name | `cohere2.embed-multilingual-v3` |
+| Provider | Required fields |
+|---|---|
+| **Default (System Provided)** | None: works out of the box<br/>Model: `BAAI/bge-large-en-v1.5` |
+| [**OpenAI**](/ai-models/embedding/openai) | API Key, Model Name<br/>Optional: Base URL, Organization ID, Output Dimensions<br/>Examples: `text-embedding-3-small`, `text-embedding-3-large` |
+| [**Gemini**](/ai-models/embedding/gemini) | API Key, Model Name<br/>Example: `gemini-embedding-001` |
+| [**Vertex AI**](/ai-models/embedding/vertex-ai) | GCP Project ID, Service Account JSON, Model Name<br/>Optional: Region (default `us-central1`)<br/>Examples: `gemini-embedding-001`, `gemini-embedding-2` |
+| [**Azure OpenAI**](/ai-models/embedding/azure-openai) | Endpoint URL, API Key, Deployment Name, Model Name<br/>Example: `text-embedding-3-small` |
+| [**Azure AI**](/ai-models/embedding/azure-ai) | Endpoint URL, API Key, Model Name<br/>Examples: `text-embedding-ada-002`, `embed-v-4-0` |
+| [**Cohere**](/ai-models/embedding/cohere) | API Key, Model Name<br/>Example: `embed-v4.0` |
+| [**Mistral**](/ai-models/embedding/mistral) | API Key, Model Name<br/>Example: `mistral-embed` |
+| [**Fireworks**](/ai-models/embedding/fireworks) | API Key, Model Name, Endpoint URL<br/>Example: `nomic-ai/nomic-embed-text-v1.5` |
+| [**Together**](/ai-models/embedding/together) | API Key, Model Name, Endpoint URL<br/>Example: `togethercomputer/m2-bert-80M-32k-retrieval` |
+| [**OpenRouter**](/ai-models/embedding/openrouter) | API Key, Model Name<br/>Example: `openai/text-embedding-3-small` |
+| [**LiteLLM Proxy**](/ai-models/embedding/litellm-proxy) | Endpoint URL (default `http://host.docker.internal:4000`), API Key, Model Name<br/>Example: the `model_name` from your proxy config |
+| [**OpenAI Compatible**](/ai-models/embedding/openai-compatible) | Endpoint URL, API Key, Model Name<br/>Example: `text-embedding-3-small` |
+| [**Ollama**](/ai-models/embedding/ollama) | Model Name<br/>Optional: Endpoint URL<br/>Example: `mxbai-embed-large` |
+| [**LM Studio**](/ai-models/embedding/lm-studio) | Endpoint URL (default `http://host.docker.internal:1234/v1`), Model Name<br/>Optional: API Key<br/>Example: `nomic-ai/nomic-embed-text-v1.5-GGUF` |
+| [**Sentence Transformers**](/ai-models/embedding/sentence-transformer) | Model Name<br/>Example: `all-MiniLM-L6-v2` |
+| [**HuggingFace**](/ai-models/embedding/huggingface) | Model Name<br/>Example: `sentence-transformers/all-MiniLM-L6-v2` |
+| [**Jina AI**](/ai-models/embedding/jina) | API Key, Model Name<br/>Example: `jina-embeddings-v3` |
+| [**Voyage**](/ai-models/embedding/voyage) | API Key, Model Name<br/>Example: `voyage-3.5` |
+| [**Amazon Bedrock**](/ai-models/embedding/bedrock) | AWS Region, Model Name, Provider<br/>Optional: AWS Access Key ID, AWS Secret Access Key, Custom Provider Name<br/>Example: `cohere2.embed-multilingual-v3` |
 
-> **Azure OpenAI — Deployment Name:** This is the name you assigned when deploying the model in Azure, not the model ID itself.
+> **Azure OpenAI, Deployment Name:** This is the name you assigned when deploying the model in Azure, not the model ID itself.
 >
-> **Azure AI — Endpoint URL format:** `https://<resource>.services.ai.azure.com/openai/v1/`
+> **Azure AI, Endpoint URL format:** `https://<resource>.services.ai.azure.com/openai/v1/`
 >
 > **OpenAI Compatible:** Use this for any provider that speaks the OpenAI embeddings API format.
 >
@@ -286,27 +285,27 @@ Only workspace **admins** and **owners** can access the AI Models settings page.
 
 After saving, your model appears under **Configured models**. Each row has the following actions:
 
-- **Edit** — update credentials or settings without deleting the configuration.
-- **Set as Default** — make this model the one used for all new document indexing and search.
-- **Delete** — permanently remove the configuration. You will be asked to type the model's name to confirm.
+- **Edit**: update credentials or settings without deleting the configuration.
+- **Set as default**: make this model the one used for all new document indexing and search.
+- **Delete**: permanently remove the configuration. You will be asked to type the model's name to confirm.
 
 <Note>
 While vectors are stored, PipesHub refuses to switch the **embedding model in use** to a different model or a different vector size. A different model is refused even if its vectors are the same size. The same model from another provider (for example `nomic-ai/nomic-embed-text` and `nomic-embed-text`) counts as unchanged: the change is saved and the stored vectors are kept. The embedding model in use is the default one, or the first configured model if none is marked default. With no embedding model configured, the built-in `BAAI/bge-large-en-v1.5` embeds your content.
 
-The refusal covers adding your first embedding model when content is already embedded with the built-in model, setting another model as default, deleting the model in use, and editing the model in use to change its model name or **Output Dimensions**. Adding, editing and deleting are refused with: "This model is embedding your indexed content. Delete the embeddings in Labs first, then change or delete the model and re-embed." **Set as Default** shows "Failed to set default model". In every case the model in use stays the same. The first model you add sizes the vector store only when the store is empty.
+The refusal covers adding your first embedding model when content is already embedded with the built-in model, setting another model as default, deleting the model in use, and editing the model in use to change its model name or **Output Dimensions**. Adding, editing and deleting are refused with: "This model is embedding your indexed content. Delete the embeddings in Labs first, then change or delete the model and re-embed." **Set as default** shows "Failed to set default model". In every case the model in use stays the same. The first model you add sizes the vector store only when the store is empty.
 
 To change or delete the embedding model in use:
 
-1. Under **Labs → Feature flags**, turn on **Enable Vector Store Rebuild** and click **Save**. The **Vector Store** section appears in **Labs**.
-2. In **Labs → Vector Store**, click **Clean up**, type `DELETE`, and click **Delete embeddings**. The button stays disabled until the word is typed.
+1. Under **Labs → Feature flags**, turn on **Enable Vector Store Rebuild** and click **Save**. The **Vector store** section appears in **Labs**.
+2. In **Labs → Vector store**, click **Clean up**, type `DELETE`, and click **Delete embeddings**. The button stays disabled until the word is typed.
 3. Wait for the cleanup to finish. It runs in the background, and until it finishes the old vectors are still stored, so the change in step 4 is refused.
 4. Add, edit, set as default, or delete the embedding model.
-5. In **Labs → Vector Store**, click **Reindex**, type `REINDEX`, and click **Start reindex**. If the cleanup is still running, the reindex is refused with "A search index cleanup or reindex is already running. Wait for it to finish, then try again." or "Vector-store cleanup is still dropping the collection". Wait a little and try again.
+5. In **Labs → Vector store**, click **Reindex**, type `REINDEX`, and click **Start reindex**. If the cleanup is still running, the reindex is refused with "A search index cleanup or reindex is already running. Wait for it to finish, then try again." or "Vector-store cleanup is still dropping the collection". Wait a little and try again.
 
 Adding, editing or deleting any other embedding model does not touch the vector store.
 </Note>
 
-### Troubleshooting
+### Embedding troubleshooting
 
 <Note>
 If the health check fails when saving, double-check:
@@ -327,9 +326,9 @@ Image generation models allow AI agents and workflows in PipesHub to generate im
 
 Supported providers: **OpenAI**, **Gemini**, **OpenAI Compatible**, **OpenRouter** and **LiteLLM Proxy**.
 
-### How to navigate to this page
+### Open the image generation settings
 
-Open the **left sidebar** → **Workspace Settings** → **AI models**. Click the **For image generation** tab.
+Open the **left sidebar** → **Workspace settings** → **AI models**. Click the **For image generation** tab.
 
 <Note>
 Only workspace **admins** and **owners** can access the AI Models settings page.
@@ -339,7 +338,7 @@ Only workspace **admins** and **owners** can access the AI Models settings page.
 
 <Steps>
   <Step title="Open AI Models settings">
-    Open the left sidebar → **Workspace Settings** → **AI models**.
+    Open the left sidebar → **Workspace settings** → **AI models**.
   </Step>
   <Step title="Go to the For image generation tab">
     Click the **For image generation** tab in the capability row.
@@ -351,7 +350,7 @@ Only workspace **admins** and **owners** can access the AI Models settings page.
     Enter the required fields for your provider (for most, an **API Key** and the exact **Model Name**). See the [provider reference](#image-generation-provider-reference) below.
   </Step>
   <Step title="Set an optional friendly name">
-    Optionally set a **Model Friendly Name** — a human-readable label displayed in the UI.
+    Optionally set a **Model Friendly Name**: a human-readable label displayed in the UI.
   </Step>
   <Step title="Save and validate">
     Click **Add model**. PipesHub runs a live health check to validate your credentials.
@@ -363,13 +362,13 @@ Only workspace **admins** and **owners** can access the AI Models settings page.
 
 ### Image generation provider reference
 
-| Provider | Required fields | Example model names |
-|---|---|---|
-| [**OpenAI**](/ai-models/image-generation/openai) | API Key, Model Name (optional: Base URL, Organization ID) | `gpt-image-2.5-sunburst`, `gpt-image-2.5-flare` |
-| [**Gemini**](/ai-models/image-generation/gemini) | API Key, Model Name | `gemini-3.1-flash-image`, `gemini-2.5-flash-image` |
-| [**OpenAI Compatible**](/ai-models/image-generation/openai-compatible) | Endpoint URL, Model Name (optional: API Key) | The model name your server expects |
-| [**OpenRouter**](/ai-models/image-generation/openrouter) | API Key, Model Name | `bytedance-seed/seedream-4.5`, `black-forest-labs/flux.2-pro` |
-| [**LiteLLM Proxy**](/ai-models/image-generation/litellm-proxy) | Endpoint URL, API Key, Model Name | The `model_name` from your proxy config |
+| Provider | Required fields |
+|---|---|
+| [**OpenAI**](/ai-models/image-generation/openai) | API Key, Model Name<br/>Optional: Base URL, Organization ID<br/>Examples: `gpt-image-2.5-sunburst`, `gpt-image-2.5-flare` |
+| [**Gemini**](/ai-models/image-generation/gemini) | API Key, Model Name<br/>Examples: `gemini-3.1-flash-image`, `gemini-2.5-flash-image` |
+| [**OpenAI Compatible**](/ai-models/image-generation/openai-compatible) | Endpoint URL, Model Name<br/>Optional: API Key<br/>Example: the model name your server expects |
+| [**OpenRouter**](/ai-models/image-generation/openrouter) | API Key, Model Name<br/>Examples: `bytedance-seed/seedream-4.5`, `black-forest-labs/flux.2-pro` |
+| [**LiteLLM Proxy**](/ai-models/image-generation/litellm-proxy) | Endpoint URL, API Key, Model Name<br/>Example: the `model_name` from your proxy config |
 
 > **OpenAI:** Get your API key at [platform.openai.com/api-keys](https://platform.openai.com/api-keys).
 >
@@ -379,11 +378,11 @@ Only workspace **admins** and **owners** can access the AI Models settings page.
 
 After saving, your model appears under **Configured models**. Each row has the following actions:
 
-- **Edit** — update credentials or the model name.
-- **Set as Default** — make this the model used when image generation is triggered.
-- **Delete** — permanently remove the configuration. You will be asked to type the model's name to confirm.
+- **Edit**: update credentials or the model name.
+- **Set as default**: make this the model used when image generation is triggered.
+- **Delete**: permanently remove the configuration. You will be asked to type the model's name to confirm.
 
-### Troubleshooting
+### Image generation troubleshooting
 
 <Note>
 If the health check fails when saving, double-check:
@@ -398,9 +397,9 @@ Text to Speech models convert AI text responses into spoken audio, enabling voic
 
 Supported providers: **OpenAI**, **Gemini**, **OpenAI Compatible**, **OpenRouter** and **LiteLLM Proxy**.
 
-### How to navigate to this page
+### Open the text to speech settings
 
-Open the **left sidebar** → **Workspace Settings** → **AI models**. Click the **Text to speech** tab.
+Open the **left sidebar** → **Workspace settings** → **AI models**. Click the **Text to speech** tab.
 
 <Note>
 Only workspace **admins** and **owners** can access the AI Models settings page.
@@ -410,7 +409,7 @@ Only workspace **admins** and **owners** can access the AI Models settings page.
 
 <Steps>
   <Step title="Open AI Models settings">
-    Open the left sidebar → **Workspace Settings** → **AI models**.
+    Open the left sidebar → **Workspace settings** → **AI models**.
   </Step>
   <Step title="Go to the Text to speech tab">
     Click the **Text to speech** tab in the capability row.
@@ -422,9 +421,9 @@ Only workspace **admins** and **owners** can access the AI Models settings page.
     Enter the required fields for your provider (for most, an **API Key** and the exact **Model Name**). See the [provider reference](#tts-provider-reference) below.
   </Step>
   <Step title="Choose optional settings">
-    - **Voice** — select a default voice for audio output.
-    - **Audio Format** — select the output audio format.
-    - **Model Friendly Name** — a custom display label for this configuration.
+    - **Voice**: select a default voice for audio output.
+    - **Audio Format**: select the output audio format.
+    - **Model Friendly Name**: a custom display label for this configuration.
   </Step>
   <Step title="Save and validate">
     Click **Add model**. PipesHub validates your credentials with a live health check.
@@ -436,13 +435,13 @@ Only workspace **admins** and **owners** can access the AI Models settings page.
 
 ### TTS provider reference
 
-| Provider | Required fields | Example model names | Default voice | Default format |
-|---|---|---|---|---|
-| [**OpenAI**](/ai-models/tts/openai) | API Key, Model Name (optional: Base URL, Organization ID) | `tts-1`, `tts-1-hd`, `gpt-4o-mini-tts` | Alloy | MP3 |
-| [**Gemini**](/ai-models/tts/gemini) | API Key, Model Name | `gemini-3.8-flash-tts`, `gemini-3.8-flash-lite-tts` | Kore | WAV |
-| [**OpenAI Compatible**](/ai-models/tts/openai-compatible) | Endpoint URL, Model Name (optional: API Key) | The model name your server expects | Server default (Voice is free text) | MP3 |
-| [**OpenRouter**](/ai-models/tts/openrouter) | API Key, Model Name | `openai/gpt-4o-mini-tts-2025-12-15` | Alloy | MP3 |
-| [**LiteLLM Proxy**](/ai-models/tts/litellm-proxy) | Endpoint URL, API Key, Model Name | The `model_name` from your proxy config | Alloy | MP3 |
+| Provider | Required fields |
+|---|---|
+| [**OpenAI**](/ai-models/tts/openai) | API Key, Model Name<br/>Optional: Base URL, Organization ID<br/>Examples: `tts-1`, `tts-1-hd`, `gpt-4o-mini-tts`<br/>Defaults: voice Alloy, format MP3 |
+| [**Gemini**](/ai-models/tts/gemini) | API Key, Model Name<br/>Examples: `gemini-3.8-flash-tts`, `gemini-3.8-flash-lite-tts`<br/>Defaults: voice Kore, format WAV |
+| [**OpenAI Compatible**](/ai-models/tts/openai-compatible) | Endpoint URL, Model Name<br/>Optional: API Key<br/>Example: the model name your server expects<br/>Defaults: voice is the server default (Voice is free text), format MP3 |
+| [**OpenRouter**](/ai-models/tts/openrouter) | API Key, Model Name<br/>Example: `openai/gpt-4o-mini-tts-2025-12-15`<br/>Defaults: voice Alloy, format MP3 |
+| [**LiteLLM Proxy**](/ai-models/tts/litellm-proxy) | Endpoint URL, API Key, Model Name<br/>Example: the `model_name` from your proxy config<br/>Defaults: voice Alloy, format MP3 |
 
 > **OpenAI models:** OpenAI lists January 6, 2027 as the shutdown date of `tts-1`, `tts-1-hd` and `gpt-4o-mini-tts`. See [OpenAI TTS](/ai-models/tts/openai).
 >
@@ -452,7 +451,7 @@ Only workspace **admins** and **owners** can access the AI Models settings page.
 >
 > **OpenAI audio formats:** MP3, Opus, AAC, FLAC, WAV.
 >
-> **Gemini voices:** 30 prebuilt voices named after astronomical objects — Zephyr, Puck, Charon, Kore, Fenrir, Leda, Orus, Aoede, Callirrhoe, Autonoe, Enceladus, Iapetus, Umbriel, Algieba, Despina, Erinome, Algenib, Rasalgethi, Laomedeia, Achernar, Alnilam, Schedar, Gacrux, Pulcherrima, Achird, Zubenelgenubi, Vindemiatrix, Sadachbia, Sadaltager, Sulafat. Get your API key at [aistudio.google.com/app/apikey](https://aistudio.google.com/app/apikey).
+> **Gemini voices:** 30 prebuilt voices named after astronomical objects: Zephyr, Puck, Charon, Kore, Fenrir, Leda, Orus, Aoede, Callirrhoe, Autonoe, Enceladus, Iapetus, Umbriel, Algieba, Despina, Erinome, Algenib, Rasalgethi, Laomedeia, Achernar, Alnilam, Schedar, Gacrux, Pulcherrima, Achird, Zubenelgenubi, Vindemiatrix, Sadachbia, Sadaltager, Sulafat. Get your API key at [aistudio.google.com/app/apikey](https://aistudio.google.com/app/apikey).
 >
 > **Gemini audio formats:** WAV and PCM work without any extra dependencies. MP3, Opus, AAC, and FLAC require **ffmpeg** installed on the PipesHub backend host.
 
@@ -460,11 +459,11 @@ Only workspace **admins** and **owners** can access the AI Models settings page.
 
 After saving, your model appears under **Configured models**. Each row has the following actions:
 
-- **Edit** — update credentials, voice, or format settings.
-- **Set as Default** — make this the model used for all TTS output.
-- **Delete** — permanently remove the configuration. You will be asked to type the model's name to confirm.
+- **Edit**: update credentials, voice, or format settings.
+- **Set as default**: make this the model used for all TTS output.
+- **Delete**: permanently remove the configuration. You will be asked to type the model's name to confirm.
 
-### Troubleshooting
+### Text to speech troubleshooting
 
 <Note>
 If the health check fails when saving, double-check:
@@ -479,9 +478,9 @@ Speech to Text models transcribe spoken audio into text, enabling voice input in
 
 Supported providers: **OpenAI** and **Gemini** (cloud APIs), **OpenAI Compatible**, **OpenRouter** and **LiteLLM Proxy** (any server or gateway that speaks the OpenAI transcription API), **Whisper** (self-hosted open-source via faster-whisper), and **Wispr Flow** (hosted specialist transcription service). At least one STT model must be configured before voice input features are available.
 
-### How to navigate to this page
+### Open the speech to text settings
 
-Open the **left sidebar** → **Workspace Settings** → **AI models**. Click the **Speech to text** tab.
+Open the **left sidebar** → **Workspace settings** → **AI models**. Click the **Speech to text** tab.
 
 <Note>
 Only workspace **admins** and **owners** can access the AI Models settings page.
@@ -491,7 +490,7 @@ Only workspace **admins** and **owners** can access the AI Models settings page.
 
 <Steps>
   <Step title="Open AI Models settings">
-    Open the left sidebar → **Workspace Settings** → **AI models**.
+    Open the left sidebar → **Workspace settings** → **AI models**.
   </Step>
   <Step title="Go to the Speech to text tab">
     Click the **Speech to text** tab in the capability row.
@@ -506,7 +505,7 @@ Only workspace **admins** and **owners** can access the AI Models settings page.
     Configure any optional settings such as language, device, compute type, or app type depending on your provider.
   </Step>
   <Step title="Set an optional friendly name">
-    Optionally set a **Model Friendly Name** — a custom label shown in the UI.
+    Optionally set a **Model Friendly Name**: a custom label shown in the UI.
   </Step>
   <Step title="Save and validate">
     Click **Add model**. PipesHub validates your configuration with a live health check.
@@ -518,15 +517,15 @@ Only workspace **admins** and **owners** can access the AI Models settings page.
 
 ### STT provider reference
 
-| Provider | Required fields | Example model names / sizes |
-|---|---|---|
-| [**OpenAI**](/ai-models/stt/openai) | API Key, Model Name (optional: Base URL, Organization ID) | `gpt-transcribe`, `whisper-1`, `gpt-4o-transcribe` |
-| [**Gemini**](/ai-models/stt/gemini) | API Key, Model Name | `gemini-2.5-flash`, `gemini-2.5-pro`, `gemini-3-flash-preview` |
-| [**OpenAI Compatible**](/ai-models/stt/openai-compatible) | Endpoint URL, Model Name (optional: API Key) | The model name your server expects |
-| [**OpenRouter**](/ai-models/stt/openrouter) | API Key, Model Name | `openai/whisper-1` |
-| [**LiteLLM Proxy**](/ai-models/stt/litellm-proxy) | Endpoint URL, API Key, Model Name | The `model_name` from your proxy config |
-| [**Whisper (local)**](/ai-models/stt/whisper) | Model size (dropdown) | tiny, base, small, medium, large-v2, large-v3, distil-large-v3 |
-| [**Wispr Flow**](/ai-models/stt/wispr-flow) | API Key | flow-v1 (selected automatically) |
+| Provider | Required fields |
+|---|---|
+| [**OpenAI**](/ai-models/stt/openai) | API Key, Model Name<br/>Optional: Base URL, Organization ID<br/>Examples: `gpt-transcribe`, `whisper-1`, `gpt-4o-transcribe` |
+| [**Gemini**](/ai-models/stt/gemini) | API Key, Model Name<br/>Examples: `gemini-2.5-flash`, `gemini-2.5-pro`, `gemini-3-flash-preview` |
+| [**OpenAI Compatible**](/ai-models/stt/openai-compatible) | Endpoint URL, Model Name<br/>Optional: API Key<br/>Example: the model name your server expects |
+| [**OpenRouter**](/ai-models/stt/openrouter) | API Key, Model Name<br/>Example: `openai/whisper-1` |
+| [**LiteLLM Proxy**](/ai-models/stt/litellm-proxy) | Endpoint URL, API Key, Model Name<br/>Example: the `model_name` from your proxy config |
+| [**Whisper (local)**](/ai-models/stt/whisper) | Model size (dropdown)<br/>Sizes: tiny, base, small, medium, large-v2, large-v3, distil-large-v3 |
+| [**Wispr Flow**](/ai-models/stt/wispr-flow) | API Key<br/>Model: flow-v1 (selected automatically) |
 
 > **OpenAI:** Get your API key at [platform.openai.com/api-keys](https://platform.openai.com/api-keys).
 >
@@ -540,15 +539,15 @@ Only workspace **admins** and **owners** can access the AI Models settings page.
 
 After saving, your model appears under **Configured models**. Each row has the following actions:
 
-- **Edit** — update credentials or settings.
-- **Set as Default** — make this the model used for all speech transcription.
-- **Delete** — permanently remove the configuration. You will be asked to type the model's name to confirm.
+- **Edit**: update credentials or settings.
+- **Set as default**: make this the model used for all speech transcription.
+- **Delete**: permanently remove the configuration. You will be asked to type the model's name to confirm.
 
-### Troubleshooting
+### Speech to text troubleshooting
 
 <Note>
 If the health check fails when saving, double-check:
 - For OpenAI, Gemini, OpenRouter and LiteLLM Proxy: the API key is correct and has not expired.
-- For Whisper (local): the faster-whisper package is installed on the backend host. On first use, model weights are downloaded — ensure internet access is available.
+- For Whisper (local): the faster-whisper package is installed on the backend host. On first use, model weights are downloaded, so the host needs internet access.
 - For Wispr Flow: ffmpeg must be installed on the backend host. Confirm your API key is active (contact [enterprise@wisprflow.ai](mailto:enterprise@wisprflow.ai) if unsure).
 </Note>

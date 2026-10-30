@@ -1,6 +1,8 @@
 ---
-title: "Overview"
+title: "Connectors overview"
+sidebarTitle: "Overview"
 description: "Connectors are software components that enable different applications, systems, or platforms to communicate and share data with each other."
+icon: "plug"
 ---
 
 ## What are Connectors?
@@ -19,14 +21,14 @@ Connectors are software components that **sync and index data** from external ap
 </Warning>
 
 <Note>
-  **When you want to use both Connector and Toolset:** In the Agent Builder add nodes from **Knowledge** (Collections, API Apps) for document search and context retrieval, and add nodes from **Tools** for performing actions. Connect both to your Agent node so the agent can search context and take action in the same conversation.
+  **When you want to use both Connector and Action:** In the Agent Builder add nodes from **Knowledge** (Collections, API Apps) for document search and context retrieval, and add nodes from **Tools** for performing actions. Connect both to your Agent node so the agent can search context and take action in the same conversation.
 </Note>
 
 ---
 
 ## Setting up a connector
 
-Connectors for the whole organization are set up under **Workspace Settings** > **Connectors**. Use the **All**, **Configured** and **Not configured** tabs to filter the catalog, and click **Set up** on a card to start.
+Connectors for the whole organization are set up under **Workspace settings** > **Connectors**. Use the **All**, **Configured** and **Not configured** tabs to filter the catalog, and click **Set up** on a card to start.
 
 <div style={{ textAlign: "center" }}>
   <img
@@ -71,7 +73,7 @@ Our platform supports a wide range of connectors organized by ecosystem to help 
 | **[Gmail](/connectors/google-workspace/gmail/gmail)** | Sync email messages and attachments (team and personal) |
 | **[Google Drive](/connectors/google-workspace/drive/drive)** | Sync files and folders from Google Drive (team and personal) |
 
-Calendar, Docs, Sheets, Slides, Meet, and the other Google actions are [toolsets](/toolsets/overview) that let agents act in those apps. They are not connectors.
+Calendar, Docs, Sheets, Slides, Meet, and the other Google actions are [actions](/toolsets/overview) that let agents act in those apps. They are not connectors.
 
 ---
 
@@ -83,7 +85,7 @@ Calendar, Docs, Sheets, Slides, Meet, and the other Google actions are [toolsets
 | **[OneDrive](/connectors/microsoft-365/one-drive)** | Files and folders from users' OneDrive |
 | **[SharePoint](/connectors/microsoft-365/sharepoint)** | Document libraries and pages from SharePoint Online sites |
 
-Microsoft Teams is an agent [toolset](/toolsets/microsoft-365/teams), not a connector. There is no OneNote connector.
+Microsoft Teams is available as an agent [action](/toolsets/microsoft-365/teams).
 
 ---
 
@@ -131,7 +133,7 @@ Microsoft Teams is an agent [toolset](/toolsets/microsoft-365/teams), not a conn
 
 | Connector | Description |
 |-----------|-------------|
-| **[Local FS](/connectors/local-fs/local-fs)** | Index a folder on the connector host; set up under **Workspace Settings → Your Connectors**; optional desktop watcher in the Electron app |
+| **[Local FS](/connectors/local-fs/local-fs)** | Index a folder on the connector host; set up under **Workspace settings → Your Connectors**; optional desktop watcher in the Electron app |
 | **[SMB](/connectors/smb/smb)** | Files and folders from one SMB 2 or SMB 3 network share |
 
 ---
@@ -180,9 +182,9 @@ Microsoft Teams is an agent [toolset](/toolsets/microsoft-365/teams), not a conn
 
 ---
 
-## Security & Compliance
+## Security
 
-All connectors are built with enterprise-grade security in mind, supporting OAuth 2.0 or token-based authentication (depending on the source), data encryption, and compliance with major industry standards including SOC 2, GDPR, and HIPAA where applicable.
+Each connector signs in to its source with OAuth 2.0 or a token, depending on the source. PipesHub stores connector credentials encrypted. See [Security and privacy](/security-and-privacy).
 
 ---
 
@@ -190,25 +192,25 @@ All connectors are built with enterprise-grade security in mind, supporting OAut
 
 <AccordionGroup>
 
-<Accordion title="What's the difference between Connectors and Toolsets?">
+<Accordion title="What's the difference between Connectors and Actions?">
 
-| Aspect | Connectors | Toolsets |
+| Aspect | Connectors | Actions |
 |--------|-----------|----------|
 | **Purpose** | Sync and index data for search | Enable agents to perform actions |
 | **Data Flow** | One-way (import data into PipesHub) | Two-way (read and write via API) |
 | **When to Use** | Query/search data | Perform actions on data |
 
-**Example:** Use a **Gmail Connector** to index and search your email history. Use a **Gmail Toolset** to send new emails through an agent.
+**Example:** Use a **Gmail Connector** to index and search your email history. Use a **Gmail action** to send new emails through an agent.
 
 </Accordion>
 
-<Accordion title="When should I use a Connector vs a Toolset?">
+<Accordion title="When should I use a Connector vs an Action?">
 
 **Connector** — Use when you need document context search: connectors sync and index your documents, emails, and pages so your assistant can find and use that context, and they do not perform actions.
 
-**Toolset** — When you need **actions**: create or update content, send messages, or run analytical queries (e.g. JQL, CQL, reports).
+**Action** — Use when the agent needs to do something in another app: create or update content, send messages, or run analytical queries (e.g. JQL, CQL, reports).
 
-**Quick takeaway:** Search & context → **Connector**. Actions → **Toolset**.
+**Quick takeaway:** Search & context → **Connector**. Do something in another app → **Action**.
 
 </Accordion>
 
@@ -216,7 +218,7 @@ All connectors are built with enterprise-grade security in mind, supporting OAut
 
 The callback URL is displayed in PipesHub when configuring a connector:
 
-1. Go to **Workspace Settings > Connectors** (or **Your connectors** for a personal connector)
+1. Go to **Workspace settings > Connectors** (or **Your connectors** for a personal connector)
 2. Click **Set up** on the connector you want to configure
 3. Copy the **Redirect URI** shown in the dialog
 4. Add it to your OAuth app's allowed redirect URIs in the service's developer console
@@ -257,10 +259,10 @@ There are three common causes:
    - **Fix:** Reconfigure the connector and authenticate using the same email as your PipesHub account.
 
 2. **Records not displaying in "All Records"** - Documents or data from the connector are not showing up at all in the All Records section.
-   - **Fix:** Check permissions in the connector configuration, verify email match, and go to **Settings > Connectors** to ensure all records have synced successfully.
+   - **Fix:** Check permissions in the connector configuration, verify email match, and go to **Workspace settings > Connectors** to ensure all records have synced successfully.
 
 3. **Data not yet indexed** - The connector is still syncing or hasn't completed the initial indexing process.
-   - **Fix:** Go to **Settings > Connectors**, check the sync status, and wait for indexing to complete.
+   - **Fix:** Go to **Workspace settings > Connectors**, check the sync status, and wait for indexing to complete.
 
 </Accordion>
 

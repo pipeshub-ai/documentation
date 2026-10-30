@@ -1,5 +1,5 @@
 ---
-title: "SharePoint Toolset"
+title: "SharePoint actions"
 description: "Sites, files, pages, and OneNote integration for AI agents"
 icon: "/logo/sharepoint.png"
 ---
@@ -12,7 +12,7 @@ icon: "/logo/sharepoint.png"
         alt="SharePoint Logo" 
         className="w-8 h-8 object-contain flex-shrink-0"
       />
-      <div className="text-xl font-semibold text-gray-900 dark:text-white">SharePoint Toolset</div>
+      <div className="text-xl font-semibold text-gray-900 dark:text-white">SharePoint actions</div>
     </div>
     <p className="text-base text-gray-700 dark:text-gray-300 mt-0 mb-5">SharePoint sites, files, pages, and OneNote</p>
     <div className="flex flex-wrap items-center gap-2">
@@ -28,7 +28,7 @@ icon: "/logo/sharepoint.png"
 
 ## Overview
 
-The SharePoint toolset enables AI agents to interact with your SharePoint Online content via the Microsoft Graph API. Agents can browse sites, read and update pages, search and manage files across drives, and create or read OneNote notebooks.
+The SharePoint action enables AI agents to interact with your SharePoint Online content via the Microsoft Graph API. Agents can browse sites, read and update pages, search and manage files across drives, and create or read OneNote notebooks.
 
 ### Key Capabilities
 
@@ -117,9 +117,9 @@ On the **App registrations** page, click **+ New registration**.
 
 ### Step 3: Register the application
 
-1. **Name**: Enter a display name (for example, `PipesHub SharePoint Toolset`).
+1. **Name**: Enter a display name (for example, `PipesHub SharePoint actions`).
 2. **Supported account types**: Choose who can sign in — for example **Accounts in any organizational directory and personal Microsoft accounts** for the broadest support, or a single-tenant option if you only use your organization.
-3. **Redirect URI**: Get the Redirect URI from the PipesHub **Configure SharePoint** dialog in **Workspace Settings → Actions** (where SharePoint is set up — for example **+ Setup** / **Configure**). Set the platform to **Web** and paste the value.
+3. **Redirect URI**: Get the Redirect URI from the PipesHub **Action configuration** dialog in **Workspace settings → Actions** (where SharePoint is set up — for example **Set up**). Set the platform to **Web** and paste the value.
 
 <div style={{ textAlign: "center" }}>
   <img
@@ -196,7 +196,7 @@ On the **Overview** page for your app, copy:
 </div>
 
 <Info>
-  The SharePoint toolset uses **Delegated** permissions so actions run as the signed-in user, not as the app alone.
+  The SharePoint action uses **Delegated** permissions so actions run as the signed-in user, not as the app alone.
 </Info>
 
 ### Step 7: Grant admin consent
@@ -212,27 +212,27 @@ The `*.All` scopes (e.g., `Sites.ReadWrite.All`) require **admin consent** at th
   />
 </div>
 
-### Step 8: Configure the SharePoint toolset in PipesHub
+### Step 8: Configure the SharePoint action in PipesHub
 
-1. In PipesHub, go to **Workspace Settings** → **Actions**.
-2. Find **SharePoint** and open setup / configuration (**+ Setup** or **Configure**).
+1. In PipesHub, go to **Workspace settings** → **Actions**.
+2. Find **SharePoint** and click **Set up** to open its setup dialog.
 3. Confirm the **Redirect URI** in the dialog matches the **Web** redirect URI you registered in Azure in **Step 3**.
 4. Enter **Client ID**, **Client Secret**, and **Tenant ID**, then create or save the instance.
 
 <div style={{ textAlign: "center" }}>
   <img
     src="/images/toolsets/sharepoint/sharepoint_toolset_page.png"
-    alt="Workspace Actions SharePoint toolset configuration"
+    alt="Workspace Actions SharePoint action configuration"
     style={{ display: 'block', margin: '0 auto' }}
-    width="90%"
+    width="45%"
   />
 </div>
 
-### Step 9: Authenticate the SharePoint toolset
+### Step 9: Authenticate the SharePoint action
 
 Authentication uses the same OAuth flow in either location:
 
-- **Admins** can authenticate the shared instance directly under **Workspace Settings → Actions**.
+- **Admins** can authenticate the shared instance directly under **Workspace settings → Actions**.
 - **Users** can authenticate their own personal instance under **Your actions** (in the **Personal** section of the sidebar).
 
 1. On the SharePoint tile (in **Actions** or **Your actions**), click **Authenticate with OAuth**.
@@ -252,12 +252,12 @@ Authentication uses the same OAuth flow in either location:
 
 1. Go to the **Home** page.
 2. Next to **Agents**, click **+** to create a new agent.
-3. Give the agent a name, drag the **SharePoint** toolset onto the canvas, connect it to the **Agent** node with your model and chat input/output, then create the agent.
+3. Give the agent a name, drag the **SharePoint** action onto the canvas, connect it to the **Agent** node with your model and chat input/output, then create the agent.
 
 <div style={{ textAlign: "center" }}>
   <img
     src="/images/toolsets/sharepoint/create_agent.png"
-    alt="Agent builder with SharePoint toolset connected"
+    alt="Agent builder with SharePoint action connected"
     style={{ display: 'block', margin: '0 auto' }}
     width="90%"
   />
@@ -273,16 +273,16 @@ Authentication uses the same OAuth flow in either location:
 
 <AccordionGroup>
 
-<Accordion title="What's the difference between SharePoint Connector and SharePoint Toolset?">
+<Accordion title="What's the difference between SharePoint Connector and SharePoint Action?">
 
-| Aspect | SharePoint Connector | SharePoint Toolset |
+| Aspect | SharePoint Connector | SharePoint Action |
 |--------|---------------------|-------------------|
 | **Purpose** | Sync and index sites, files, and pages for search | Enable agents to perform actions in SharePoint |
 | **Auth Type** | Application permissions (admin-consent, runs as the app) | Delegated permissions (acts as the signed-in user) |
 | **Data Flow** | One-way (import data into PipesHub) | Two-way (read and write via API) |
 | **When to Use** | Query/search past site content and documents | Create pages, upload files, manage OneNote |
 
-**Example:** Use the **SharePoint Connector** to search across all your indexed SharePoint content. Use the **SharePoint Toolset** to let agents create pages, upload files, or manage OneNote notebooks on behalf of the signed-in user.
+**Example:** Use the **SharePoint Connector** to search across all your indexed SharePoint content. Use the **SharePoint action** to let agents create pages, upload files, or manage OneNote notebooks on behalf of the signed-in user.
 
 </Accordion>
 

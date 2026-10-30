@@ -10,7 +10,7 @@ PipesHub 1.0 migrates the graph database one way, changes some defaults and remo
 
 <Steps>
   <Step title="Back up">
-    On first start, 1.0 migrates the graph database (Neo4j or ArangoDB) to a new model for hierarchy and permissions. **A release older than 1.0.0 cannot read the migrated graph**, so the only way back is a restore. Follow [Backup and Restore](/deployment/backup-restore) and keep `.env` with the backup.
+    On first start, 1.0 migrates the graph database (Neo4j or ArangoDB) to a new model for hierarchy and permissions. **A release older than 1.0.0 cannot read the migrated graph**, so the only way back is a restore. Follow [Backup and restore](/deployment/backup-restore) and keep `.env` with the backup.
   </Step>
   <Step title="Check how people sign in">
     If your workspace used SAML or generic OAuth sign-in, read [Authentication](/auth) first. Some people may need to set a password.
@@ -86,14 +86,14 @@ docker compose -p pipeshub-ai logs -f pipeshub-ai
 
 ## Defaults that changed
 
-| Setting | Before | In 1.0 | How to change it |
-|---|---|---|---|
-| Focused reading (`TARGETED_RETRIEVAL`) | Off | On | Set `TARGETED_RETRIEVAL=false` in `.env` |
-| Timeline search (`TIMELINE_SUMMARIES`) | Off | On | Set `TIMELINE_SUMMARIES=false` in `.env` |
-| MCP servers for agents | Off | On | **Workspace → Labs → Enable MCP Servers**. A workspace that already saved this setting keeps its value. |
-| Neo4j writes (`NEO4J_EXPLICIT_TRANSACTIONS`) | Per query | One transaction, rolled back in full on failure | Set `NEO4J_EXPLICIT_TRANSACTIONS=false` |
+| Setting | What changed in 1.0, and how to change it back |
+|---|---|
+| Focused reading (`TARGETED_RETRIEVAL`) | Off before, on in 1.0. To turn it off, set `TARGETED_RETRIEVAL=false` in `.env`. |
+| Timeline search (`TIMELINE_SUMMARIES`) | Off before, on in 1.0. To turn it off, set `TIMELINE_SUMMARIES=false` in `.env`. |
+| MCP servers for agents | Off before, on in 1.0. To turn it off, use **Workspace → Labs → Enable MCP Servers**. A workspace that already saved this setting keeps its value. |
+| Neo4j writes (`NEO4J_EXPLICIT_TRANSACTIONS`) | Before: per query. In 1.0: one transaction, rolled back in full on failure. To go back, set `NEO4J_EXPLICIT_TRANSACTIONS=false`. |
 
-These stay off: `HIGH_ACCURACY_MODE` and the experimental knowledge-base push. See [Environment Variables](/deployment/environment-variables).
+These stay off: `HIGH_ACCURACY_MODE` and the experimental knowledge-base push. See [Environment variables](/deployment/environment-variables).
 
 ## Removed
 
@@ -110,6 +110,6 @@ From a clone of the repository, `deployment/docker-compose/rollback.sh <tag>` mo
 
 ## Related
 
-- [Backup and Restore](/deployment/backup-restore)
-- [Environment Variables](/deployment/environment-variables)
+- [Backup and restore](/deployment/backup-restore)
+- [Environment variables](/deployment/environment-variables)
 - [Troubleshooting](/additional-resources/troubleshooting)

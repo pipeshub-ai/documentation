@@ -1,6 +1,6 @@
 ---
-title: "Toolsets Overview"
-description: "Connect your AI agents to external applications with toolsets"
+title: "Actions overview"
+description: "Connect your AI agents to external applications with actions"
 icon: "tools"
 ---
 
@@ -8,57 +8,57 @@ icon: "tools"
   <div className="p-6 border border-gray-200 dark:border-gray-700 rounded-xl bg-blue-50 dark:bg-gray-800">
     <div className="flex items-center gap-3 mb-4">
       <span className="text-4xl">🔧</span>
-      <div className="text-xl font-semibold text-gray-900 dark:text-white">PipesHub Toolsets</div>
+      <div className="text-xl font-semibold text-gray-900 dark:text-white">PipesHub actions</div>
     </div>
     <p className="text-base text-gray-700 dark:text-gray-300 my-0">Give your AI agents the ability to interact with external applications</p>
   </div>
 </div>
 
-## What are Toolsets?
+## What are Actions?
 
-Toolsets are collections of tools that enable AI agents to **perform actions** in external applications. Each toolset provides a set of actions (tools) that agents can use to read data, create content, and perform operations in connected services.
+Actions are collections of tools that let AI agents **do things** in external applications. Each action provides a set of tools that agents can use to read data, create content, and perform operations in connected services.
 
-**Use Toolsets when you want agents to take action on data** — sending emails, creating tickets, updating documents, or modifying content in external services.
+**Use Actions when you want agents to take action on data**: sending emails, creating tickets, updating documents, or modifying content in external services.
 
 **Key characteristics:**
-- **Two-way API access** - Read and write data in real-time
-- **Action-oriented** - Send emails, create tickets, update documents
-- **OAuth callback URL required** - Secure authorization flow
-- **Instant execution** - Actions happen immediately when agents invoke tools
+- **Two-way API access**: Read and write data in real-time
+- **Action-oriented**: Send emails, create tickets, update documents
+- **OAuth callback URL required**: Secure authorization flow
+- **Instant execution**: Actions happen immediately when agents invoke tools
 
-Unlike **Connectors** (which index data for querying and search), **Toolsets** provide real-time API access for performing actions.
+Unlike **Connectors** (which index data for querying and search), **Actions** provide real-time API access for performing actions.
 
 <Info>
-  Need to search or query through documents or emails? You need [**Connectors**](/connectors/overview) instead. Connectors index data for knowledge retrieval, while Toolsets enable actions.
+  Need to search or query through documents or emails? You need [**Connectors**](/connectors/overview) instead. Connectors index data for knowledge retrieval, while actions let agents do things in other apps.
 </Info>
 
 <Note>
-  **When you want to use both Connector and Toolset:** In the Agent Builder add nodes from **Knowledge** (Collections, API Apps) for document search and context retrieval, and add nodes from **Tools** for performing actions. Connect both to your Agent node so the agent can search context and take action in the same conversation.
+  **When you want to use both Connector and Action:** In the Agent Builder add nodes from **Knowledge** (Collections, API Apps) for document search and context retrieval, and add nodes from **Tools** for performing actions. Connect both to your Agent node so the agent can search context and take action in the same conversation.
 </Note>
 
-| Feature | Connectors | Toolsets |
+| Feature | Connectors | Actions |
 |---------|------------|----------|
 | **Purpose** | Sync and index data for search | Perform actions via API |
 | **Data Flow** | One-way (import) | Two-way (read/write) |
 | **Use Case** | Query/search data | Actions on data |
 | **Real-time** | Periodic sync | Instant API calls |
 
-## Available Toolsets
+## Available Actions
 
-Tool counts come from the toolsets themselves.
+Tool counts come from the actions themselves.
 
 Every agent also gets a set of **built-in capabilities** it did not have to be given.
 They do not appear under **Workspace settings → Actions** and there is nothing to
 configure. They are listed here so you know what an agent can already do before you
 attach anything.
 
-| Built-in capability | What the agent can do | Tools |
-|---------------------|-----------------------|-------|
-| Artifact Manager | Save and retrieve versioned output | 7 |
-| Internal Tools | Ask the user a structured question with options | 1 |
-| Calculator | Exact arithmetic, date differences and text counts | 5 |
-| Date Calculator | Weekend and holiday dates for working-day maths | 3 |
-| Image Generator | Generate or edit an image from a prompt | 1 |
+| Built-in capability | What the agent can do |
+|---|---|
+| Artifact Manager | Save and retrieve versioned output (7 tools) |
+| Internal Tools | Ask the user a structured question with options (1 tool) |
+| Calculator | Exact arithmetic, date differences and text counts (5 tools) |
+| Date Calculator | Weekend and holiday dates for working-day maths (3 tools) |
+| Image Generator | Generate or edit an image from a prompt (1 tool) |
 
 Two of these change how you write a prompt. **Calculator** exists because language
 models are unreliable at arithmetic, so an agent that must produce exact numbers
@@ -71,84 +71,84 @@ sits in. An agent with no knowledge sources does not get it, because there would
 nothing to search.
 
 <Warning>
-**Agents can run code.** When code execution is enabled — which it is by default —
+**Agents can run code.** When code execution is enabled (it is by default),
 an agent gets `run_code`, `install_packages` and `read_sandbox_file`, letting it
 execute Python, TypeScript and SQL in an isolated sandbox. Set
 `PIPESHUB_ENABLE_CODE_EXECUTION=false` to turn this off for the deployment.
 
-These are not toolsets you attach, and they are not the `coding_sandbox` or
-`database_sandbox` entries in the repository — those are always excluded from agents
+These are not actions you attach, and they are not the `coding_sandbox` or
+`database_sandbox` entries in the repository. Those are always excluded from agents
 in favour of `run_code`.
 </Warning>
 
-Everything below is a **catalogue toolset**: you authorise it under **Actions** and
+Everything below is a **catalogue action**: you authorise it under **Actions** and
 then attach it to an agent from the **Tools** panel.
 
 ### Google Workspace
 
-| Toolset | What agents can do | Tools |
-|---------|--------------------|-------|
-| [Gmail](/toolsets/google-workspace/gmail) | Read, send, and reply to email | 7 |
-| [Calendar](/toolsets/google-workspace/calendar) | Create and manage calendar events | 7 |
-| [Drive](/toolsets/google-workspace/drive) | Find, read, and manage files | 8 |
-| [Docs](/toolsets/google-workspace/docs) | Read, create, and edit documents | 5 |
-| [Sheets](/toolsets/google-workspace/sheets) | Read and update spreadsheets | 7 |
+| Action | What agents can do |
+|---|---|
+| [Gmail](/toolsets/google-workspace/gmail) | Read, send, and reply to email (7 tools) |
+| [Calendar](/toolsets/google-workspace/calendar) | Create and manage calendar events (7 tools) |
+| [Drive](/toolsets/google-workspace/drive) | Find, read, and manage files (8 tools) |
+| [Docs](/toolsets/google-workspace/docs) | Read, create, and edit documents (5 tools) |
+| [Sheets](/toolsets/google-workspace/sheets) | Read and update spreadsheets (7 tools) |
 
 ### Microsoft 365
 
-| Toolset | What agents can do | Tools |
-|---------|--------------------|-------|
-| [Outlook](/toolsets/microsoft-365/outlook) | Send email and manage the calendar | 19 |
-| [OneDrive](/toolsets/microsoft-365/onedrive) | Find, read, and manage files | 21 |
-| [SharePoint](/toolsets/microsoft-365/sharepoint) | Sites, lists, and documents | 19 |
-| [Teams](/toolsets/microsoft-365/teams) | Channels, chats, and meetings | 34 |
+| Action | What agents can do |
+|---|---|
+| [Outlook](/toolsets/microsoft-365/outlook) | Send email and manage the calendar (19 tools) |
+| [OneDrive](/toolsets/microsoft-365/onedrive) | Find, read, and manage files (21 tools) |
+| [SharePoint](/toolsets/microsoft-365/sharepoint) | Sites, lists, and documents (19 tools) |
+| [Teams](/toolsets/microsoft-365/teams) | Channels, chats, and meetings (34 tools) |
 
 ### Atlassian
 
-| Toolset | What agents can do | Tools |
-|---------|--------------------|-------|
-| [Jira](/toolsets/jira/jira) | Issues, comments, and transitions | 15 |
-| [Jira Data Center](/toolsets/jira/jira-data-center) | Self-hosted Jira | 13 |
-| [Confluence](/toolsets/confluence/confluence) | Pages, comments, and attachments | 16 |
-| [Confluence Data Center](/toolsets/confluence/confluence-data-center) | Self-hosted Confluence | 15 |
+| Action | What agents can do |
+|---|---|
+| [Jira](/toolsets/jira/jira) | Issues, comments, and transitions (15 tools) |
+| [Jira Data Center](/toolsets/jira/jira-data-center) | Self-hosted Jira (13 tools) |
+| [Confluence](/toolsets/confluence/confluence) | Pages, comments, and attachments (16 tools) |
+| [Confluence Data Center](/toolsets/confluence/confluence-data-center) | Self-hosted Confluence (15 tools) |
 
 ### Work and customer systems
 
-| Toolset | What agents can do | Tools |
-|---------|--------------------|-------|
-| [GitHub](/toolsets/github/github) | Repositories, issues, and pull requests | 23 |
-| [ClickUp](/toolsets/clickup/clickup) | Tasks, docs, and checklists | 26 |
-| [Slack](/toolsets/slack/slack) | Messages, channels, and threads | 37 |
-| [Zoom](/toolsets/zoom/zoom) | Meetings and contacts | 13 |
-| [Salesforce](/toolsets/salesforce/salesforce) | Records, cases, and SOQL queries | 30 |
-| Lumos | Access requests and app permissions | 26 |
+| Action | What agents can do |
+|---|---|
+| [GitHub](/toolsets/github/github) | Repositories, issues, and pull requests (23 tools) |
+| [ClickUp](/toolsets/clickup/clickup) | Tasks, docs, and checklists (26 tools) |
+| [Slack](/toolsets/slack/slack) | Messages, channels, and threads (37 tools) |
+| [Zoom](/toolsets/zoom/zoom) | Meetings and contacts (13 tools) |
+| [Salesforce](/toolsets/salesforce/salesforce) | Records, cases, and SOQL queries (30 tools) |
+| Lumos | Access requests and app permissions (26 tools) |
 
 ### Databases
 
-| Toolset | What agents can do | Tools |
-|---------|--------------------|-------|
-| [MariaDB](/toolsets/mariadb/mariadb) | Query tables and inspect schemas | 5 |
-| [Redshift](/toolsets/redshift/redshift) | Query tables and inspect schemas | 8 |
+| Action | What agents can do |
+|---|---|
+| [MariaDB](/toolsets/mariadb/mariadb) | Query tables and inspect schemas (5 tools) |
+| [Redshift](/toolsets/redshift/redshift) | Query tables and inspect schemas (8 tools) |
 
-That is **21 catalogue toolsets** carrying 354 tools that you authorise and attach, on top of the built-in capabilities above.
+That is **21 catalogue actions** carrying 354 tools that you authorise and attach, on top of the built-in capabilities above.
 
 <Note>
-Two kinds of toolset are deliberately absent from **Actions**, for different reasons.
+Two kinds of action are deliberately absent from **Actions**, for different reasons.
 
-**Internal toolsets** — the first group above — are excluded by design. They are
+**Internal actions** (the first group above) are excluded by design. They are
 attached to every agent already, so there is nothing to configure.
 
-**Unreleased implementations** — Notion, Linear, GitLab, Dropbox, Box, S3, Zendesk
-and others — exist in the repository but are commented out of the toolset discovery
+**Unreleased implementations** (Notion, Linear, GitLab, Dropbox, Box, S3, Zendesk
+and others) exist in the repository but are commented out of the action discovery
 list, so they are not loaded and cannot be added to an agent yet.
 </Note>
 
-## Configuring Toolsets
+## Configuring Actions
 
 ### Step 1: Open Actions
 
-Go to **Workspace settings → Actions**. Team-wide toolsets live there and require an
-administrator; your own live under **Your Actions**, which filters by
+Go to **Workspace settings → Actions**. Team-wide actions live there and require an
+administrator; your own live under **Your actions**, which filters by
 **All**, **Authenticated** and **Not authenticated** rather than by configuration
 state.
 
@@ -160,13 +160,15 @@ state.
   />
 </div>
 
-### Step 2: Browse Available Toolsets
+### Step 2: Browse Available Actions
 
-The Actions page filters by configuration state:
+The Actions page has two sections. **App actions** lists the built-in integrations on this page, such as Slack or Jira. **API actions** lists internal REST APIs added from an OpenAPI spec; see [API actions](/agent-guide/api-actions).
 
-- **All** - every toolset in the catalogue
-- **Configured** - the ones already set up
-- **Not configured** - the ones still to authorise
+The **App actions** list filters by configuration state:
+
+- **All**: every action in the catalogue
+- **Configured**: the ones already set up
+- **Not configured**: the ones still to authorise
 
 <div className="text-center">
   <img
@@ -176,10 +178,10 @@ The Actions page filters by configuration state:
   />
 </div>
 
-### Step 3: Configure a Toolset
+### Step 3: Configure an Action
 
-1. Find the toolset you want to configure under the **Not configured** filter
-2. Click **Set up** on the toolset card
+1. Find the action you want to configure under the **Not configured** filter
+2. Click **Set up** on the action card
 3. The **Action configuration** dialog opens
 
 <div className="text-center">
@@ -192,67 +194,67 @@ The Actions page filters by configuration state:
 
 ### Step 4: Authenticate
 
-Follow the authentication flow for the toolset:
+Follow the authentication flow for the action:
 
 1. Enter the required credentials in the configuration dialog (e.g., Client ID and Client Secret, or Username and Password)
-2. Click **"Authenticate"**
-3. For OAuth toolsets, a popup window opens for authorization
+2. Click **Create**, then click **Authenticate** on the new instance
+3. For OAuth actions, a popup window opens for authorization
 4. Grant the requested permissions (OAuth flow)
 5. You'll be redirected back to PipesHub with authentication confirmed
 
 <Info>
-  Each toolset may have different authentication requirements. See individual toolset documentation for specific setup steps and credentials needed.
+  Each action may have different authentication requirements. See individual action documentation for specific setup steps and credentials needed.
 </Info>
 
 ### Step 5: Verify Configuration
 
-Once configured, the toolset will appear under the **Configured** filter with an "Authenticated" status.
+Once configured, the action will appear under the **Configured** filter with an "Authenticated" status.
 
 <div className="text-center">
   <img
     src="/images/toolsets/authenticated-toolset.png"
-    alt="Authenticated Toolset"
+    alt="Authenticated Action"
     className="block mx-auto w-11/12"
   />
 </div>
 
-### Managing Toolset Configuration
+### Managing Action Configuration
 
-You can manage your toolset by clicking on it under the **Configured** filter to open the configuration dialog. Available actions:
+You can manage your action by clicking on it under the **Configured** filter and clicking **Manage configuration** on its instance. Available actions:
 
-- **Update Configuration** - Modify credentials or settings
-- **Reauthenticate** - Refresh authentication if it expires or encounters issues
-- **Delete** - Remove the toolset configuration entirely
+- **Save**: Modify credentials or settings
+- **Authenticate**: Refresh authentication if it expires or encounters issues
+- **Delete instance**: Remove the action configuration entirely
 
 <div className="text-center">
   <img
     src="/images/toolsets/manage-toolset.png"
-    alt="Manage Toolset Configuration"
+    alt="Manage Action Configuration"
     className="block mx-auto w-11/12"
   />
 </div>
 
 ---
 
-## Using Toolsets in Agents
+## Using Actions in Agents
 
-Once a toolset is configured, it becomes available in the Agent Builder:
+Once an action is configured, it becomes available in the Agent Builder:
 
 1. Open the **Agent Builder** (create new or edit existing agent)
 2. In the left sidebar, expand the **"Tools"** section
-3. Find your configured toolset and drag it onto the canvas
+3. Find your configured action and drag it onto the canvas
 4. Connect it to your agent flow
 
 <div className="text-center">
   <img
     src="/images/toolsets/toolset-in-agent-builder.png"
-    alt="Toolset in Agent Builder"
+    alt="Action in Agent Builder"
     className="block mx-auto w-11/12"
   />
 </div>
 
 <Warning>
-  Only authenticated toolsets appear in the Agent Builder. If a toolset is missing, check its configuration status in **Workspace > Actions**.
+  Only authenticated actions appear in the Agent Builder. If an action is missing, check its configuration status in **Workspace > Actions**.
 </Warning>
 
 ---
@@ -267,7 +269,7 @@ Each tool says what it does to data, and that decides whether it runs straight a
 - **In a chat in the PipesHub app**, the person sees an approval card and chooses **Allow** or **Deny**.
 - **Where nobody can answer a card** (the Slack bot, the API, the PipesHub MCP server and service-account agents), a tool that asks first doesn't run.
 
-In the Enterprise Edition, an admin can set these rules for the whole organization, per toolset and per tool, in the action's **Tool approvals**: **Pre-approved**, **Allow on approval** or **Deny**. For example, an admin can make a tool that changes data ask first, or pre-approve a tool that can't be undone for an automation that needs it.
+In the Enterprise Edition, an admin can set these rules for the whole organization, per action and per tool, in the action's **Tool approvals**: **Pre-approved**, **Allow on approval** or **Deny**. For example, an admin can make a tool that changes data ask first, or pre-approve a tool that can't be undone for an automation that needs it.
 
 ---
 
@@ -275,12 +277,12 @@ In the Enterprise Edition, an admin can set these rules for the whole organizati
 
 ### OAuth 2.0
 
-OAuth 2.0 is the recommended authentication method for most toolsets. It provides:
+OAuth 2.0 is the recommended authentication method for most actions. It provides:
 
-- **Secure token-based access** - No passwords stored
-- **Automatic token refresh** - Tokens are refreshed automatically
-- **Granular permissions** - Only request necessary scopes
-- **User authorization** - Users explicitly grant access
+- **Secure token-based access**: No passwords stored
+- **Automatic token refresh**: Tokens are refreshed automatically
+- **Granular permissions**: Only request necessary scopes
+- **User authorization**: Users explicitly grant access
 
 **Requirements:**
 - Create an OAuth application in the service's developer console
@@ -289,15 +291,15 @@ OAuth 2.0 is the recommended authentication method for most toolsets. It provide
 
 ### Basic Auth
 
-Basic Auth is used by toolsets like MariaDB. It works as follows:
+Basic Auth is used by actions like MariaDB. It works as follows:
 
-- **Per-user credentials** - Each user enters their own username and password
-- **Secure credential handling** - Credentials are stored securely and scoped to the authenticated user
-- **Admin and user separation** - Admin creates the shared toolset instance; users authenticate their own accounts
-- **No credential sharing** - One user's credentials are not visible to other users
+- **Per-user credentials**: Each user enters their own username and password
+- **Secure credential handling**: Credentials are stored securely and scoped to the authenticated user
+- **Admin and user separation**: Admin creates the shared action instance; users authenticate their own accounts
+- **No credential sharing**: One user's credentials are not visible to other users
 
 **Requirements:**
-- Admin creates the toolset instance (host, port, database)
+- Admin creates the action instance (host, port, database)
 - Each user provides valid username and password for that data source
 ---
 
@@ -305,34 +307,34 @@ Basic Auth is used by toolsets like MariaDB. It works as follows:
 
 <AccordionGroup>
 
-<Accordion title="What's the difference between Connectors and Toolsets?">
+<Accordion title="What's the difference between Connectors and Actions?">
 
-| Aspect | Connectors | Toolsets |
+| Aspect | Connectors | Actions |
 |--------|-----------|----------|
 | **Purpose** | Sync and index data for search | Enable agents to perform actions |
 | **Data Flow** | One-way (import data into PipesHub) | Two-way (read and write via API) |
 | **When to Use** | Query/search data | Perform actions on data |
 
-**Example:** Use a **Gmail Connector** to index and search your email history. Use a **Gmail Toolset** to send new emails through an agent.
+**Example:** Use a **Gmail Connector** to index and search your email history. Use a **Gmail action** to send new emails through an agent.
 
 </Accordion>
 
-<Accordion title="When should I use a Connector vs a Toolset?">
+<Accordion title="When should I use a Connector vs an Action?">
 
-**Connector** — Use when you need document context search: connectors sync and index your documents, emails, and pages so your assistant can find and use that context, and they do not perform actions.
+**Connector**: Use when you need document context search: connectors sync and index your documents, emails, and pages so your assistant can find and use that context, and they do not perform actions.
 
-**Toolset** — When you need **actions**: create or update content, send messages, or run analytical queries (e.g. JQL, CQL, reports).
+**Action**: Use when the agent needs to do something in another app: create or update content, send messages, or run analytical queries (e.g. JQL, CQL, reports).
 
-**Quick takeaway:** Search & context → **Connector**. Actions → **Toolset**.
+**Quick takeaway:** Search & context → **Connector**. Do something in another app → **Action**.
 
 </Accordion>
 
 <Accordion title="Where do I find the callback URL to add in the OAuth app?">
 
-The callback URL is displayed in PipesHub when configuring a toolset:
+The callback URL is displayed in PipesHub when configuring an action:
 
 1. Go to **Workspace > Actions**
-2. Click **Set up** on the toolset you want to configure
+2. Click **Set up** on the action you want to configure
 3. Copy the **Redirect URI** shown in the dialog
 4. Add it to your OAuth app's allowed redirect URIs in the service's developer console
 
@@ -340,28 +342,28 @@ The callback URL must match exactly between PipesHub and the OAuth app for authe
 
 </Accordion>
 
-<Accordion title="What OAuth scopes do Toolsets require?">
+<Accordion title="What OAuth scopes do Actions require?">
 
-Toolsets need **read, write and delete permissions** to perform actions on your behalf:
+Actions need **read, write and delete permissions** to perform actions on your behalf:
 
-- **Read permissions** - Access existing data (messages, tickets, files)
-- **Write permissions** - Create and update content (send emails, create tickets)
-- **Delete permissions** - Remove items (delete messages, delete comment)
+- **Read permissions**: Access existing data (messages, tickets, files)
+- **Write permissions**: Create and update content (send emails, create tickets)
+- **Delete permissions**: Remove items (delete messages, delete comment)
 
-The required scopes depend on what actions your agents will perform. Check each toolset's documentation page for the complete list of required scopes based on your use case.
+The required scopes depend on what actions your agents will perform. Check each action's documentation page for the complete list of required scopes based on your use case.
 
 </Accordion>
 
-<Accordion title="Why can't I drag and use a Toolset in Agent Builder?">
+<Accordion title="Why can't I drag and use an Action in Agent Builder?">
 
-Toolsets appear in the Agent Builder but can only be used after authentication:
+Actions appear in the Agent Builder but can only be used after authentication:
 
 1. Check **Workspace > Actions** for the authentication status
-2. If not "Authenticated", click **"Configure"** and complete the OAuth flow
-3. If expired, click **"Reauthenticate"**
-4. Return to Agent Builder and the toolset will be available to drag and connect
+2. If not "Authenticated", click **Authenticate** and complete the OAuth flow
+3. If expired, click **Authenticate** again
+4. Return to Agent Builder and the action will be available to drag and connect
 
-Unauthenticated toolsets are visible but cannot be added to agents.
+Unauthenticated actions are visible but cannot be added to agents.
 
 </Accordion>
 
@@ -374,10 +376,10 @@ Unauthenticated toolsets are visible but cannot be added to agents.
 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
   <a href="/agent-guide/setup-guide" className="block p-4 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
     <h3 className="text-lg font-semibold mb-2">Create an Agent</h3>
-    <p className="text-gray-600 dark:text-gray-400">Build an agent using your configured toolsets</p>
+    <p className="text-gray-600 dark:text-gray-400">Build an agent using your configured actions</p>
   </a>
   <a href="/toolsets/jira/jira" className="block p-4 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
-    <h3 className="text-lg font-semibold mb-2">Jira Toolset</h3>
-    <p className="text-gray-600 dark:text-gray-400">Popular toolset for issue tracking</p>
+    <h3 className="text-lg font-semibold mb-2">Jira Action</h3>
+    <p className="text-gray-600 dark:text-gray-400">Popular action for issue tracking</p>
   </a>
 </div>

@@ -1,10 +1,10 @@
 ---
-title: "Tools Reference"
+title: "Tools reference"
 description: "Tools exposed by the PipesHub MCP server"
-icon: "wrench"
+icon: "toolbox"
 ---
 
-Reference for the tools exposed by the PipesHub MCP server. These tools let an AI client (Cursor, Claude Code, Gemini CLI, Claude.ai, LibreChat, etc.) talk to PipesHub — search and chat over the org's indexed documents, look up people and groups, download files, and talk to configured PipesHub agents.
+Reference for the tools exposed by the PipesHub MCP server. These tools let an AI client (Cursor, Claude Code, Gemini CLI, Claude.ai, LibreChat, etc.) talk to PipesHub: search and chat over the org's indexed documents, look up people and groups, download files, and talk to configured PipesHub agents.
 
 The server exposes **eleven** tools: the seven below plus the four in [Filling a workspace](#filling-a-workspace). When the signed-in user has an indexed code repository and the token holds `code:read`, it also offers the nine [`pipeshub_code_*` tools](#code-graph-tools). Each tool wraps several lower-level API calls so the LLM gets a single, well-shaped response. This page follows the package's [TOOLS.md](https://github.com/pipeshub-ai/mcp-server/blob/main/TOOLS.md).
 
@@ -14,25 +14,25 @@ The server exposes **eleven** tools: the seven below plus the four in [Filling a
 
 ## `pipeshub_chat`
 
-**Optional.** Ask PipesHub's own assistant a question and get an answer grounded in the org's indexed sources and the live web, with citations. It reads a **few retrieved passages** — never a whole document, never a complete list.
+**Optional.** Ask PipesHub's own assistant a question and get an answer grounded in the org's indexed sources and the live web, with citations. It reads a **few retrieved passages**, never a whole document or a complete list.
 
 <Warning>
   Plain chat can also take actions. It runs PipesHub's assistant with the actions the user has connected (for example creating a Jira ticket or sending an email), using the user's own credentials, unless an admin turned actions off. The tool is annotated `destructiveHint: true`, so clients that confirm risky calls ask first. Do not ask it to write unless the user asked for that action.
 </Warning>
 
-| Argument | Type | Required | Description |
-|---|---|---|---|
-| `query` | string | yes | The user's question or message for this turn. |
-| `conversationId` | string | no | Existing conversation id to continue. Omit on the first turn; pass it back on every subsequent turn. |
-| `filters` | object | no | Source scoping: `{ apps, kb }`. Connector ids go in `apps`, collection ids go in `kb`; get both from `pipeshub_sources`. Leave out to use all sources. Only works on the first turn. |
-| `modelKey` | string | no | Model id from `pipeshub_sources` `llmModels[*].modelKey`. Defaults to the org's default LLM. |
-| `agentId` | string | no | PipesHub agent to converse with (`agentId` from `pipeshub_agents`). Pass the same `agentId` on every follow-up turn. Omit for plain chat. |
+| Argument | Description |
+|---|---|
+| `query`<br/>*string, required* | The user's question or message for this turn. |
+| `conversationId`<br/>*string, optional* | Existing conversation id to continue. Omit on the first turn; pass it back on every subsequent turn. |
+| `filters`<br/>*object, optional* | Source scoping: `{ apps, kb }`. Connector ids go in `apps`, collection ids go in `kb`; get both from `pipeshub_sources`. Leave out to use all sources. Only works on the first turn. |
+| `modelKey`<br/>*string, optional* | Model id from `pipeshub_sources` `llmModels[*].modelKey`. Defaults to the org's default LLM. |
+| `agentId`<br/>*string, optional* | PipesHub agent to converse with (`agentId` from `pipeshub_agents`). Pass the same `agentId` on every follow-up turn. Omit for plain chat. |
 
-**Three questions this tool gets wrong — check them first:**
+**Check these three questions first. Chat gets them wrong:**
 
-- **Structure** — "what's under this epic?", "which pages are in this space?", "what's in this folder?" → `pipeshub_get_record_content` `mode:"navigate"`.
-- **Exhaustive** — "how many X?", "list all the Y", "every Z" → `mode:"navigate"`. Chat undercounts and will not say so.
-- **One named document** — summarize it, extract from it, what does it say about X → `pipeshub_search` for the `recordId`, then `mode:"content"`.
+- **Structure**: "what's under this epic?", "which pages are in this space?", "what's in this folder?" → `pipeshub_get_record_content` `mode:"navigate"`.
+- **Exhaustive**: "how many X?", "list all the Y", "every Z" → `mode:"navigate"`. Chat undercounts and will not say so.
+- **One named document**: summarize it, extract from it, what does it say about X → `pipeshub_search` for the `recordId`, then `mode:"content"`.
 
 For other questions about the org's knowledge, including ones that span several documents, search and read the records yourself unless the user asks for PipesHub's own answer.
 
@@ -49,16 +49,16 @@ Treat the answer as a lead. Before stating a specific ID, status, date or owner,
 
 Vector / semantic search across the org's indexed documents. It is the **default first step for a question about the org's knowledge**: search, then read the records that matter with `pipeshub_get_record_content`. It also **locates a document** by name, topic or phrase and resolves it to a `recordId`.
 
-| Argument | Type | Required | Description |
-|---|---|---|---|
-| `query` | string | yes | Natural language query. |
-| `limit` | number (1–100) | no | Vector matches to fetch. Default 10. 5–10 is enough to find a `recordId`. |
-| `offset` | number | no | Records to skip. To read the next page, pass the previous call's `nextOffset` with the same other arguments. |
-| `apps` | string[] | no | Connector ids to search, from `pipeshub_sources` where `kind` is `"connector"`. |
-| `kb` | string[] | no | Collection ids to search, from `pipeshub_sources` where `kind` is `"knowledgeBase"`. |
-| `createdAfter` / `createdBefore` | string | no | Only records created in their source within these dates. `YYYY-MM-DD` (whole day, UTC) or an ISO 8601 datetime with a timezone. Inclusive. |
-| `modifiedAfter` / `modifiedBefore` | string | no | Only records last changed in their source within these dates, same format. |
-| `timeline` | `"created"` \| `"modified"` \| `"off"` | no | Search a span period by period, for how something evolved or a summary over months. Each page holds every period's best records, oldest first, each with its `period`. `"off"` forces one ranked search. |
+| Argument | Description |
+|---|---|
+| `query`<br/>*string, required* | Natural language query. |
+| `limit`<br/>*number (1–100), optional* | Vector matches to fetch. Default 10. 5–10 is enough to find a `recordId`. |
+| `offset`<br/>*number, optional* | Records to skip. To read the next page, pass the previous call's `nextOffset` with the same other arguments. |
+| `apps`<br/>*string[], optional* | Connector ids to search, from `pipeshub_sources` where `kind` is `"connector"`. |
+| `kb`<br/>*string[], optional* | Collection ids to search, from `pipeshub_sources` where `kind` is `"knowledgeBase"`. |
+| `createdAfter` / `createdBefore`<br/>*string, optional* | Only records created in their source within these dates. `YYYY-MM-DD` (whole day, UTC) or an ISO 8601 datetime with a timezone. Inclusive. |
+| `modifiedAfter` / `modifiedBefore`<br/>*string, optional* | Only records last changed in their source within these dates, same format. |
+| `timeline`<br/>`"created"` \| `"modified"` \| `"off"`, *optional* | Search a span period by period, for how something evolved or a summary over months. Each page holds every period's best records, oldest first, each with its `period`. `"off"` forces one ranked search. |
 
 Leave out `apps` and `kb` to search everything; if you set either, only the listed sources are searched. The date filters match when a record was written or last changed at its source, not the date of an event it describes, so leave them off unless the question is about when records were written.
 
@@ -70,24 +70,24 @@ Records are a ranked sample, never a complete list. Never count them to answer "
 
 Four operations on records, selected by `mode`.
 
-| Argument | Type | Required | Description |
-|---|---|---|---|
-| `mode` | enum | no | `content` (default), `thread`, `navigate`, or `lookup`. |
-| `recordId` | string | conditional | Required when `mode` is `content` or `thread`. Get it from a chat citation, a search hit, or a `lookup`. |
-| `maxChars` | number (2000–140000) | no | `content` and `thread`. Most characters of text to return. Default 40000. |
-| `query` | string | no | `content` only. What you are looking for. When the record is longer than `maxChars`, the most relevant passages come back first. |
-| `extract` | boolean | no | `content` only, with `query`. Return only the passages that answer `query`, copied word for word by PipesHub's reader model, instead of the record's text. Needs a newer PipesHub server; an older one ignores it. |
-| `startBlock` | number | no | `content` and `thread`. Continue reading from the block named in the previous part's `Next:` line. |
-| `startRecord` | number | no | `thread` only. Continue a long thread from this record, as the `Next:` line names it. |
-| `nodeId` | string | no | `navigate` only. Omit to list the top level: a flat listing of everything reachable. On a limited connection, see the note below. |
-| `page` / `limit` | number | no | `navigate` only. 1-based page, 50–200 children per page (default 50). |
-| `depth` | number (1–3) | no | `navigate` only. `2` or `3` flattens descendants into one call instead of one call per level. Default 1. |
-| `identifiers` | string or string[] | conditional | Required when `mode` is `lookup`. A URL, issue key, or external ID — or up to 10 of them. |
+| Argument | Description |
+|---|---|
+| `mode`<br/>*enum, optional* | `content` (default), `thread`, `navigate`, or `lookup`. |
+| `recordId`<br/>*string, conditional* | Required when `mode` is `content` or `thread`. Get it from a chat citation, a search hit, or a `lookup`. |
+| `maxChars`<br/>*number (2000–140000), optional* | `content` and `thread`. Most characters of text to return. Default 40000. |
+| `query`<br/>*string, optional* | `content` only. What you are looking for. When the record is longer than `maxChars`, the most relevant passages come back first. |
+| `extract`<br/>*boolean, optional* | `content` only, with `query`. Return only the passages that answer `query`, copied word for word by PipesHub's reader model, instead of the record's text. Needs a newer PipesHub server; an older one ignores it. |
+| `startBlock`<br/>*number, optional* | `content` and `thread`. Continue reading from the block named in the previous part's `Next:` line. |
+| `startRecord`<br/>*number, optional* | `thread` only. Continue a long thread from this record, as the `Next:` line names it. |
+| `nodeId`<br/>*string, optional* | `navigate` only. Omit to list the top level: a flat listing of everything reachable. On a limited connection, see the note below. |
+| `page` / `limit`<br/>*number, optional* | `navigate` only. 1-based page, 50–200 children per page (default 50). |
+| `depth`<br/>*number (1–3), optional* | `navigate` only. `2` or `3` flattens descendants into one call instead of one call per level. Default 1. |
+| `identifiers`<br/>*string or string[], conditional* | Required when `mode` is `lookup`. A URL, issue key, or external ID, or up to 10 of them. |
 
-- **`mode: "content"`** — the only way to see a document's full text. Use it to summarize, extract, or quote a named document. A long record comes back in parts, each ending with a `Read:` line and, while text is left, a `Next:` line naming the call that reads on. Pass `query` with `extract: true` to pull a few facts out of a long record for less context.
-- **`mode: "thread"`** — every message of the Slack thread that `recordId` belongs to, parent first, limited to what the caller may see. A Slack record is one burst of messages; replies are separate records (`Reply Count: N` means they are not included), so use this mode to read them.
-- **`mode: "navigate"`** — browse the hierarchy (project / space / folder → records → children). Use it for structure and for every "how many" / "all" / "every" question. Pass `depth: 2` or `3` to see several levels in one call. Returns no document text.
-- **`mode: "lookup"`** — resolve a Jira key, URL, or external ID to a `recordId` plus metadata.
+- **`mode: "content"`**: The only way to see a document's full text. Use it to summarize, extract, or quote a named document. A long record comes back in parts, each ending with a `Read:` line and, while text is left, a `Next:` line naming the call that reads on. Pass `query` with `extract: true` to pull a few facts out of a long record for less context.
+- **`mode: "thread"`**: Every message of the Slack thread that `recordId` belongs to, parent first, limited to what the caller may see. A Slack record is one burst of messages; replies are separate records (`Reply Count: N` means they are not included), so use this mode to read them.
+- **`mode: "navigate"`**: Browse the hierarchy (project / space / folder → records → children). Use it for structure and for every "how many" / "all" / "every" question. Pass `depth: 2` or `3` to see several levels in one call. Returns no document text.
+- **`mode: "lookup"`**: Resolve a Jira key, URL, or external ID to a `recordId` plus metadata.
 
 **On a limited connection.** A personal access token or OAuth app set to **Only what I pick** browses only what was picked. With no `nodeId`, `mode: "navigate"` lists:
 
@@ -98,30 +98,30 @@ Four operations on records, selected by `mode`.
 
 Stream the binary content of a single record. Use it when the user wants the actual file bytes (download, attach, open).
 
-| Argument | Type | Required | Description |
-|---|---|---|---|
-| `recordId` | string | yes | From a chat citation or `pipeshub_search` hit. |
-| `convertTo` | string | no | Optional server-side format conversion (e.g. `pdf`). Omit for the original bytes. |
+| Argument | Description |
+|---|---|
+| `recordId`<br/>*string, required* | From a chat citation or `pipeshub_search` hit. |
+| `convertTo`<br/>*string, optional* | Optional server-side format conversion (e.g. `pdf`). Omit for the original bytes. |
 
 ## `pipeshub_directory`
 
 Look up people, groups, and teams. One tool with five `action`s.
 
-| Argument | Type | Required | Description |
-|---|---|---|---|
-| `action` | enum | yes | One of `whoami`, `list_users`, `get_user`, `list_groups`, `list_my_teams`. |
-| `userId` | string | conditional | Required when `action` is `get_user`. |
-| `page` | number | no | 1-based page number for `list_*` actions. |
-| `limit` | number (1–100) | no | Items per page for `list_*` actions. |
-| `search` | string | no | Substring match against name / email. Used by `list_users` (including find-by-email). |
+| Argument | Description |
+|---|---|
+| `action`<br/>*enum, required* | One of `whoami`, `list_users`, `get_user`, `list_groups`, `list_my_teams`. |
+| `userId`<br/>*string, conditional* | Required when `action` is `get_user`. |
+| `page`<br/>*number, optional* | 1-based page number for `list_*` actions. |
+| `limit`<br/>*number (1–100), optional* | Items per page for `list_*` actions. |
+| `search`<br/>*string, optional* | Substring match against name / email. Used by `list_users` (including find-by-email). |
 
 ## `pipeshub_sources`
 
 Discover available chat sources and AI models in one call. Call this once at the start of a session and cache the result.
 
-| Argument | Type | Required | Description |
-|---|---|---|---|
-| `include` | enum[] | no | Default: `["sources", "llmModels"]`. Add `"embeddingModels"` if configuring re-embedding. |
+| Argument | Description |
+|---|---|
+| `include`<br/>*enum[], optional* | Default: `["sources", "llmModels"]`. Add `"embeddingModels"` if configuring re-embedding. |
 
 Each source `id` is the value to put in `pipeshub_chat`'s or `pipeshub_search`'s `apps` filter.
 
@@ -129,7 +129,7 @@ Each source `id` is the value to put in `pipeshub_chat`'s or `pipeshub_search`'s
 
 List the PipesHub **agents** configured for this org. To converse with one, take its `agentId` and pass it to `pipeshub_chat`.
 
-**Route on `toolsets` / `knowledge`, not the name.** Match the request to the agent whose tools can actually perform it. The list may be empty — for plain Q&A, use `pipeshub_chat` without `agentId`.
+**Route on `toolsets` / `knowledge`, not the name.** (`toolsets` lists the agent's actions; the API still calls them toolsets.) Match the request to the agent whose tools can actually perform it. The list may be empty. For plain Q&A, use `pipeshub_chat` without `agentId`.
 
 ## Filling a workspace
 
@@ -139,9 +139,9 @@ Four tools take an empty workspace to a searchable one. The two that write, `pip
 
 Creates an empty collection that the caller owns, to upload into. Names are not unique: to add to an existing collection, use its id from `pipeshub_sources`.
 
-| Argument | Type | Required | Description |
-|---|---|---|---|
-| `name` | string | yes | 1–255 characters. |
+| Argument | Description |
+|---|---|
+| `name`<br/>*string, required* | 1–255 characters. |
 
 Returns `{ collectionId, name, url }`.
 
@@ -149,10 +149,10 @@ Returns `{ collectionId, name, url }`.
 
 Uploads documents into a collection. Each document travels inline: `text` for text formats, `base64` for binary ones. Up to 20 documents and about 3 MB per call. For a folder or larger files, run the CLI: `pipeshub upload <collectionId> <path>`, after signing it in with `pipeshub login`.
 
-| Argument | Type | Required | Description |
-|---|---|---|---|
-| `collectionId` | string | yes | From `pipeshub_create_collection` or `pipeshub_sources`. |
-| `documents` | array | yes | 1–20 items, each `{ name, text }` or `{ name, base64 }`. The extension in `name` sets the type: pdf, docx, pptx, xlsx, md, txt, html, csv, json, png, jpg and more. |
+| Argument | Description |
+|---|---|
+| `collectionId`<br/>*string, required* | From `pipeshub_create_collection` or `pipeshub_sources`. |
+| `documents`<br/>*array, required* | 1–20 items, each `{ name, text }` or `{ name, base64 }`. The extension in `name` sets the type: pdf, docx, pptx, xlsx, md, txt, html, csv, json, png, jpg and more. |
 
 Returns `{ uploaded, failed, summary }`. Indexing follows in the background.
 
@@ -160,9 +160,9 @@ Returns `{ uploaded, failed, summary }`. Indexing follows in the background.
 
 Reports how far a collection's records are through indexing. Poll it every 15–30 seconds after an upload until `done` is true; search finds a document only once it is indexed. Counts are exact at any collection size.
 
-| Argument | Type | Required | Description |
-|---|---|---|---|
-| `collectionId` | string | yes | The collection to check. |
+| Argument | Description |
+|---|---|
+| `collectionId`<br/>*string, required* | The collection to check. |
 
 Returns `{ done, total, pendingCount, failedCount, pending, failed }`. `pending` and `failed` list up to 25 records each; failed records carry the reason.
 
@@ -170,9 +170,9 @@ Returns `{ done, total, pendingCount, failedCount, pending, failed }`. `pending`
 
 Returns the page where the user connects Slack, Google Drive, Jira or another source. Connecting needs the user's own sign-in in a browser, so the agent hands over the link.
 
-| Argument | Type | Required | Description |
-|---|---|---|---|
-| `connector` | string | no | Opens that connector directly, e.g. `Jira`. |
+| Argument | Description |
+|---|---|
+| `connector`<br/>*string, optional* | Opens that connector directly, e.g. `Jira`. |
 
 Returns `{ url, adminUrl, instructions }`. Give the user `url`: it opens their personal connectors page. `adminUrl` opens the organization's connectors page and works only for an admin connecting the source for everyone; anyone else is redirected to their personal page without the connector selected.
 
@@ -219,7 +219,7 @@ Cross-file call and import edges are resolved for Python, JavaScript, TypeScript
 | "What do we know about X?" (spans many docs) | `pipeshub_search` → read the records that matter with `pipeshub_get_record_content` |
 | "What's our PTO policy?" (no single named file) | `pipeshub_search` → read the top records with `pipeshub_get_record_content` |
 | The client cannot run its own tool loop, or wants PipesHub's own answer | `pipeshub_chat` |
-| "How many / list all / every X" | `pipeshub_get_record_content` `mode:"navigate"` — not chat |
+| "How many / list all / every X" | `pipeshub_get_record_content` `mode:"navigate"`, not chat |
 | "Find the file called *security-review.pdf*" | `pipeshub_search` |
 | "Download that file" | `pipeshub_download_record` |
 | "Who am I?" | `pipeshub_directory` (`whoami`) |

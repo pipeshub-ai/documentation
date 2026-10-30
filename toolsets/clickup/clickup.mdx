@@ -1,5 +1,5 @@
 ---
-title: "ClickUp Toolset"
+title: "ClickUp actions"
 description: "Project and task management integration for AI agents"
 icon: "/logo/clickup.png"
 ---
@@ -12,7 +12,7 @@ icon: "/logo/clickup.png"
         alt="ClickUp Logo" 
         className="w-8 h-8 object-contain flex-shrink-0"
       />
-      <div className="text-xl font-semibold text-gray-900 dark:text-white">ClickUp Toolset</div>
+      <div className="text-xl font-semibold text-gray-900 dark:text-white">ClickUp actions</div>
     </div>
     <p className="text-base text-gray-700 dark:text-gray-300 mt-0 mb-5">Tasks, lists, docs, and team collaboration</p>
     <div className="flex flex-wrap items-center gap-2">
@@ -28,7 +28,7 @@ icon: "/logo/clickup.png"
 
 ## Overview
 
-The ClickUp toolset enables AI agents to interact with your ClickUp workspace. Agents can create and update tasks, manage spaces, folders, and lists, add comments and checklists, and author docs and pages — all through natural language. It uses OAuth 2.0 so agents act on behalf of the authenticated user in the Workspaces they consent to.
+The ClickUp action enables AI agents to interact with your ClickUp workspace. Agents can create and update tasks, manage spaces, folders, and lists, add comments and checklists, and author docs and pages — all through natural language. It uses OAuth 2.0 so agents act on behalf of the authenticated user in the Workspaces they consent to.
 
 ### Key Capabilities
 
@@ -131,8 +131,8 @@ The ClickUp toolset enables AI agents to interact with your ClickUp workspace. A
 
 Before creating the app, copy the Redirect URI from PipesHub so the values match exactly.
 
-1. In PipesHub, go to **Workspace Settings** → **Actions**.
-2. Find **ClickUp** in the list and click **+ Setup** (or **Configure**).
+1. In PipesHub, go to **Workspace settings** → **Actions**.
+2. Find **ClickUp** in the list and click **Set up**.
 3. Copy the **Redirect URI** shown in the dialog.
 
 <div style={{ textAlign: "center" }}>
@@ -147,7 +147,7 @@ Before creating the app, copy the Redirect URI from PipesHub so the values match
 ### Step 3: Create the OAuth app
 
 1. Back on the **ClickUp API Settings** tab, click **Create an App**.
-2. In the dialog that opens, enter an **App Name** (for example, `PipesHub ClickUp Toolset`).
+2. In the dialog that opens, enter an **App Name** (for example, `PipesHub ClickUp actions`).
 3. Paste the **Redirect URI** you copied from PipesHub into the **Redirect URL** field.
 4. Click **Create App**.
 
@@ -190,10 +190,10 @@ After you click **Create App**, ClickUp lists the app on the **ClickUp API Setti
   ClickUp OAuth does **not** use granular scopes. When a user authorizes the app, they choose one or more **Workspaces** to grant access to, and the access token inherits whatever permissions that user already has in those Workspaces. There is no scope selection step on either side.
 </Info>
 
-### Step 6: Configure the ClickUp toolset in PipesHub
+### Step 6: Configure the ClickUp action in PipesHub
 
-1. In PipesHub, return to **Workspace Settings** → **Actions**.
-2. Find **ClickUp** and open setup / configuration (**+ Setup** or **Configure**).
+1. In PipesHub, return to **Workspace settings** → **Actions**.
+2. Find **ClickUp** and click **Set up** to open its setup dialog.
 3. Confirm the **Redirect URI** in the dialog matches the **Redirect URL** you registered in ClickUp in **Step 3**.
 4. Paste your **Client ID** and **Client Secret**, then save the instance.
 
@@ -206,11 +206,11 @@ After you click **Create App**, ClickUp lists the app on the **ClickUp API Setti
   />
 </div>
 
-### Step 7: Authenticate the ClickUp toolset
+### Step 7: Authenticate the ClickUp action
 
 Authentication uses the same OAuth flow in either location:
 
-- **Admins** can authenticate the shared instance directly under **Workspace Settings → Actions**.
+- **Admins** can authenticate the shared instance directly under **Workspace settings → Actions**.
 - **Users** can authenticate their own personal instance under **Your actions** (in the **Personal** section of the sidebar).
 
 1. On the ClickUp tile (in **Actions** or **Your actions**), click **Authenticate with OAuth**.
@@ -220,7 +220,7 @@ Authentication uses the same OAuth flow in either location:
 <div style={{ textAlign: "center" }}>
   <img
     src="/images/toolsets/clickup/clickup_auth_page.png"
-    alt="Authenticate ClickUp toolset with OAuth"
+    alt="Authenticate ClickUp action with OAuth"
     style={{ display: 'block', margin: '0 auto' }}
     width="90%"
   />
@@ -239,12 +239,12 @@ Authentication uses the same OAuth flow in either location:
 
 1. Go to the **Home** page.
 2. Next to **Agents**, click **+** to create a new agent.
-3. Give the agent a name, drag the **ClickUp** toolset onto the canvas, connect it to the **Agent** node with your model and chat input/output, then create the agent.
+3. Give the agent a name, drag the **ClickUp** action onto the canvas, connect it to the **Agent** node with your model and chat input/output, then create the agent.
 
 <div style={{ textAlign: "center" }}>
   <img
     src="/images/toolsets/clickup/create_agent.png"
-    alt="Agent builder with ClickUp toolset connected"
+    alt="Agent builder with ClickUp action connected"
     style={{ display: 'block', margin: '0 auto' }}
     width="90%"
   />
@@ -262,7 +262,7 @@ Authentication uses the same OAuth flow in either location:
 
 <Accordion title="Why doesn't ClickUp ask me to choose scopes?">
 
-ClickUp's OAuth implementation does not support granular scopes. Instead of picking individual permissions, the authorizing user selects which **Workspaces** to expose to the app. The resulting token can do anything that user can do inside those Workspaces. If you want to restrict what the toolset can touch, authorize as a user with narrower Workspace permissions.
+ClickUp's OAuth implementation does not support granular scopes. Instead of picking individual permissions, the authorizing user selects which **Workspaces** to expose to the app. The resulting token can do anything that user can do inside those Workspaces. If you want to restrict what the action can touch, authorize as a user with narrower Workspace permissions.
 
 </Accordion>
 
@@ -274,7 +274,7 @@ ClickUp only lists Workspaces where your account is a member. Workspaces you've 
 
 <Accordion title="Do I need a paid ClickUp plan?">
 
-You can create an OAuth app and authorize the toolset on any ClickUp plan. However, rate limits and some API endpoints vary by plan, so heavy usage may benefit from a higher tier.
+You can create an OAuth app and authorize the action on any ClickUp plan. However, rate limits and some API endpoints vary by plan, so heavy usage may benefit from a higher tier.
 
 </Accordion>
 

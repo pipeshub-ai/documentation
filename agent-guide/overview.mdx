@@ -1,13 +1,13 @@
 ---
-title: "Agents Overview"
-description: "Build intelligent AI agents with visual flow builder, toolsets, and collections"
+title: "Agents overview"
+description: "Build agents in the visual builder from a model, knowledge, actions, skills and MCP servers"
 icon: "robot"
 ---
 
 <div className="not-prose mt-10">
   <div className="p-6 border border-gray-200 dark:border-gray-700 rounded-xl bg-blue-50 dark:bg-gray-800">
     <div className="flex items-center gap-3 mb-4">
-      <span className="text-4xl">🤖</span>
+      <Icon icon="robot" size={32} />
       <div className="text-xl font-semibold text-gray-900 dark:text-white">PipesHub Agents</div>
     </div>
     <p className="text-base text-gray-700 dark:text-gray-300 mt-0 mb-5">Create custom AI agents that can perform actions across your connected applications</p>
@@ -22,20 +22,20 @@ icon: "robot"
   </div>
 </div>
 
-## What are Agents?
+## What agents are
 
 Agents are customizable AI assistants that can interact with your connected applications, search collections, and perform actions on your behalf. Unlike the standard chatbot assistant, agents are purpose-built for specific workflows and can be configured with:
 
-- **Models** - Choose the AI model that powers your agent, or leave it empty to use your organization's default model
-- **Toolsets** - Connect to external services like Slack, Jira, Confluence, and more
-- **MCP servers** - Give the agent tools from MCP servers your organization has set up
-- **Skills** - Attach skills the agent can invoke
-- **API actions** - Use API actions that were created from an OpenAPI spec
-- **Knowledge sources** - Access indexed documents and collections
-- **Custom system prompts** - Define the agent's personality and behavior
+- **Models**: Choose the AI model that powers your agent, or leave it empty to use your organization's default model
+- **Actions**: Connect to external services like Slack, Jira, Confluence, and more
+- **MCP servers**: Give the agent tools from MCP servers your organization has set up
+- **Skills**: Attach skills the agent can invoke
+- **API actions**: Use API actions that were created from an OpenAPI spec
+- **Knowledge sources**: Access indexed documents and collections
+- **Custom system prompts**: Define the agent's personality and behavior
 
 <Note>
-  **When you want to use both Connector and Toolset:** In the Agent Builder add nodes from **Knowledge** (Collections, API Apps) for document search and context retrieval, and add nodes from **Tools** for performing actions. Connect both to your Agent node so the agent can search context and take action in the same conversation.
+  **When you want to use both Connector and Action:** In the Agent Builder add nodes from **Knowledge** (Collections, API Apps) for document search and context retrieval, and add nodes from **Tools** for performing actions. Connect both to your Agent node so the agent can search context and take action in the same conversation.
 </Note>
 
 ## Key Concepts
@@ -46,7 +46,7 @@ Agents are built using a visual drag-and-drop flow builder powered by ReactFlow.
 
 1. Starting from the **Agent** node (labeled **Core** and **Orchestrator** on the canvas), which defines the agent's basic configuration
 2. Connecting **Model** nodes to power the agent's intelligence (optional; without one the agent uses your organization's default model)
-3. Adding **Toolset** nodes to give the agent access to external applications
+3. Adding action nodes to give the agent access to external applications
 4. Adding **MCP servers**, **Skills** and **API actions** nodes where you need them
 5. Connecting **Knowledge** nodes (apps and collections) for indexed document search
 6. Connecting the chat **Input** and **Response** handles to the chat input and chat output nodes
@@ -61,7 +61,7 @@ Agents are built using a visual drag-and-drop flow builder powered by ReactFlow.
 
 ### Agent node
 
-The Agent node is the central configuration for your agent. Its sections are Model, Knowledge, Toolsets, Skills, MCP servers, Input and Response.
+The Agent node is the central configuration for your agent. Its sections are Model, Knowledge, Toolsets (the builder still uses that label for actions), Skills, MCP servers, Input and Response.
 
 | Field | Description |
 |-------|-------------|
@@ -74,21 +74,21 @@ The Agent node is the central configuration for your agent. Its sections are Mod
 
 ### Service agents
 
-When you create an agent you choose its type. A **user agent** is a personal agent where each person signs in to the toolsets. A **service agent** is shared with your whole organization and uses agent-level toolset credentials; set them with the key icon in the palette. A service agent searches knowledge with its creator's access (or a service account an administrator grants), so everyone who uses it sees results from what that identity can read. An existing agent can be converted with **Convert to service agent**; this cannot be undone.
+When you create an agent you choose its type. A **user agent** is a personal agent where each person signs in to the actions. A **service agent** is shared with your whole organization and uses agent-level action credentials; set them with the key icon in the palette. A service agent searches knowledge with its creator's access (or a service account an administrator grants), so everyone who uses it sees results from what that identity can read. An existing agent can be converted with **Convert to service agent**; this cannot be undone.
 
-### Toolsets
+### Actions
 
-Toolsets are collections of tools that allow agents to interact with external applications. Each toolset provides specific actions:
+Actions are collections of tools that allow agents to interact with external applications. Each action provides specific actions:
 
-- **Jira Toolset** - Create issues, search tickets, add comments, etc.
-- **Slack Toolset** - Send messages, search channels, manage conversations, etc.
-- **Confluence Toolset** - Create/update pages, search content, etc.
-- **Gmail Toolset** - Send emails, read messages, search, etc.
-- **Calendar Toolset** - Create events, update events, check availability, etc.
-- **Drive Toolset** - List files, manage folders, search documents, etc.
+- **Jira action**: Create issues, search tickets, add comments, etc.
+- **Slack action**: Send messages, search channels, manage conversations, etc.
+- **Confluence action**: Create/update pages, search content, etc.
+- **Gmail action**: Send emails, read messages, search, etc.
+- **Calendar action**: Create events, update events, check availability, etc.
+- **Drive action**: List files, manage folders, search documents, etc.
 
 <Info>
-  Toolsets must be configured and authenticated before they can be used in agents. See [Toolsets Overview](/toolsets/overview) for setup instructions.
+  Actions must be configured and authenticated before they can be used in agents. See [Actions Overview](/toolsets/overview) for setup instructions.
 </Info>
 
 ### MCP servers, skills and API actions
@@ -103,8 +103,8 @@ The palette also lists **MCP servers**, **Skills** and **API actions** (the last
 
 Agents can access your indexed knowledge sources:
 
-- **Connectors** - Data synced and indexed from connected applications for querying and search (Google Drive, SharePoint, etc.)
-- **Collections** - Custom document collections you've uploaded
+- **Connectors**: Data synced and indexed from connected applications for querying and search (Google Drive, SharePoint, etc.)
+- **Collections**: Custom document collections you've uploaded
 
 ## Agent Capabilities
 
@@ -113,15 +113,15 @@ Agents can access your indexed knowledge sources:
 | Capability | Description |
 |------------|-------------|
 | **Search Knowledge** | Query indexed documents and return relevant information |
-| **Perform Actions** | Create tickets, send messages, update pages via toolsets |
-| **Multi-tool Workflows** | Combine multiple toolsets in a single conversation |
+| **Perform Actions** | Create tickets, send messages, update pages via actions |
+| **Multi-tool Workflows** | Combine multiple actions in a single conversation |
 | **Context-Aware Responses** | Use system prompts to maintain consistent behavior |
 
 ## Getting Started
 
-1. **Configure Toolsets** - Set up the toolsets your agent will use ([Toolsets Overview](/toolsets/overview))
-2. **Create an Agent** - Use the visual builder to create your agent ([Setup Guide](/agent-guide/setup-guide))
-3. **Test and Iterate** - Chat with your agent and refine its configuration
+1. **Configure Actions**: Set up the actions your agent will use ([Actions Overview](/toolsets/overview))
+2. **Create an Agent**: Use the visual builder to create your agent ([Setup Guide](/agent-guide/setup-guide))
+3. **Test and Iterate**: Chat with your agent and refine its configuration
 
 ---
 
@@ -129,29 +129,29 @@ Agents can access your indexed knowledge sources:
 
 <AccordionGroup>
 
-<Accordion title="What's the difference between Connectors and Toolsets?">
+<Accordion title="What's the difference between Connectors and Actions?">
 
-| Aspect | Connectors | Toolsets |
+| Aspect | Connectors | Actions |
 |--------|-----------|----------|
 | **Purpose** | Sync and index data for search | Enable agents to perform actions |
 | **Data Flow** | One-way (import data into PipesHub) | Two-way (read and write via API) |
 | **When to Use** | Query/search data | Perform actions on data |
 
-**Example:** Use a **Gmail Connector** to index and search your email history. Use a **Gmail Toolset** to send new emails through an agent.
+**Example:** Use a **Gmail Connector** to index and search your email history. Use a **Gmail action** to send new emails through an agent.
 
 </Accordion>
 
-<Accordion title="When should I use a Connector vs a Toolset?">
+<Accordion title="When should I use a Connector vs an Action?">
 
-**Connector** — Use when you need document context search: connectors sync and index your documents, emails, and pages so your assistant can find and use that context.
+**Connector**: use when you need document context search. Connectors sync and index your documents, emails, and pages so your assistant can find and use that context.
 
-**Toolset** — When you need **actions**: create or update content, send messages, or run analytical queries (e.g. JQL, CQL, reports).
+**Action**: use when the agent needs to do something in another app: create or update content, send messages, or run analytical queries (e.g. JQL, CQL, reports).
 
-**Quick takeaway:** Search & context → **Connector**. Actions → **Toolset**.
+**Quick takeaway:** Search & context → **Connector**. Do something in another app → **Action**.
 
 </Accordion>
 
-<Accordion title="Can I use one OAuth app for both Connector and Toolset?">
+<Accordion title="Can I use one OAuth app for both Connector and Action?">
 
 Yes! You can create a single OAuth app in the service's developer console and use it for both:
 
@@ -159,11 +159,11 @@ Yes! You can create a single OAuth app in the service's developer console and us
 
 1. **Both redirect URLs:**
    - Connector callback URL (e.g., `/connectors/oauth/callback/Gmail`)
-   - Toolset callback URL (e.g., `/api/oauth/callback/Gmail`)
+   - Action callback URL (e.g., `/api/oauth/callback/Gmail`)
 
 2. **Both scope types:**
    - Read-only scopes for the Connector (to index data)
-   - Read/write/delete scopes for the Toolset (to perform actions)
+   - Read/write/delete scopes for the action (so the agent can make changes)
 
 **Benefits:**
 - Simpler setup - One OAuth app instead of two
@@ -178,12 +178,12 @@ Follow this pattern:
 
 1. **Agent** node (required) - The center of your agent
 2. **Model** (optional) - Connect an AI model, or the agent uses your organization's default
-3. **Toolset nodes** (optional) - For actions like sending emails, creating tickets
+3. **Action nodes** (optional) - For actions like sending emails, creating tickets
 4. **MCP servers, Skills and API actions** (optional) - For extra tools and reusable instructions
 5. **Knowledge nodes** (optional) - For searching indexed data from Connectors and collections
-6. **Chat input and chat output** - Connect them to the Input and Response handles
+6. **Chat input and chat output**: Connect them to the Input and Response handles
 
-All nodes must connect through the Agent node. The agent will have access to all connected toolsets and knowledge sources.
+All nodes must connect through the Agent node. The agent will have access to all connected actions and knowledge sources.
 
 </Accordion>
 
@@ -191,9 +191,9 @@ All nodes must connect through the Agent node. The agent will have access to all
 
 Yes! While chatting with an agent, you can select:
 
-- **Specific Collections** - Query data from particular Connectors (e.g., search only Confluence or only Drive)
-- **Specific Toolsets** - Use particular tools (e.g., send via Gmail or create Jira ticket)
-- **Model** - Choose which AI model to use for the query
+- **Specific Collections**: Query data from particular Connectors (e.g., search only Confluence or only Drive)
+- **Specific Actions**: Use particular tools (e.g., send via Gmail or create Jira ticket)
+- **Model**: Choose which AI model to use for the query
 
 This gives you control at any time during the conversation to specify where the agent should search or which action to perform. See [Using chat](/using-chat).
 
@@ -222,7 +222,7 @@ When chatting with the agent, users can select which model to use for specific q
     <p className="text-gray-600 dark:text-gray-400">Step-by-step instructions for creating your first agent</p>
   </a>
   <a href="/toolsets/overview" className="block p-4 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
-    <h3 className="text-lg font-semibold mb-2">Toolsets Overview</h3>
-    <p className="text-gray-600 dark:text-gray-400">Learn about available toolsets and how to configure them</p>
+    <h3 className="text-lg font-semibold mb-2">Actions Overview</h3>
+    <p className="text-gray-600 dark:text-gray-400">Learn about available actions and how to configure them</p>
   </a>
 </div>

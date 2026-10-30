@@ -1,5 +1,5 @@
 ---
-title: "System Requirements"
+title: "System requirements"
 description: "Hardware, Docker version and deployment types that the PipesHub installer checks for"
 icon: "microchip"
 ---
@@ -8,16 +8,16 @@ These are the figures the Docker Compose installer (`install.sh`) checks before 
 
 ## What the installer checks
 
-| Check | Requirement | What happens if it fails |
-|---|---|---|
-| Docker | Docker Engine with the Compose v2 plugin | The installer stops |
-| Docker Compose version | 2.20 or later | Warning. Older versions may not honour optional service dependencies, so the stack can fail to start |
-| CPU | 4 cores or more | The installer stops |
-| Memory, `slim` and `full` | A 16 GB-class machine (it warns below 15,000 MB) | Warning, and a prompt to continue |
-| Memory, `eval` | An 8 GB-class machine (it warns below 7,500 MB) | Warning, and a prompt to continue |
-| Memory, WSL | 10 GB given to the WSL virtual machine | Warning, and a prompt to continue |
-| Memory, Docker Desktop on macOS or Windows | 8 GB given to the Docker Desktop virtual machine | Warning |
-| Free disk | 20 GB free where Docker stores its data | Warning |
+| Check | Requirement, and what happens if it fails |
+|---|---|
+| Docker | Docker Engine with the Compose v2 plugin. **If not met:** The installer stops. |
+| Docker Compose version | 2.20 or later. **If not met:** Warning. Older versions may not honour optional service dependencies, so the stack can fail to start. |
+| CPU | 4 cores or more. **If not met:** The installer stops. |
+| Memory, `slim` and `full` | A 16 GB-class machine (it warns below 15,000 MB). **If not met:** Warning, and a prompt to continue. |
+| Memory, `eval` | An 8 GB-class machine (it warns below 7,500 MB). **If not met:** Warning, and a prompt to continue. |
+| Memory, WSL | 10 GB given to the WSL virtual machine. **If not met:** Warning, and a prompt to continue. |
+| Memory, Docker Desktop on macOS or Windows | 8 GB given to the Docker Desktop virtual machine. **If not met:** Warning. |
+| Free disk | 20 GB free where Docker stores its data. **If not met:** Warning. |
 
 With `--yes`, the memory prompt is skipped and the install continues. The checks do not run for `--upgrade` or `--rotate-signing-secrets`.
 
@@ -31,12 +31,16 @@ The installer supports macOS, Linux (x86_64 and arm64) and Windows through WSL o
 
 The installer asks for a deployment type, or reads it from `PIPESHUB_DEPLOY_TYPE`:
 
-| Type | Image tag | Message broker | Key-value store | Graph database | Coding sandbox | Meant for |
-|---|---|---|---|---|---|---|
-| `slim` (default) | `slim` | Redis Streams | Redis | Neo4j | Yes | Laptops and smaller servers |
-| `full` | `latest` | Kafka | Redis | Neo4j | Yes | Production servers and air-gapped hosts |
-| `eval` | `slim` | Redis Streams | Redis | Neo4j | No | 8 GB-class laptops and demos of search and chat over MCP |
+| Type | Meant for |
+|---|---|
+| `slim` (default), image `slim` | Laptops and smaller servers |
+| `full`, image `latest` | Production servers and air-gapped hosts |
+| `eval`, image `slim` | 8 GB-class laptops and demos of search and chat over MCP |
 
+By default, every type uses Redis as the key-value store and Neo4j as the graph database. The types differ in these ways:
+
+- **Message broker:** `full` uses Kafka. `slim` and `eval` use Redis Streams.
+- **Coding sandbox:** `slim` and `full` have one. `eval` does not.
 - The `slim` image is smaller. It downloads the embedding model the first time it is needed, so that first start needs internet access.
 - The `latest` image has the embedding model built in. Use it where the host cannot reach the internet.
 - `eval` does not pull the coding-sandbox image and does not start the Slack bot, so agents cannot run code.
@@ -54,5 +58,5 @@ Anyone reaching PipesHub by a hostname, rather than `localhost`, needs HTTPS. Se
 ## Related
 
 - [Deployment Overview](/deployment/overview)
-- [Environment Variables](/deployment/environment-variables)
+- [Environment variables](/deployment/environment-variables)
 - [Troubleshooting](/additional-resources/troubleshooting)

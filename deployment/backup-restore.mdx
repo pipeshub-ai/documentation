@@ -1,5 +1,5 @@
 ---
-title: "Backup and Restore"
+title: "Backup and restore"
 description: "Back up and restore every PipesHub data store on a Docker Compose install"
 icon: "database"
 ---
@@ -8,18 +8,18 @@ A Docker Compose install keeps its data in Docker volumes named `<project>_<volu
 
 ## What to back up
 
-| Volume | Holds | Present when |
-|---|---|---|
-| `mongodb_data` | MongoDB, the application database | Always |
-| `redis_data` | Cache, Redis Streams messages, and configuration when `KV_STORE_TYPE=redis` | Always |
-| `qdrant_storage` | Search vectors | Always |
-| `pipeshub_data` | The app's data directory, `/data/pipeshub` | Always |
-| `pipeshub_root_local` | App runtime files under `/root/.local` | Always |
-| `neo4j_data` | Graph: records, permissions, hierarchy | `DATA_STORE=neo4j` |
-| `arango_data` | Graph: records, permissions, hierarchy | `DATA_STORE=arangodb` |
-| `etcd_data` | Configuration | `KV_STORE_TYPE=etcd` |
-| `kafka_data`, `zookeeper_data`, `zookeeper_log` | Queued messages | `MESSAGE_BROKER=kafka` |
-| `.env` file | `SECRET_KEY` and database passwords | Always |
+| Volume (present when) | Holds |
+|---|---|
+| `mongodb_data` (always) | MongoDB, the application database |
+| `redis_data` (always) | Cache, Redis Streams messages, and configuration when `KV_STORE_TYPE=redis` |
+| `qdrant_storage` (always) | Search vectors |
+| `pipeshub_data` (always) | The app's data directory, `/data/pipeshub` |
+| `pipeshub_root_local` (always) | App runtime files under `/root/.local` |
+| `neo4j_data` (`DATA_STORE=neo4j`) | Graph: records, permissions, hierarchy |
+| `arango_data` (`DATA_STORE=arangodb`) | Graph: records, permissions, hierarchy |
+| `etcd_data` (`KV_STORE_TYPE=etcd`) | Configuration |
+| `kafka_data`, `zookeeper_data`, `zookeeper_log` (`MESSAGE_BROKER=kafka`) | Queued messages |
+| `.env` file (always) | `SECRET_KEY` and database passwords |
 
 <Warning>
 Back up `.env` with the volumes, and keep it as secret as the data. Stored settings are encrypted with `SECRET_KEY`, and the databases only accept the passwords they were created with. Volumes restored without the matching `.env` are not usable.
@@ -56,7 +56,9 @@ chmod 600 "$BACKUP_DIR/env.backup"
 The loop skips volumes your install does not have. Run the commands with `sudo` if your user is not in the `docker` group.
 
 <Note>
-Do not copy database volumes while the stack is running. A copy taken from a live database can be corrupt. To back up with less downtime using each database's own tools (`mongodump`, `neo4j-admin`, Qdrant snapshots, Redis `BGSAVE`), see [Backup Data in the GCP guide](/deployment/vendor/gcp#backup-data). It covers the default Neo4j and Redis stack; use the method above for ArangoDB, etcd or Kafka.
+Do not copy database volumes while the stack is running. A copy taken from a live database can be corrupt.
+
+To back up with less downtime using each database's own tools (`mongodump`, `neo4j-admin`, Qdrant snapshots, Redis `BGSAVE`), see [Backup Data in the GCP guide](/deployment/vendor/gcp#backup-data). It covers the default Neo4j and Redis stack; use the method above for ArangoDB, etcd or Kafka.
 </Note>
 
 Copy the backup directory off the host.
@@ -100,5 +102,5 @@ The chart stores data in PersistentVolumeClaims. Back them up with your cluster'
 ## Related
 
 - [Upgrading to 1.0](/deployment/upgrade-to-1-0)
-- [Environment Variables](/deployment/environment-variables)
+- [Environment variables](/deployment/environment-variables)
 - [Troubleshooting](/additional-resources/troubleshooting)

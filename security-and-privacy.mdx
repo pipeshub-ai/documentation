@@ -8,14 +8,14 @@ This page describes a self-hosted PipesHub started with the Docker Compose files
 
 ## Where data is stored
 
-| Store | Default | What it holds |
-| --- | --- | --- |
-| MongoDB | Always runs | Users, organizations, password hashes, chat conversations, OAuth apps and tokens, notifications |
-| Graph database | Neo4j (ArangoDB optional) | Records, folders and collections, and who has permission to see each record |
-| Vector database | Qdrant | Embeddings of indexed content, used for search |
-| Key-value store | Redis (etcd optional) | Settings, AI model API keys, connector credentials and signing secrets, encrypted as described below |
-| Message broker | Redis Streams (Kafka optional) | Sync and indexing jobs in flight |
-| File storage | Local disk in the `pipeshub_root_local` volume (S3 or Azure Blob optional) | Uploaded files |
+| Store | What it holds |
+| --- | --- |
+| **MongoDB**<br/>Always runs | Users, organizations, password hashes, chat conversations, OAuth apps and tokens, notifications |
+| **Graph database**<br/>Neo4j (ArangoDB optional) | Records, folders and collections, and who has permission to see each record |
+| **Vector database**<br/>Qdrant | Embeddings of indexed content, used for search |
+| **Key-value store**<br/>Redis (etcd optional) | Settings, AI model API keys, connector credentials and signing secrets, encrypted as described below |
+| **Message broker**<br/>Redis Streams (Kafka optional) | Sync and indexing jobs in flight |
+| **File storage**<br/>Local disk (S3 or Azure Blob optional) | Uploaded files. On local disk they are kept in the `pipeshub_root_local` volume. |
 
 ## Secrets and credentials at rest
 

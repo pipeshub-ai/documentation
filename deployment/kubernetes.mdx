@@ -15,11 +15,11 @@ The Helm chart lives in [`deployment/helm/pipeshub-ai`](https://github.com/pipes
 
 ## Pick a preset
 
-| Preset | Values file | Use for | Footprint |
-|---|---|---|---|
-| Local | `values-local.yaml` | kind, minikube, k3d, k3s, Docker Desktop | One app pod, one each of MongoDB, Kafka, Redis, Qdrant and Neo4j, ReadWriteOnce storage |
-| AWS EKS | `values-eks.yaml` | Amazon EKS | gp3 volume per database, MongoDB ×3, Redis primary and replica, Qdrant ×3, Neo4j ×1 |
-| Cloud HA | `values-cloud.yaml` | GKE, AKS, or any cluster with ReadWriteMany storage | Two app pods with autoscaling. Not for EKS |
+| Preset (values file) | Use for, and footprint |
+|---|---|
+| **Local** `values-local.yaml` | kind, minikube, k3d, k3s, Docker Desktop. One app pod, one each of MongoDB, Kafka, Redis, Qdrant and Neo4j, ReadWriteOnce storage. |
+| **AWS EKS** `values-eks.yaml` | Amazon EKS. gp3 volume per database, MongoDB ×3, Redis primary and replica, Qdrant ×3, Neo4j ×1. |
+| **Cloud HA** `values-cloud.yaml` | GKE, AKS, or any cluster with ReadWriteMany storage. Two app pods with autoscaling. Not for EKS. |
 
 For EKS, the repository has a one-command script and a step-by-step guide: [Deploy PipesHub on Amazon EKS](https://github.com/pipeshub-ai/pipeshub-ai/blob/main/docs/deployment/aws-eks.md).
 
@@ -84,11 +84,11 @@ helm upgrade --install pipeshub-ai ./deployment/helm/pipeshub-ai \
   ...                                  # database passwords as in the local install
 ```
 
-| Provider | `global.storageClass` (databases) | `persistence.storageClass` (shared app volume, ReadWriteMany) |
-|---|---|---|
-| GKE | `standard-rwo` | `filestore-csi` |
-| AKS | `managed-csi` | `azurefile-csi` |
-| On-premises | Any block storage | Any ReadWriteMany storage (NFS, CephFS) |
+Set `global.storageClass` for the databases and `persistence.storageClass` for the shared app volume, which must be ReadWriteMany:
+
+- **GKE:** `global.storageClass=standard-rwo`, `persistence.storageClass=filestore-csi`
+- **AKS:** `global.storageClass=managed-csi`, `persistence.storageClass=azurefile-csi`
+- **On-premises:** any block storage for `global.storageClass`, and any ReadWriteMany storage (NFS, CephFS) for `persistence.storageClass`
 
 The chart refuses to install more than one app replica unless the shared volume is ReadWriteMany.
 
@@ -119,7 +119,7 @@ Before upgrading to 1.0, read [Upgrading to 1.0](/deployment/upgrade-to-1-0). A 
 - **Behind an ingress:** the client IP is read from one proxy hop when the ingress is enabled. Set `trustProxy` to change that.
 - **Coding sandbox:** `config.sandboxMode` is `docker` by default and needs a Docker daemon (`sandbox.dind.enabled=true` adds one as a sidecar), or set it to `e2b`.
 - **External Redis:** set `redis.enabled=false` and `redis.external.*`. See the chart README for standalone and cluster modes.
-- **Any other environment variable:** pass it with `extraEnv`. See [Environment Variables](/deployment/environment-variables).
+- **Any other environment variable:** pass it with `extraEnv`. See [Environment variables](/deployment/environment-variables).
 
 ## Check before production
 
@@ -130,6 +130,6 @@ Before upgrading to 1.0, read [Upgrading to 1.0](/deployment/upgrade-to-1-0). A 
 
 ## Related
 
-- [System Requirements](/deployment/system-requirements)
-- [Backup and Restore](/deployment/backup-restore)
+- [System requirements](/deployment/system-requirements)
+- [Backup and restore](/deployment/backup-restore)
 - [Deployment Overview](/deployment/overview)

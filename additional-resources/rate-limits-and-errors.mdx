@@ -1,5 +1,5 @@
 ---
-title: "Rate Limits and API Errors"
+title: "Rate limits and API errors"
 description: "Request limits on the PipesHub API, the 429 response, and the error format every API route returns"
 icon: "gauge"
 ---
@@ -8,24 +8,26 @@ icon: "gauge"
 
 Every limit counts requests in a one-minute window.
 
-| Limit | Applies to | Counted per | Default | Setting |
-|---|---|---|---|---|
-| General | Every API request | Signed-in user; else the organization, for service tokens; else client IP | 2000 on Docker Compose, 1000 otherwise | `MAX_REQUESTS_PER_MINUTE` |
-| Sign-in | Password, one-time code and password-reset requests | Signed-in user; else client IP plus the account named in the request | 10 | `MAX_AUTH_REQUESTS_PER_MINUTE` |
-| Sign-in, per IP | The same routes, across all accounts | Client IP | 6 × the sign-in limit (60) | Follows `MAX_AUTH_REQUESTS_PER_MINUTE` |
-| Sign-in page load | Starting a sign-in | Client IP | 6 × the sign-in limit (60) | Follows `MAX_AUTH_REQUESTS_PER_MINUTE` |
-| Apps and tokens | OAuth apps, personal access tokens, service accounts and service tokens, and the OAuth token endpoints | Signed-in user; else client IP | 1000 | `MAX_OAUTH_CLIENT_REQUESTS_PER_MINUTE` |
-| Skill import | Importing skill packages | Signed-in user; else client IP | 10 | — |
+| Limit | Applies to, counted per, and default |
+|---|---|
+| General | Every API request. **Counted per:** signed-in user; else the organization, for service tokens; else client IP. **Default:** 2000 on Docker Compose, 1000 otherwise (`MAX_REQUESTS_PER_MINUTE`). |
+| Sign-in | Password, one-time code and password-reset requests. **Counted per:** signed-in user; else client IP plus the account named in the request. **Default:** 10 (`MAX_AUTH_REQUESTS_PER_MINUTE`). |
+| Sign-in, per IP | The same routes, across all accounts. **Counted per:** client IP. **Default:** 6 × the sign-in limit (60). Follows `MAX_AUTH_REQUESTS_PER_MINUTE`. |
+| Sign-in page load | Starting a sign-in. **Counted per:** client IP. **Default:** 6 × the sign-in limit (60). Follows `MAX_AUTH_REQUESTS_PER_MINUTE`. |
+| Apps and tokens | OAuth apps, personal access tokens, service accounts and service tokens, and the OAuth token endpoints. **Counted per:** signed-in user; else client IP. **Default:** 1000 (`MAX_OAUTH_CLIENT_REQUESTS_PER_MINUTE`). |
+| Skill import | Importing skill packages. **Counted per:** signed-in user; else client IP. **Default:** 10, with no setting to change it. |
 
 Calls between PipesHub's own services are not counted.
 
 The sign-in and app limits are kept in each API process. If you run several API replicas, each one counts on its own, so the effective limit is that many times higher.
 
-Change a limit in `.env` and recreate the containers. See [Environment Variables](/deployment/environment-variables#rate-limits-and-proxies).
+Change a limit in `.env` and recreate the containers. See [Environment variables](/deployment/environment-variables#rate-limits-and-proxies).
 
 ### Behind a reverse proxy
 
-Without `TRUST_PROXY`, PipesHub sees the proxy's address as the client IP for every request, so everyone who is not signed in shares one bucket. Behind one proxy (Nginx, Caddy, Traefik, a load balancer), set `TRUST_PROXY=1`, or list the proxy addresses or CIDRs. Never set it to `true`: clients could then choose their own IP and get around the limits. The Helm chart sets one trusted hop when its ingress is enabled.
+Without `TRUST_PROXY`, PipesHub sees the proxy's address as the client IP for every request, so everyone who is not signed in shares one bucket.
+
+Behind one proxy (Nginx, Caddy, Traefik, a load balancer), set `TRUST_PROXY=1`, or list the proxy addresses or CIDRs. Never set it to `true`: clients could then choose their own IP and get around the limits. The Helm chart sets one trusted hop when its ingress is enabled.
 
 ### The 429 response
 

@@ -194,7 +194,7 @@ All of these are on the **Configure records** tab. You can change them later.
 | **Sync strategy** | **Scheduled** syncs on its own. **Manual** syncs only when you start it. | Keep **Scheduled** unless you want full control. |
 | **Sync interval** | How often a scheduled sync runs. The default is **1 hour**. | Make it longer for very large accounts. |
 | **Enable Manual Indexing** | On: synced files are not searchable until you choose them. Off: every synced file is made searchable. | Leave it off unless you want to pick files one by one. |
-| **Folders** | Folders inside each container, such as `reports/2026`. **In** syncs only these folders (and their subfolders). **Not In** syncs everything except them. Press Enter after each folder. | When you need only part of a container. |
+| **Folders** | Folders inside each container, such as `reports/2026`. **In** syncs only these folders (and their subfolders). **Not In** syncs everything except them. The same path applies in every container you sync. Press Enter after each folder. | When you need only part of a container. |
 | **Container Names** | **In** syncs only the containers you pick. **Not In** syncs every container except those. Empty means every container the sign-in can see. | Almost always, on a team connector, to keep private containers out. |
 | **File Extensions** | Sync only certain file types (**In**), or skip them (**Not In**), such as `pdf` or `png`. | To skip images, videos or other files you don't need to search. |
 | **Modified Date** | Sync only files changed before, after or between dates. | To leave out old files. |
@@ -208,11 +208,11 @@ Click **Add filter** to add **Container Names**, **File Extensions**, **Modified
 
 ## What gets synced and how it stays up to date
 
-- **What appears:** every file in the containers and folders you chose, with its folder structure. You can search inside documents (PDF, Word, PowerPoint, Excel, text, CSV, HTML and more), code files, e-books (EPUB) and images (JPG, PNG, WebP). Other files, such as videos, audio, GIFs and ZIP archives, can be found by their name only.
+- **What appears:** every file in the containers and folders you chose, with its folder structure. You can search inside documents (PDF, Word, PowerPoint, Excel, text, CSV, HTML and more), code files, e-books (EPUB) and images (JPG, PNG, WebP). Other files, such as videos, audio, GIFs and ZIP archives, can be found by their name only. Images are searchable by their content only if your PipesHub has an AI model that can read images: a multimodal chat or embedding model under **Workspace** → **AI models**. Without one, images and scanned PDFs (pages that are pictures, with no text you can select) are synced but not searchable.
 - **Opening files:** search results and citations open the file in PipesHub's viewer, not in the Azure portal.
 - **First sync:** PipesHub reads everything in scope, so a large account can take hours. Filters make it faster.
 - **Later syncs:** on each scheduled sync, PipesHub picks up new and changed files and skips files that haven't changed.
-- **Moved or renamed files** move in PipesHub too, without being read again.
+- **Moved or renamed files** move in PipesHub too, without being read again, as long as the file itself didn't change. A file that was both edited and moved between two syncs shows up as a new file, and its old entry is removed.
 - **Deleted files and containers** disappear from PipesHub after the next sync that finishes without errors.
 - **Archive tier:** files in Azure's **Archive** tier show up but aren't searchable, because Azure can't read them. After you move one to the Hot or Cool tier, the next sync makes it searchable.
 - **When something goes wrong:** a sign-in, permission or network problem never removes anything from PipesHub. You get a notification, and the next sync tries again.
@@ -232,7 +232,7 @@ Click **Add filter** to add **Container Names**, **File Extensions**, **Modified
   <Accordion title="Syncing won't start: 'Cannot list containers', 'Cannot list blobs in' or 'Cannot create download links for files'">
     PipesHub's check before the first sync found a missing permission. The message ends with Azure's reason.
 
-    - **Cannot list containers**: the sign-in can't see the list of containers. Pick your containers in **Container Names**, or create a SAS that includes the **Service** resource type.
+    - **Cannot list containers**: the sign-in can't see the list of containers. Create a SAS with the **Service** resource type and the **List** permission. The **Container Names** list needs this too: you can't type container names in by hand.
     - **Cannot list blobs in** a container: give the SAS the **List** permission and the **Container** resource type.
     - **Cannot create download links for files**: with Microsoft Entra ID, give the app the **Storage Blob Data Reader** role. With a SAS, include **Read** and the **Object** resource type.
   </Accordion>
@@ -251,6 +251,7 @@ Click **Add filter** to add **Container Names**, **File Extensions**, **Modified
     - Large files take longer to become searchable.
     - Password-protected and copy-protected files can't be read.
     - A file in Azure's **Archive** tier can't be read. Move it to the Hot or Cool tier in Azure, and the next sync makes it searchable.
+    - Images and scanned PDFs need an AI model that can read images. Add a multimodal chat or embedding model under **Workspace** → **AI models**, then index the files again.
   </Accordion>
 </AccordionGroup>
 

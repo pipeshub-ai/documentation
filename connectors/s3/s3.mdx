@@ -221,10 +221,10 @@ Add the last three with **Add filter**. Filters are the easiest way to make a la
     The message names the permission, for example `s3:ListBucket` or `s3:GetObject`. Add it to the user's policy (or the role's, for AssumeRole). `s3:ListBucket` and `s3:GetBucketLocation` go on the bucket (`arn:aws:s3:::bucket-name`), `s3:GetObject` on its files (`arn:aws:s3:::bucket-name/*`).
   </Accordion>
   <Accordion title="The Bucket Names list is empty">
-    The key needs `s3:ListAllMyBuckets` to show the list. Add it, then reopen the filter. When you search, type the start of the bucket name.
+    The list needs `s3:ListAllMyBuckets`. Add it to the IAM user behind your access key, or to the role if you use **IAM Role (AssumeRole)**, then reopen the filter. When you search, type the start of the bucket name.
   </Accordion>
   <Accordion title="Sync fails with “Failed to list buckets”">
-    **Bucket Names** is empty or set to **Not In**, so PipesHub has to list all buckets and the key lacks `s3:ListAllMyBuckets`. Add the permission, or pick your buckets in **Bucket Names** with **In**.
+    **Bucket Names** is empty or set to **Not In**, so PipesHub has to list all buckets, and the IAM user behind your access key (or the role, with AssumeRole) lacks `s3:ListAllMyBuckets`. Add the permission there, or pick your buckets in **Bucket Names** with **In**.
   </Accordion>
   <Accordion title="A notification says some buckets were skipped">
     The key can see those buckets but not read them. Give it read access, or leave those buckets out with the **Bucket Names** filter. Files already synced from them stay in PipesHub.

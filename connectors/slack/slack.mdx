@@ -28,730 +28,251 @@ icon: "/logo/slack.png"
   </div>
 </div>
 
-## Overview
 
-The Slack connector syncs conversations from Slack — channels, messages, thread replies, shared files, and shared links — into PipesHub so they become searchable and available to agents.
+Slack brings your Slack conversations into PipesHub: channel messages, thread replies, and the files and links people share in them. Once synced, you can search them and use them in agents.
 
-Slack ships as **two separate connectors**. Pick the one that matches how you want data brought in:
+There are two Slack connectors. Most organizations start with **Slack Workspace**.
 
-| | **Slack Workspace** (Team) | **Slack** (Individual) |
+| | **Slack Workspace** | **Slack** (personal) |
 |---|---|---|
-| **Where to find it** | Workspace Settings → **Workspace** → **Connectors** | Workspace Settings → **Personal** → **Your Connectors** |
-| **Who sets it up** | A workspace administrator, once for the whole organization | Each user, for their own account |
-| **Authentication** | **Bot User OAuth Token** (`xoxb-…`) from a Slack app | **OAuth 2.0** with a Slack app's Client ID and Client Secret (user token, `xoxp-…`) |
-| **What it can see** | Public channels, plus private channels the bot has been invited to | Everything the authorizing user can see — public and private channels, DMs, and group DMs |
-| **Permissions in PipesHub** | Per-channel: public channels are readable by all non-guest workspace members and by guests in that channel; private channels only by their Slack members. The PipesHub user who set up the connector can read every synced channel. See [Who can read what](/connectors/slack/slack#who-can-read-slack-workspace-records-in-pipeshub) | Only the authorizing user can read the synced records |
-| **Users and groups** | All workspace members and user groups are synced | Only the authorizing user is synced |
+| **Who sets it up** | An administrator, once for the whole organization | Each person, for their own Slack account |
+| **What it brings in** | Public channels, and private channels the Slack app is invited to | Your public and private channels, your direct messages and your group messages |
+| **Who can search it** | People who can see the channel in Slack (details below) | Only you |
+| **Setup** | [Slack Workspace setup](#step-1-create-a-slack-app-and-get-a-bot-token) | [Personal Slack setup](#personal-slack-connector) |
+
+<Info>
+  **Who can search Slack Workspace data:** access follows the Slack channel. Everyone in your Slack workspace (except guests) can search public channels. Private channels are searchable only by their members. The person who set up the connector can search every channel it syncs. See [Who can see what](#who-can-see-what) for the details.
+</Info>
+
+## Before you start
+
+- A Slack account that is allowed to create and install apps in your workspace. Some workspaces need an owner or admin to approve new apps.
+- Admin access to PipesHub, so you can open **Workspace → Connectors**.
+- People's Slack profiles should use the same email address as their PipesHub accounts. PipesHub uses the email address to match people, so it knows who may see which channel.
+
+## Step 1: Create a Slack app and get a bot token
+
+PipesHub reads Slack through a small Slack app that you create. The app gets a **bot token**, a password-like key that starts with `xoxb-`, which you paste into PipesHub.
+
+<Steps>
+  <Step title="Create the app">
+    Go to the [Slack apps page](https://api.slack.com/apps), sign in, and click **Create New App**. Choose to start from scratch (**Blank app**).
+
+    <img src="/images/connectors/slack-team/salck-1-your-app.png" alt="Slack Your Apps page with the Create New App button" className="block mx-auto w-11/12" />
+
+    <img src="/images/connectors/slack-team/slack-2-create-app.png" alt="Create new app dialog with Blank app selected" className="block mx-auto w-11/12" />
+  </Step>
+  <Step title="Name the app and choose your workspace">
+    Enter an **App name** (for example `pipeshub`), pick the **Workspace** you want to bring into PipesHub, and click **Create**. You can't change the workspace later.
+
+    <img src="/images/connectors/slack-team/slack-3-create-app-2.png" alt="Dialog with the app name and the workspace picker" className="block mx-auto w-11/12" />
+  </Step>
+  <Step title="Add the bot token scopes">
+    Scopes are the permissions you give the app. In the left sidebar, open **OAuth & Permissions**. Under **Scopes → Bot Token Scopes**, click **Add an OAuth Scope** and add each scope below.
+
+    | Scope | Needed? | What it lets PipesHub do |
+    |---|---|---|
+    | `channels:read` | Required | See the list of public channels |
+    | `channels:history` | Required | Read messages in public channels |
+    | `groups:read` | Required | See the private channels the app is invited to |
+    | `groups:history` | Required | Read messages in those private channels |
+    | `users:read` | Required | See who is in the workspace and show names in place of `@mentions` |
+    | `users:read.email` | Required | Match Slack people to PipesHub accounts by email, so the right people get access |
+    | `files:read` | Required | Read the files shared in messages |
+    | `channels:join` | Optional | Join public channels by itself. Without it, the app reads only the public channels you invite it to |
+    | `usergroups:read` | Optional | Bring in Slack user groups (such as `@design-team`) and their members. Without it, user groups are not synced |
+
+    You don't need any `im:` or `mpim:` scopes. This connector never reads direct messages or group messages.
+  </Step>
+  <Step title="Install the app">
+    On **OAuth & Permissions**, under **OAuth Tokens**, click **Install to** your workspace. Check the permissions and click **Allow**. If your workspace needs approval for new apps, the request goes to a workspace owner first.
+
+    <img src="/images/connectors/slack-team/slack-5-install-to-org.png" alt="OAuth & Permissions page with the Install button under OAuth Tokens" className="block mx-auto w-11/12" />
+
+    <img src="/images/connectors/slack-team/slack-6-allow-to-install.png" alt="Slack page asking you to allow the app to access the workspace" className="block mx-auto w-11/12" />
+  </Step>
+  <Step title="Copy the bot token">
+    Back on **OAuth & Permissions**, under **OAuth Tokens**, copy the **Bot User OAuth Token**. It starts with `xoxb-`.
+
+    <Warning>
+      Keep this token secret, like a password. Anyone who has it can read what the app can read. If it leaks, click **Regenerate** in Slack and paste the new token into PipesHub.
+    </Warning>
+  </Step>
+  <Step title="Invite the app to private channels">
+    Slack never lets an app into a private channel on its own. In each private channel you want in PipesHub, send this message (use your app's name):
+
+    ```
+    /invite @pipeshub
+    ```
+
+    Public channels: with `channels:join`, the app joins them by itself wherever Slack allows it. Slack can still refuse some joins, for example when a workspace setting blocks it. Any channel the app can't read is named in a **Some Slack channels were not synced** notice after the sync. Invite the app to those channels by hand. Without `channels:join`, invite the app to every public channel you want synced.
+  </Step>
+</Steps>
 
 <Note>
-  Both connectors can run side by side. The team connector gives the organization shared channel history; the individual connector adds each user's DMs and private conversations, visible only to them.
+  If you add or change scopes later, Slack only applies them after you reinstall the app (**OAuth & Permissions → Reinstall**). Then paste the token into PipesHub again.
 </Note>
 
-### What gets synced
+## Step 2: Connect Slack Workspace in PipesHub
 
-| Entity | Description |
-|--------|-------------|
-| **Channels** | Public and private channels become record groups. The individual connector also syncs **DMs** and **group DMs** |
-| **Messages** | Channel messages, with reactions and resolved `@user` / `#channel` mentions |
-| **Threads** | Each thread becomes its own record group containing the parent message and its replies |
-| **Files** | Files shared in messages, linked back to the message they were posted in |
-| **Links** | Links shared in messages, captured as their own records |
-| **Users** | Team: all workspace members. Individual: only the authorizing user |
-| **User groups** | Team only — Slack user groups and their members |
+<Steps>
+  <Step title="Find the connector">
+    In PipesHub, open **Workspace → Connectors**, search for **Slack**, and click **Set up** on the **Slack Workspace** card.
 
-<Info>
-  Messages posted close together are grouped into short conversational bursts before indexing, so a back-and-forth exchange is retrieved as one coherent piece of context rather than isolated one-liners.
-</Info>
+    <img src="/images/connectors/slack-team/pipeshub-find-connector.png" alt="Connectors page with Slack Workspace found by search and its Set up button" className="block mx-auto w-11/12" />
+  </Step>
+  <Step title="Enter the bot token">
+    On the **Authenticate** tab, enter an **Instance name** (for example `Slack Workspace`), paste the bot token into **Bot Access Token**, and click **Next**.
 
-<Note>
-  The **Slack Workspace** connector does not sync DMs, group DMs, canvases, lists, pins, bookmarks or huddle transcripts.
-</Note>
+    <img src="/images/connectors/slack-team/pipeshub-authenticate.png" alt="Authenticate tab with the Instance name and Bot Access Token fields" style={{ display: 'block', margin: '0 auto' }} width="420" />
+  </Step>
+  <Step title="Choose what to sync and save">
+    On the **Configure records** tab, pick how often to sync and which channels to bring in (see [Choose what to sync](#choose-what-to-sync)). Then click **Save configuration**.
 
----
+    When you save, PipesHub checks the token with Slack. If the token is wrong, refused by Slack, or missing a required scope, the save fails and the message tells you why.
 
-## Configuration Guide
+    <img src="/images/connectors/slack-team/pipeshub-configure-records.png" alt="Configure records tab with sync settings, Enable Manual Indexing, sync filters and indexing filters" style={{ display: 'block', margin: '0 auto' }} width="420" />
+  </Step>
+  <Step title="Start the first sync">
+    When PipesHub says the instance is ready, click **Start syncing now**. You can also click **I'll do it later** and start it from the connector's page.
 
-<AccordionGroup type="single" collapsible>
+    <img src="/images/connectors/slack-team/pipeshub-ready-to-sync.png" alt="Instance is configured and ready to sync dialog with the Start syncing now button" style={{ display: 'block', margin: '0 auto' }} width="420" />
+  </Step>
+</Steps>
 
-<Accordion title="Team Setup" icon="building">
+## Choose what to sync
 
-<div className="mt-4">
+These settings are on the **Configure records** tab. Click **Add filter** to add the **Channel** and **Channel Types** filters.
 
-## Overview
+| Setting | What it does |
+|---|---|
+| **Sync strategy** | **Scheduled** syncs on its own at the interval you pick. **Manual** syncs only when you start it. |
+| **Sync interval** | How often a scheduled sync runs. The default is 1 hour. |
+| **Sync Messages From** | How far back the first sync goes. The default is the last 30 days; pick an earlier date to bring in older history. Later syncs only fetch new messages. A long history makes the first sync slow, so start small if you can. |
+| **Channel** | Bring in only the channels you choose (**is any of**), or every channel except the ones you choose (**is none of**). |
+| **Channel Types** | Public channels, private channels, or both. |
+| **Enable Manual Indexing** | On: synced messages are not searchable until you choose to index them. Off: everything synced is indexed. |
+| **Index Messages**, **Index Threads**, **Index Files**, **Index Links** | Turn one off to keep that kind of content out of search. It is still synced, and you can index items later from **All Records**. |
+| **Index Bot Messages** | Turn off to skip messages posted by bots and apps, and threads that a bot started. These are not brought in at all. Bot replies in a thread that a person started are kept. |
 
-The **Slack Workspace** connector syncs public and private channels for your entire organization using a Slack app installed in your workspace. It authenticates with a **Bot User OAuth Token**, so there is no per-user sign-in.
+## What gets synced and how it stays up to date
 
-### Prerequisites
+**Synced:** messages in the channels the app can read, with reactions and with `@mentions` shown as names; thread replies; files and links shared in messages; workspace members who have an email address on their Slack profile; and Slack user groups (only with the `usergroups:read` scope). Messages sent close together are grouped, so a quick back-and-forth is found as one conversation.
 
-- Permission to create and install a Slack app in your workspace (a workspace owner or admin may need to approve the installation).
-- PipesHub administrator access to **Workspace Settings → Connectors**.
+**Not synced:** direct messages, group messages, canvases, lists, pins, bookmarks and huddle transcripts.
 
-### Authentication
+**Keeping up to date:**
 
-The connector uses a **Bot Access Token** (`xoxb-…`). You create a Slack app, grant it bot scopes, install it into your workspace, and paste the resulting token into PipesHub.
+- Each sync fetches the messages posted since the last sync, channel by channel.
+- A scheduled sync also picks up new replies to threads started in about the last 24 hours. Replies to older threads come in on a full sync.
+- Edits, deletions and new reactions on messages that were already synced come in only on a **full sync**, for messages inside **Sync Messages From**. A full sync also removes deleted messages and channels.
+- When a channel is archived, PipesHub stops reading it. What was already synced stays until the next full sync, which removes it like a deleted channel.
+- If Slack is busy or a channel can't be read completely, PipesHub keeps its place and tries again on the next sync. Large workspaces sync gradually because Slack limits how fast apps can read.
 
-## How to configure and enable the Slack Workspace connector
+### Who can see what
 
-### Step 1: Create a Slack app
+Each message, thread and file gets the access of the channel it was posted in.
 
-1. Go to the [Slack API app dashboard](https://api.slack.com/apps) and sign in.
-2. Click **Create New App**.
+- **Public channel:** everyone in the Slack workspace except guests, plus guests who are members of that channel. Guests never see other public channels.
+- **Private channel:** only its Slack members.
+- **The person who set up the connector** can see every channel the connector syncs, including private channels. This comes from setting up the connector, not from their Slack account.
+- **Everyone else gets no access from Slack.** This includes people with no email address on their Slack profile, deactivated Slack accounts, and people from other organizations in shared (Slack Connect) channels. The rule above for the person who set up the connector still applies to them.
 
-<div className="text-center">
-  <img
-    src="/images/connectors/slack-team/salck-1-your-app.png"
-    alt="Slack API — Your Apps page with the Create New App button"
-    className="block mx-auto w-11/12"
-  />
-</div>
-
-### Step 2: Start from a blank app
-
-In the **Create new app** dialog, under **Or start your own way**, choose **Blank app**, then click **Continue**.
-
-<div className="text-center">
-  <img
-    src="/images/connectors/slack-team/slack-2-create-app.png"
-    alt="Slack — Create new app dialog with Blank app selected"
-    className="block mx-auto w-11/12"
-  />
-</div>
-
-### Step 3: Name the app and pick the workspace
-
-Enter an **App name** (for example `slack-app`), select the **Workspace** you want to sync, and click **Create**.
-
-<div className="text-center">
-  <img
-    src="/images/connectors/slack-team/slack-3-create-app-2.png"
-    alt="Slack — Create from scratch dialog with app name and workspace"
-    className="block mx-auto w-11/12"
-  />
-</div>
-
-<Warning>
-  The workspace cannot be changed later. Create the app in the workspace whose content you want PipesHub to index.
-</Warning>
-
-### Step 4: Add Bot Token Scopes
-
-1. In the left sidebar, open **OAuth & Permissions**.
-2. Scroll to **Scopes → Bot Token Scopes** and click **Add an OAuth Scope**.
-3. Add the scopes below. The first seven are required; `channels:join` and `usergroups:read` are optional.
-
-```
-channels:read
-channels:history
-groups:read
-groups:history
-users:read
-users:read.email
-files:read
-channels:join
-usergroups:read
-```
-
-<div className="text-center">
-  <img
-    src="/images/connectors/slack-team/slack-4-add-bot-scopes.png"
-    alt="Slack — Bot Token Scopes list"
-    className="block mx-auto w-11/12"
-  />
-</div>
-
-<Info>
-  What each scope is used for:
-  - **Required:** `channels:read`, `channels:history`, `groups:read`, `groups:history` (read public and private channels and their history), `users:read`, `users:read.email` (map Slack users to PipesHub accounts by email, and resolve `@mentions` to names), `files:read` (fetch files shared in messages). When you save, PipesHub checks the token's scopes; if one of these is missing, the save fails with a message naming it.
-  - **Optional:** `channels:join` lets the bot join public channels on its own. Without it, public channels the bot isn't in are skipped. `usergroups:read` syncs Slack user groups; without it, user groups aren't synced.
-  - **Not needed:** `im:*` and `mpim:*`. This connector never reads DMs or group DMs, so you can leave them out. `users.profile:read` and `usergroups.users:read` are not checked by this connector.
-</Info>
-
-### Step 5: Install the app to your workspace
-
-Still on **OAuth & Permissions**, scroll to **OAuth Tokens** and click **Install to \<your workspace\>**.
-
-<div className="text-center">
-  <img
-    src="/images/connectors/slack-team/slack-5-install-to-org.png"
-    alt="Slack — OAuth & Permissions page with the Install to workspace button"
-    className="block mx-auto w-11/12"
-  />
-</div>
-
-### Step 6: Review and allow the requested permissions
-
-Confirm the workspace, review the requested permissions, and click **Allow**.
-
-<div className="text-center">
-  <img
-    src="/images/connectors/slack-team/slack-6-allow-to-install.png"
-    alt="Slack — Review app permissions and allow installation"
-    className="block mx-auto w-11/12"
-  />
-</div>
-
-<Note>
-  If your workspace requires admin approval for apps, the request is sent to a workspace owner. Installation finishes once they approve it.
-</Note>
-
-### Step 7: Copy the Bot User OAuth Token
-
-Back on **OAuth & Permissions**, copy the **Bot User OAuth Token** — it starts with `xoxb-`.
-
-<div className="text-center">
-  <img
-    src="/images/connectors/slack-team/slack-7-bot-token.png"
-    alt="Slack — Bot User OAuth Token under OAuth Tokens"
-    className="block mx-auto w-11/12"
-  />
-</div>
-
-<Warning>
-  Treat this token like a password. Anyone holding it can read the Slack content the app has access to. If it leaks, use **Regenerate** in Slack and update the connector.
-</Warning>
-
-### Step 8: Configure the connector in PipesHub
-
-1. Navigate to **Workspace Settings** → under **Workspace** in the sidebar → **Connectors**.
-
-<div className="text-center">
-  <img
-    src="/images/connectors/common/go_to_workspace_settings.png"
-    alt="Go to Workspace Settings"
-    className="block mx-auto w-11/12"
-  />
-</div>
-
-2. Find the **Slack Workspace** connector and click **+ Setup**.
-3. On the **Authenticate Instance** tab:
-   - Enter an **Instance name** (for example `Slack Workspace`).
-   - Paste the **Bot Access Token** from Step 7.
-   - Click **Next →**.
-
-<div className="text-center">
-  <img
-    src="/images/connectors/slack-team/slack-8-pipeshub-page.png"
-    alt="PipesHub — Slack Workspace Configuration, Authenticate Instance tab with Bot Access Token"
-    className="block mx-auto w-11/12"
-  />
-</div>
-
-### Step 9: Configure records and save
-
-On the **Configure Records** tab, choose your **Sync Strategy** (Scheduled or Manual) and adjust the sync and indexing filters. See [Connector Settings](/connectors/slack/slack#connector-settings) for what each filter does. Click **Save Configuration**.
-
-<Note>
-  When you save, PipesHub checks the token with Slack. The save fails with a message that says why if the token is malformed, if Slack refuses it (for example `invalid_auth`, `token_revoked` or `account_inactive`), or if a required scope is missing.
-</Note>
-
-<div className="text-center">
-  <img
-    src="/images/connectors/slack-team/slack-9-pipeshub-configuration-1.png"
-    alt="PipesHub — Slack Workspace Configure Records tab with sync settings"
-    className="block mx-auto w-11/12"
-  />
-</div>
-
-### Step 10: Start syncing
-
-Once PipesHub confirms the instance is ready, you can start the sync immediately or start it later from the instance card.
-
-<div className="text-center">
-  <img
-    src="/images/connectors/slack-team/slack-10-filters.png"
-    alt="PipesHub — Slack Workspace sync filters and indexing filters"
-    className="block mx-auto w-11/12"
-  />
-</div>
-
-### Channel access for the bot
-
-- **Public channels** — with the `channels:join` scope, the bot joins them on its own, so no manual action is needed. Without it, invite the bot to each public channel you want synced; the others are skipped and named in a warning after each sync.
-- **Private channels** — Slack never grants an app access automatically. Invite the bot from inside each private channel you want synced:
-
-```
-/invite @slack-app
-```
-
-Replace `slack-app` with the name you gave the app in Step 3.
-
-<Info>
-  DMs and group DMs are **not** synced by the team connector, even if the bot holds `im:*` and `mpim:*` scopes. Use the **Individual Setup** if you need personal conversations indexed.
-</Info>
-
-</div>
-
-</Accordion>
-
-<Accordion title="Individual Setup" icon="user">
-
-<div className="mt-4">
-
-## Overview
-
-The **Slack** connector syncs your own Slack view — public and private channels you are a member of, your direct messages, and your group DMs. Records synced this way are visible only to you in PipesHub.
-
-### Prerequisites
-
-- Permission to create a Slack app in your workspace (some workspaces require admin approval before an app can be installed).
-- A PipesHub account whose email matches the Slack account you will authorize with.
-
-### Authentication
-
-This connector uses **OAuth 2.0** with a **user token** (`xoxp-…`). You create a Slack app, register PipesHub's callback URL, request user token scopes, then sign in from PipesHub to authorize it.
-
-<Note>
-  If an administrator has already registered a Slack OAuth app in PipesHub, you can select that saved app on the configuration screen and skip Steps 2 to 7 — go straight to authorizing.
-</Note>
-
-## How to configure and enable the Slack connector
-
-### Step 1: Copy the Redirect/Callback URL from PipesHub
-
-1. Navigate to **Workspace Settings** → under **Personal** in the sidebar → **Your Connectors**.
-
-<div className="text-center">
-  <img
-    src="/images/connectors/common/go_to_workspace_settings.png"
-    alt="Go to Workspace Settings"
-    className="block mx-auto w-11/12"
-  />
-</div>
-
-2. You will see the list of connectors available for Individual Setup.
-
-<div className="text-center">
-  <img
-    src="/images/connectors/common/personal_connectors_list.png"
-    alt="Personal connectors list"
-    className="block mx-auto w-11/12"
-  />
-</div>
-
-3. Find **Slack**, click **+ Setup**, and on the **Authenticate Instance** tab set the **Authentication method** to **OAuth 2.0**.
-4. Copy the **Redirect/Callback URL** shown on that screen — you will paste it into Slack in Step 5.
-
-<div className="text-center">
-  <img
-    src="/images/connectors/slack-individual/pipeshub-redirect-urlpage.png"
-    alt="PipesHub — Slack Configuration showing the Redirect/Callback URL and OAuth credentials fields"
-    className="block mx-auto w-11/12"
-  />
-</div>
-
-<Info>
-  The URL follows the pattern `https://your-frontend-dns/connectors/oauth/callback/Slack`. Always copy the exact value from your own instance rather than typing it from memory.
-</Info>
-
-### Step 2: Create a Slack app
-
-Go to the [Slack API app dashboard](https://api.slack.com/apps), click **Create New App**, choose **Blank app**, then give the app a name (for example `slack-personal-app`) and select your workspace.
-
-<div className="text-center">
-  <img
-    src="/images/connectors/slack-team/salck-1-your-app.png"
-    alt="Slack API — Your Apps page with the Create New App button"
-    className="block mx-auto w-11/12"
-  />
-</div>
-
-<div className="text-center">
-  <img
-    src="/images/connectors/slack-team/slack-3-create-app-2.png"
-    alt="Slack — Create from scratch dialog with app name and workspace"
-    className="block mx-auto w-11/12"
-  />
-</div>
-
-### Step 3: Add the Redirect URL in Slack
-
-1. In the left sidebar, open **OAuth & Permissions**.
-2. Under **Redirect URLs**, click **Add New Redirect URL** and paste the URL you copied in Step 1.
-3. Click **Add**, then **Save URLs**.
-
-<div className="text-center">
-  <img
-    src="/images/connectors/slack-individual/slack-4-add-redirect-url.png"
-    alt="Slack — Redirect URLs list with the PipesHub callback URL added"
-    className="block mx-auto w-11/12"
-  />
-</div>
-
-<Warning>
-  The redirect URL must match PipesHub's value **exactly** — scheme, host, port, and path. A mismatch produces a `bad_redirect_uri` error during authorization.
-</Warning>
-
-<Info>
-  Planning to use the Slack **toolset** as well? It has its own callback path (`.../toolsets/oauth/callback/Slack`). Add that URL here too so both can authorize against the same Slack app.
-</Info>
-
-### Step 4: Add User Token Scopes
-
-On the same **OAuth & Permissions** page, scroll to **Scopes → User Token Scopes** and add every scope below.
-
-```
-channels:read
-channels:history
-groups:read
-groups:history
-mpim:read
-mpim:history
-im:read
-im:history
-users:read
-users:read.email
-users.profile:read
-files:read
-```
-
-<div className="text-center">
-  <img
-    src="/images/connectors/slack-individual/slack-5-add-user-scope.png"
-    alt="Slack — User Token Scopes list"
-    className="block mx-auto w-11/12"
-  />
-</div>
-
-<Warning>
-  Add these under **User Token Scopes**, not **Bot Token Scopes**. The individual connector needs a user token (`xoxp-…`) to see your private channels and DMs; a bot token cannot access them.
-</Warning>
-
-### Step 5: Install the app to your workspace
-
-Scroll to **OAuth Tokens**, click **Install to \<your workspace\>**, and click **Allow** on the permission screen. This makes the app available for the OAuth sign-in you'll run from PipesHub.
-
-<div className="text-center">
-  <img
-    src="/images/connectors/slack-team/slack-6-allow-to-install.png"
-    alt="Slack — Review app permissions and allow installation"
-    className="block mx-auto w-11/12"
-  />
-</div>
-
-### Step 6: Copy the Client ID and Client Secret
-
-Open **Settings → Basic Information** and, under **App Credentials**, copy the **Client ID** and the **Client Secret** (click **Show** to reveal it).
-
-<div className="text-center">
-  <img
-    src="/images/connectors/slack-individual/slack-6-app-cred.png"
-    alt="Slack — Basic Information page with App Credentials"
-    className="block mx-auto w-11/12"
-  />
-</div>
-
-### Step 7: Enter the credentials in PipesHub
-
-Return to the **Slack Configuration** dialog and fill in:
-
-| Field | Value |
-|-------|-------|
-| **OAuth app name** | A name for the saved OAuth registration, for example `Slack` — it appears when you pick a saved app for other instances |
-| **Client ID** | The Client ID from Step 6 |
-| **Client Secret** | The Client Secret from Step 6 |
-
-Confirm the Redirect/Callback URL still matches what you added in Slack, then click **Next →**.
-
-<div className="text-center">
-  <img
-    src="/images/connectors/slack-individual/slack-7-pipeshub-page.png"
-    alt="PipesHub — Slack Configuration with OAuth app name and client credentials"
-    className="block mx-auto w-11/12"
-  />
-</div>
-
-### Step 8: Authorize with Slack
-
-On the **Authorize** tab, click **Authenticate Slack to Proceed**. Sign in to Slack and click **Allow** on the consent screen. When authorization succeeds, click **Continue to configuration →**.
-
-<div className="text-center">
-  <img
-    src="/images/connectors/slack-individual/slack-8-auth.png"
-    alt="PipesHub — Slack Configuration Authorize tab"
-    className="block mx-auto w-11/12"
-  />
-</div>
-
-<Warning>
-  **Important:** Authorize with the same email address as your PipesHub account. Using a different Slack account causes permission issues, and the sync stops early if your Slack email cannot be resolved.
-</Warning>
-
-### Step 9: Configure records and save
-
-On **Configure Records**, set your **Sync Strategy** and adjust the sync and indexing filters — including whether direct messages and group direct messages are indexed. See [Connector Settings](/connectors/slack/slack#connector-settings) for details. Click **Save Configuration**, then start the sync now or later.
-
-</div>
-
-</Accordion>
-
-</AccordionGroup>
-
-<AccordionGroup>
-
-<Accordion title="Connector Settings" id="connector-settings" icon="gear">
-
-## Sync Settings
-
-Sync settings control how the connector pulls data from Slack.
-
-**Sync Strategy:**
-- **Scheduled** — the connector syncs automatically at the configured interval.
-- **Manual** — the connector syncs only when the sync is triggered from the connector settings page.
-
-**Sync Interval:**
-How often a scheduled sync runs (default: 60 minutes).
-
----
-
-## Sync Filters
-
-Sync filters control which conversations are fetched from Slack. Anything excluded here is never fetched, so it never becomes a record.
-
-### Channel
-
-Include or exclude specific channels. The list is populated from your Slack workspace, so you can pick channels by name and use either an **is any of** (include) or **is none of** (exclude) operator.
-
-### Channel Types
-
-Filter by conversation type.
-
-- **Slack Workspace (Team):** `public_channel` and `private_channel`. DMs and group DMs are not synced by the team connector.
-- **Slack (Individual):** public channel, private channel, **Direct Messages**, and **Group Direct Messages**.
-
-### Sync Messages From
-
-How far back to reach on the **initial** sync — for example `Last 30 Days` (the default), or `Is After` with a specific date. Later syncs are incremental and pick up from where the last successful run stopped, so this window only applies the first time a channel is synced.
-
-<Info>
-  A wider window means a longer first sync. Start narrow if your workspace has years of history, then widen it later if you need more.
-</Info>
-
-### Enable Manual Indexing
-
-When enabled, records are synced but not indexed automatically. They won't appear in search results until you index them explicitly from the **All Records** section — go to a record, click the **3 dots** → **Start Indexing**.
-
----
-
-## Indexing Filters
-
-Indexing filters control which synced records are made searchable. Unlike sync filters, they don't stop content from being fetched — the records still exist in PipesHub, but their indexing status is set to **Manual Indexing** and they can be indexed later from **All Records**.
-
-### Index Messages
-
-When disabled, synced channel messages are not indexed for search by default.
-
-### Index Threads
-
-When disabled, thread replies are not indexed for search by default.
-
-### Index Bot Messages
-
-**Slack Workspace (Team) only.** Controls messages posted by bots and apps. When disabled, standalone bot messages — and threads whose parent message was posted by a bot — are skipped at sync time. Unlike the other indexing filters, no record is created for them. Bot replies inside a thread started by a person are still synced.
-
-Turning it back on only brings in bot messages that a later sync reads: new ones, or those inside **Sync Messages From** on a full sync.
-
-### Index Direct Messages
-
-**Slack (Individual) only.** When disabled, 1:1 direct messages are not indexed for search by default.
-
-### Index Group Direct Messages
-
-**Slack (Individual) only.** When disabled, group direct messages are not indexed for search by default.
-
-### Index Files
-
-When disabled, files shared in messages are not indexed for search by default.
-
-### Index Links
-
-When disabled, links shared in messages are not indexed for search by default.
-
-</Accordion>
-
-</AccordionGroup>
-
----
-
-## Data sync behavior
-
-<AccordionGroup>
-
-<Accordion title="Synchronization process" icon="sync">
-
-### Initial sync
-
-Runs in phases: users (and, for the team connector, user groups) → channels → messages, files, and links per channel → thread replies. How long it takes depends on how many channels you sync and how far back **Sync Messages From** reaches.
-
-### Incremental sync
-
-Each channel keeps its own checkpoint, so later runs fetch only messages posted since that channel's last successful sync.
-
-For the **Slack Workspace** connector, each scheduled sync also re-checks threads started in at least the last 24 hours (or since the previous check, if that is earlier, but never before **Sync Messages From**) for new replies. A new reply to a thread started before that is picked up by a **full sync** only.
-
-### What incremental sync does not catch
-
-Slack's history API returns messages by the time they were **created**, not the time they were last modified. For the **Slack Workspace** connector:
-
-- A scheduled sync does not see edits, deletions or new reactions on messages it already synced.
-- A full sync picks up edits and reactions on messages inside **Sync Messages From**, and removes deleted messages and channels. An edited message is re-indexed; re-reading an unchanged message does not re-index it.
-- Archived channels are not listed, so later syncs don't read them. What was already synced from them stays until a full sync, which treats an archived channel like a deleted one.
-
-### Rate limits
-
-Slack rate-limits its API per method. The connector paces its own calls to stay under those limits, which is why large workspaces sync gradually rather than all at once. A call Slack rate-limits (HTTP 429) is retried after Slack's `Retry-After`; if it still fails, the channel's checkpoint doesn't move past it and the next sync tries again.
-
-### Failures and notices (Slack Workspace)
-
-- **Slack token refused:** if Slack refuses the token during a sync, the sync stops and the connector shows one **Slack token refused** notice. Data already in PipesHub is left as it was.
-- **Some Slack channels were not synced:** channels the app cannot read (it isn't a member and cannot join) are named in one warning per sync — the first five, then "and N more". Invite the app with `/invite`, or add `channels:join` for public channels.
-- **Slack channels could not be listed:** if Slack doesn't return the full channel list, you get an error notice. The channels it did list are synced, and the next sync tries again.
-- **Partial reads:** if a channel's history or a thread's replies were only partly read, that channel's checkpoint stays where it was and the next sync retries. Nothing is removed on a full sync where a read failed.
-
-</Accordion>
-
-</AccordionGroup>
-
----
+People are matched by email. Someone whose PipesHub email differs from their Slack email doesn't get access to their channels.
 
 ## Troubleshooting
 
 <AccordionGroup>
-
-<Accordion title="Troubleshooting" icon="circle-exclamation">
-
-### Common issues
-
-**`not_in_channel` / a private channel isn't syncing (Team)**
-
-- Slack apps have no automatic access to private channels. Invite the bot from inside the channel with `/invite @your-app-name`, then run the sync again.
-
-**`missing_scope`**
-
-- A required scope wasn't granted. Add it in **OAuth & Permissions**, then **reinstall the app** — scope changes only take effect after reinstalling.
-
-**"The Slack token is missing these scopes" when saving (Team)**
-
-- The token lacks one of the required bot scopes listed in [Step 4](/connectors/slack/slack#step-4-add-bot-token-scopes). Add the scopes named in the message under **Bot Token Scopes**, reinstall the app, and paste the new token.
-
-**"Slack token refused" notice (Team)**
-
-- Slack refused the token during a sync, so the sync stopped. The token was revoked, the app was removed from the workspace, or the workspace is inactive. Reinstall the app, then paste its current **Bot User OAuth Token** into the connector's settings.
-
-**"Some Slack channels were not synced" warning (Team)**
-
-- The app cannot read the channels named in the warning. Run `/invite @your-app-name` in each one, or add the `channels:join` scope (public channels only) and reinstall the app.
-
-**A new reply to an old thread doesn't show up (Team)**
-
-- Scheduled syncs re-check only threads started in about the last 24 hours. Run a full sync to pick up replies to older threads inside **Sync Messages From**.
-
-**`bad_redirect_uri` or `redirect_uri_mismatch` (Individual)**
-
-- The Redirect URL in Slack must match the one in PipesHub exactly, including scheme, host, port, and path.
-
-**`invalid_auth` / `token_revoked` / `token_expired`**
-
-- **Signed in with Slack, with token rotation on:** on `invalid_auth` or `token_expired`, PipesHub renews the token and retries the call once. You still see these errors if Slack refuses the retry too. You also see `invalid_auth` without a new renewal if the token was renewed less than a minute earlier, because a newer token wouldn't help. If they keep appearing, re-run authorization from the **Authorize** tab. See **Token rotation** below.
-- **`token_expired` on a pasted token:** the token comes from a Slack app with token rotation on, and it has reached its 12-hour expiry. A new token from the same app will expire again, so follow **Token rotation** below: use an app with rotation left off, or connect the Individual connector with Slack sign-in.
-- **`token_revoked`, or `invalid_auth` on a pasted token:** the token was regenerated or the app was uninstalled. For the Workspace connector, paste the new **Bot User OAuth Token**. For the Individual connector, paste the new user token if you use the API token option, or re-run authorization from the **Authorize** tab if you signed in with Slack.
-
-**"Invalid Slack token format"**
-
-- PipesHub accepts bot tokens (`xoxb-…`) and user tokens (`xoxp-…`), and, for apps with **token rotation** turned on, the rotating forms `xoxe.xoxb-…` and `xoxe.xoxp-…`. A token that starts with just `xoxe-` is a refresh token, which can't call Slack; paste the access token from **OAuth & Permissions** instead.
-
-**Token rotation**
-
-With **token rotation** turned on, Slack's access tokens expire after about 12 hours. Each one comes with a refresh token that works once. What happens next depends on how the connector got its token:
-
-- **Signed in with Slack (Individual connector, OAuth):** rotation is supported. PipesHub renews the token before it expires and saves the new refresh token each time, so you don't need to do anything. If a renewal is missed, the connector renews the token on the next call to Slack and retries that call once.
-- **Pasted token (Workspace connector, or the API token option of the Individual connector):** a pasted token has no refresh token, so PipesHub can't renew it, and syncing stops about 12 hours after you paste it. The connector logs that the pasted token has expired. Use a Slack app with token rotation left off for pasted tokens. Slack doesn't let an app turn rotation off once it's on, so if yours has it on, create a new app without it, or connect the Individual connector with Slack sign-in instead.
-
-<Warning>
-  **"Slack no longer accepts PipesHub's saved sign-in"** in the connector logs means Slack refused the refresh token, usually because the app was reinstalled or removed, or the sign-in was revoked. Renewing again can't fix that, so PipesHub stops trying. Re-run authorization from the connector's **Authorize** tab to reconnect Slack. After a few refused renewals, the connector is also marked as needing to be reconnected.
-</Warning>
-
-**Only a bot token was found (Individual)**
-
-- The individual connector needs a **user token** (`xoxp-…`). Confirm the scopes were added under **User Token Scopes**, not Bot Token Scopes, and authorize again.
-
-**Users are missing from the sync (Team)**
-
-- Members without an email address on their Slack profile are skipped, because PipesHub matches people by email. Bots are cached for mention resolution but are not created as users.
-- Deactivated members get no access. Slack Connect (external) users are not returned by Slack's user list, so they get no access in PipesHub.
-
-**Nothing synced beyond a certain date**
-
-- Check **Sync Messages From**. On a first sync, anything older than that window is deliberately skipped.
-
-</Accordion>
-
+  <Accordion title="A private channel is missing">
+    Slack doesn't let apps into private channels by themselves. Run `/invite @your-app-name` in the channel, then run the sync again.
+  </Accordion>
+  <Accordion title="Notice: Some Slack channels were not synced">
+    The app can't read the channels named in the notice (it shows the first five, then "and N more"). Invite the app to each of them with `/invite @your-app-name`. For public channels, you can instead add the `channels:join` scope and reinstall the app. If a channel is still listed after that, Slack refused the join, so invite the app by hand.
+  </Accordion>
+  <Accordion title="Saving fails: The Slack token is missing these scopes">
+    Add the scopes named in the message under **Bot Token Scopes** (see the [scope table](#step-1-create-a-slack-app-and-get-a-bot-token)), reinstall the app, and paste the token again.
+  </Accordion>
+  <Accordion title="Notice: Slack token refused">
+    Slack no longer accepts the token. It was regenerated or revoked, the app was removed, or the workspace is inactive. The sync stops, and data already in PipesHub stays as it was. Reinstall the app if needed, then paste its current **Bot User OAuth Token** into the connector's settings.
+  </Accordion>
+  <Accordion title="Invalid Slack token format">
+    Paste the **Bot User OAuth Token** from **OAuth & Permissions**. It starts with `xoxb-` (or `xoxe.xoxb-` if the app uses token rotation). A token that starts with only `xoxe-` is a refresh token and won't work here.
+  </Accordion>
+  <Accordion title="Syncing stops about 12 hours after setup">
+    Your Slack app has **token rotation** turned on, so its tokens expire after about 12 hours. PipesHub can't renew a pasted token. Create a new Slack app with token rotation left off (Slack doesn't let you turn it off again), and paste its token.
+  </Accordion>
+  <Accordion title="Notice: Slack channels could not be listed">
+    Slack didn't return the full channel list. The channels it did return were synced, and the next sync tries again.
+  </Accordion>
+  <Accordion title="Someone can't find messages they should see">
+    - Check that their PipesHub email matches the email on their Slack profile.
+    - Guests only see the channels they are in.
+    - Check whether **Enable Manual Indexing** is on, or an **Index** setting is off. Index the records from **All Records** if needed.
+    - The first sync may still be running. Check the connector's sync status.
+  </Accordion>
+  <Accordion title="Edits, deletions or new thread replies don't show up">
+    A scheduled sync only fetches new messages and replies to recent threads. Run a full sync to pick up edits, deletions and replies to older threads.
+  </Accordion>
+  <Accordion title="Nothing older than a certain date">
+    The first sync only goes back as far as **Sync Messages From**. Pick an earlier date and run a full sync.
+  </Accordion>
 </AccordionGroup>
 
----
+## Personal Slack connector
 
-## FAQ
+The **Slack** connector brings in what you can see in Slack: your public and private channels, your direct messages and your group messages.
 
-<AccordionGroup>
+<Info>
+  Only you can search what this connector syncs. Sign in with the Slack account that uses the same email as your PipesHub account.
+</Info>
 
-<Accordion title="Which should I use — Slack Workspace or Slack?">
+You need a Slack app with your own **Client ID** and **Client Secret**. If an administrator already saved a Slack app in PipesHub, you can pick it when you set up the connector and skip steps 2 to 4.
 
-Use **Slack Workspace** when an administrator wants channel history available across the organization, with permissions mirroring Slack's own channel membership. Use **Slack** (Individual) when a user wants their own view indexed, including DMs and group DMs, visible only to them.
+<Steps>
+  <Step title="Start the setup in PipesHub">
+    Open **Personal → Your connectors** (or click **Your connectors** on the Connectors page), find **Slack**, and click **Set up**. On the **Authenticate** tab, set the authentication method to **OAuth 2.0** and copy the **Redirect/Callback URL** shown there. It looks like `https://<your-pipeshub-address>/connectors/oauth/callback/Slack`.
+  </Step>
+  <Step title="Create a Slack app and add the redirect URL">
+    Create an app as in [Step 1](#step-1-create-a-slack-app-and-get-a-bot-token) (for example `slack-personal-app`). Open **OAuth & Permissions**, click **Add New Redirect URL** under **Redirect URLs**, paste the URL, then click **Add** and **Save URLs**. It must match the PipesHub value exactly.
 
-They aren't mutually exclusive — running both gives shared channel history plus personal conversations.
+    <img src="/images/connectors/slack-individual/slack-4-add-redirect-url.png" alt="Redirect URLs list in Slack with the PipesHub callback URL added" className="block mx-auto w-11/12" />
 
+    <Tip>
+      Using the [Slack toolset](/toolsets/slack/slack) too? Also add its URL, which ends in `/toolsets/oauth/callback/Slack`, so both can use the same app.
+    </Tip>
+  </Step>
+  <Step title="Add the user token scopes and install">
+    On the same page, under **Scopes → User Token Scopes** (not Bot Token Scopes), add all of these:
+
+    ```
+    channels:read  channels:history  groups:read  groups:history
+    im:read  im:history  mpim:read  mpim:history
+    users:read  users:read.email  users.profile:read  files:read
+    ```
+
+    Then click **Install to** your workspace and **Allow**.
+
+    <img src="/images/connectors/slack-individual/slack-5-add-user-scope.png" alt="User Token Scopes list in Slack" className="block mx-auto w-11/12" />
+  </Step>
+  <Step title="Copy the Client ID and Client Secret">
+    Open **Settings → Basic Information**. Under **App Credentials**, copy the **Client ID** and the **Client Secret** (click **Show**). Paste them into PipesHub, give the app a name, and continue.
+
+    <img src="/images/connectors/slack-individual/slack-6-app-cred.png" alt="Basic Information page in Slack with the App Credentials section" className="block mx-auto w-11/12" />
+  </Step>
+  <Step title="Sign in with Slack">
+    Sign in to Slack from PipesHub and click **Allow**. Use the Slack account with the same email as your PipesHub account. If PipesHub can't find your email, the sync stops.
+  </Step>
+  <Step title="Choose what to sync and start">
+    On **Configure records**, choose your settings as in [Choose what to sync](#choose-what-to-sync). The personal connector also lets you pick **Direct Messages** and **Group Direct Messages** under **Channel Types**, and has **Index Direct Messages** and **Index Group Direct Messages** instead of **Index Bot Messages**. Click **Save configuration**, then **Start syncing now**.
+  </Step>
+</Steps>
+
+<Note>
+  Instead of signing in, you can choose the API token option and paste a **User OAuth Token** (starts with `xoxp-`) from your app's **OAuth & Permissions** page. Use a user token, not a bot token (`xoxb-`): the personal connector needs a user token to read your private channels and direct messages. With token rotation on, a pasted token stops working after about 12 hours, but a Slack sign-in is renewed on its own.
+</Note>
+
+<Accordion title="Details for administrators">
+  - **Token rotation.** Slack tokens from apps with token rotation expire after about 12 hours. With Slack sign-in (personal connector), PipesHub renews the token on its own. A pasted token (Slack Workspace, or the personal connector's API token option) can't be renewed, so use an app with rotation off. If the logs say **Slack no longer accepts PipesHub's saved sign-in**, the app was reinstalled or removed or the sign-in was revoked: sign in again from the connector's settings.
+  - **Scopes the Workspace connector checks.** On save, PipesHub requires the seven required bot scopes above. It notes in its logs when `channels:join` or `usergroups:read` is missing, but saves anyway.
+  - **Read-only.** The connector never posts to Slack. The only change it makes is joining public channels when it has `channels:join`. To let agents post to Slack, use the [Slack toolset](/toolsets/slack/slack).
 </Accordion>
-
-<Accordion title="Who can read Slack Workspace records in PipesHub?" id="who-can-read-slack-workspace-records-in-pipeshub">
-
-Access follows the channel. Messages, threads and files get the access of the channel they were posted in.
-
-- **Public channel:** every non-guest workspace member, plus guests (multi- and single-channel) who are in that channel. Guests never get other public channels.
-- **Private channel:** its Slack members, matched by email.
-- **The PipesHub user who set up the connector** can read every channel the connector syncs, including private channels the bot was invited to. A bot token has no Slack account to link to that user, so PipesHub grants them access to everything the token reads.
-- **No access:** members without an email on their Slack profile, deactivated members, and Slack Connect (external) users, whom Slack's user list does not return.
-
-</Accordion>
-
-<Accordion title="What's the difference between the Slack Connector and the Slack Toolset?">
-
-| Aspect | Slack Connector | Slack Toolset |
-|--------|----------------|---------------|
-| **Purpose** | Sync and index Slack conversations for search | Enable agents to perform Slack actions |
-| **Data Flow** | One-way (import data into PipesHub) | Two-way (read and write via API) |
-| **When to Use** | Query and search past conversations, files, and threads | Send messages, reply in threads, manage channels |
-
-**Example:** Use the **Slack Connector** to search what a team decided last quarter. Use the **Slack Toolset** to let an agent post the answer back into a channel.
-
-</Accordion>
-
-<Accordion title="Does the connector post anything to Slack?">
-
-No. The connector is read-only — it reads channels, messages, files, and links. The only write-like action is the bot joining public channels so it can read their history, which requires the `channels:join` scope.
-
-</Accordion>
-
-<Accordion title="Queries not returning results. What could be wrong?">
-
-There are three common causes:
-
-1. **Email mismatch** — the email used during authentication doesn't match your PipesHub account email, which causes permission issues on synced data.
-   - **Fix:** Reconfigure the connector and authenticate with the same email as your PipesHub account.
-
-2. **Records show in "All Records" but not in search** — indexing hasn't run for those records.
-   - **Fix:** Check whether **Enable Manual Indexing** is on, or whether the relevant indexing filter (messages, threads, files, links) is disabled. Index the records manually from **All Records** if needed.
-
-3. **Data not yet synced or indexed** — the connector is still working through the initial sync.
-   - **Fix:** Go to **Settings → Connectors**, check the sync status, and wait for indexing to complete.
-
-</Accordion>
-
-</AccordionGroup>
-
----
-
-<div className="text-center mt-12 p-6 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl">
-  <h3 className="text-lg font-semibold mb-2">Ready to get started?</h3>
-  <p className="text-gray-600 dark:text-gray-400">
-    Connect Slack to PipesHub for unified search across your conversations. Follow the configuration guide above for your setup type (Team or Individual), or reach out to our support team if you need assistance.
-  </p>
-</div>

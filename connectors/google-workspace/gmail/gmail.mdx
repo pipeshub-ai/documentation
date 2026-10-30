@@ -133,7 +133,7 @@ The Gmail connector uses OAuth 2.0 for authentication. This requires users to gr
 3. Click **Manage Domain Wide Delegation**
 4. Click **Add new** and paste the service account's client ID
 5. Add the following OAuth scopes required for Gmail sync:
-```
+```text
 https://www.googleapis.com/auth/gmail.readonly,https://www.googleapis.com/auth/drive.readonly,https://www.googleapis.com/auth/admin.directory.user.readonly,https://www.googleapis.com/auth/admin.directory.group.readonly,https://www.googleapis.com/auth/admin.directory.domain.readonly,https://www.googleapis.com/auth/admin.reports.audit.readonly
 ```
 
@@ -291,64 +291,6 @@ Click on the **Save** button
 
 After completing these steps, return to [Step 5](#step-5%3A-create-a-json-key-for-the-service-account) and try creating the service account key again.
 
-## Google PubSub Configuration
-
-PubSub setup enables real-time updates for Gmail content. While optional, it's highly recommended for maintaining up-to-date content in Enterprise search.
-
-### Step 1: Set Up a Cloud Pub/Sub Topic
-
-1. Navigate to **Pub/Sub > Topics** in the Cloud Console sidebar
-2. Click **Create Topic**
-3. Enter a unique name (e.g., `projects/your-project-id/topics/gmail-webhook-topic`)
-4. Check **"Add a default subscription"**
-5. Click **Create** to confirm
-
-<div style={{ textAlign: "center" }}>
-  <img
-    src="/images/connectors/googleWorkspace/enterprise/topic.png"
-    alt="Create Topic"
-    style={{ display: 'block', margin: '0 auto' }}
-    width="80%"
-  />
-</div>
-
-### Step 2: Configure the Subscription
-
-1. Go to **Pub/Sub > Topics**
-2. Select the subscription created with the topic
-3. Click **Edit**
-4. Change Delivery type to **"Push"**
-5. Set Endpoint URL as **"_your_base_url_/gmail/webhook"**
-6. Adjust Expiry Period as needed
-7. Click **Update**
-
-<Warning>
-  Ensure your base URL matches the Enterprise search connector service base URL
-</Warning>
-
-### Step 3: Set Topic Permissions
-
-1. In **Pub/Sub > Topics**, select your topic
-2. Open the Info Panel (right side)
-3. Click **Add Principals**
-4. Add `gmail-api-push@system.gserviceaccount.com`
-5. Assign the **Pub/Sub Publisher** role
-
-<div style={{ textAlign: "center" }}>
-  <img
-    src="/images/connectors/googleWorkspace/enterprise/publisher_principals.png"
-    alt="Add Principals"
-    style={{ display: 'block', margin: '0 auto' }}
-    width="60%"
-  />
-</div>
-
-6. Click **Save**
-
-<Info>
-  If you encounter an organizational policy constraint error, modify the policy in organizational policies to allow the given domain. Allow 5-10 minutes for changes to propagate.
-</Info>
-
 </div>
 
 </Accordion>
@@ -408,11 +350,11 @@ The Gmail connector uses OAuth 2.0 for authentication. This requires users to gr
 2. Click **Create Credentials** and select **OAuth client ID**
 3. Select **Web application** as the application type
 4. Set the **Authorized redirect URI** to:
-   ```
+   ```text
    http://your-frontend-dns/connectors/oauth/callback/Gmail
    ```
    or for HTTPS:
-   ```
+   ```text
    https://your-frontend-dns/connectors/oauth/callback/Gmail
    ```
 5. Click **Create** and note your **Client ID** and **Client Secret**
@@ -454,8 +396,8 @@ The Gmail connector uses OAuth 2.0 for authentication. This requires users to gr
 2. You will see a list of connectors with Individual Setup.
 <div style={{ textAlign: "center", padding: "5px" }}>
   <img
-    src="/images/connectors/common/personal_connectors_list.png"
-    alt="Connector registry"
+    src="/images/connectors/common/personal_connectors_list-new.png"
+    alt="Personal connectors catalog under Your connectors"
     style={{ display: 'block', margin: '0 auto' }}
     width="80%"
   />
@@ -508,10 +450,6 @@ The Gmail connector uses OAuth 2.0 for authentication. This requires users to gr
 <Warning>
   **Important:** Authorize using the same email address as your PipesHub account. Using a different email will cause permission issues on the PipesHub platform.
 </Warning>
-
-<Info>
-  For setting up Google PubSub notifications, see the **Google PubSub Configuration** section earlier in this Enterprise Setup guide.
-</Info>
 
 </div>
 
@@ -567,6 +505,17 @@ When disabled, file attachments on synced messages are not indexed for search by
 </Accordion>
 
 </AccordionGroup>
+
+---
+
+## Permissions
+
+Access follows the mailbox a message was synced from. People are matched to PipesHub accounts by email.
+
+- **Gmail Workspace connector:** each user's mailbox, with its messages and attachments, is visible only to that user. An admin who sets up the connector doesn't get access to other people's mail.
+  - A suspended or archived Google account loses access to its mailbox in PipesHub. The messages stay, and access comes back when the account is reinstated.
+  - A user deleted from the Workspace directory loses access to their mailbox. The messages stay until a full sync removes them.
+- **Gmail (individual connector):** everything it syncs is visible only to the user who connected it.
 
 ---
 

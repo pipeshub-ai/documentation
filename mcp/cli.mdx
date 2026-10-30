@@ -1,0 +1,209 @@
+---
+title: "pipeshub CLI"
+description: "Command reference for the pipeshub command-line tool: sign in, search, ask, read records, upload files and add PipesHub to MCP clients"
+icon: "terminal"
+---
+
+`pipeshub` is a small command-line tool over the PipesHub MCP endpoint. It is built for coding agents and scripts: output is JSON by default, and exit codes are fixed so a caller can branch on them. It ships in the `@pipeshub-ai/mcp` npm package, next to the [local stdio server](/mcp/local-server).
+
+## Install
+
+```bash
+npm i -g @pipeshub-ai/mcp
+pipeshub --help
+```
+
+This page describes `@pipeshub-ai/mcp` 4.8.0.
+
+## Sign in
+
+The CLI never takes a token as an argument. It gets one in one of two ways:
+
+- **`pipeshub login`**: you approve a code in the browser, and the CLI stores the sign-in in a file only you can read.
+- **Environment variables**: `PIPESHUB_TOKEN` (or `PIPESHUB_MCP_TOKEN`) holding a [personal access token](/developer/personal-access-tokens), plus `PIPESHUB_BASE_URL`.
+
+A token in the environment wins over a stored sign-in. A stored sign-in is only sent to the instance that issued it.
+
+```bash
+pipeshub login                                     # PipesHub Cloud (https://app.pipeshub.com)
+pipeshub login --url https://pipeshub.example.com  # self-hosted
+pipeshub auth status --text
+```
+
+`login` uses the OAuth device flow. It prints a link and a code, then waits until you approve them in the browser. If the instance does not offer CLI sign-in, `login` says so; set `PIPESHUB_TOKEN` to a personal access token instead.
+
+### Sign-in from an agent
+
+An agent only sees a command's output when the command ends. Split the sign-in in two:
+
+```bash
+pipeshub login --no-wait   # prints the link and the code, then exits
+# give the link and code to the person, who approves them
+pipeshub login --wait      # finishes the sign-in started above
+```
+
+### Where the sign-in is stored
+
+`pipeshub login` writes `credentials.json` to `$XDG_CONFIG_HOME/pipeshub/`, or `~/.config/pipeshub/` when `XDG_CONFIG_HOME` is unset. The file has mode `0600`. The CLI refreshes the access token before it expires when the instance issued a refresh token. If it did not, `login` tells you, and the sign-in ends when the token expires.
+
+`pipeshub logout` deletes the file and asks the server to revoke the tokens.
+
+## Commands
+
+All commands print JSON unless you pass `--text`. Every JSON result carries a `requestId`.
+
+| Command | What it does | Scopes it needs |
+|---|---|---|
+| `login [--url <origin>]` | Sign in from the browser | none |
+| `logout` | Delete the stored sign-in and ask the server to revoke it | none |
+| `auth status` | Show the instance, user, org, scopes, expiry and tool count; list commands your scopes do not allow | any |
+| `auth connect-help` | Print the steps to store a token in a QM keychain | none |
+| `init-qm <dir>` | Write the QM deployment-layer bundle into `<dir>` | none |
+| `sources` | List searchable sources and their ids, for `--app` and `--kb` | `kb:read` |
+| `search <query>` | Find records | `semantic:write` |
+| `ask <question>` | Ask a question and get a cited answer | `conversation:chat`, `agent:execute` |
+| `get <recordId>` | Print a record's text content | `connector:read` (with `--as` or `--out`: `kb:read`) |
+| `directory whoami` | Show the identity behind the token | none beyond a valid token |
+| `collection create <name>` | Create a collection to upload into | `kb:write` |
+| `upload <collectionId> <path>...` | Upload files or folders to a collection | `kb:upload` |
+| `status <collectionId>` | Show indexing progress of a collection | `kb:read` |
+| `connect [connector]` | Get a link to connect a source, for example `connect Jira` | any |
+| `mcp install --client <name>` | Add PipesHub to an MCP client config, with no token in it | none |
+
+`pipeshub auth set`, `auth import` and `auth add` do not exist on purpose: they exit with code 2 and point you to `pipeshub login`.
+
+### search
+
+```bash
+pipeshub search "vacation policy" --limit 5
+pipeshub search "release checklist" --kb <collectionId> --text
+pipeshub search "incident review" --offset 10
+```
+
+`--app <id>` limits results to one connector and `--kb <id>` to one collection. Both can repeat. Get the ids from `pipeshub sources`. `--limit` takes 1 to 100 (default 10). Pass the `nextOffset` from a previous result as `--offset` to get the next page.
+
+### ask
+
+```bash
+pipeshub ask "What is our refund window?"
+pipeshub ask "And for annual plans?" --conversation <conversationId>
+```
+
+`--conversation` continues an earlier conversation. An answer with no citations exits with code 6.
+
+### get
+
+```bash
+pipeshub get <recordId> --max-chars 5000
+pipeshub get <recordId> --out ./contract.pdf
+pipeshub get <recordId> --as pdf --out ./notes.pdf
+```
+
+Without `--out`, `get` prints the record's text, cut to `--max-chars` (default 2000). Binary content cannot be printed; use `--out <path>` to save it. `--as <format>` asks the server to convert the file first.
+
+### collection create, upload and status
+
+```bash
+pipeshub collection create "Design docs"
+pipeshub upload <collectionId> ./docs ./README.md
+pipeshub status <collectionId>
+```
+
+`upload` walks folders. Inside a folder it skips files and folders whose names start with a dot, and symbolic links. Files with an unsupported extension are skipped and listed under `skipped`. Indexing runs in the background; use `status` to follow it. `upload` exits with code 1 if any file failed.
+
+### connect
+
+```bash
+pipeshub connect Jira --text
+```
+
+Prints the page where you connect a source; the CLI writes nothing. With a name (matched case-insensitively), the link opens that connector. The JSON result has `url` (your personal connectors page) and `adminUrl` (connect for the whole organization). Check the result later with `pipeshub sources`.
+
+### mcp install
+
+```bash
+pipeshub login --url https://pipeshub.example.com
+pipeshub mcp install --client claude-code --dry-run
+pipeshub mcp install --client claude-code
+```
+
+`--client` takes `claude-code`, `cursor`, `codex`, `gemini` or `claude-desktop`. Sign in first: `mcp install` needs an instance and a credential.
+
+The entry runs the local stdio server, `npx -y @pipeshub-ai/mcp@>=4.7.0 start --server-url <origin>`, which reads the `pipeshub login` sign-in. No token is written into the client's config.
+
+| Client | What `mcp install` does |
+|---|---|
+| `claude-code` | Runs `claude mcp add --scope user pipeshub -- npx ...` |
+| `codex` | Runs `codex mcp add pipeshub -- npx ...` |
+| `gemini` | Runs `gemini mcp add pipeshub -- npx ...` |
+| `cursor` | Adds `mcpServers.pipeshub` to `~/.cursor/mcp.json` |
+| `claude-desktop` | Adds `mcpServers.pipeshub` to `claude_desktop_config.json` (macOS and Windows only) |
+
+`--dry-run` shows what would change and changes nothing. `--force` replaces an existing `pipeshub` entry. Restart the client afterwards.
+
+### init-qm
+
+```bash
+pipeshub init-qm ./qm-bundle
+```
+
+Writes the QM bundle into the directory. `--force` overwrites files that already exist. See [QM](/mcp/qm).
+
+## Options
+
+| Option | Applies to | Meaning |
+|---|---|---|
+| `--json` | all | JSON output (default) |
+| `--text` | all | Human-readable output where the command has it |
+| `--limit <n>` | `search` | Result limit, 1 to 100 (default 10) |
+| `--app <id>` | `search` | Only this connector; repeatable |
+| `--kb <id>` | `search` | Only this collection; repeatable |
+| `--offset <n>` | `search` | Skip `n` records (a previous `nextOffset`) |
+| `--conversation <id>` | `ask` | Continue a conversation |
+| `--as <format>` | `get` | Server-side conversion, for example `pdf` |
+| `--out <path>` | `get` | Write to a file instead of stdout |
+| `--max-chars <n>` | `search`, `get` | Cap snippet and content length (default 2000) |
+| `--insecure-http` | all | Allow `http://` to a host outside the private allowlist |
+| `--force` | `init-qm`, `mcp install` | Overwrite existing files, or replace an existing entry |
+| `--client <name>` | `mcp install` | The client to configure |
+| `--dry-run` | `mcp install` | Show what would change |
+| `--url <origin>` | `login` | The PipesHub instance to sign in to |
+| `--no-wait` | `login` | Print the code and link, then exit |
+| `--wait` | `login` | Finish a sign-in started with `--no-wait` |
+
+An unknown option is an error (exit code 2), not ignored.
+
+## Environment variables
+
+| Variable | Meaning |
+|---|---|
+| `PIPESHUB_TOKEN` | Bearer token, for example a personal access token. Used before a stored sign-in. |
+| `PIPESHUB_MCP_TOKEN` | Read when `PIPESHUB_TOKEN` is unset or blank |
+| `PIPESHUB_BASE_URL` | Instance origin, for example `https://pipeshub.example.com` |
+| `PIPESHUB_MCP_URL` | Read when `PIPESHUB_BASE_URL` is unset; its `/mcp` path is stripped |
+| `XDG_CONFIG_HOME` | Where `credentials.json` is stored (see above) |
+
+When no URL variable is set, the CLI uses the instance of the stored sign-in.
+
+## Cleartext HTTP
+
+The CLI sends credentials over `http://` only to private hosts: `localhost` and other loopback addresses, private IP ranges, `host.docker.internal`, single-label names such as Docker Compose service names, and names ending in `.local`, `.internal`, `.svc` or `.svc.cluster.local`. For any other host it refuses with exit code 2. Use `https://`, or pass `--insecure-http` if the host really is private.
+
+## Exit codes
+
+| Code | Meaning |
+|---|---|
+| `0` | OK |
+| `1` | Other error |
+| `2` | Usage error: bad command, option or value |
+| `3` | Not authenticated: no credential, or it expired or was refused |
+| `4` | Forbidden: the token lacks a scope or permission |
+| `5` | Rate limited |
+| `6` | No results, or an `ask` answer with no citations |
+
+## Related
+
+- [Local server (stdio)](/mcp/local-server): run the MCP server for a client
+- [MCP tools](/mcp/tools): the tools these commands call
+- [Personal access tokens](/developer/personal-access-tokens)
+- [QM](/mcp/qm)

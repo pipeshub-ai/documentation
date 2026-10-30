@@ -43,48 +43,50 @@ The GitHub toolset enables AI agents to interact with your GitHub account and or
 
 ## Available Tools
 
+Parameters marked `?` are optional.
+
 ### Repositories
 
-| Tool | Description |
-|------|-------------|
-| `create_repository` | Create a new repository (private by default) |
-| `get_repository` | Get repository details (description, stars, forks, default branch) |
-| `list_repositories` | List repositories for a user or org with pagination |
-| `search_repositories` | Search repositories by keyword, language, or stars |
-| `get_owner` | Get a user or organization profile |
+| Tool | Description | Parameters |
+|------|-------------|------------|
+| `create_repository` | Create a new repository (private by default) | `name`, `private?`, `description?`, `auto_init?` |
+| `get_repository` | Get repository details (description, stars, forks, default branch) | `owner`, `repo` |
+| `list_repositories` | List repositories for a user or org with pagination | `user`, `type?`, `per_page?`, `page?` |
+| `search_repositories` | Search repositories by keyword, language, or stars | `query`, `per_page?`, `page?` |
+| `get_owner` | Get a user or organization profile | `owner`, `owner_type?` |
 
 ### Issues
 
-| Tool | Description |
-|------|-------------|
-| `create_issue` | Create an issue with title, body, assignees, and labels |
-| `get_issue` | Get a single issue by number |
-| `list_issues` | List issues filtered by state, labels, or assignee |
-| `update_issue` | Update title, body, state, assignees, or labels |
-| `close_issue` | Close an issue |
-| `list_issue_comments` | Get all comments on an issue |
-| `get_issue_comment` | Get a single comment by ID |
-| `create_issue_comment` | Post a comment on an issue (supports Markdown) |
+| Tool | Description | Parameters |
+|------|-------------|------------|
+| `create_issue` | Create an issue with title, body, assignees, and labels | `owner`, `repo`, `title`, `body?`, `assignees?`, `labels?` |
+| `get_issue` | Get a single issue by number | `owner`, `repo`, `number` |
+| `list_issues` | List issues filtered by state, labels, or assignee | `owner`, `repo`, `state?`, `labels?`, `assignee?`, `per_page?`, `page?` |
+| `update_issue` | Update title, body, state, assignees, or labels | `owner`, `repo`, `number`, `title?`, `body?`, `state?`, `assignees?`, `labels?` |
+| `close_issue` | Close an issue | `owner`, `repo`, `number` |
+| `list_issue_comments` | Get all comments on an issue | `owner`, `repo`, `number` |
+| `get_issue_comment` | Get a single comment by ID | `owner`, `repo`, `number`, `comment_id` |
+| `create_issue_comment` | Post a comment on an issue (supports Markdown) | `owner`, `repo`, `number`, `body` |
 
 ### Pull Requests
 
-| Tool | Description |
-|------|-------------|
-| `create_pull_request` | Open a PR between head and base branches (supports draft mode) |
-| `get_pull_request` | Get PR details plus conversation comments |
-| `list_pull_requests` | List PRs filtered by state, head, or base |
-| `merge_pull_request` | Merge a PR using merge, squash, or rebase |
-| `get_pull_request_commits` | List commits in a PR with the last commit SHA |
-| `get_pull_request_file_changes` | Get per-file diffs with configurable context lines |
+| Tool | Description | Parameters |
+|------|-------------|------------|
+| `create_pull_request` | Open a PR between head and base branches (supports draft mode) | `owner`, `repo`, `title`, `head`, `base`, `body?`, `draft?` |
+| `get_pull_request` | Get PR details plus conversation comments | `owner`, `repo`, `number` |
+| `list_pull_requests` | List PRs filtered by state, head, or base | `owner`, `repo`, `state?`, `head?`, `base?`, `per_page?`, `page?` |
+| `merge_pull_request` | Merge a PR using merge, squash, or rebase | `owner`, `repo`, `number`, `commit_message?`, `merge_method?`, `sha?` |
+| `get_pull_request_commits` | List commits in a PR with the last commit SHA | `owner`, `repo`, `number` |
+| `get_pull_request_file_changes` | Get per-file diffs with configurable context lines | `owner`, `repo`, `number`, `fetch_full_content?`, `max_changes_per_file?`, `max_diff_lines?`, `context_lines?` |
 
 ### Code Review
 
-| Tool | Description |
-|------|-------------|
-| `list_pull_request_comments` | List line-level and file-level review comments |
-| `create_pull_request_review_comment` | Add a review comment on a specific file and line |
-| `get_pull_request_reviews` | Get PR reviews (approved, changes requested, comment) |
-| `create_pull_request_review` | Submit a review (approve, request changes, or comment) |
+| Tool | Description | Parameters |
+|------|-------------|------------|
+| `list_pull_request_comments` | List line-level and file-level review comments | `owner`, `repo`, `number` |
+| `create_pull_request_review_comment` | Add a review comment on a specific file and line | `owner`, `repo`, `number`, `body`, `commit_id`, `path`, `line?`, `side?` |
+| `get_pull_request_reviews` | Get PR reviews (approved, changes requested, comment) | `owner`, `repo`, `number` |
+| `create_pull_request_review` | Submit a review (approve, request changes, or comment) | `owner`, `repo`, `number`, `event?`, `body?` |
 
 ---
 
@@ -243,7 +245,7 @@ Authentication uses the same OAuth flow in either location:
 
 1. Go to the **Home** page.
 2. Next to **Agents**, click **+** to create a new agent.
-3. Give the agent a name, drag the **GitHub** toolset onto the canvas, connect it to the **Agent Core** node with your model and chat input/output, then create the agent.
+3. Give the agent a name, drag the **GitHub** toolset onto the canvas, connect it to the **Agent** node with your model and chat input/output, then create the agent.
 
 <div style={{ textAlign: "center" }}>
   <img

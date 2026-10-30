@@ -41,6 +41,16 @@ The PostgreSQL connector indexes schemas, tables, and row data from a PostgreSQL
 
 ---
 
+## Prerequisites
+
+- A PostgreSQL server that PipesHub can reach on its host and port. PipesHub can connect to a server on a private IP address unless the deployment has `PIPESHUB_BLOCK_PRIVATE_ADDRESSES` turned on. Link-local and cloud metadata addresses are always refused.
+- A database user with `CONNECT` on the database, `USAGE` on each schema, and `SELECT` on each table you want to sync. Keep it read-only (Step 1 shows the grants).
+- The server must accept a login from PipesHub's address (`pg_hba.conf`), and any firewall must allow it. The connection test gives up after 10 seconds.
+- SSL: PipesHub uses SSL when the server offers it (`sslmode=prefer`). To require it, use the connection string and add `?sslmode=require` (or `verify-ca`, `verify-full`). Accepted values are `disable`, `allow`, `prefer`, `require`, `verify-ca` and `verify-full`. The **Basic Auth** form has no SSL setting.
+- A PipesHub admin account for a team connector. PostgreSQL is also offered as a personal connector, which you set up for yourself.
+
+---
+
 ## Configuration Guide
 
 <AccordionGroup>
@@ -164,13 +174,13 @@ The dataset includes Formula 1 tables: `circuits`, `constructors`, `constructorr
 
 Use a single PostgreSQL connection string:
 
-```
+```text
 postgresql://pipeshub_user:<password>@localhost:5432/bird_mini_dev
 ```
 
 If your password contains special characters, URL-encode them:
 
-```
+```text
 @ -> %40
 : -> %3A
 / -> %2F
@@ -180,7 +190,7 @@ If your password contains special characters, URL-encode them:
 
 Example: `p@ss:word` becomes `p%40ss%3Aword`
 
-```
+```text
 postgresql://pipeshub_user:p%40ss%3Aword@localhost:5432/bird_mini_dev
 ```
 
@@ -210,8 +220,9 @@ Sync filters control what is pulled from PostgreSQL. Anything excluded by a filt
 |--------|-------------|---------|
 | **Schemas** | Pick the schemas to sync (e.g. `public`). Leave empty to sync all schemas. | All schemas |
 | **Tables** | Pick the tables to sync (e.g. `public.account`). Leave empty to sync all tables in the selected schemas. | All tables |
-| **Max rows per table** | Maximum number of rows to fetch from each table. | 1000 |
-| **Index tables** | When enabled, table content is indexed for AI search. When disabled, only schema metadata is indexed. | Enabled |
+| **Max Rows Per Table** | Maximum number of rows to fetch from each table. The highest value is 10000. | 1000 |
+| **Index Tables** | When enabled, table content is indexed for AI search. When disabled, only schema metadata is indexed. | Enabled |
+| **Enable Manual Indexing** | On: synced tables are not indexed until you choose them. Off: every synced table is indexed. | Off |
 
 <Info>
   Schemas and tables are dropdowns populated from your database after the credentials are saved — pick from the list rather than typing names by hand.
@@ -222,7 +233,7 @@ Sync filters control what is pulled from PostgreSQL. Anything excluded by a filt
 <Accordion title="Step 5: Choose a sync strategy and save" icon="rotate">
 
 1. Pick **Scheduled** or **Manual** sync.
-2. If scheduled, set the **Sync interval** (default: 60 minutes).
+2. If scheduled, set the **Sync interval** (default: 120 minutes).
 3. Click **Save** to enable the connector.
 
 <div className="text-center">
@@ -246,6 +257,19 @@ The connector verifies the connection, then runs the initial sync. Watch the **I
 </Accordion>
 
 </AccordionGroup>
+
+---
+
+## Permissions
+
+PostgreSQL grants and row-level security are not copied into PipesHub. Access is set for the whole connector, and it covers every schema, table and row it syncs:
+
+| Connector type | Who can find the synced tables and rows in PipesHub |
+|---|---|
+| **Team connector** | Everyone in your PipesHub organization. |
+| **Personal connector** | Only the user who created it. |
+
+What the database user can read decides what is synced. Anything it can `SELECT` in the schemas and tables you pick becomes searchable for the people above, so use the **Schemas** and **Tables** filters, or a narrower database user, to keep sensitive tables out.
 
 ---
 
@@ -292,7 +316,7 @@ Yes. Use the public host and port. Make sure:
 
 URL-encode the special characters in the password. Common replacements:
 
-```
+```text
 @ -> %40
 : -> %3A
 / -> %2F
@@ -306,7 +330,7 @@ So `p@ss:word` becomes `p%40ss%3Aword` in the connection string.
 
 <Accordion title="How do I keep large tables from blowing up the sync?">
 
-Use **Max rows per table** in sync filters to cap how many rows are fetched per table, narrow the **Schemas** and **Tables** filters to just what you need, and disable **Index tables** if you only want schema metadata in search.
+Use **Max Rows Per Table** in sync filters to cap how many rows are fetched per table, narrow the **Schemas** and **Tables** filters to just what you need, and disable **Index Tables** if you only want schema metadata in search.
 
 </Accordion>
 

@@ -1,15 +1,14 @@
 ---
-title: OpenAI
+title: "OpenAI Image Generation"
+sidebarTitle: "OpenAI"
 description: "Configure PipesHub to use OpenAI image generation models"
 ---
-
-# OpenAI Image Generation Configuration
 
 ![OpenAI Image Generation Configuration Interface](/images/ai-models/image-generation/OpenAI_ImageGenConfig.png)
 
 *The OpenAI image generation configuration screen in PipesHub where you'll enter your API Key and Model Name*
 
-PipesHub allows you to integrate with OpenAI's image generation models to enable AI-powered image creation in your workspace. Once configured, AI agents and workflows can generate images from text prompts using OpenAI's DALL-E and GPT-Image models.
+PipesHub allows you to integrate with OpenAI's image generation models to enable AI-powered image creation in your workspace. Once configured, AI agents and workflows can generate images from text prompts using OpenAI's GPT Image models.
 
 ## Required Fields
 
@@ -29,14 +28,19 @@ The API Key is required to authenticate your requests to OpenAI's image generati
 
 The Model Name field defines which OpenAI image generation model you want to use with PipesHub.
 
-**Available OpenAI image generation models:**
-- `gpt-image-1` - OpenAI's latest image generation model with high-quality, instruction-following image creation
-- `dall-e-3` - DALL-E 3, OpenAI's previous generation image model with strong prompt adherence
+**Example model names:** `gpt-image-2.5-sunburst`, `gpt-image-2.5-flare`.
 
-**How to choose a model:**
-- For the best quality and most accurate prompt following, select `gpt-image-1`
-- For broad availability and proven reliability, select `dall-e-3`
-- Check OpenAI's [image generation documentation](https://platform.openai.com/docs/guides/images) for the most up-to-date options
+OpenAI has shut down `dall-e-3` and `gpt-image-1`. If an existing configuration uses one of them, edit it to a current model. Check OpenAI's [image generation documentation](https://platform.openai.com/docs/guides/images) for the current options.
+
+## Optional Fields
+
+### Base URL (optional)
+
+The address of the OpenAI API. Leave it blank to use the official OpenAI API (`https://api.openai.com/v1`). Set it only when requests must go to another server that speaks the OpenAI API, such as a proxy in front of OpenAI.
+
+### Organization ID (optional)
+
+Your OpenAI organization ID, in the form `org-...`. When it is set, PipesHub sends it in the `OpenAI-Organization` header. Leave it blank to send no organization header.
 
 ## Configuration Steps
 
@@ -60,7 +64,7 @@ As shown in the image above:
 
 - If you encounter authentication errors, verify your API key is correct and has not expired
 - Ensure your OpenAI account has billing set up
-- Check that the model name is spelled correctly and matches exactly (e.g. `dall-e-3`, not `DALL-E-3`)
+- Check that the model name is spelled correctly and matches exactly (e.g. `gpt-image-2.5-sunburst`, not `GPT-Image-2.5-Sunburst`)
 - Verify your account has access to the image generation API (some API keys may have restrictions)
 
 For additional support, refer to the [OpenAI image generation documentation](https://platform.openai.com/docs/guides/images) or contact PipesHub support.

@@ -42,15 +42,18 @@ The Google Drive toolset enables AI agents to manage files and folders in Google
 
 ## Available Tools
 
-| Tool | What it does |
-|------|-------------|
-| `get_files_list` | Get list of files in Google Drive |
-| `get_file_details` | Get detailed information about a file |
-| `create_folder` | Create a new folder in Google Drive |
-| `search_files` | Search for files using query syntax |
-| `get_drive_info` | Get information about the user's Drive |
-| `get_shared_drives` | Get list of shared drives |
-| `get_file_permissions` | Get permissions for a specific file |
+Parameters marked `?` are optional.
+
+| Tool | What it does | Parameters |
+|------|-------------|------------|
+| `get_files_list` | Get list of files in Google Drive | `corpora?`, `drive_id?`, `order_by?`, `page_size?`, `page_token?`, `query?`, `spaces?`, `parent_folder_id?` |
+| `get_file_details` | Get detailed information about a file | `fileId?`, `acknowledge_abuse?`, `supports_all_drives?` |
+| `get_file_content` | Read text content of a Drive file | `file_id` |
+| `create_folder` | Create a new folder in Google Drive | `folderName?`, `parent_folder_id?` |
+| `search_files` | Search for files using query syntax | `query`, `page_size?`, `order_by?`, `page_token?` |
+| `get_drive_info` | Get information about the user's Drive | None |
+| `get_shared_drives` | Get list of shared drives | `page_size?`, `query?`, `page_token?` |
+| `get_file_permissions` | Get permissions for a specific file | `file_id`, `page_size?`, `page_token?` |
 
 ---
 
@@ -88,7 +91,7 @@ The Google Drive toolset enables AI agents to manage files and folders in Google
 
 ### Step 4: Get Redirect URI from PipesHub
 
-1. In PipesHub, go to **Settings > Toolsets**
+1. In PipesHub, go to **Workspace > Actions**
 2. Find **Drive** and click **"Configure"**
 3. Copy the **Redirect URI** shown in the dialog
 

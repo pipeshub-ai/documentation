@@ -1,0 +1,100 @@
+---
+title: "Skills"
+description: "Write or import reusable instructions that agents load when a request needs them, and attach them to an agent"
+icon: "book-open"
+---
+
+A skill is a set of written instructions an agent can load when a task calls for it. It has a name, a short description of when to use it, and a body in Markdown. It can also bundle reference files and scripts.
+
+The agent sees each skill's name and description. When a request matches a skill, the agent loads the full instructions and follows them.
+
+<Note>
+  Skills are a **Beta** feature and are on by default. An admin can turn them off in **Workspace → Labs** with **Enable Skills (Beta)**.
+</Note>
+
+## Where skills live
+
+Open **Workspace → Your skills**. The page lists two kinds of skills:
+
+- **Built-in skills** that ship with PipesHub, for example `pdf`, `docx`, `xlsx`, `pptx`, `data-analysis` and `data-visualization`. They are read-only. Every user sees them.
+- **Skills you created or imported.** Only you see and manage them. Other people's skills don't appear in your list.
+
+Each skill has a status: **Active**, **Disabled**, **Deprecated** or **Candidate**.
+
+## Create a skill
+
+1. Go to **Workspace → Your skills** and select **New skill**.
+2. Fill in:
+   - **Name**: lowercase letters, numbers and single hyphens, for example `pdf-table-extractor`.
+   - **Description**: what the skill does and when to use it. The agent reads this to decide whether to load the skill, so keep the "how" in the body.
+3. On the **Content** tab, write the instructions the agent should follow. Use Markdown headings, lists and code blocks.
+4. Optional: on the **Metadata** tab, set **Category**, **Subcategory**, **Tags**, **Related skills**, **Requires**, **License** and **Compatibility**.
+5. Select **Create**.
+
+**Name**, **Description** and the content are required. You can't use the name of a built-in skill.
+
+After the skill exists, open it again to use the **Resources** tab (select **Add resource** and give a **Path** and **Content**) and the **Versions** tab.
+
+## Import a skill
+
+An imported skill must contain a `SKILL.md` file. Its front matter needs at least a `name` and a `description`, followed by the instructions in Markdown:
+
+```markdown
+---
+name: summarize-pdf-report
+description: Use when the user asks for a summary of a PDF report.
+---
+
+1. Read the report.
+2. ...
+```
+
+To import:
+
+1. Go to **Workspace → Your skills** and select **Import**.
+2. Choose a source:
+   - **npm**: paste an npm, npx, yarn or pnpm install command, or just the package name. PipesHub parses the command and never runs it.
+   - **URL**: the address of a skill archive.
+   - **Upload**: a `.zip` or `.tar.gz` archive.
+3. Select **Preview** and check the name, description and resources.
+4. If the name is already taken by a built-in skill (for example `pptx`), change it in **Name**.
+5. Select **Import skill**.
+
+Text files in the archive become the skill's resources. Binary files are skipped, and the preview tells you how many. An archive can be at most 25 MB and hold at most 500 files.
+
+## Manage a skill
+
+Select **Manage** on a skill card to open it.
+
+- **Available to agents**: when off, the skill stays in your library but agents can't find or load it. For a built-in skill, only an admin can change this, and it applies to the whole organization.
+- **Versions**: every save creates a version. Select **Roll back** to restore an older one. Rolling back creates a new version with the old content, so the history is kept.
+- **Danger zone → Deprecate**: marks the skill as replaced. You can give a **Reason** and name the skill that **Replaced by** it.
+- **Danger zone → Delete**: removes the skill for good. If another skill lists it under **Requires**, you can't delete it; deprecate it instead. If agents use it, deleting it removes it from those agents.
+
+### Review candidates
+
+An agent can propose a new skill while it works. Proposed skills wait for review: select **Review candidates**, then **Approve**, **Edit & approve** or **Reject** each one.
+
+## Attach a skill to an agent
+
+1. Open the agent in the agent builder.
+2. In the palette, open **Skills** and drag a skill onto the canvas.
+3. Connect it to the **Skills** section of the Agent node.
+4. Save the agent.
+
+You can attach the same skill only once per agent. If a skill on the canvas is disabled or deprecated, the builder shows a warning. A disabled skill isn't available to the agent until you turn it back on.
+
+When you attach skills, the agent can find and load only those skills. When you attach none, the agent searches the whole skill library.
+
+## Use a skill in chat
+
+You don't call a skill yourself. Ask the agent for the task in plain words. If the request matches a skill's description, the agent loads that skill's instructions and any resources it needs, then follows them.
+
+To make a skill easier to pick up, write a description that says exactly which requests it is for.
+
+## Related
+
+- [Agents overview](/agent-guide/overview)
+- [Create an agent](/agent-guide/setup-guide)
+- [MCP servers in agents](/agent-guide/mcp-servers)
+- [API actions](/agent-guide/api-actions)

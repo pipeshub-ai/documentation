@@ -27,11 +27,15 @@ It works out of the box: with no provider configured, PipesHub uses free search 
 
 PipesHub has its own page reader, so you only need Firecrawl or Crawl4AI for sites the built-in reader can't get through, such as sites that block automated clients.
 
+<Frame caption="DuckDuckGo set as the default, with the other providers not configured yet.">
+  <img src="/images/product/workspace/web-search.png" alt="Web search providers with DuckDuckGo as default" />
+</Frame>
+
 ## Add a provider
 
 <Steps>
   <Step title="Open the settings">
-    As an admin, go to **Workspace → Web Search**.
+    As an admin, go to **Workspace → Web search**.
 
     <Frame caption="Workspace → Web Search, with SearXNG as the default and Serper and Crawl4AI configured.">
       <img src="/images/web-search/providers.png" alt="Web Search Configuration page listing providers with their status and Set as default buttons" style={{ width: 480, maxWidth: "100%" }} />
@@ -95,7 +99,7 @@ The Docker Compose setup includes both servers as optional profiles.
     ```
   </Step>
   <Step title="Start the stack and add the providers">
-    Run `docker compose up -d`. Then add SearXNG at `http://searxng:8080` and Crawl4AI at `http://crawl4ai:11235` under **Workspace → Web Search**. For Crawl4AI, enter the same token as `CRAWL4AI_API_TOKEN`.
+    Run `docker compose up -d`. Then add SearXNG at `http://searxng:8080` and Crawl4AI at `http://crawl4ai:11235` under **Workspace → Web search**. For Crawl4AI, enter the same token as `CRAWL4AI_API_TOKEN`.
 
     <Frame caption="Crawl4AI takes its server address and the token from .env.">
       <img src="/images/web-search/crawl4ai-form.png" alt="Crawl4AI configuration panel with Server URL and API Token fields" />
@@ -120,7 +124,7 @@ PipesHub reads HTML, PDF (pages with a text layer), plain text, Markdown, CSV an
 
 ## Deep research
 
-In agent mode, the chat's **+** menu has a **Deep research** switch. It needs **Web Search** turned on. With it on, the agent:
+In agent mode, the chat's **+** menu has a **Deep research** switch. It needs **Web search** turned on. With it on, the agent:
 
 - splits the question into parts and searches them in parallel;
 - reads the best pages in full and checks key facts against two sources;
@@ -157,7 +161,7 @@ When a step fails, open it in the chat to see why. Common reasons:
 | Message | What to do |
 | --- | --- |
 | The search engines blocked the request | The free engines treat your server as a bot. Add a provider with an API key, or SearXNG. |
-| The search provider rejected its API key | Check the key under **Workspace → Web Search**. |
+| The search provider rejected its API key | Check the key under **Workspace → Web search**. |
 | The search provider's credits are used up | Add credits, or add another provider so search falls back to it. |
 | The site refused the request; it may need a sign-in | The site blocks automated readers or needs a login. Adding Firecrawl or Crawl4AI often gets past bot checks. Pages behind a login can't be read. |
 | That address isn't a public website | The page is on a private network and can't be read. |

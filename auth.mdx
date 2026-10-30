@@ -19,11 +19,11 @@ Authentication is the process of verifying a user's identity before granting acc
   </Card>
 </CardGroup>
 
-You can edit the authentication method and configure the respective credentials under the authentication page of settings in Company profie as shown in below image.
+Admins manage sign-in methods under **Workspace Settings** > **Authentication**. Click **Edit** to turn methods on or off. Use the settings (gear) icon on a method, such as Google or Microsoft, to enter its credentials.
 
 <img
-  src="/images/auth/authentication_settings.png"
-  alt="Auth methods"
+  src="/images/auth/authentication_settings-new.png"
+  alt="Authentication page listing sign-in methods"
   width="100%"
 />
 
@@ -63,19 +63,31 @@ Get credentials from Google Cloud console.
 
 </Tab>
 
-<Tab title="Microsoft/AzureAd">
+<Tab title="Microsoft">
   ## Microsoft Authentication Allow users to sign in with their Microsoft
-  accounts using OAuth 2.0.
+  accounts using OAuth 2.0. Sign-in with Azure AD is part of Microsoft sign-in.
+
+### For more info, refer to [Microsoft Configuration Guide](/auth/microsoft-azureAd).
 
 </Tab>
 
-  <Tab title="SAML SSO">
-    ## Enterprise single sign-on using Security Assertion Markup Language (SAML) protocol.
-    <Warning>
-      SAML configuration requires technical coordination between your application admin and the Identity Provider admin.
-    </Warning>
+<Tab title="SAML SSO">
+  ## Enterprise single sign-on using Security Assertion Markup Language (SAML)
 
-  </Tab>
+  <Note>SAML SSO is available in the Enterprise edition only.</Note>
+
+### For more info, refer to [SAML SSO](/auth/saml).
+
+</Tab>
+
+<Tab title="OAuth / OIDC">
+  ## Sign in with any OAuth 2.0 or OpenID Connect provider
+
+  <Note>Generic OAuth / OIDC sign-in is available in the Enterprise edition only.</Note>
+
+### For more info, refer to [OAuth / OIDC](/auth/oauth).
+
+</Tab>
 </Tabs>
 
 ## How sign-in protects accounts
@@ -88,8 +100,30 @@ These rules apply whichever methods you turn on.
 - **Locking after repeated failures.** After five wrong passwords or codes in a row, the account is locked for 24 hours and then unlocks by itself. The account owner is emailed when the lock is applied. While the lock lasts, sign-in shows the ordinary "incorrect" message, even for the right password or code, because a different message would tell a stranger that the account exists. The lock email is the only place the owner learns about it.
 
 <Note>
-  Sign-in steps are set up through the API (`POST /api/v1/orgAuthConfig/updateAuthMethod`); the settings page saves a single step. SAML SSO can't be one of several steps yet: a policy with more than one step that includes SAML is refused. Use SAML on its own, as a one-step sign-in. See [SAML SSO](/auth/saml).
+  Sign-in steps are set up through the API (`POST /api/v1/orgAuthConfig/updateAuthMethod`); the settings page saves a single step.
 </Note>
+
+## SAML SSO and OAuth / OIDC
+
+**SAML SSO** and **generic OAuth / OIDC** sign-in are available in the Enterprise edition only. The open-source edition offers password, one-time password, Google and Microsoft sign-in. Azure AD sign-in is part of Microsoft sign-in.
+
+If you move from an edition that had SAML or OAuth turned on to the open-source edition:
+
+- **Saved sign-in policies are rewritten once, at startup.** SAML and OAuth are taken out of every step, and a step left with no method is dropped. If the policy offers no password sign-in, password sign-in is added to the first step, so nobody is locked out.
+- **Your saved SAML and OAuth settings are kept** but not used.
+
+People who signed in only through SAML or OAuth have no password. Unless they also use Google, Microsoft or one-time password sign-in, they need to set one:
+
+- **With email (SMTP) set up:** they use **Forgot password** on the sign-in page. See [SMTP](/smtp).
+- **Without email:** whoever runs the server creates a single-use link and sends it to the person. The link expires after the same time as a Forgot password email.
+
+  ```bash
+  # Docker Compose
+  docker compose exec pipeshub-ai sh -c 'cd /app/backend && node dist/scripts/set-password-link.js person@example.com'
+
+  # Kubernetes (Helm): use your release's deployment name
+  kubectl exec deploy/<release>-pipeshub-ai -- sh -c 'cd /app/backend && node dist/scripts/set-password-link.js person@example.com'
+  ```
 
 ## Troubleshooting
 
@@ -100,6 +134,6 @@ If users encounter authentication issues:
 3. Confirm network connectivity to identity providers
 4. Validate certificate expiration dates
 5. Test authentication flow with a test account
-6. If someone is sure their password is right but is told it is incorrect, their account may be locked after five failed attempts. Ask them to look for the lock email; the account unlocks 24 hours after the lock was applied
+6. If someone is sure their password is right but is told it is incorrect, their account may be locked after five failed attempts. Ask them to look for the lock email; the account unlocks 24 hours after the lock was applied, or an admin can lift it sooner from the Users page (see [Unblocking Users](/user-management/user#unblocking-users))
 
 ## Next Steps

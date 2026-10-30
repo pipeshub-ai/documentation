@@ -19,8 +19,42 @@ Connectors are software components that **sync and index data** from external ap
 </Warning>
 
 <Note>
-  **When you want to use both Connector and Toolset:** In the Agent Builder add nodes from **Knowledge** (Collections, API Apps) for document search and context retrieval, and add nodes from **Tools** for performing actions. Connect both to your Agent Core so the agent can search context and take action in the same conversation.
+  **When you want to use both Connector and Toolset:** In the Agent Builder add nodes from **Knowledge** (Collections, API Apps) for document search and context retrieval, and add nodes from **Tools** for performing actions. Connect both to your Agent node so the agent can search context and take action in the same conversation.
 </Note>
+
+---
+
+## Setting up a connector
+
+Connectors for the whole organization are set up under **Workspace Settings** > **Connectors**. Use the **All**, **Configured** and **Not configured** tabs to filter the catalog, and click **Set up** on a card to start.
+
+<div style={{ textAlign: "center" }}>
+  <img
+    src="/images/product/workspace/connectors-list.png"
+    alt="Workspace connectors catalog with Set up buttons"
+    width="90%"
+  />
+</div>
+
+Connectors that sync only your own account are under **Your connectors** (the button at the top right of the page).
+
+<div style={{ textAlign: "center" }}>
+  <img
+    src="/images/connectors/common/personal_connectors_list-new.png"
+    alt="Personal connectors catalog under Your connectors"
+    width="90%"
+  />
+</div>
+
+The setup dialog has two tabs. On **Authenticate**, read the setup guides, enter an **Instance name** and choose the **Authentication method**, then click **Next** to go to **Configure records**. Each connector's page lists the fields it needs.
+
+<div style={{ textAlign: "center" }}>
+  <img
+    src="/images/product/connectors/connector-setup-dialog-confluence.png"
+    alt="Connector setup dialog for Confluence on the Authenticate tab"
+    width="90%"
+  />
+</div>
 
 ---
 
@@ -32,42 +66,35 @@ Our platform supports a wide range of connectors organized by ecosystem to help 
 
 ### Google Workspace
 
-| Connector        | Description |
-|------------------|-------------|
-| **Gmail**        | Access and manage email communications, create automated workflows |
-| **Google Calendar** | Sync events, create meetings, and manage scheduling |
-| **Google Drive** | File storage, sharing, and collaboration management |
-| **Google Docs**  | Document creation, editing, and collaboration |
-| **Google Sheets**| Spreadsheet data management and analysis |
-| **Google Slides**| Presentation creation and sharing |
-| **Google Forms** | Survey and form data collection |
-| **Google Meet**  | Video conferencing integration |
-| **Google Admin** | Workspace administration and user management |
-| **YouTube**      | Video content management and analytics |
+| Connector | Description |
+|-----------|-------------|
+| **[Gmail](/connectors/google-workspace/gmail/gmail)** | Sync email messages and attachments (team and personal) |
+| **[Google Drive](/connectors/google-workspace/drive/drive)** | Sync files and folders from Google Drive (team and personal) |
+
+Calendar, Docs, Sheets, Slides, Meet, and the other Google actions are [toolsets](/toolsets/overview) that let agents act in those apps. They are not connectors.
 
 ---
 
 ### Microsoft Ecosystem
 
-| Connector        | Description |
-|------------------|-------------|
-| **Outlook**      | Email and calendar management |
-| **OneDrive**     | Cloud file storage and synchronization |
-| **OneNote**      | Note-taking and knowledge management |
-| **Teams**        | Team collaboration and communication |
-| **SharePoint**   | Document management and team sites |
-| **Planner**      | Task and project management |
+| Connector | Description |
+|-----------|-------------|
+| **[Outlook](/connectors/microsoft-365/outlook)** | Email sync from Outlook mailboxes |
+| **[OneDrive](/connectors/microsoft-365/one-drive)** | Files and folders from users' OneDrive |
+| **[SharePoint](/connectors/microsoft-365/sharepoint)** | Document libraries and pages from SharePoint Online sites |
+
+Microsoft Teams is an agent [toolset](/toolsets/microsoft-365/teams), not a connector. There is no OneNote connector.
 
 ---
 
 ### Atlassian
 
-| Connector    | Description |
-|--------------|-------------|
-| **Jira Cloud** (team & personal) | Issue tracking, project management, and agile workflows |
-| **Jira Data Center** (team & personal) | Issue tracking and project management for self-hosted Jira |
-| **Confluence Cloud** | Team collaboration and knowledge base management |
-| **Confluence Data Center** | Team collaboration and knowledge base for self-hosted Confluence |
+| Connector | Description |
+|-----------|-------------|
+| **[Jira Cloud](/connectors/jira/jira)** | Issue tracking, project management, and agile workflows |
+| **[Jira Data Center](/connectors/jira/jira-data-center)** | Issue tracking and project management for self-hosted Jira |
+| **[Confluence Cloud](/connectors/confluence/confluence)** | Team collaboration and knowledge base management |
+| **[Confluence Data Center](/connectors/confluence/confluence-data-center)** | Team collaboration and knowledge base for self-hosted Confluence |
 
 ---
 
@@ -75,10 +102,11 @@ Our platform supports a wide range of connectors organized by ecosystem to help 
 
 | Connector | Description |
 |-----------|-------------|
-| **Slack** | Team messaging and collaboration |
-| **Zammad** | Open-source helpdesk and ticketing system |
+| **[Slack](/connectors/slack/slack)** (Slack Workspace and Slack) | Team messaging and collaboration |
+| **[Zammad](/connectors/zammad/zammad)** | Open-source helpdesk and ticketing system |
 | **[Zendesk](/connectors/zendesk/zendesk)** | Customer support and ticket management |
 | **[Zoom](/connectors/zoom/zoom)** | Past meetings, participants, and AI Companion meeting transcripts |
+| **[ServiceNow](/connectors/servicenow/servicenow)** | Knowledge base and service management records from ServiceNow |
 
 ---
 
@@ -94,30 +122,32 @@ Our platform supports a wide range of connectors organized by ecosystem to help 
 
 | Connector | Description |
 |-----------|-------------|
-| **Web** | Crawl and index publicly reachable pages and files from a website URL |
-| **RSS** | Subscribe to and sync items from public RSS and Atom feeds (optional full article text) |
+| **[Web](/connectors/web/web)** | Crawl and index publicly reachable pages and files from a website URL |
+| **[RSS](/connectors/rss/rss)** | Subscribe to and sync items from public RSS and Atom feeds (optional full article text) |
 
 ---
 
-### Local & network storage
+### Local storage and file shares
 
 | Connector | Description |
 |-----------|-------------|
-| **Local FS** | Index a folder on the connector host; set up under **Workspace Settings → Your Connectors**; optional desktop watcher in the Electron app |
-| **SMB** | Sync one Windows / Samba / NAS file share over SMB 2/3; team or personal |
+| **[Local FS](/connectors/local-fs/local-fs)** | Index a folder on the connector host; set up under **Workspace Settings → Your Connectors**; optional desktop watcher in the Electron app |
+| **[SMB](/connectors/smb/smb)** | Files and folders from one SMB 2 or SMB 3 network share |
 
 ---
 
 ### Cloud Storage & Infrastructure
 
-| Connector        | Description |
-|------------------|-------------|
-| **Amazon S3**    | Scalable object storage and data management |
-| **Microsoft Azure** | Cloud computing platform and services |
-| **Google Cloud Platform (GCP)** | Google's cloud infrastructure services |
-| **Box**          | Enterprise content management and collaboration |
-| **Dropbox**      | File synchronization and cloud storage |
-| **Nextcloud**    | Self-hosted file sync and share platform |
+| Connector | Description |
+|-----------|-------------|
+| **[Amazon S3](/connectors/s3/s3)** | Scalable object storage and data management |
+| **MinIO** | S3-compatible object storage |
+| **[Azure Blob Storage](/connectors/azure-blob/azure-blob)** | Containers and blobs from an Azure storage account |
+| **[Azure Files](/connectors/azure-files/azure-files)** | File shares from an Azure storage account |
+| **[Google Cloud Storage (GCS)](/connectors/gcs/gcs)** | Buckets and objects from Google Cloud Storage |
+| **[Box](/connectors/box/box)** | Enterprise content management and collaboration |
+| **Dropbox** ([Dropbox](/connectors/dropbox/dropbox_teams) and [Dropbox Personal](/connectors/dropbox/dropbox_personal)) | File synchronization and cloud storage |
+| **[Nextcloud](/connectors/nextcloud/nextcloud)** | Self-hosted file sync and share platform |
 
 ---
 
@@ -125,9 +155,9 @@ Our platform supports a wide range of connectors organized by ecosystem to help 
 
 | Connector | Description |
 |-----------|-------------|
-| **[GitHub](/connectors/github/github)** (GitHub and GitHub Teams) | Version control, code collaboration, issues, and pull requests |
+| **[GitHub](/connectors/github/github)** (GitHub Teams and Github) | Version control, code collaboration, issues, and pull requests |
 | **[GitLab](/connectors/gitlab/gitlab)** (GitLab and GitLab Personal) | Version control, code collaboration, and merge request tracking |
-| **Linear** | Modern issue tracking and project management |
+| **[Linear](/connectors/linear/linear)** | Modern issue tracking and project management |
 | **[Notion](/connectors/notion/notion)** (Notion and Notion Personal) | Pages, databases, and files — team (workspace members matched by email) or personal (only you) |
 
 ---
@@ -137,6 +167,7 @@ Our platform supports a wide range of connectors organized by ecosystem to help 
 | Connector | Description |
 |-----------|-------------|
 | **[Drupal Wiki](/connectors/drupal-wiki/drupal-wiki)** | Spaces, pages, and attachments from a self-hosted or cloud Drupal Wiki, with per-space permissions |
+| **[BookStack](/connectors/bookstack/bookstack)** | Shelves, books, chapters, and pages from a BookStack instance |
 
 ---
 
@@ -144,9 +175,8 @@ Our platform supports a wide range of connectors organized by ecosystem to help 
 
 | Connector | Description |
 |-----------|-------------|
-| **Airtable** | Flexible database and project management |
-| **MariaDB** | Tables and rows sync from a MariaDB database |
-| **PostgreSQL** | Schemas, tables, and rows sync from a PostgreSQL database |
+| **[MariaDB](/connectors/mariadb/mariadb)** | Tables and rows sync from a MariaDB database |
+| **[PostgreSQL](/connectors/postgres/postgres)** | Schemas, tables, and rows sync from a PostgreSQL database |
 
 ---
 
@@ -186,8 +216,8 @@ All connectors are built with enterprise-grade security in mind, supporting OAut
 
 The callback URL is displayed in PipesHub when configuring a connector:
 
-1. Go to **Settings > Connectors**
-2. Click **"Configure"** on the connector you want to set up
+1. Go to **Workspace Settings > Connectors** (or **Your connectors** for a personal connector)
+2. Click **Set up** on the connector you want to configure
 3. Copy the **Redirect URI** shown in the dialog
 4. Add it to your OAuth app's allowed redirect URIs in the service's developer console
 

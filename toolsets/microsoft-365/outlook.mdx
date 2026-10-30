@@ -41,32 +41,36 @@ The Outlook toolset enables AI agents to send, read, and manage emails, calendar
 
 ## Available Tools
 
+Parameters marked `?` are optional.
+
 ### Email Tools
 
-| Tool | Description |
-|------|-------------|
-| `send_email` | Send an email with subject, body, recipients, CC, and BCC |
-| `reply_to_message` | Reply to an existing email message |
-| `reply_all_to_message` | Reply-all to an email message |
-| `forward_message` | Forward an email to one or more recipients |
-| `search_messages` | Search or list emails using OData queries (`$search`, `$filter`, `$orderby`) |
-| `get_message` | Get the full details of a specific email by message ID |
-| `get_mail_folders` | List mail folders (Inbox, Sent Items, Drafts, custom folders) |
+| Tool | Description | Parameters |
+|------|-------------|------------|
+| `send_email` | Send an email with subject, body, recipients, CC, and BCC | `to_recipients`, `subject`, `body`, `body_type?`, `cc_recipients?`, `bcc_recipients?`, `attachment_record_ids?` |
+| `reply_to_message` | Reply to an existing email message | `message_id`, `comment` |
+| `reply_all_to_message` | Reply-all to an email message | `message_id`, `comment` |
+| `forward_message` | Forward an email to one or more recipients | `message_id`, `to_recipients`, `comment?` |
+| `search_messages` | Search or list emails using OData queries (`$search`, `$filter`, `$orderby`) | `search?`, `filter?`, `top?`, `orderby?` |
+| `get_message` | Get the full details of a specific email by message ID | `message_id` |
+| `get_mail_folders` | List mail folders (Inbox, Sent Items, Drafts, custom folders) | `top?` |
+| `list_message_attachments` | List attachments on an email message (id, name, content type, size) without downloading them | `message_id`, `top?` |
+| `stage_attachment_to_blob` | Download an Outlook attachment into PipesHub as a record, so other toolsets can use it by `record_id` | `message_id`, `attachment_id` |
 
 ### Calendar Tools
 
-| Tool | Description |
-|------|-------------|
-| `create_calendar_event` | Create a new calendar event with optional attendees, location, recurrence, and online meeting link |
-| `update_calendar_event` | Update an existing event (subject, time, attendees, location, recurrence, etc.) |
-| `delete_calendar_event` | Delete a calendar event |
-| `get_calendar_events` | Get calendar events within a date/time range |
-| `get_calendar_event` | Get details of a specific calendar event by event ID |
-| `search_calendar_events` | Search calendar events by keyword (subject, body, location) |
-| `get_recurring_events` | Get all recurring event series with their occurrences in a date range |
-| `get_recurring_events_ending` | Find recurring events whose series ends within a specified time frame |
-| `delete_recurring_event_occurrence` | Delete specific occurrences of a recurring event by date |
-| `get_meeting_transcripts` | Retrieve Teams meeting transcripts with speaker names and text |
+| Tool | Description | Parameters |
+|------|-------------|------------|
+| `create_calendar_event` | Create a new calendar event with optional attendees, location, recurrence, and online meeting link | `subject`, `start_datetime`, `end_datetime`, `timezone?`, `body?`, `location?`, `attendees?`, `recurrence?`, `is_online_meeting?` |
+| `update_calendar_event` | Update an existing event (subject, time, attendees, location, recurrence, etc.) | `event_id`, `subject?`, `start_datetime?`, `end_datetime?`, `timezone?`, `body?`, `location?`, `attendees?`, `is_online_meeting?`, `recurrence?` |
+| `delete_calendar_event` | Delete a calendar event | `event_id` |
+| `get_calendar_events` | Get calendar events within a date/time range | `start_datetime`, `end_datetime`, `top?` |
+| `get_calendar_event` | Get details of a specific calendar event by event ID | `event_id` |
+| `search_calendar_events` | Search calendar events by keyword (subject, body, location) | `search`, `top?` |
+| `get_recurring_events` | Get all recurring event series with their occurrences in a date range | `start_date?`, `end_date?`, `timezone?`, `top?` |
+| `get_recurring_events_ending` | Find recurring events whose series ends within a specified time frame | `end_before`, `end_after?`, `timezone?`, `top?` |
+| `delete_recurring_event_occurrence` | Delete specific occurrences of a recurring event by date | `event_id`, `occurrence_dates`, `timezone?` |
+| `get_meeting_transcripts` | Retrieve Teams meeting transcripts with speaker names and text | `join_url?`, `event_id?` |
 
 ---
 

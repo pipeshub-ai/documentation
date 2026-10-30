@@ -1,0 +1,141 @@
+---
+title: "Troubleshooting"
+description: "Fixes for common problems installing, starting and running a self-hosted PipesHub"
+icon: "wrench"
+---
+
+Run the commands on this page from the install directory (`./pipeshub` by default). If you changed `COMPOSE_PROJECT_NAME`, use that instead of `pipeshub-ai`.
+
+## First checks
+
+```bash
+# Are all services healthy?
+curl -fsS http://localhost:3000/api/v1/health/services
+
+# Container status and restarts
+docker compose -p pipeshub-ai ps
+
+# App logs
+docker compose -p pipeshub-ai logs -f pipeshub-ai
+
+# Logs of one data store
+docker compose -p pipeshub-ai logs --tail 40 mongodb
+```
+
+Replace `3000` with your `APP_PORT` if you changed it.
+
+## Install and start
+
+<AccordionGroup>
+  <Accordion title="White or blank screen after deploying to a server">
+    You are opening PipesHub over plain HTTP from a hostname. Browsers block features PipesHub needs unless the page is on HTTPS or `localhost`. Put a TLS-terminating reverse proxy in front of it and set the public HTTPS URL. See [Serving it over HTTPS](/deployment/overview#serving-it-over-https).
+  </Accordion>
+
+  <Accordion title="Cannot access the Docker socket">
+    Your user is not in the `docker` group. Either add it and log in again:
+
+    ```bash
+    sudo usermod -aG docker $USER && newgrp docker
+    ```
+
+    or run the installer with `sudo`.
+  </Accordion>
+
+  <Accordion title="Insufficient CPU cores">
+    The installer stops on fewer than 4 cores. Use a larger machine. See [System Requirements](/deployment/system-requirements).
+  </Accordion>
+
+  <Accordion title="Low RAM warning">
+    `slim` and `full` want a 16 GB-class machine. On an 8 GB machine, use the `eval` type:
+
+    ```bash
+    PIPESHUB_DEPLOY_TYPE=eval ./install.sh --reconfigure
+    ```
+  </Accordion>
+
+  <Accordion title="Health check did not pass in time">
+    The installer waits 420 seconds. The first start of a `slim` image downloads the embedding model, which can take longer on a slow connection. Wait a few minutes and run the health check above. To wait longer next time, set `HEALTH_WAIT_SECS`.
+  </Accordion>
+
+  <Accordion title="A container keeps restarting (exit 137)">
+    Exit code 137 means the container was killed, usually for running out of memory. Check it:
+
+    ```bash
+    docker inspect <container> --format 'exit={{.State.ExitCode}} oom={{.State.OOMKilled}}'
+    ```
+
+    Free memory, or move to the lighter `slim` type, which drops Kafka and Zookeeper: `./install.sh --reconfigure`. For MongoDB, raise `MONGO_CACHE_GB` and `MONGO_MEMORY_LIMIT` together.
+  </Accordion>
+
+  <Accordion title="MongoDB keeps restarting (exit 139)">
+    MongoDB 8 can crash on some newer host kernels. The installer normally detects this and fixes it. If not, set this in `.env` and run `./install.sh --upgrade`:
+
+    ```bash
+    MONGO_GLIBC_TUNABLES=glibc.pthread.rseq=1
+    ```
+
+    Do not delete the MongoDB volume to fix this. That destroys your data and does not fix the cause.
+  </Accordion>
+
+  <Accordion title="Port 3000 is already in use">
+    The installer moves to the next free port and prints the one it chose. To pick one yourself, set `PIPESHUB_PORT`.
+  </Accordion>
+
+  <Accordion title="The container cannot reach the internet">
+    Cloud AI models and most connectors need outbound access; local models do not. Test it:
+
+    ```bash
+    docker compose -p pipeshub-ai exec -T pipeshub-ai curl -s -o /dev/null -m 6 -w '%{http_code}\n' https://1.1.1.1/
+    ```
+
+    If `/etc/docker/daemon.json` contains `"iptables": false`, Docker is not routing container traffic. Remove that setting and restart Docker.
+  </Accordion>
+
+  <Accordion title="First-run setup stops with &quot;Scopes not allowed for this app: code:read&quot;">
+    `MCP_SCOPES` is set in `.env` without `code:read`. Add it, or remove the line to use the default. See [Upgrading to 1.0](/deployment/upgrade-to-1-0).
+  </Accordion>
+
+  <Accordion title="Services stop at startup after changing VECTOR_COLLECTION_STRATEGY">
+    That setting cannot be changed on an existing install, because the vectors are already stored in the old layout. Set it back.
+  </Accordion>
+</AccordionGroup>
+
+## Signing in and the API
+
+<AccordionGroup>
+  <Accordion title="Someone cannot sign in after upgrading to 1.0">
+    SAML and generic OAuth sign-in are not in the open-source edition. See [Authentication](/auth) for how those people set a password.
+  </Accordion>
+
+  <Accordion title="The right password is rejected">
+    After five wrong passwords or codes in a row, the account is locked for 24 hours, and sign-in shows the ordinary "incorrect" message. See [Authentication](/auth#how-sign-in-protects-accounts).
+  </Accordion>
+
+  <Accordion title="429 Too many requests">
+    A rate limit was reached. Wait for the number of seconds in the `Retry-After` header. If everyone behind a reverse proxy hits the limit at once, set `TRUST_PROXY`. See [Rate Limits and API Errors](/additional-resources/rate-limits-and-errors).
+  </Accordion>
+
+  <Accordion title="An API error has a requestId">
+    Search the app logs for it to find the cause:
+
+    ```bash
+    docker compose -p pipeshub-ai logs pipeshub-ai | grep <requestId>
+    ```
+  </Accordion>
+</AccordionGroup>
+
+## Indexing
+
+<AccordionGroup>
+  <Accordion title="Indexing is slow and the CPU is idle">
+    The app sizes indexing and parsing from its memory limit. A container held near its limit runs only a couple of documents at a time. Raise `APP_MEMORY_LIMIT` (and `APP_MEMSWAP_LIMIT` with it) if the machine has free memory. See [Environment Variables](/deployment/environment-variables#memory-and-databases).
+  </Accordion>
+
+  <Accordion title="Search is slow on a large index">
+    Qdrant slows down once the index no longer fits in `QDRANT_MEMORY_LIMIT` (default 6 GB). Raise it.
+  </Accordion>
+</AccordionGroup>
+
+## Still stuck
+
+Collect the output of the first checks above, then [contact us](/contact-us).

@@ -1,0 +1,99 @@
+---
+title: "Identity Forwarding"
+description: "Send who is asking to an AI gateway so it can apply per-user budgets, rate limits and model access"
+icon: "id-badge"
+---
+
+When PipesHub calls models through an AI gateway, every request normally arrives with the same API key, so the gateway cannot tell people apart. Identity forwarding adds the person behind each request (and, if you allow it, their groups) to the request headers. The gateway can then apply per-user or per-group budgets, rate limits and model access.
+
+Identity forwarding is available for models from these providers:
+
+- [LiteLLM Proxy](/ai-models/llm/litellm-proxy)
+- [OpenAI Compatible](/ai-models/llm/openai-compatible)
+- [OpenRouter](/ai-models/llm/openrouter)
+
+It is off until you turn it on for a connection.
+
+## Turn it on for a connection
+
+<Steps>
+  <Step title="Add the model">
+    Add a model from one of the providers above on the **AI Models** page.
+  </Step>
+  <Step title="Open Identity forwarding">
+    On the model's row, open the actions menu and choose **Identity forwarding**. The setting applies to every model in that connection.
+  </Step>
+  <Step title="Choose what to send">
+    Turn on **Forward user identity**, then choose a **Format**:
+    - **LiteLLM headers** sends LiteLLM's own identity headers (listed below).
+    - **Header template** sends the headers of a **Gateway preset**: Portkey, Helicone, Cloudflare AI Gateway or Azure API Management. Choose **Custom headers** to write your own.
+  </Step>
+  <Step title="Set a key for background work (optional)">
+    Indexing and extraction have no signed-in person. In **Key for background work**, you can give them their own gateway key, so their spend is budgeted apart from people's.
+  </Step>
+  <Step title="Check and save">
+    Click **Preview** to see what would be sent for you, then click **Save**.
+  </Step>
+</Steps>
+
+## What is sent
+
+### LiteLLM headers
+
+| Header | Value |
+|---|---|
+| `x-litellm-end-user-id` | The person's identifier (see [Identity policy](#identity-policy)), or a service identity for background work |
+| `x-litellm-tags` | `workload:<workload>`, `org:<org id>`, and one `group:<group id>` per forwarded group |
+| `x-pipeshub-workload` | What the call is for, such as `chat`, `agent`, `search` or `indexing` |
+| `x-pipeshub-user-groups` | The forwarded group IDs, when there are any |
+| `x-pipeshub-request-id`, `x-pipeshub-conversation-id` | Sent when the call has them |
+
+When a **Key for background work** is set, background calls use it as their `Authorization: Bearer` key.
+
+<Warning>
+In this format anyone who holds the gateway key can claim any identity. Limit the key's routes and network access on the gateway side.
+</Warning>
+
+### Gateway presets
+
+| Preset | Headers |
+|---|---|
+| Portkey | `x-portkey-metadata` (JSON with `_user`, `org_id`, `workload`, `group_ids`) |
+| Helicone | `Helicone-User-Id`, `Helicone-Property-Workload`, `Helicone-Property-Org`, `Helicone-Property-Groups` |
+| Cloudflare AI Gateway | `cf-aig-metadata` (JSON with `userid`, `org`, `workload`, `groups`) |
+| Azure API Management | `x-pipeshub-counter-key`, `x-pipeshub-org`, `x-pipeshub-user-groups` |
+
+### Custom headers
+
+With **Custom headers**, enter one header per line in **Header templates**, as `Header-Name: value`. A value can use these placeholders: `{{SUBJECT}}`, `{{EMAIL}}`, `{{GROUP_IDS}}`, `{{ORG_ID}}`, `{{WORKLOAD}}`, `{{REQUEST_ID}}`, `{{CONVERSATION_ID}}`, `{{AGENT_ID}}`. You can set up to 16 headers, each value up to 1,024 characters.
+
+For example:
+
+```text
+x-user: {{SUBJECT}}
+x-groups: {{GROUP_IDS}}
+```
+
+## Identity policy
+
+The identity policy decides what PipesHub may tell any gateway about the person asking. It applies to every connection that forwards identity. Open it with the **Identity policy** button on the **LLM** tab of the AI Models page.
+
+| Setting | What it does | Default |
+|---|---|---|
+| **Identify people by** | User ID, email address, or identity provider object ID | User ID |
+| **Include email address** | Fills the `{{EMAIL}}` placeholder of a custom header. Without it, `{{EMAIL}}` is empty. | Off |
+| **Include display name** | Adds the display name to what **Preview** shows. None of the formats above sends it. | Off |
+| **Hide identities behind a stable pseudonym** | The gateway sees an opaque ID instead of the real one. The mapping is not reversible. | Off |
+| **Forward group membership** | Lets the gateway apply per-group access and budgets | On |
+| **Only forward these groups** | One group ID per line. Empty forwards every group, up to the limit below. | Empty |
+| **Most groups to forward** | 1 to 500 | 50 |
+| **Refuse requests with no signed-in person** | An interactive call that cannot be tied to a person is refused instead of sent as the service | Off |
+| **Attribute search embeddings to the service** | Off: the person's budget pays for embedding their search query | Off |
+| **Service identity prefix** | Prefix of the identity used for work with no person, up to 64 characters | `svc:pipeshub` |
+
+Only chat, agent, search, search-query embedding and speech calls carry a person. Indexing, extraction, parsing and other background work, health checks and model discovery are sent as a service identity, such as `svc:pipeshub:indexing`.
+
+## Related
+
+- [AI Models overview](/ai-models/overview)
+- [LiteLLM Proxy](/ai-models/llm/litellm-proxy)

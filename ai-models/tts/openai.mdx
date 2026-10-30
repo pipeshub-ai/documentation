@@ -1,9 +1,8 @@
 ---
-title: OpenAI
+title: "OpenAI Text to Speech"
+sidebarTitle: "OpenAI"
 description: "Configure PipesHub to use OpenAI text-to-speech models"
 ---
-
-# OpenAI Text to Speech Configuration
 
 ![OpenAI TTS Configuration Interface](/images/ai-models/tts/OpenAI_TTSConfig.png)
 
@@ -40,6 +39,10 @@ The Model Name field defines which OpenAI TTS model you want to use with PipesHu
 - For the most natural and expressive speech, select `gpt-4o-mini-tts`
 - Check OpenAI's [TTS documentation](https://platform.openai.com/docs/guides/text-to-speech) for the most up-to-date options
 
+<Warning>
+OpenAI has deprecated `tts-1`, `tts-1-hd` and `gpt-4o-mini-tts` and lists January 6, 2027 as their shutdown date. PipesHub calls OpenAI's speech endpoint (`/v1/audio/speech`); the replacement OpenAI names, `gpt-realtime-2.1-mini`, does not support that endpoint. See OpenAI's [deprecations page](https://platform.openai.com/docs/deprecations).
+</Warning>
+
 ## Optional Fields
 
 ### Voice
@@ -64,6 +67,14 @@ Select the output audio format for generated speech (default: MP3).
 - **AAC** — good quality with broad device compatibility
 - **FLAC** — lossless, highest quality, larger file size
 - **WAV** — uncompressed, broad compatibility
+
+### Base URL (optional)
+
+The address of the OpenAI API. Leave it blank to use the official OpenAI API (`https://api.openai.com/v1`). Set it only when requests must go to another server that speaks the OpenAI API, such as a proxy in front of OpenAI.
+
+### Organization ID (optional)
+
+Your OpenAI organization ID, in the form `org-...`. When it is set, PipesHub sends it in the `OpenAI-Organization` header. Leave it blank to send no organization header.
 
 ## Configuration Steps
 

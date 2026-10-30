@@ -4,6 +4,92 @@ description: "Explore the APIs of the PipesHub Workplace AI platform with detail
 icon: "server"
 ---
 
+New to the API? Start with the [API Quickstart](/developer/api-quickstart).
+
+## Using the API
+
+- **Base URL:** your instance URL followed by `/api/v1`, for example `https://your-pipeshub-instance.com/api/v1`.
+- **Authentication:** send `Authorization: Bearer <token>` with a [personal access token](/developer/personal-access-tokens) or an [OAuth 2.0](/developer/oauth2) access token.
+- **Full reference:** every instance serves an interactive API reference at `/api/v1/docs` and the OpenAPI document at `/api/v1/docs/json`. Use it for every endpoint, field and response.
+- **Errors:** an error response has an `error` object with `code`, `message` and `requestId`. A missing or invalid token returns `401`; a token without the required scope returns `403`.
+
+## Common request bodies
+
+These examples cover the first calls most integrations make. Field names come from the OpenAPI document; see it for the optional fields.
+
+<AccordionGroup>
+
+<Accordion title="Create a knowledge base: POST /knowledgeBase">
+
+Needs `kb:write`. `kbName` is required.
+
+```bash
+curl -s -X POST "$PIPESHUB_URL/api/v1/knowledgeBase" \
+  -H "Authorization: Bearer $PIPESHUB_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"kbName": "Engineering handbook"}'
+```
+
+</Accordion>
+
+<Accordion title="Create a folder: POST /knowledgeBase/{kbId}/folder">
+
+Needs `kb:write`. `folderName` is required.
+
+```bash
+curl -s -X POST "$PIPESHUB_URL/api/v1/knowledgeBase/KB_ID/folder" \
+  -H "Authorization: Bearer $PIPESHUB_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"folderName": "Runbooks"}'
+```
+
+</Accordion>
+
+<Accordion title="Upload files: POST /knowledgeBase/{kbId}/upload">
+
+Needs `kb:upload`. A `multipart/form-data` request. Send each file as a `files` part (up to 1000 per request). Records are named after their files.
+
+```bash
+curl -s -X POST "$PIPESHUB_URL/api/v1/knowledgeBase/KB_ID/upload" \
+  -H "Authorization: Bearer $PIPESHUB_TOKEN" \
+  -F "files=@./deploy-guide.pdf" \
+  -F "files=@./oncall.md"
+```
+
+</Accordion>
+
+<Accordion title="Start a conversation: POST /conversations/create">
+
+Needs `conversation:chat`. `query` is required. Use `POST /conversations/stream` with a `chatMode` to stream the answer instead; see the [API Quickstart](/developer/api-quickstart).
+
+```bash
+curl -s -X POST "$PIPESHUB_URL/api/v1/conversations/create" \
+  -H "Authorization: Bearer $PIPESHUB_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"query": "What is our on-call rotation?"}'
+```
+
+</Accordion>
+
+<Accordion title="Create an agent: POST /agents/create">
+
+Needs `agent:write`. `name` is required.
+
+```bash
+curl -s -X POST "$PIPESHUB_URL/api/v1/agents/create" \
+  -H "Authorization: Bearer $PIPESHUB_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Support assistant",
+    "description": "Answers support questions from the help center",
+    "instructions": "Answer from the connected knowledge only and cite sources."
+  }'
+```
+
+</Accordion>
+
+</AccordionGroup>
+
 ## API Documentation
 
 ### Authentication Service

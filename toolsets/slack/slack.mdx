@@ -44,42 +44,47 @@ The Slack toolset enables AI agents to interact with your Slack workspace. Send 
 
 ## Available Tools
 
-| Tool | Description |
-|------|-------------|
-| `send_message` | Send a message to a channel |
-| `send_direct_message` | Send a direct message to a user |
-| `send_message_with_mentions` | Send a message with user mentions |
-| `send_message_to_multiple_channels` | Send a message to multiple channels |
-| `reply_to_message` | Reply to a specific message in a channel |
-| `update_message` | Update an existing message in a channel |
-| `delete_message` | Delete a message from a channel |
-| `schedule_message` | Schedule a message to be sent at a specific time |
-| `get_scheduled_messages` | Get scheduled messages |
-| `get_channel_history` | Get message history from a channel |
-| `get_unread_messages` | Get unread messages from a channel |
-| `get_thread_replies` | Get replies in a thread |
-| `get_message_permalink` | Get a permalink for a specific message |
-| `search_all` | Search messages, files, and channels |
-| `search_messages` | Search for messages in Slack |
-| `fetch_channels` | Fetch all conversations in the workspace |
-| `get_user_conversations` | Get all conversations for the authenticated user |
-| `get_user_channels` | Get all conversations that the user is a member of |
-| `get_channel_info` | Get information about a channel |
-| `get_channel_members` | Get the members of a channel |
-| `get_channel_members_by_id` | Get the members of a channel by ID |
-| `get_user_info` | Get information about a Slack user |
-| `get_users_list` | Get list of all users in the organization |
-| `resolve_user` | Resolve a Slack user ID to display name and email |
-| `get_user_groups` | Get list of user groups in the organization |
-| `get_user_group_info` | Get information about a specific user group |
-| `set_user_status` | Set or clear user status |
-| `add_reaction` | Add an emoji reaction to a message |
-| `remove_reaction` | Remove a reaction from a message |
-| `get_reactions` | Get reactions for a specific message |
-| `pin_message` | Pin a message to a channel |
-| `unpin_message` | Unpin a message from a channel |
-| `get_pinned_messages` | Get pinned messages from a channel |
-| `check_token_info` | Check Slack token information and available scopes |
+Parameters marked `?` are optional.
+
+| Tool | Description | Parameters |
+|------|-------------|------------|
+| `send_message` | Send a message to a channel | `channel`, `message`, `attachment_record_ids?` |
+| `send_direct_message` | Send a direct message to a user | `user`, `message`, `attachment_record_ids?` |
+| `send_message_with_mentions` | Send a message with user mentions | `channel`, `message`, `mentions?` |
+| `send_message_to_multiple_channels` | Send a message to multiple channels | `channels`, `message` |
+| `reply_to_message` | Reply to a specific message in a channel | `channel`, `message`, `thread_ts?`, `latest_message?`, `attachment_record_ids?` |
+| `update_message` | Update an existing message in a channel | `channel`, `timestamp`, `text`, `blocks?`, `as_user?` |
+| `delete_message` | Delete a message from a channel | `channel`, `timestamp`, `as_user?` |
+| `upload_file_to_channel` | Upload files to a Slack channel | `channel`, `filename?`, `file_content?`, `title?`, `initial_comment?`, `attachment_record_ids?` |
+| `schedule_message` | Schedule a message to be sent at a specific time | `channel`, `message`, `post_at` |
+| `get_scheduled_messages` | Get scheduled messages | `channel?` |
+| `get_channel_history` | Get message history from a channel | `channel`, `limit?`, `oldest?`, `latest?`, `inclusive?` |
+| `get_dm_history` | Get direct message history with a specific user | `user`, `limit?`, `oldest?`, `latest?`, `inclusive?` |
+| `get_unread_messages` | Get unread messages from a channel | `channel` |
+| `get_thread_replies` | Get replies in a thread | `channel`, `timestamp`, `limit?`, `oldest?`, `latest?`, `inclusive?` |
+| `get_message_permalink` | Get a permalink for a specific message | `channel`, `timestamp` |
+| `search_all` | Search messages, files, and channels | `query`, `limit?` |
+| `search_messages` | Search for messages in Slack | `query`, `channel?`, `with_user?`, `from_user?`, `count?`, `sort?`, `sort_dir?`, `after?`, `before?` |
+| `fetch_channels` | Fetch all conversations in the workspace | `types?`, `exclude_archived?` |
+| `get_user_conversations` | Get all conversations for the authenticated user | `types?`, `exclude_archived?`, `limit?` |
+| `get_user_channels` | Get all conversations that the user is a member of | `exclude_archived?`, `types?` |
+| `get_channel_info` | Get information about a channel | `channel` |
+| `get_channel_members` | Get the members of a channel | `channel` |
+| `get_channel_members_by_id` | Get the members of a channel by ID | `channel_id` |
+| `get_user_info` | Get information about a Slack user | `user` |
+| `get_users_list` | Get list of all users in the organization | `include_deleted?`, `limit?` |
+| `search_users` | Search Slack users by name | `name`, `include_bots?` |
+| `resolve_user` | Resolve a Slack user ID to display name and email | `user_id` |
+| `get_user_groups` | Get list of user groups in the organization | `include_users?`, `include_disabled?` |
+| `get_user_group_info` | Get information about a specific user group | `usergroup`, `include_disabled?` |
+| `set_user_status` | Set or clear user status | `status_text`, `status_emoji?`, `duration_seconds?` |
+| `add_reaction` | Add an emoji reaction to a message | `channel`, `timestamp`, `name` |
+| `remove_reaction` | Remove a reaction from a message | `channel`, `timestamp`, `name` |
+| `get_reactions` | Get reactions for a specific message | `channel`, `timestamp`, `full?` |
+| `pin_message` | Pin a message to a channel | `channel`, `timestamp` |
+| `unpin_message` | Unpin a message from a channel | `channel`, `timestamp` |
+| `get_pinned_messages` | Get pinned messages from a channel | `channel` |
+| `check_token_info` | Check Slack token information and available scopes | None |
 
 ---
 
@@ -313,7 +318,7 @@ Authentication uses the same OAuth flow in either location:
 
 1. Go to the **Home** page.
 2. Next to **Agents**, click **+** to create a new agent.
-3. Give the agent a name, drag the **Slack** toolset onto the canvas, connect it to the **Agent Core** node with your model and chat input/output, then create the agent.
+3. Give the agent a name, drag the **Slack** toolset onto the canvas, connect it to the **Agent** node with your model and chat input/output, then create the agent.
 
 </Accordion>
 
@@ -355,8 +360,8 @@ Listing tools (channel members, users, conversations) read every page Slack retu
 **Does the toolset work with Slack token rotation?**  
 Yes. If your Slack app has **token rotation** turned on, its sign-in expires about every 12 hours, and PipesHub renews it automatically before then.
 
-- If the agent says *"The Slack sign-in has expired. PipesHub renews it automatically, so try again in a few minutes."*, wait a few minutes and ask again. If it keeps happening, reconnect the Slack toolset in **Settings > Toolsets**.
-- If the agent says *"Slack did not accept the saved sign-in."*, Slack has refused the sign-in (for example, it was revoked or the app was reinstalled), and renewing can't fix it. Reconnect the Slack toolset in **Settings > Toolsets**.
+- If the agent says *"The Slack sign-in has expired. PipesHub renews it automatically, so try again in a few minutes."*, wait a few minutes and ask again. If it keeps happening, reconnect the Slack toolset in **Workspace > Actions**.
+- If the agent says *"Slack did not accept the saved sign-in."*, Slack has refused the sign-in (for example, it was revoked or the app was reinstalled), and renewing can't fix it. Reconnect the Slack toolset in **Workspace > Actions**.
 
 **How do I reply to a message?**  
 Ask to "reply to that message in thread" or "respond to the latest message in #engineering". The agent can reply in threads to keep conversations organized.

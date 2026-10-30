@@ -42,15 +42,17 @@ The Gmail toolset enables AI agents to send, read, and manage emails in Gmail.
 
 ## Available Tools
 
-| Tool | What it does |
-|------|-------------|
-| `send_email` | Send an email with subject, body, and recipients |
-| `reply` | Reply to an email message |
-| `draft_email` | Create a draft email |
-| `search_emails` | Search emails using Gmail search syntax |
-| `get_email_details` | Get details of a specific email |
-| `get_email_attachments` | Get attachments for a specific email |
-| `get_user_profile` | Get the authenticated user's Gmail profile |
+Parameters marked `?` are optional.
+
+| Tool | What it does | Parameters |
+|------|-------------|------------|
+| `send_email` | Send an email with subject, body, and recipients | `mail_to`, `mail_subject`, `mail_cc?`, `mail_bcc?`, `mail_body?`, `thread_id?`, `message_id?`, `attachment_record_ids?` |
+| `reply` | Reply to an email message | `message_id`, `mail_to`, `mail_subject`, `mail_cc?`, `mail_bcc?`, `mail_body?`, `thread_id?`, `attachment_record_ids?` |
+| `draft_email` | Create a draft email | `mail_to`, `mail_subject`, `mail_cc?`, `mail_bcc?`, `mail_body?`, `attachment_record_ids?` |
+| `search_emails` | Search emails using Gmail search syntax | `query`, `max_results?`, `page_token?` |
+| `get_email_details` | Get details of a specific email | `message_id` |
+| `get_email_attachments` | Get attachments for a specific email | `message_id` |
+| `get_user_profile` | Get the authenticated user's Gmail profile | `user_id?` |
 
 ---
 
@@ -113,7 +115,7 @@ The Gmail toolset enables AI agents to send, read, and manage emails in Gmail.
 
 ### Step 5: Get Redirect URI from PipesHub
 
-1. In PipesHub, go to **Settings > Toolsets**
+1. In PipesHub, go to **Workspace > Actions**
 2. Find **Gmail** and click **"Configure"**
 3. Copy the **Redirect URI** shown in the dialog
 

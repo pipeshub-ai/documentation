@@ -46,22 +46,25 @@ The Jira toolset enables AI agents to interact with your Jira workspace. Agents 
 
 ## Available Tools
 
-| Tool | Description | Type |
-|------|-------------|------|
-| `create_issue` | Create a new Jira issue | Action |
-| `update_issue` | Update an existing issue (summary, description, status, assignee, etc.) | Action |
-| `get_issue` | Get details of a specific issue | Search |
-| `get_issues` | Get issues from a project | Search |
-| `search_issues` | Search issues using JQL queries | Search |
-| `add_comment` | Add a comment to an issue | Action |
-| `get_comments` | Get comments for an issue | Search |
-| `get_projects` | Get all Jira projects | Search |
-| `get_project` | Get details of a specific project | Search |
-| `get_project_metadata` | Get project metadata (issue types, components) | Search |
-| `search_users` | Search users by name or email | Search |
-| `get_current_user` | Get current authenticated user info | Search |
-| `validate_connection` | Validate Jira connection status | Utility |
-| `convert_text_to_adf` | Convert plain text to Atlassian Document Format | Utility |
+Parameters marked `?` are optional.
+
+| Tool | Description | Type | Parameters |
+|------|-------------|------|------------|
+| `get_create_issue_fields` | Get the fields needed to create an issue for a project and issue type | Search | `project_key`, `issue_type_name` |
+| `create_issue` | Create a new Jira issue | Action | `project_key`, `summary`, `issue_type_name`, `description?`, `assignee_account_id?`, `assignee_query?`, `priority_name?`, `labels?`, `components?`, `parent_key?`, `custom_fields?` |
+| `update_issue` | Update an existing issue (summary, description, status, assignee, etc.) | Action | `issue_key`, `summary?`, `description?`, `issue_type_name?`, `assignee_account_id?`, `assignee_query?`, `reporter_account_id?`, `reporter_query?`, `priority_name?`, `labels?`, `components?`, `status?`, `custom_fields?` |
+| `get_issue` | Get details of a specific issue | Search | `issue_key` |
+| `get_issues` | Get issues from a project | Search | `project_key`, `days?`, `max_results?` |
+| `search_issues` | Search issues using JQL queries | Search | `jql`, `maxResults?` |
+| `add_comment` | Add a comment to an issue | Action | `issue_key`, `comment` |
+| `get_comments` | Get comments for an issue | Search | `issue_key` |
+| `get_projects` | Get all Jira projects | Search | None |
+| `get_project` | Get details of a specific project | Search | `project_key` |
+| `get_project_metadata` | Get project metadata (issue types, components) | Search | `project_key` |
+| `search_users` | Search users by name or email | Search | `query`, `max_results?` |
+| `get_current_user` | Get current authenticated user info | Search | None |
+| `validate_connection` | Validate Jira connection status | Utility | None |
+| `convert_text_to_adf` | Convert plain text to Atlassian Document Format | Utility | `text` |
 
 ---
 
@@ -276,7 +279,7 @@ Authentication uses the same OAuth flow in either location:
 
 1. Go to the **Home** page.
 2. Next to **Agents**, click **+** to create a new agent.
-3. Give the agent a name, drag the **Jira** toolset onto the canvas, connect it to the **Agent Core** node with your model and chat input/output, then create the agent.
+3. Give the agent a name, drag the **Jira** toolset onto the canvas, connect it to the **Agent** node with your model and chat input/output, then create the agent.
 
 <div className="text-center">
   <img
@@ -377,7 +380,7 @@ The Jira tile in **Your actions** now shows **Authenticated**. The toolset is co
 
 1. Go to the **Home** page.
 2. Next to **Agents**, click **+** to create a new agent.
-3. Give the agent a name, drag the **Jira** toolset onto the canvas, connect it to the **Agent Core** node with your model and chat input/output, then create the agent.
+3. Give the agent a name, drag the **Jira** toolset onto the canvas, connect it to the **Agent** node with your model and chat input/output, then create the agent.
 
 <div className="text-center">
   <img

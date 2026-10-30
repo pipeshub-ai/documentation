@@ -33,6 +33,15 @@ You can index a **single page** or use **recursive** mode to discover more pages
 
 ---
 
+## Prerequisites
+
+- **A site PipesHub can open without signing in.** The connector sends no login, cookies or API keys, so it only gets what the site shows to an anonymous visitor.
+- **A public address.** Pages on a private or internal network (for example `10.x.x.x`, `192.168.x.x`, or a `.local` name) are never fetched; they are listed as "This address is on a private or internal network, so it wasn't fetched." Redirects onto such an address are refused the same way.
+- **Permission to crawl the site.** By default the crawler identifies itself as `PipesHub/1.0` and follows the site's `robots.txt` (see **robots.txt** under Connector Workflow below).
+- **For a team connector, a PipesHub admin account.** Any user can create a personal Web connector for themselves.
+
+---
+
 ## Configuration setup
 
 <AccordionGroup>
@@ -156,7 +165,7 @@ After you finish configuring connector settings, click **Save Configuration**. T
 
 With **Respect robots.txt** on (the default), the connector reads each site's `robots.txt` once per sync and follows it the way the robots.txt standard (RFC 9309) describes:
 
-- Rules written for **PipesHub** by name (`User-agent: PipesHub`) apply if the site has them. Otherwise the rules for all crawlers (`User-agent: *`) apply. The requests themselves still carry a browser-like `User-Agent` header, so a site's server logs won't show the name PipesHub.
+- Rules written for **PipesHub** by name (`User-agent: PipesHub`) apply if the site has them. Otherwise the rules for all crawlers (`User-agent: *`) apply. Requests carry the `User-Agent` `Mozilla/5.0 (compatible; PipesHub/1.0; +https://docs.pipeshub.com/connectors/web)`. If you turn on **Identify as a web browser** (an advanced setting, off by default), they carry a browser's `User-Agent` instead, and `robots.txt` is still followed.
 - The most specific (longest) matching rule decides, and `Allow` wins a tie. The `*` and `$` wildcards are understood.
 - A `robots.txt` that is missing, or that the site refuses with a 4xx error other than 429, allows everything.
 - A `robots.txt` that can't be read (a 5xx error, a 429, or no answer within 10 seconds) means that site isn't crawled in this sync. Its stored pages are left as they are, and it is tried again on the next sync.

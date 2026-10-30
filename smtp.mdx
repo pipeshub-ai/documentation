@@ -4,8 +4,6 @@ description: "Configure email capabilities for authentication and notifications"
 icon: "envelope"
 ---
 
-# SMTP Configuration
-
 Your AI agent application requires SMTP configuration to enable email-based features like One-Time Password (OTP) authentication, password reset, and notifications.
 
 <Callout type="info">
@@ -19,72 +17,51 @@ When properly configured, your application can send automated emails to users fo
 - Password reset requests
 - Send invitations to the users to your organisation
 
-## Configuration Options
+## Configuring SMTP
 
-<Tabs>
-  <Tab title="During Onboarding">
-    ### Configuring SMTP During Onboarding
-    At the time of setting up your app for the first time onboarding configuration dialog will open automatically 
-  <Steps>
-    <Step title="Access the SMTP Configuration Step">
-        After completing the LLM, Storage, and Connector setup steps in the onboarding process, you will reach the SMTP configuration screen.
-    </Step>
-    <Step title="Fill in Required Information">
-        Enter the necessary SMTP details:
-        - **SMTP Host** (*required*) - The address of your email server (e.g., smtp.gmail.com)
-        - **Port** (*required*) - The port number for your SMTP server (Default: 587)
-        - **From Email Address** (*required*) - The email address that will appear as the sender
-    </Step>
-    <Step title=" Add Authentication (if needed)">
-    If your email server requires authentication:
-      - **SMTP Username** (optional) - Username for SMTP authentication
-      - **SMTP Password** (optional) - Password for SMTP authentication
-    </Step>
-   <Step title="Complete Setup">
-      Click "Save" to save your configuration and proceed with the onboarding process.
-    </Step>
-   </Steps>
+Email is not part of the first-time onboarding steps. Admins set it up afterwards, or change it later, under **Workspace** > **Mail**.
 
-    <Callout type="warning">
-      You can skip this configuration during onboarding, but email-based features will not work until SMTP is properly configured.
-    </Callout>
+<Steps>
+  <Step title="Open Mail">
+    In the sidebar, open **Workspace Settings** and select **Mail**. This page is visible to admins only.
+  </Step>
+  <Step title="Open the SMTP settings">
+    Click the settings (gear) icon on the **SMTP** row. The **Configure SMTP settings** panel opens on the right.
+  </Step>
+  <Step title="Enter the settings">
+    - **SMTP host** (*required*) - The address of your email server (e.g., smtp.gmail.com)
+    - **Port** (*required*, 1 to 65535, default 587)
+    - **From email address** (*required*) - The address that appears as the sender
+    - **Username** and **Password** (optional) - For servers that need authentication
+
     <p align="center">
-    <img src="/images/smtp/smtp_onboarding.png" alt="Smtp in Onboarding setup" width="100%" />
+      <img src="/images/smtp/smtp_auth_config_dialog-new.png" alt="Configure SMTP settings dialog on the Mail page" width="100%" />
     </p>
+  </Step>
+  <Step title="Save">
+    Click **Save**. PipesHub connects to the server and signs in with these settings before it stores them. If the server accepts them, the Mail page shows SMTP as **Configured**.
 
-  </Tab>
-  <Tab title="From Settings">
-    ### Configuring SMTP in Settings
-    If you skipped SMTP configuration during onboarding or need to modify your settings later:
-    <Steps>
-    <Step title="Access Authentication Settings">
-        1. Navigate to the sidebar menu
-        2. Select "Settings"
-        3. Click on "Authentication" in the submenu
-        Scroll down to the "Server Configuration" section and find the SMTP configuration option.
-    </Step>
-    <Step title="Edit SMTP Settings">
-        Click the settings icon next to the SMTP configuration to open the configuration modal.
-    </Step>
-    <Step title="Update Configuration">
-        Enter or update the required fields:
-      - **SMTP Host** (*required*)
-      - **Port** (*required*, default 587)
-      - **From Email Address** (*required*)
-      - **Username** (optional)
-      - **Password** (optional)
-
-      Click **Save** to apply your new SMTP configuration.
-      If the Smtp box shows configured, then your smtp configuration has been successfully added.
-    </Step>
-    </Steps>
     <p align="center">
-    <img src="/images/smtp/smtp_auth_settings.png" alt="Smtp in Auth Settings page" width="100%" />
-    <img src="/images/smtp/smtp_auth_config_dialog.png" alt="Smtp in Auth Settings page" width="100%" />
+      <img src="/images/product/workspace/mail-settings.png" alt="Mail settings page with SMTP configured" width="100%" />
     </p>
+  </Step>
+</Steps>
 
-  </Tab>
-</Tabs>
+<Note>
+  There is no test-send button. Saving checks the connection and login only; it does not send an email. To confirm delivery, trigger a real email, for example invite a user or use **Forgot password**.
+</Note>
+
+### What Save checks
+
+The check gives up after 10 seconds. If the server refuses the settings, nothing is saved and the panel shows one of three fixed messages:
+
+| Message | Meaning |
+| --- | --- |
+| "The mail (SMTP) server rejected this username or password. Check them, then save again." | The server was reached but refused the login. |
+| "PipesHub couldn't reach the mail (SMTP) server at this host and port. Check them and that PipesHub can connect to the server, then save again." | The host or port is wrong, the server did not answer in time, or PipesHub has no network route to it. |
+| "The mail (SMTP) server didn't accept a connection with these settings. Check the host, port, username and password, then save again." | Any other refusal. |
+
+Port 465 uses TLS from the first byte. Other ports upgrade to TLS with STARTTLS when the server offers it.
 
 ## Required vs Optional Fields
 
@@ -126,7 +103,7 @@ For optimal SMTP configuration:
 
 - Use a dedicated email address for system notifications (e.g., noreply@yourcompany.com)
 - Check with your email provider for specific SMTP settings and requirements
-- Test your configuration by sending a test email after setup
+- Confirm delivery after setup by sending a real email, such as a user invitation
 - Use secure connections when possible (Port 465 for SSL or 587 for TLS)
 - Check spam filters if users report not receiving emails
 
@@ -141,3 +118,4 @@ For optimal SMTP configuration:
 3. Check if your email provider restricts automated sending
 4. Look for error messages in your application logs
 5. Test your SMTP server connection using external tools
+6. If Save fails, read the message in the panel (see What Save checks above)

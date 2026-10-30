@@ -1,210 +1,66 @@
 ---
-title: OpenRouter
-description: "Configure PipesHub Workplace AI to use OpenRouter for access to multiple LLM providers"
+title: "OpenRouter LLM"
+sidebarTitle: "OpenRouter"
+description: "Configure PipesHub to use chat models through OpenRouter"
 ---
 
-# OpenRouter Configuration
+OpenRouter is a hosted gateway that gives you many model providers through a single API key. PipesHub has a native OpenRouter provider: you enter only your API key and a model name. PipesHub sends requests to `https://openrouter.ai/api/v1`, so there is no endpoint field.
 
-![OpenAI Compatible Configuration Interface](/images/ai-models/llm/OpenAICompatible_LLMConfig.png)
+## Before you start
 
-*The OpenAI API Compatible configuration screen in PipesHub where you'll enter your OpenRouter endpoint URL, API Key, and Model Name*
-
-PipesHub allows you to integrate with OpenRouter, a unified API that provides access to multiple LLM providers through a single interface. OpenRouter simplifies working with various AI models by offering a consistent OpenAI-compatible API format.
-
-## What is OpenRouter?
-
-OpenRouter is an API aggregator that provides access to multiple LLM providers through a unified interface. It offers:
-- Access to 100+ models from various providers (OpenAI, Anthropic, Google, Meta, and more)
-- OpenAI-compatible API format
-- Simple pricing and billing across all providers
-- Automatic fallback and load balancing
-- No need to manage multiple API keys for different providers
-
-## Prerequisites
-
-Before configuring OpenRouter in PipesHub, ensure you have:
-1. An OpenRouter account (sign up at [openrouter.ai](https://openrouter.ai))
-2. Your OpenRouter API key (available in your OpenRouter dashboard)
-3. Selected a model from OpenRouter's model list
-
-## Getting Your API Key
-
-To obtain your OpenRouter API key:
-
-1. Visit [openrouter.ai](https://openrouter.ai) and create an account
-2. Navigate to your dashboard
-3. Go to the API Keys section
-4. Generate a new API key
-5. Add credits to your account for model usage
-
-Your API key will look like: `sk-or-v1-...`
+Create an account at [openrouter.ai](https://openrouter.ai/), add credit, and generate an API key under **Keys**.
 
 ## Required Fields
 
-### Endpoint URL *
-
-The Endpoint URL is OpenRouter's API endpoint.
-
-**Format:** `https://openrouter.ai/api/v1/`
-
-**Standard Configuration:**
-For most use cases, use: `https://openrouter.ai/api/v1/`
-
-**Important:** 
-- Always use the HTTPS protocol for secure communication
-- The endpoint URL must include the `/v1/` suffix
-- OpenRouter's API is cloud-based, so ensure your PipesHub instance has internet access
-
 ### API Key *
 
-The API Key field is your OpenRouter API key used to authenticate requests.
+Your OpenRouter API key. Keys begin with `sk-or-`.
 
-**Format:** `sk-or-v1-...`
-
-**Where to find it:**
-- Log in to your OpenRouter account at [openrouter.ai](https://openrouter.ai)
-- Navigate to the API Keys section in your dashboard
-- Copy your existing key or generate a new one
-
-**Security Note:** Keep your API key secure and never commit it to version control. OpenRouter charges based on usage, so protect your key to avoid unauthorized charges.
+Requests fail once your OpenRouter balance reaches zero.
 
 ### Model Name *
 
-The Model Name specifies which model from OpenRouter's catalog you want to use.
+The model identifier in OpenRouter's `provider/model` form, for example `anthropic/claude-sonnet-5.5`, `openai/gpt-6-luna` or `google/gemini-3.8-flash`. Use the exact identifier from the [OpenRouter models page](https://openrouter.ai/models), including the provider prefix.
 
-**Format:** `provider/model-name`
+## Optional Fields
 
-**Popular Examples:**
-- `openai/gpt-5.2`
-- `openai/gpt-4o-mini`
-- `meta-llama/llama-3.3-70b-instruct`
-- `deepseek/deepseek-chat`
-- `qwen/qwen-2.5-72b-instruct`
+### Model Friendly Name
 
-**Finding available models:**
-Browse the complete model list at [openrouter.ai/models](https://openrouter.ai/models) or query the API:
+A label shown in the PipesHub interface so you can tell several configurations apart. If you leave it blank, the model name is used.
 
-```bash
-curl https://openrouter.ai/api/v1/models \
-  -H "Authorization: Bearer YOUR_API_KEY"
-```
+### Context Length
 
-**Important:** Use the exact model identifier as shown on OpenRouter's model page (e.g., `openai/gpt-4o-mini`, not just `gpt-4o-mini`).
-
-## Optional Features
+The size of the model's context window, in tokens. Set it to the value shown for the model on OpenRouter. Leave it empty and PipesHub assumes 128,000.
 
 ### Multimodal
 
-Enable this checkbox if you're using a model that supports multimodal input (text + images).
-
-**When to enable:**
-- You're using a vision-language model
-- The model can process both text and images
-- You need to analyze documents with visual content
-
-**Example multimodal models on OpenRouter:**
-- `openai/gpt-4o-mini`
-- `anthropic/claude-4.5-sonnet`
-- `google/gemini-pro-2.5`
-
-**Note:** Check the model details on OpenRouter's model page to confirm multimodal support before enabling this feature.
+Turn this on if the model accepts images as well as text. It is on by default. Check the model's page on OpenRouter before you leave it on; if the model refuses images, the check run when you save the model fails.
 
 ### Reasoning
 
-Enable this checkbox if you're using a model with enhanced reasoning capabilities.
-
-**When to enable:**
-- You're using a reasoning-focused model
-- The model is designed for complex problem-solving tasks
-- Your use case involves mathematical, logical, or multi-step reasoning
-
-**Example reasoning models on OpenRouter:**
-- `deepseek/deepseek-r1`
-- `openai/gpt-5.2`
-
-**Note:** Reasoning models typically take longer to generate responses as they perform additional internal reasoning steps.
+Turn this on if the model reasons before it answers. It is on by default.
 
 ## Configuration Steps
 
-As shown in the image above:
+1. Open **Workspace Settings** → **AI Models** and click the **LLM** tab.
+2. Click **Configure** on the **OpenRouter** provider card.
+3. Enter your API Key and the Model Name.
+4. (Optional) Set the optional fields above.
+5. Click **Add Model**. PipesHub runs a health check before it saves the model.
 
-1. Select "OpenAI API Compatible" as your Provider Type from the dropdown
-2. Enter the OpenRouter Endpoint URL: `https://openrouter.ai/api/v1/`
-3. Enter your OpenRouter API Key (starts with `sk-or-v1-`)
-4. Specify the Model Name in `provider/model-name` format (e.g., `openai/gpt-4o-mini`)
-5. (Optional) Check "Multimodal" if using a vision-language model
-6. (Optional) Check "Reasoning" if using a reasoning-focused model
-7. Click "Add Model" to complete the setup
+## Forward user identity
 
-**All fields marked with an asterisk (*) are required to successfully configure the OpenRouter integration. You must complete these fields to proceed with the setup.**
-
-## Supported Models
-
-OpenRouter provides access to 100+ models from various providers.
-
-For the complete and up-to-date list of supported models, pricing, and capabilities, visit [openrouter.ai/models](https://openrouter.ai/models).
-
-## Cost and Usage Considerations
-
-**Managing OpenRouter costs:**
-- **Model Selection:** Different models have different pricing. Check [openrouter.ai/models](https://openrouter.ai/models) for current rates
-- **Credits:** Add credits to your OpenRouter account to ensure uninterrupted service
-- **Usage Monitoring:** Monitor your usage through the OpenRouter dashboard
-- **Cost Optimization:** Consider using smaller or more cost-effective models for routine tasks
-- **Rate Limits:** Be aware of rate limits for each model (varies by model and provider)
-
-**Pricing Examples (subject to change):**
-- GPT-5.2: Higher cost, best performance
-- GPT-4o-mini: Lower cost, good performance
-- Claude 4.5 Sonnet: Mid-tier pricing, excellent quality
-- Open-source models (Glm, Qwen): Often lower cost alternatives
-
-**Best Practices:**
-- Start with smaller models for testing
-- Use appropriate models for your use case (don't use gpt-5.2 when gpt-4o-mini suffices)
-- Monitor your spending through the OpenRouter dashboard
-- Set up billing alerts to avoid unexpected charges
+OpenRouter is one of the gateway providers that can receive who is asking with each request. See [Identity forwarding](/ai-models/identity-forwarding).
 
 ## Troubleshooting
 
-**Connection Issues:**
-- Verify the endpoint URL is exactly: `https://openrouter.ai/api/v1/`
-- Check that your PipesHub instance has internet access
-- Verify firewall rules allow outbound HTTPS connections
-- Test the connection manually:
-  ```bash
-  curl https://openrouter.ai/api/v1/models \
-    -H "Authorization: Bearer YOUR_API_KEY"
-  ```
+- **The key is rejected.** Check that the key is correct, has not been revoked, and that your OpenRouter account has credit.
+- **The model is not found.** Check the `provider/model` identifier on the [OpenRouter models page](https://openrouter.ai/models). A name without the provider prefix, such as `gpt-6-luna`, is not found.
+- **The check fails with a message about images.** Turn off **Multimodal**, or choose a model that reads images.
 
-**Authentication Errors:**
-- Verify your API key is correct and starts with `sk-or-v1-`
-- Check that your API key hasn't been revoked in the OpenRouter dashboard
-- Ensure your OpenRouter account has sufficient credits
-- Regenerate your API key if issues persist
+For the full list of health check messages, see [AI Models overview](/ai-models/overview#health-check-error-messages).
 
-**Model Not Found:**
-- Confirm the model name is in the correct format: `provider/model-name`
-- Verify the model is available on [openrouter.ai/models](https://openrouter.ai/models)
-- Check for typos in the model name
-- Some models may have availability restrictions or require special access
+## Related
 
-**Rate Limiting:**
-- OpenRouter enforces rate limits per model
-- Check your OpenRouter dashboard for rate limit details
-- Consider spreading requests across multiple models
-- Wait before retrying if you hit rate limits
-
-**Insufficient Credits:**
-- Check your OpenRouter account balance
-- Add credits through the OpenRouter dashboard
-- Set up auto-reload to prevent service interruptions
-- Monitor your usage to avoid unexpected credit depletion
-
-**Model Unavailable:**
-- Some models may be temporarily unavailable
-- Check OpenRouter's status page for service disruptions
-- Try an alternative model as a fallback
-- Contact OpenRouter support if a model is consistently unavailable
-
-For additional support, refer to the [OpenRouter documentation](https://openrouter.ai/docs) or contact PipesHub support.
+- [OpenRouter for embeddings](/ai-models/embedding/openrouter)
+- [Identity forwarding](/ai-models/identity-forwarding)

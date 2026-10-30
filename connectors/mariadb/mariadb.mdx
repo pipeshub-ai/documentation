@@ -43,6 +43,16 @@ The MariaDB connector indexes schema metadata, table contents from a MariaDB dat
 
 ---
 
+## Prerequisites
+
+- A MariaDB server that PipesHub can reach on its host and port. PipesHub can connect to a server on a private IP address unless the deployment has `PIPESHUB_BLOCK_PRIVATE_ADDRESSES` turned on. Link-local and cloud metadata addresses are always refused.
+- A database user with `SELECT` on the database you want to sync, allowed to log in from PipesHub's address (the host part of `'user'@'host'`). Keep it read-only (Step 1 shows the grants).
+- Any firewall between PipesHub and the server must allow the port (default `3306`).
+- The connector form has no SSL setting.
+- A PipesHub admin account. MariaDB is a team connector; there is no personal version.
+
+---
+
 ## Configuration Guide
 
 <AccordionGroup>
@@ -148,11 +158,12 @@ Sync filters control what is pulled from MariaDB. Anything excluded by a filter 
 | Filter | Description | Default |
 |--------|-------------|---------|
 | **Tables** | Pick the tables to sync (e.g. `customers`, `orders`). Leave empty to sync all tables in the database. | All tables |
-| **Max rows per table** | Maximum number of rows to fetch from each table. | 1000 |
-| **Index tables** | When enabled, table content is indexed for AI search. When disabled, only schema metadata is indexed. | Enabled |
+| **Max Rows Per Table** | Maximum number of rows to fetch from each table. The highest value is 10000. | 1000 |
+| **Index Tables** | When enabled, table content is indexed for AI search. When disabled, only schema metadata is indexed. | Enabled |
+| **Enable Manual Indexing** | On: synced tables are not indexed until you choose them. Off: every synced table is indexed. | Off |
 
 <Info>
-  Use **Max rows per table** to keep initial syncs fast on large tables, or to cap the amount of data exposed to your assistant.
+  Use **Max Rows Per Table** to keep initial syncs fast on large tables, or to cap the amount of data exposed to your assistant.
 </Info>
 
 </Accordion>
@@ -160,7 +171,7 @@ Sync filters control what is pulled from MariaDB. Anything excluded by a filter 
 <Accordion title="Step 4: Choose a sync strategy and save" icon="rotate">
 
 1. Pick **Scheduled** or **Manual** sync.
-2. If scheduled, set the **Sync interval** (default: 60 minutes).
+2. If scheduled, set the **Sync interval** (default: 120 minutes).
 3. Click **Save** to enable the connector.
 
 <div className="text-center">
@@ -184,6 +195,14 @@ The connector verifies the connection, then runs the initial sync. Watch the **I
 </Accordion>
 
 </AccordionGroup>
+
+---
+
+## Permissions
+
+MariaDB grants are not copied into PipesHub. Every table and row the connector syncs is visible to **everyone in your PipesHub organization**.
+
+What the database user can read decides what is synced. Use the **Tables** filter, or a narrower database user, to keep sensitive tables out.
 
 ---
 
@@ -211,7 +230,7 @@ Yes. Use the public host and port of your MariaDB server. Make sure the server a
 
 <Accordion title="How do I keep large tables from blowing up the sync?">
 
-Use **Max rows per table** in sync filters to cap how many rows are fetched per table, and use the **Tables** filter to only sync the tables you actually need.
+Use **Max Rows Per Table** in sync filters to cap how many rows are fetched per table, and use the **Tables** filter to only sync the tables you actually need.
 
 </Accordion>
 

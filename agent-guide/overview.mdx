@@ -26,13 +26,16 @@ icon: "robot"
 
 Agents are customizable AI assistants that can interact with your connected applications, search collections, and perform actions on your behalf. Unlike the standard chatbot assistant, agents are purpose-built for specific workflows and can be configured with:
 
-- **Reasoning Models** - Choose the AI model with reasoning capabilities that powers your agent
+- **Models** - Choose the AI model that powers your agent, or leave it empty to use your organization's default model
 - **Toolsets** - Connect to external services like Slack, Jira, Confluence, and more
+- **MCP servers** - Give the agent tools from MCP servers your organization has set up
+- **Skills** - Attach skills the agent can invoke
+- **API actions** - Use API actions that were created from an OpenAPI spec
 - **Knowledge sources** - Access indexed documents and collections
 - **Custom system prompts** - Define the agent's personality and behavior
 
 <Note>
-  **When you want to use both Connector and Toolset:** In the Agent Builder add nodes from **Knowledge** (Collections, API Apps) for document search and context retrieval, and add nodes from **Tools** for performing actions. Connect both to your Agent Core so the agent can search context and take action in the same conversation.
+  **When you want to use both Connector and Toolset:** In the Agent Builder add nodes from **Knowledge** (Collections, API Apps) for document search and context retrieval, and add nodes from **Tools** for performing actions. Connect both to your Agent node so the agent can search context and take action in the same conversation.
 </Note>
 
 ## Key Concepts
@@ -41,23 +44,37 @@ Agents are customizable AI assistants that can interact with your connected appl
 
 Agents are built using a visual drag-and-drop flow builder powered by ReactFlow. You create agents by:
 
-1. Adding an **Agent Core** node that defines the agent's basic configuration
-2. Connecting **Reasoning Model** nodes (LLM with reasoning enabled) to power the agent's intelligence
+1. Starting from the **Agent** node (labeled **Core** and **Orchestrator** on the canvas), which defines the agent's basic configuration
+2. Connecting **Model** nodes to power the agent's intelligence (optional; without one the agent uses your organization's default model)
 3. Adding **Toolset** nodes to give the agent access to external applications
-4. Connecting **Collection** nodes for indexed document search
-5. Configuring edges to connect all components together
+4. Adding **MCP servers**, **Skills** and **API actions** nodes where you need them
+5. Connecting **Knowledge** nodes (apps and collections) for indexed document search
+6. Connecting the chat **Input** and **Response** handles to the chat input and chat output nodes
 
-### Agent Core
+<div className="text-center">
+  <img
+    src="/images/agents/agent-builder-canvas-new.png"
+    alt="Agent builder canvas with the Agent node connected to chat input and output"
+    className="block mx-auto w-11/12"
+  />
+</div>
 
-The Agent Core is the central configuration for your agent:
+### Agent node
+
+The Agent node is the central configuration for your agent. Its sections are Model, Knowledge, Toolsets, Skills, MCP servers, Input and Response.
 
 | Field | Description |
 |-------|-------------|
-| **Name** | Display name for your agent |
-| **Description** | Brief description of what the agent does |
-| **Start Message** | Initial greeting when users start a conversation |
-| **Instruction** | Detailed instructions for the agent's behavior and capabilities |
-| **System Prompt** | Instructions that define the agent's behavior and personality |
+| **Name** | Display name for your agent (entered in the header) |
+| **System prompt** | Instructions that define the agent's behavior and personality |
+| **Instructions** | Detailed instructions for the agent's behavior and capabilities |
+| **Starting message** | Initial greeting when users start a conversation |
+| **Default reasoning effort** | Fallback reasoning effort used when the user does not choose one in chat ([Using chat](/using-chat)). Shown only when a connected model supports reasoning |
+| **Send user & organization context** | When off, the agent does not receive the user's name, email or organization in its system prompt |
+
+### Service agents
+
+When you create an agent you choose its type. A **user agent** is a personal agent where each person signs in to the toolsets. A **service agent** is shared with your whole organization and uses agent-level toolset credentials; set them with the key icon in the palette. A service agent searches knowledge with its creator's access (or a service account an administrator grants), so everyone who uses it sees results from what that identity can read. An existing agent can be converted with **Convert to service agent**; this cannot be undone.
 
 ### Toolsets
 
@@ -73,6 +90,14 @@ Toolsets are collections of tools that allow agents to interact with external ap
 <Info>
   Toolsets must be configured and authenticated before they can be used in agents. See [Toolsets Overview](/toolsets/overview) for setup instructions.
 </Info>
+
+### MCP servers, skills and API actions
+
+The palette also lists **MCP servers**, **Skills** and **API actions** (the last under Tools).
+
+- [Skills](/agent-guide/skills): reusable instructions you create or import under **Workspace → Your skills**.
+- [MCP servers](/agent-guide/mcp-servers): tools from MCP servers an admin adds under **Workspace → MCP servers**, or that you add under **Workspace → Your MCP servers**.
+- [API actions](/agent-guide/api-actions): operations from an OpenAPI spec, which an admin adds under **Workspace → Actions**.
 
 ### Collections
 
@@ -151,12 +176,14 @@ Yes! You can create a single OAuth app in the service's developer console and us
 
 Follow this pattern:
 
-1. **Agent Core** (required) - The center of your agent
-2. **Reasoning Model** (required) - Connect at least one AI model
+1. **Agent** node (required) - The center of your agent
+2. **Model** (optional) - Connect an AI model, or the agent uses your organization's default
 3. **Toolset nodes** (optional) - For actions like sending emails, creating tickets
-4. **Collection nodes** (optional) - For searching indexed data from Connectors
+4. **MCP servers, Skills and API actions** (optional) - For extra tools and reusable instructions
+5. **Knowledge nodes** (optional) - For searching indexed data from Connectors and collections
+6. **Chat input and chat output** - Connect them to the Input and Response handles
 
-All nodes must connect to the Agent Core. The agent will have access to all connected toolsets and collections.
+All nodes must connect through the Agent node. The agent will have access to all connected toolsets and knowledge sources.
 
 </Accordion>
 
@@ -166,15 +193,15 @@ Yes! While chatting with an agent, you can select:
 
 - **Specific Collections** - Query data from particular Connectors (e.g., search only Confluence or only Drive)
 - **Specific Toolsets** - Use particular tools (e.g., send via Gmail or create Jira ticket)
-- **Reasoning Model** - Choose which AI model to use for the query
+- **Model** - Choose which AI model to use for the query
 
-This gives you control at any time during the conversation to specify where the agent should search or which action to perform.
+This gives you control at any time during the conversation to specify where the agent should search or which action to perform. See [Using chat](/using-chat).
 
 </Accordion>
 
-<Accordion title="Can I connect multiple Reasoning Models to one agent?">
+<Accordion title="Can I connect multiple Models to one agent?">
 
-Yes! You can connect multiple Reasoning Model nodes to the Agent Core. 
+Yes! You can connect multiple Model nodes to the Agent node. 
 
 When chatting with the agent, users can select which model to use for specific queries from the chat interface. This allows:
 

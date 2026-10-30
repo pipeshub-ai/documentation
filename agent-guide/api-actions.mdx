@@ -1,0 +1,91 @@
+---
+title: "API actions"
+description: "Turn an internal REST API into agent actions from its OpenAPI spec, choose how PipesHub signs in, and use it in agents"
+icon: "code"
+---
+
+An API action turns a REST API into tools an agent can call. An admin uploads the API's OpenAPI spec, picks the operations agents may call, and sets how PipesHub signs in. Agents can then call those operations in chat.
+
+<Note>
+  API actions are off by default. An admin turns them on in **Workspace → Labs** with **Enable API actions**.
+</Note>
+
+## Add an API action (admin)
+
+1. Go to **Workspace → Actions**. The **API actions** section is above the app actions.
+2. Select **Add API action**.
+3. Under **OpenAPI spec**, drop a spec file, choose one, or paste it. The spec must be OpenAPI 3.0 or 3.1, in JSON or YAML. No spec at hand? Start from **Sample YAML** or **Sample JSON**.
+4. Select **Read spec**. If PipesHub skips parts of the spec, it lists them.
+5. Under **Details**, check:
+   - **Name**.
+   - **Description**. Agents read it to decide when to use the API.
+   - **Base URL**: where PipesHub sends requests. Operation paths are added to it. `localhost` means the PipesHub server itself, so use the address PipesHub reaches the API at.
+6. Under **Authentication**, choose how PipesHub signs in (see below).
+7. Under **Operations**, select the operations agents may call. Use **Reads only**, **All** or **None** to select quickly. Agents can call only the operations you select.
+8. Optional: under **Advanced**, set **Timeout (seconds)**, from 1 to 120.
+9. Select **Add API action**.
+
+Each operation is marked **Read**, **Write** or **Delete**.
+
+## Authentication
+
+PipesHub offers the sign-in methods the spec declares:
+
+| Method | What it uses |
+| --- | --- |
+| **No authentication** | Nothing. Only operations the spec marks as public work. |
+| **API key** | An API key. |
+| **Bearer token** | A token. |
+| **Username and password** | HTTP basic credentials. |
+| **OAuth 2.0 client credentials** | A client ID and secret. PipesHub signs in as the app, not as a person. |
+| **OAuth 2.0 sign-in** | Each sign-in goes through the provider. Register the **Redirect URL** PipesHub shows with the OAuth app, and enter the **OAuth app client ID** and **OAuth app client secret**. |
+
+With **No authentication**, operations that the spec says need credentials show **Needs credentials**. Select **Deselect them** to drop them.
+
+To change the sign-in method later, upload the spec again.
+
+### Shared or personal credentials
+
+Turn on **One shared credential** to set the credential once for every member. When it's off, each member connects their own. **OAuth 2.0 client credentials** always use one shared credential.
+
+## Connect your credential
+
+When an API action asks each member for a credential:
+
+1. Go to **Workspace → Your actions**. Your organization's API actions are listed in the **API actions** section.
+2. Select **Connect** on the API action and enter the credential, or select **Sign in** for OAuth 2.0 sign-in.
+3. Optional: select **Test connection**. It calls one read operation that needs no input and shows the response.
+
+The status shows **Connected**, **Not connected**, **No sign-in needed** or **Shared credential**.
+
+## Use API actions in an agent
+
+1. Open the agent in the agent builder.
+2. In the palette, open **Tools**. Your API actions are under **API actions**.
+3. Drag an API action onto the canvas and connect it to the Agent node.
+4. Save the agent.
+
+If you haven't connected a credential yet, connect it under **Actions** first.
+
+A service agent can use only API actions with **One shared credential** or **No authentication**.
+
+## What runs without asking
+
+By default:
+
+- **Read** operations run right away.
+- **Write** operations ask the user first. The chat shows **Needs your approval** with **Allow** and **Deny**.
+- **Delete** operations are blocked.
+
+## Edit or delete an API action
+
+On the API action's card, open the menu and select **Edit** or **Delete**. To pick from a newer version of the API, select **Replace spec** and read the new spec.
+
+Deleting an API action removes every saved credential for it. You can't delete an API action that an agent uses.
+
+## Related
+
+- [Agents overview](/agent-guide/overview)
+- [Toolsets overview](/toolsets/overview)
+- [MCP servers in agents](/agent-guide/mcp-servers)
+- [Skills](/agent-guide/skills)

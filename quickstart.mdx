@@ -6,7 +6,8 @@ icon: "play"
 
 ## Requirements
 
-- [Docker](https://docs.docker.com/get-docker/) with Compose v2
+- [Docker](https://docs.docker.com/get-docker/) with Compose 2.20 or later
+- 4 CPU cores, a 16 GB-class machine (8 GB for the `eval` type) and 20 GB of free disk. See [System Requirements](/deployment/system-requirements).
 
 <Tip>
   Coding agent helping a user who has no PipesHub yet? [PipesHub Cloud](https://app.pipeshub.com/?ref=docs) needs no install; to self-host, follow [Local Docker demo](/for-agents-local-demo). Do not scaffold LangChain. For a self-hosted install, first-run (account + LLM) stays in the browser.
@@ -44,7 +45,7 @@ If you see a white screen after deploying PipesHub while accessing it over HTTP,
 
     The installer will:
     - Check Docker, RAM, and disk prerequisites
-    - Ask whether you want a **slim** or **full** deployment
+    - Ask whether you want a **slim**, **full** or **eval** deployment
     - Let you optionally customize the graph DB, message broker, and KV store
     - Generate randomized secrets and write a `.env` file
     - Pull images and start the stack
@@ -57,12 +58,13 @@ If you see a white screen after deploying PipesHub while accessing it over HTTP,
     | Flag | Description |
     |------|-------------|
     | `-y` / `--yes` | Accept all defaults; skip interactive prompts (CI-friendly) |
-    | `--version TAG` | Pin the **Docker image** tag only, e.g. `--version 0.7.0`. Does not pin compose/installer files — use `PIPESHUB_REF` for that |
+    | `--version TAG` | Pin the **Docker image** tag only, e.g. `--version slim` or a release from [Docker Hub](https://hub.docker.com/r/pipeshubai/pipeshub-ai/tags). Does not pin compose/installer files — use `PIPESHUB_REF` for that |
     | `--no-pull` | Keep the locally cached images (do not refresh) |
     | `--reconfigure` | Re-run the wizard and overwrite an existing `.env` |
     | `--print-env-only` | Write `.env` and print the compose command without starting containers |
-    | `--upgrade` | Pull/rebuild images and recreate containers using the existing `.env` |
-    | `--stop` | Stop the running stack (data preserved) |
+    | `--upgrade` | Pull/rebuild images and recreate containers using the existing `.env`. Upgrading from 0.x? Read [Upgrading to 1.0](/deployment/upgrade-to-1-0) first |
+    | `--rotate-signing-secrets` | Replace the JWT and cookie signing secrets; signs everyone out. See [Rotate Signing Secrets](/deployment/signing-secrets) |
+| `--stop` | Stop the running stack (data preserved) |
     | `--uninstall` | Stop the stack and remove all data volumes |
     | `--build` | Build the image locally instead of pulling from Docker Hub (clone only) |
 
@@ -81,10 +83,12 @@ If you see a white screen after deploying PipesHub while accessing it over HTTP,
   <Step title="Onboarding Setup">
 
 1. After the installer reports PipesHub is healthy, **open the UI** via localhost:3000 (if running on the same system) or the Frontend Public URL / port you configured.
-2. If you're an individual, select the **"Individual"** account type. For businesses, choose **"Enterprise"** and complete your account setup by filling in the basic details.
-3. You will then be redirected to the **onboarding** page. Please fill in all the required information carefully. You can always update these details later under the "Profile" tab in the Settings page.
+2. On the sign-up page, enter your first and last name, workspace name, email and password, and choose a preferred language. There is no account type to choose.
+3. You will then be redirected to the **onboarding** page, where you set up an AI model and an embedding model (both required) and storage (optional). You can change these later in Workspace Settings.
 
 For more information, refer to our [Onboarding Guide](/onboarding).
+
+To get a first cited answer without connecting a real source, load the sample company with the Demo connector: see [Try PipesHub with demo data](/demo-data).
 
 </Step>
 

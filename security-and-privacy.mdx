@@ -1,0 +1,67 @@
+---
+title: "Security and privacy"
+description: "Where a self-hosted PipesHub keeps your data, how it protects credentials, and what data leaves your deployment"
+icon: "shield-halved"
+---
+
+This page describes a self-hosted PipesHub started with the Docker Compose files in the PipesHub repository. You run every service, so your data stays on infrastructure you control, except for the outbound calls listed under [What leaves your deployment](#what-leaves-your-deployment).
+
+## Where data is stored
+
+| Store | Default | What it holds |
+| --- | --- | --- |
+| MongoDB | Always runs | Users, organizations, password hashes, chat conversations, OAuth apps and tokens, notifications |
+| Graph database | Neo4j (ArangoDB optional) | Records, folders and collections, and who has permission to see each record |
+| Vector database | Qdrant | Embeddings of indexed content, used for search |
+| Key-value store | Redis (etcd optional) | Settings, AI model API keys, connector credentials and signing secrets, encrypted as described below |
+| Message broker | Redis Streams (Kafka optional) | Sync and indexing jobs in flight |
+| File storage | Local disk in the `pipeshub_root_local` volume (S3 or Azure Blob optional) | Uploaded files |
+
+## Secrets and credentials at rest
+
+- **Settings in the key-value store**, including AI model API keys, connector credentials and the token signing secrets, are encrypted with AES-256-GCM. The key is the SHA-256 hash of the `SECRET_KEY` environment variable. A few non-secret settings, such as service endpoints, are stored as plain text. Storage credentials, such as S3 keys, are encrypted on their own before they are saved.
+- **`SECRET_KEY`** is required: the services don't start without it. Set it to a long random value, keep it safe, and keep it the same across upgrades. Without it, PipesHub can't decrypt its stored settings.
+- **Passwords** are stored as bcrypt hashes. One-time sign-in codes are hashed the same way.
+- **OAuth and personal access tokens** are stored as hashes, not as the tokens themselves.
+
+## Sign-in sessions and tokens
+
+- After sign-in, the web app receives an access token and a refresh token, which it keeps in the browser's local storage.
+- Access tokens expire after 24 hours and refresh tokens after 30 days (720 hours) by default. Set `ACCESS_TOKEN_EXPIRY` and `REFRESH_TOKEN_EXPIRY` to change this.
+- The signing secrets are generated with 32 random bytes on first start and stored, encrypted, in the key-value store. To rotate them on an existing install, run `./install.sh --rotate-signing-secrets`. This signs everyone out.
+- For API and MCP access, use [personal access tokens](/developer/personal-access-tokens) or [OAuth 2.0 apps](/developer/oauth2). Both limit what a token can do with scopes.
+
+## Permission-aware search
+
+Search, chat and agents only use records the signed-in user is allowed to see. PipesHub checks the user's permissions in the graph database before it returns results. If it can't check them, it shows no results and says why, instead of showing everything.
+
+For a connected app, PipesHub syncs each item's permissions from the source and matches them to PipesHub users by email address. Use the same email for a connector account as for PipesHub. See [Connectors](/connectors/overview).
+
+## What leaves your deployment
+
+PipesHub makes outbound calls only for the services you set up, plus telemetry:
+
+- **AI models.** Chat sends your question and the content it retrieved to the chat model you configured. Indexing sends file content to your embedding model, and to your chat model to add summaries, topics and categories and to read images and scanned pages. If those models are hosted by a provider, that provider receives the content. Self-hosted models keep it on your network. See [AI Models](/ai-models/overview).
+- **Connectors.** Each connector calls the API of the app it syncs, with the credentials you gave it.
+- **Web search.** When chat or an agent searches the web, the query goes to the search provider in use, and page reads go to the sites in the results. See [Web Search](/web-search).
+- **Telemetry.** See below.
+- **GitHub star count.** The workspace menu fetches the PipesHub repository's star count from `api.github.com`. This request comes from the user's browser.
+
+The [demo data](/demo-data) is bundled with PipesHub. Loading it contacts no external service, though indexing it uses your AI models like any other data.
+
+### Telemetry
+
+Telemetry is on by default. Every 5 minutes, each PipesHub service sends usage metrics and product events to PipesHub's metrics collector over HTTPS.
+
+Some events identify people:
+
+- **Sign-up and sign-in** events include the user's email address, user ID and organization ID.
+- **Workspace creation** includes the admin's email address and full name.
+
+To turn telemetry off, set `TELEMETRY_COLLECTION_FLAG=false` in your `.env` file and restart PipesHub. No telemetry code runs in any service while it is off.
+
+## Related
+
+- [Personal access tokens](/developer/personal-access-tokens)
+- [OAuth 2.0 apps](/developer/oauth2)
+- [Deployment](/deployment/overview)

@@ -46,20 +46,26 @@ The Confluence toolset enables AI agents to interact with your Confluence worksp
 
 ## Available Tools
 
-| Tool | Description |
-|------|-------------|
-| `create_page` | Create a new page in a space |
-| `update_page` | Update page title and/or content |
-| `update_page_title` | Update only the page title |
-| `get_page_content` | Get content of a specific page |
-| `get_pages_in_space` | Get all pages in a space |
-| `get_child_pages` | Get child pages of a parent page |
-| `search_pages` | Search pages by title |
-| `search_content` | Full-text search across all content |
-| `get_spaces` | Get all accessible spaces |
-| `get_space` | Get details of a specific space |
-| `get_page_versions` | Get version history of a page |
-| `comment_on_page` | Add a comment to a page |
+Parameters marked `?` are optional.
+
+| Tool | Description | Parameters |
+|------|-------------|------------|
+| `create_page` | Create a new page in a space | `space_id`, `page_title`, `page_content` |
+| `update_page` | Update page title and/or content | `page_id`, `page_title?`, `page_content?` |
+| `update_page_title` | Update only the page title | `page_id`, `new_title` |
+| `get_page_content` | Get content of a specific page | `page_id`, `body_format?`, `include_comments?`, `include_attachments?` |
+| `get_pages_in_space` | Get all pages in a space | `space_id`, `sort_by?`, `limit?` |
+| `get_child_pages` | Get child pages of a parent page | `page_id`, `sort_by?`, `limit?` |
+| `search_pages` | Search pages by title | `title`, `space_id?`, `contributor?`, `creator?`, `mention?`, `last_modifier?`, `last_modified_after?`, `last_modified_before?`, `created_after?`, `created_before?`, `labels?`, `order_by?` |
+| `search_content` | Full-text search across all content | `query?`, `space_id?`, `content_types?`, `limit?`, `contributor?`, `creator?`, `mention?`, `last_modifier?`, `last_modified_after?`, `last_modified_before?`, `created_after?`, `created_before?`, `labels?`, `order_by?` |
+| `get_spaces` | Get all accessible spaces | None |
+| `get_space` | Get details of a specific space | `space_id` |
+| `get_page_versions` | Get version history of a page | `page_id` |
+| `comment_on_page` | Add a comment to a page | `page_id`, `comment_text`, `parent_comment_id?` |
+| `list_page_attachments` | List attachments on a Confluence page | `page_id`, `media_type?`, `limit?` |
+| `get_attachment_metadata` | Get metadata for a single Confluence attachment | `attachment_id` |
+| `download_attachment` | Download a Confluence attachment and register it as an artifact | `page_id`, `attachment_id` |
+| `search_users` | Search Confluence users by name, email, or accountId | `query`, `max_results?` |
 
 ---
 
@@ -294,7 +300,7 @@ Authentication uses the same OAuth flow in either location:
 
 1. Go to the **Home** page.
 2. Next to **Agents**, click **+** to create a new agent.
-3. Give the agent a name, drag the **Confluence** toolset onto the canvas, connect it to the **Agent Core** node with your model and chat input/output, then create the agent.
+3. Give the agent a name, drag the **Confluence** toolset onto the canvas, connect it to the **Agent** node with your model and chat input/output, then create the agent.
 
 <div className="text-center">
   <img
@@ -395,7 +401,7 @@ The Confluence tile in **Your actions** now shows **Authenticated**. The toolset
 
 1. Go to the **Home** page.
 2. Next to **Agents**, click **+** to create a new agent.
-3. Give the agent a name, drag the **Confluence** toolset onto the canvas, connect it to the **Agent Core** node with your model and chat input/output, then create the agent.
+3. Give the agent a name, drag the **Confluence** toolset onto the canvas, connect it to the **Agent** node with your model and chat input/output, then create the agent.
 
 <div className="text-center">
   <img

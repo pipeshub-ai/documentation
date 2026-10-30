@@ -1,0 +1,135 @@
+---
+title: "Kubernetes (Helm)"
+description: "Install PipesHub on Kubernetes with the Helm chart in the pipeshub-ai repository"
+icon: "dharmachakra"
+---
+
+The Helm chart lives in [`deployment/helm/pipeshub-ai`](https://github.com/pipeshub-ai/pipeshub-ai/tree/main/deployment/helm/pipeshub-ai) in the pipeshub-ai repository. Its README is the full reference; this page covers the common path.
+
+## Prerequisites
+
+- Kubernetes 1.24 or later
+- Helm 3.11 or later
+- A clone of the pipeshub-ai repository. Run the commands below from its root.
+- Optional: External Secrets Operator, if you keep secrets in an external store
+
+## Pick a preset
+
+| Preset | Values file | Use for | Footprint |
+|---|---|---|---|
+| Local | `values-local.yaml` | kind, minikube, k3d, k3s, Docker Desktop | One app pod, one each of MongoDB, Kafka, Redis, Qdrant and Neo4j, ReadWriteOnce storage |
+| AWS EKS | `values-eks.yaml` | Amazon EKS | gp3 volume per database, MongoDB ×3, Redis primary and replica, Qdrant ×3, Neo4j ×1 |
+| Cloud HA | `values-cloud.yaml` | GKE, AKS, or any cluster with ReadWriteMany storage | Two app pods with autoscaling. Not for EKS |
+
+For EKS, the repository has a one-command script and a step-by-step guide: [Deploy PipesHub on Amazon EKS](https://github.com/pipeshub-ai/pipeshub-ai/blob/main/docs/deployment/aws-eks.md).
+
+## Install
+
+<Steps>
+  <Step title="Build the chart dependencies">
+    MongoDB and Redis are vendored in the repository. This packages them locally and needs no registry login.
+
+    ```bash
+    helm dependency build ./deployment/helm/pipeshub-ai
+    ```
+  </Step>
+  <Step title="Install (local preset)">
+    Keep the release name `pipeshub-ai` so the Service is also named `pipeshub-ai`.
+
+    ```bash
+    helm upgrade --install pipeshub-ai ./deployment/helm/pipeshub-ai \
+      --namespace pipeshub-local --create-namespace \
+      -f ./deployment/helm/pipeshub-ai/values-local.yaml \
+      --set secretKey="$(openssl rand -hex 32)" \
+      --set mongodb.auth.rootPassword="change-me" \
+      --set redis.auth.password="change-me" \
+      --set neo4j.auth.password="change-me" \
+      --set qdrant.apiKey="$(openssl rand -hex 32)" \
+      --set "mongodb.auth.usernames[0]=pipeshub" \
+      --set "mongodb.auth.passwords[0]=$(openssl rand -hex 16)" \
+      --set "mongodb.auth.databases[0]=pipeshub"
+    ```
+
+    Add `--set image.tag=slim` for the smaller image, which downloads models on first use. On kind or minikube, load the image into the cluster first (`kind load docker-image` or `minikube image load`).
+  </Step>
+  <Step title="Open the UI">
+    ```bash
+    kubectl port-forward -n pipeshub-local svc/pipeshub-ai 3001:3001
+    ```
+
+    Open `http://localhost:3001`. Port 3001 serves the UI and the API.
+  </Step>
+</Steps>
+
+`deployment/helm/local-setup-kind-cluster.sh` creates a kind cluster, loads the image and installs the chart in one go.
+
+## Cloud install
+
+For `values-cloud.yaml`, also set the storage classes, the ingress and the public URL:
+
+```bash
+helm upgrade --install pipeshub-ai ./deployment/helm/pipeshub-ai \
+  --namespace pipeshub --create-namespace \
+  -f ./deployment/helm/pipeshub-ai/values-cloud.yaml \
+  --set global.storageClass=<block-class> \
+  --set persistence.storageClass=<rwx-class> \
+  --set ingress.className=<alb|gce|nginx> \
+  --set 'ingress.hosts[0].host=pipeshub.example.com' \
+  --set 'ingress.hosts[0].paths[0].path=/' \
+  --set 'ingress.hosts[0].paths[0].pathType=Prefix' \
+  --set config.frontendPublicUrl=https://pipeshub.example.com \
+  --set config.allowedOrigins=https://pipeshub.example.com \
+  --set secretKey="$(openssl rand -hex 32)" \
+  --set qdrant.apiKey="$(openssl rand -hex 32)" \
+  ...                                  # database passwords as in the local install
+```
+
+| Provider | `global.storageClass` (databases) | `persistence.storageClass` (shared app volume, ReadWriteMany) |
+|---|---|---|
+| GKE | `standard-rwo` | `filestore-csi` |
+| AKS | `managed-csi` | `azurefile-csi` |
+| On-premises | Any block storage | Any ReadWriteMany storage (NFS, CephFS) |
+
+The chart refuses to install more than one app replica unless the shared volume is ReadWriteMany.
+
+Only port 3001 is exposed through the ingress. If you use OAuth connectors or provider webhooks, also expose port 8088 on a second host and set `config.connectorPublicBackend` to its public URL. See the chart README for the values.
+
+## Required secrets
+
+- `secretKey` encrypts stored configuration. Generate it once and keep it.
+- `qdrant.apiKey` has no default. The chart refuses to render without it, and refuses the old shared defaults such as `api_key`. Generate one with `openssl rand -hex 32`.
+- `arango.auth.rootPassword` may not be `root`, if you use ArangoDB.
+
+On a later `helm upgrade` you can leave `qdrant.apiKey` unset; the chart reuses the key in the release Secret. `helm template`, `--dry-run=client`, Argo CD and Flux cannot read the cluster, so they need it every time.
+
+The chart can also read secrets from existing Kubernetes Secrets (`secretManagement.existingSecrets`) or from External Secrets Operator (`secretManagement.externalSecrets`).
+
+## Upgrade
+
+```bash
+helm upgrade pipeshub-ai ./deployment/helm/pipeshub-ai --reuse-values \
+  --set image.tag=<tag>
+```
+
+Before upgrading to 1.0, read [Upgrading to 1.0](/deployment/upgrade-to-1-0). A release installed without `qdrant.apiKey` ran with the public default key, and its first upgrade fails until you set a new one. The chart README has a no-downtime procedure for that change.
+
+## Other settings
+
+- **Telemetry:** `telemetry.collection.enabled: false` turns collection off.
+- **Behind an ingress:** the client IP is read from one proxy hop when the ingress is enabled. Set `trustProxy` to change that.
+- **Coding sandbox:** `config.sandboxMode` is `docker` by default and needs a Docker daemon (`sandbox.dind.enabled=true` adds one as a sidecar), or set it to `e2b`.
+- **External Redis:** set `redis.enabled=false` and `redis.external.*`. See the chart README for standalone and cluster modes.
+- **Any other environment variable:** pass it with `extraEnv`. See [Environment Variables](/deployment/environment-variables).
+
+## Check before production
+
+- Set every password, `secretKey` and `qdrant.apiKey` to strong values.
+- Configure ingress and TLS.
+- Enable `podDisruptionBudget` and `networkPolicy`.
+- Test the upgrade in a non-production namespace first.
+
+## Related
+
+- [System Requirements](/deployment/system-requirements)
+- [Backup and Restore](/deployment/backup-restore)
+- [Deployment Overview](/deployment/overview)

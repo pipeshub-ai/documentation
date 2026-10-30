@@ -33,7 +33,7 @@ Unlike **Connectors** (which index data for querying and search), **Toolsets** p
 </Info>
 
 <Note>
-  **When you want to use both Connector and Toolset:** In the Agent Builder add nodes from **Knowledge** (Collections, API Apps) for document search and context retrieval, and add nodes from **Tools** for performing actions. Connect both to your Agent Core so the agent can search context and take action in the same conversation.
+  **When you want to use both Connector and Toolset:** In the Agent Builder add nodes from **Knowledge** (Collections, API Apps) for document search and context retrieval, and add nodes from **Tools** for performing actions. Connect both to your Agent node so the agent can search context and take action in the same conversation.
 </Note>
 
 | Feature | Connectors | Toolsets |
@@ -54,9 +54,10 @@ attach anything.
 
 | Built-in capability | What the agent can do | Tools |
 |---------------------|-----------------------|-------|
-| Artifact Manager | Save and retrieve versioned output | 6 |
+| Artifact Manager | Save and retrieve versioned output | 7 |
 | Internal Tools | Ask the user a structured question with options | 1 |
-| Calculator | Arithmetic and working-day date maths | 5 |
+| Calculator | Exact arithmetic, date differences and text counts | 5 |
+| Date Calculator | Weekend and holiday dates for working-day maths | 3 |
 | Image Generator | Generate or edit an image from a prompt | 1 |
 
 Two of these change how you write a prompt. **Calculator** exists because language
@@ -65,7 +66,7 @@ should be told to use it. **Image Generator** needs an image model configured un
 **Workspace → AI Models → Image Generation** before it will work.
 
 One more is added only when the agent has knowledge attached to it. **Knowledge
-Graph** (4 tools) lets the agent search indexed content and walk the structure it
+Graph** (10 tools; a few are available only when the matching deployment setting is on) lets the agent search indexed content and walk the structure it
 sits in. An agent with no knowledge sources does not get it, because there would be
 nothing to search.
 
@@ -169,8 +170,8 @@ The Actions page filters by configuration state:
 
 <div className="text-center">
   <img
-    src="/images/toolsets/toolsets-page.png"
-    alt="Actions page"
+    src="/images/toolsets/toolsets-page-new.png"
+    alt="Actions page listing app actions to set up"
     className="block mx-auto w-11/12"
   />
 </div>
@@ -178,13 +179,13 @@ The Actions page filters by configuration state:
 ### Step 3: Configure a Toolset
 
 1. Find the toolset you want to configure under the **Not configured** filter
-2. Click the **"Configure"** button on the toolset card
-3. The **Configuration Dialog** will open
+2. Click **Set up** on the toolset card
+3. The **Action configuration** dialog opens
 
 <div className="text-center">
   <img
-    src="/images/toolsets/config-dialog.png"
-    alt="Toolset Configuration Dialog"
+    src="/images/toolsets/config-dialog-new.png"
+    alt="Action configuration dialog for Confluence"
     className="block mx-auto w-11/12"
   />
 </div>
@@ -251,7 +252,7 @@ Once a toolset is configured, it becomes available in the Agent Builder:
 </div>
 
 <Warning>
-  Only authenticated toolsets appear in the Agent Builder. If a toolset is missing, check its configuration status in **Settings > Toolsets**.
+  Only authenticated toolsets appear in the Agent Builder. If a toolset is missing, check its configuration status in **Workspace > Actions**.
 </Warning>
 
 ---
@@ -330,8 +331,8 @@ Basic Auth is used by toolsets like MariaDB. It works as follows:
 
 The callback URL is displayed in PipesHub when configuring a toolset:
 
-1. Go to **Settings > Toolsets**
-2. Click **"Configure"** on the toolset you want to set up
+1. Go to **Workspace > Actions**
+2. Click **Set up** on the toolset you want to configure
 3. Copy the **Redirect URI** shown in the dialog
 4. Add it to your OAuth app's allowed redirect URIs in the service's developer console
 
@@ -355,7 +356,7 @@ The required scopes depend on what actions your agents will perform. Check each 
 
 Toolsets appear in the Agent Builder but can only be used after authentication:
 
-1. Check **Settings > Toolsets** for the authentication status
+1. Check **Workspace > Actions** for the authentication status
 2. If not "Authenticated", click **"Configure"** and complete the OAuth flow
 3. If expired, click **"Reauthenticate"**
 4. Return to Agent Builder and the toolset will be available to drag and connect

@@ -1,0 +1,115 @@
+---
+title: "Upgrading to 1.0"
+description: "What to do before and after upgrading a PipesHub install from 0.x to 1.0: backups, one-way migrations, changed defaults and removed settings"
+icon: "arrow-up"
+---
+
+PipesHub 1.0 migrates the graph database one way, changes some defaults and removes some settings. Read this page before you upgrade. The full list of changes is in the [1.0.0 release notes](/changelog/platform/1.0.0).
+
+## Before you upgrade
+
+<Steps>
+  <Step title="Back up">
+    On first start, 1.0 migrates the graph database (Neo4j or ArangoDB) to a new model for hierarchy and permissions. **A release older than 1.0.0 cannot read the migrated graph**, so the only way back is a restore. Follow [Backup and Restore](/deployment/backup-restore) and keep `.env` with the backup.
+  </Step>
+  <Step title="Check how people sign in">
+    If your workspace used SAML or generic OAuth sign-in, read [Authentication](/auth) first. Some people may need to set a password.
+  </Step>
+  <Step title="Check MCP_SCOPES">
+    If `.env` or your Helm values set `MCP_SCOPES` explicitly, add `code:read`. Without it, first-run setup stops with "Scopes not allowed for this app: code:read". If you never set it, do nothing.
+  </Step>
+  <Step title="Kafka on a managed cluster">
+    Classification and entity extraction now use two new topics, `pipeline.classify` and `pipeline.entities`. The indexing service creates them at startup. If its Kafka user may not create topics, or your cluster needs more replicas, create them before upgrading. The Kafka container in Docker Compose needs nothing.
+  </Step>
+  <Step title="Helm: set a Qdrant API key">
+    The chart no longer has a default `qdrant.apiKey` and will not render without one. `arango.auth.rootPassword` may not be `root`. See [Kubernetes (Helm)](/deployment/kubernetes#required-secrets).
+  </Step>
+</Steps>
+
+## Upgrade
+
+### Docker Compose
+
+From the install directory:
+
+```bash
+./install.sh --upgrade
+```
+
+`--upgrade` reuses `.env`, pulls the image for `IMAGE_TAG` and recreates the containers. Data volumes are kept. If `IMAGE_TAG` is a rolling tag (`latest` or `slim`), this pulls the newest release.
+
+To move to a specific version instead, pass it. The installer saves it to `.env`:
+
+```bash
+./install.sh --upgrade --version <tag>
+```
+
+Image tags are listed on [Docker Hub](https://hub.docker.com/r/pipeshubai/pipeshub-ai/tags).
+
+If you installed with the one-command installer, the install directory still has the installer and Compose file from your first install. To get the current ones and upgrade in one step, run the one-command installer again from the directory that contains `pipeshub`:
+
+```bash
+curl -fsSL https://get.pipeshub.com/install | bash -s -- --upgrade
+```
+
+It downloads the files into `./pipeshub` (or `PIPESHUB_DIR`) and reuses the `.env` there.
+
+### Kubernetes
+
+```bash
+helm upgrade pipeshub-ai ./deployment/helm/pipeshub-ai --reuse-values \
+  --set image.tag=<tag> \
+  --set qdrant.apiKey="<your key>"
+```
+
+Use the chart from the repository at the release you are installing.
+
+### Watch the first start
+
+The connector service runs the graph migration when it starts. The first step renames edges and can stop the service if it fails; the rest run in the background with retries. Until they finish, people may see fewer records than they should, never more.
+
+```bash
+# from the install directory
+docker compose -p pipeshub-ai logs -f pipeshub-ai
+```
+
+## After you upgrade
+
+- **Run a full sync of each connector.** It writes access rules the old graph did not record.
+- **Review Collection roles.** `ORGANIZER` and `FILEORGANIZER` are now read as `READER`. Give `WRITER` to people who must still create folders or delete files.
+- **Review grants inside Collections.** A grant on a record no longer opens it for someone who has no access to its Collection.
+- **Check saved agents.** An agent whose knowledge source lists specific record groups or records now searches only those. To search the whole source again, select the whole source in the agent builder. An agent whose source filters cannot be read is not searched until you save it again.
+- **Re-issue tokens for code tools.** Code-graph routes and MCP tools need the new `code:read` scope. Personal access tokens and OAuth tokens issued before the upgrade do not have it.
+- **Rebuild code graphs.** Repositories indexed before 1.0 get a code graph only after they are re-indexed, or on the next start with `CODE_GRAPH_BACKFILL=true`.
+- **GitHub and GitLab test files.** "Index Test Files" is now off by default, on existing connectors too. Turn it on if you need test files in search.
+- **Apps that use `client_credentials`.** Existing apps keep working. A new app with that grant must name a service account, and you can bind existing ones from their manage panel; binding revokes their outstanding tokens.
+
+## Defaults that changed
+
+| Setting | Before | In 1.0 | How to change it |
+|---|---|---|---|
+| Focused reading (`TARGETED_RETRIEVAL`) | Off | On | Set `TARGETED_RETRIEVAL=false` in `.env` |
+| Timeline search (`TIMELINE_SUMMARIES`) | Off | On | Set `TIMELINE_SUMMARIES=false` in `.env` |
+| MCP servers for agents | Off | On | **Workspace → Labs → Enable MCP Servers**. A workspace that already saved this setting keeps its value. |
+| Neo4j writes (`NEO4J_EXPLICIT_TRANSACTIONS`) | Per query | One transaction, rolled back in full on failure | Set `NEO4J_EXPLICIT_TRANSACTIONS=false` |
+
+These stay off: `HIGH_ACCURACY_MODE` and the experimental knowledge-base push. See [Environment Variables](/deployment/environment-variables).
+
+## Removed
+
+- `DEFER_EXTRACTION`. It did nothing.
+- `SAML_SP_ENTITY_ID` no longer has any effect. You can leave it in `.env`.
+- The **Container Permission Filter** Labs setting.
+- Some API routes. `POST /connectors/:connectorId/filters` is deprecated in favour of `PUT /connectors/:connectorId/config/filters-sync`. See the [release notes](/changelog/platform/1.0.0) for the full list.
+
+## Rolling back
+
+Because the graph migration is one way, rolling 1.0 back to 0.10 means restoring the backup you took before upgrading: install the old version, then [restore](/deployment/backup-restore#restore). Rolling back on ArangoDB also needs a data cleanup; see [Upgrading and rolling back](https://github.com/pipeshub-ai/pipeshub-ai/blob/v1.0.0/docs/indexing-service.md#25-upgrading-and-rolling-back) in the indexing service guide.
+
+From a clone of the repository, `deployment/docker-compose/rollback.sh <tag>` moves `IMAGE_TAG` back and re-runs the upgrade. It changes the code only, not the data.
+
+## Related
+
+- [Backup and Restore](/deployment/backup-restore)
+- [Environment Variables](/deployment/environment-variables)
+- [Troubleshooting](/additional-resources/troubleshooting)

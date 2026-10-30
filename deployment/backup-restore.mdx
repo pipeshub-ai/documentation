@@ -1,0 +1,104 @@
+---
+title: "Backup and Restore"
+description: "Back up and restore every PipesHub data store on a Docker Compose install"
+icon: "database"
+---
+
+A Docker Compose install keeps its data in Docker volumes named `<project>_<volume>`. The project is `pipeshub-ai` unless `COMPOSE_PROJECT_NAME` in `.env` says otherwise.
+
+## What to back up
+
+| Volume | Holds | Present when |
+|---|---|---|
+| `mongodb_data` | MongoDB, the application database | Always |
+| `redis_data` | Cache, Redis Streams messages, and configuration when `KV_STORE_TYPE=redis` | Always |
+| `qdrant_storage` | Search vectors | Always |
+| `pipeshub_data` | The app's data directory, `/data/pipeshub` | Always |
+| `pipeshub_root_local` | App runtime files under `/root/.local` | Always |
+| `neo4j_data` | Graph: records, permissions, hierarchy | `DATA_STORE=neo4j` |
+| `arango_data` | Graph: records, permissions, hierarchy | `DATA_STORE=arangodb` |
+| `etcd_data` | Configuration | `KV_STORE_TYPE=etcd` |
+| `kafka_data`, `zookeeper_data`, `zookeeper_log` | Queued messages | `MESSAGE_BROKER=kafka` |
+| `.env` file | `SECRET_KEY` and database passwords | Always |
+
+<Warning>
+Back up `.env` with the volumes, and keep it as secret as the data. Stored settings are encrypted with `SECRET_KEY`, and the databases only accept the passwords they were created with. Volumes restored without the matching `.env` are not usable.
+</Warning>
+
+You do not need `pipeshub_hf_cache` (downloaded models) or `neo4j_logs`. The `slim` image downloads the embedding model again on first use.
+
+## Back up
+
+This method stops PipesHub so that every store is copied in a consistent state. It works for every backend. Plan for a few minutes of downtime.
+
+```bash
+cd ~/pipeshub                       # your install directory
+PROJECT=pipeshub-ai                 # COMPOSE_PROJECT_NAME from .env, if set
+BACKUP_DIR=~/pipeshub-backups/$(date +%Y%m%d-%H%M%S)
+mkdir -p "$BACKUP_DIR"
+
+./install.sh --stop                 # stops every container, keeps the volumes
+
+for v in mongodb_data redis_data qdrant_storage pipeshub_data pipeshub_root_local \
+         neo4j_data arango_data etcd_data kafka_data zookeeper_data zookeeper_log; do
+  docker volume inspect "${PROJECT}_$v" >/dev/null 2>&1 || continue
+  docker run --rm \
+    -v "${PROJECT}_$v":/volume:ro \
+    -v "$BACKUP_DIR":/backup \
+    ubuntu tar czf "/backup/$v.tar.gz" -C /volume .
+done
+cp .env "$BACKUP_DIR/env.backup"
+chmod 600 "$BACKUP_DIR/env.backup"
+
+./install.sh --no-pull              # start again on the same images
+```
+
+The loop skips volumes your install does not have. Run the commands with `sudo` if your user is not in the `docker` group.
+
+<Note>
+Do not copy database volumes while the stack is running. A copy taken from a live database can be corrupt. To back up with less downtime using each database's own tools (`mongodump`, `neo4j-admin`, Qdrant snapshots, Redis `BGSAVE`), see [Backup Data in the GCP guide](/deployment/vendor/gcp#backup-data). It covers the default Neo4j and Redis stack; use the method above for ArangoDB, etcd or Kafka.
+</Note>
+
+Copy the backup directory off the host.
+
+## Restore
+
+Restore onto the same PipesHub version that made the backup. To move to a newer version, restore first, then [upgrade](/deployment/upgrade-to-1-0).
+
+```bash
+cd ~/pipeshub                       # install directory with docker-compose.yml and install.sh
+PROJECT=pipeshub-ai
+BACKUP_DIR=~/pipeshub-backups/<timestamp>
+
+./install.sh --stop
+cp "$BACKUP_DIR/env.backup" .env
+
+# Create any missing volumes for the profiles in .env, without starting anything
+docker compose -p "$PROJECT" create
+
+for f in "$BACKUP_DIR"/*.tar.gz; do
+  v=$(basename "$f" .tar.gz)
+  docker run --rm \
+    -v "${PROJECT}_$v":/volume \
+    -v "$BACKUP_DIR":/backup:ro \
+    ubuntu sh -c "find /volume -mindepth 1 -delete && tar xzf /backup/$v.tar.gz -C /volume"
+done
+
+./install.sh --no-pull
+```
+
+The loop empties each volume before it extracts the backup into it. When the installer reports healthy, sign in and check that your conversations, knowledge bases and connectors are there.
+
+## Delete everything
+
+`./install.sh --uninstall` stops the stack and deletes every data volume. It cannot be undone. Take a backup first.
+
+## Kubernetes
+
+The chart stores data in PersistentVolumeClaims. Back them up with your cluster's volume snapshot tooling, and keep `secretKey` and the database passwords with the snapshots. See [Kubernetes (Helm)](/deployment/kubernetes).
+
+## Related
+
+- [Upgrading to 1.0](/deployment/upgrade-to-1-0)
+- [Environment Variables](/deployment/environment-variables)
+- [Troubleshooting](/additional-resources/troubleshooting)

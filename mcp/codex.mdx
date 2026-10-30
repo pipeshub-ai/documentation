@@ -1,0 +1,78 @@
+---
+title: "Codex CLI"
+description: "Connect OpenAI Codex CLI to the PipesHub MCP server"
+icon: "code"
+---
+
+Codex CLI reads MCP servers from `[mcp_servers.<name>]` tables in `~/.codex/config.toml`. To limit a server to one project, put the table in `.codex/config.toml` in the project root instead; Codex reads that file only for trusted projects. See the [Codex MCP documentation](https://learn.chatgpt.com/docs/extend/mcp?surface=cli).
+
+<Tip>
+  Coding agents: read [For coding agents](/for-agents) first. If they have no PipesHub yet, start on [PipesHub Cloud](https://app.pipeshub.com/?ref=docs), or self-host with the [Local Docker demo](/for-agents-local-demo) (do not scaffold LangChain). MCP config is not enough — also install the skill into **this** repo (`npx skills add pipeshub-ai/mcp-server`) and append the `AGENTS.md` snippet on that page.
+</Tip>
+
+## Option A: Sign in with the pipeshub CLI
+
+This writes no token into the Codex config. It needs Node.js and `@pipeshub-ai/mcp` 4.7.0 or later.
+
+```bash
+npm i -g @pipeshub-ai/mcp
+pipeshub login                       # PipesHub Cloud; add --url <origin> when self-hosted
+pipeshub mcp install --client codex
+```
+
+`pipeshub mcp install --client codex` runs:
+
+```bash
+codex mcp add pipeshub -- npx -y "@pipeshub-ai/mcp@>=4.7.0" start --server-url PIPESHUB_INSTANCE_URL
+```
+
+Codex then starts the PipesHub [local server](/mcp/local-server), which uses the `pipeshub login` sign-in and refreshes it. Add `--dry-run` to see the command without running it, or `--force` to replace an existing `pipeshub` entry. See the [pipeshub CLI reference](/mcp/cli#mcp-install).
+
+The same entry written by hand in `~/.codex/config.toml`:
+
+```toml
+[mcp_servers.pipeshub]
+command = "npx"
+args = ["-y", "@pipeshub-ai/mcp@>=4.7.0", "start", "--server-url", "PIPESHUB_INSTANCE_URL"]
+```
+
+## Option B: Remote endpoint with a personal access token
+
+Codex connects to the remote `/mcp` endpoint over Streamable HTTP. It sends a bearer token that it reads from an environment variable. Use a [personal access token](/developer/personal-access-tokens).
+
+```toml
+[mcp_servers.pipeshub]
+url = "PIPESHUB_INSTANCE_URL/mcp"
+bearer_token_env_var = "PIPESHUB_TOKEN"
+```
+
+`bearer_token_env_var` is the **name** of the variable, not the token. Set the variable in the shell that starts Codex:
+
+```bash
+export PIPESHUB_TOKEN="YOUR_PERSONAL_ACCESS_TOKEN"
+codex
+```
+
+Do not paste the token into `config.toml`.
+
+The tools the server offers follow the token's scopes. See [Required scopes](/mcp/tools#required-scopes).
+
+## Placeholders
+
+| Placeholder | Description | Example |
+|---|---|---|
+| `PIPESHUB_INSTANCE_URL` | Your PipesHub instance URL, without a trailing slash | `https://app.pipeshub.com` |
+| `YOUR_PERSONAL_ACCESS_TOKEN` | A [personal access token](/developer/personal-access-tokens) | `phpat_...` |
+
+## Verify
+
+```bash
+codex mcp list
+```
+
+Inside the Codex TUI, `/mcp` shows the active MCP servers.
+
+## Next steps
+
+- [MCP tools](/mcp/tools): what each PipesHub tool does
+- [pipeshub CLI](/mcp/cli): search, ask and upload from the shell

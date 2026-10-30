@@ -138,6 +138,7 @@ Follow the steps below: first register an app in Azure and grant permissions, th
 2. Choose **Application permissions** (not Delegated).
 3. Add:
    - `User.Read.All`
+   - `Group.Read.All`
    - `Mail.Read`
    - `Group.Read.All`
 4. Click **Add permissions**.
@@ -363,6 +364,20 @@ The Outlook connector syncs the following data:
 </Accordion>
 
 </AccordionGroup>
+
+## Permissions
+
+People are matched to PipesHub accounts by email (their `mail` or user principal name in Microsoft Entra ID).
+
+| Synced content | Who can find it in PipesHub |
+|---|---|
+| **A user's mailbox** (folders, messages, attachments) | Only that user. An admin who sets up the connector doesn't get access to other people's mail. |
+| **Microsoft 365 group conversations** | The group's members, as read from Microsoft Entra ID on each sync. Nested groups are expanded. |
+
+- A user whose account is disabled in Microsoft Entra ID (`accountEnabled` false) loses access to their mailbox and group conversations in PipesHub. Enabling the account again restores it.
+- If a group's members can't be read on a sync, the members from the previous sync are kept.
+
+---
 
 ## Data sync behavior
 

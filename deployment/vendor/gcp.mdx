@@ -22,12 +22,14 @@ PipesHub uses a modern, distributed database architecture:
 
 Before you begin, ensure your VM meets these specifications:
 
-- **CPU**: 4 cores (minimum)
-- **RAM**: 16 GB (minimum)
-- **Storage**: 100 GB SSD or higher (recommended)
+- **CPU**: 4 cores (minimum; the installer stops on fewer)
+- **RAM**: 16 GB (minimum for the `slim` and `full` deployments)
+- **Storage**: 100 GB SSD or higher (recommended; the installer itself only warns below 20 GB free)
   - PipesHub uses multiple databases (MongoDB, Neo4j, Qdrant, Redis, and optionally Kafka)
   - Storage requirements grow with indexed documents and vector embeddings
 - **OS**: Ubuntu 22.04 LTS or 24.04 LTS (recommended)
+
+The installer's exact checks are in [System Requirements](/deployment/system-requirements).
 
 <Note>
 For production workloads with large document collections, consider 200 GB or more storage to accommodate database growth and vector embeddings.
@@ -421,7 +423,7 @@ To pin a specific version instead of the rolling `latest`/`slim` tag, pass `--ve
 **Never use simple file copy methods (like `tar`) on live database volumes.** This can result in corrupted backups and data loss. Always use native database backup tools or stop the application before backing up.
 </Warning>
 
-PipesHub uses multiple databases and storage systems. Choose one of the following backup strategies:
+PipesHub uses multiple databases and storage systems. Choose one of the following backup strategies. The commands below cover MongoDB, Neo4j, Qdrant, Redis and the application data volume only; for a backup of every volume (including ArangoDB, etcd and Kafka when you use them), follow [Backup and Restore](/deployment/backup-restore).
 
 <Note>
 Backup and restore copy-paste blocks `cd ~/pipeshub` themselves so Compose finds `docker-compose.yml` and loads `COMPOSE_PROFILES` from `.env`. Compose names containers `{project}-{service}-1` (default project `pipeshub-ai`), so use `docker compose -p pipeshub-ai exec <service>` rather than `docker exec mongodb`. The `kafka-1` service only exists if you selected Kafka as the message broker during installation; if you're on the default (Redis broker), skip that command.

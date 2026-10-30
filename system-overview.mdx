@@ -31,7 +31,8 @@ That path only works after your company data is already in those stores. In the 
 
 1. **Connectors** pull data from Slack, Drive, Jira, Confluence, and your other sources.
 2. They publish new or changed records onto the **event bus**.
-3. **Indexing** parses the files, turns the text into vectors, and writes the knowledge graph and Qdrant.
+3. **Indexing** parses the files, turns the text into vectors, and writes the knowledge graph and Qdrant. A record is searchable as soon as its vectors are written.
+4. **Classification** (summary, categories, topics, departments) and **named-entity extraction** then run in the background, as described in [After a record is searchable](#after-a-record-is-searchable).
 
 On a local machine, the event bus is **Redis Streams**. In a larger deployment, it is **Kafka**. The work the services do is the same in both cases; only the transport changes.
 
@@ -113,6 +114,43 @@ Redis still runs in both cases. It is the cache, and by default it is also the e
 **Indexing** consumes those records from the event bus. It parses files, splits them into chunks, embeds the text, and writes Qdrant and the knowledge graph. **Docling** is the heavier parser for PDFs, tables, and OCR. Two additional processes, Parsing and Extraction, start only if you set `USE_PARSING_SERVICE=true`.
 
 **Query** answers questions. It reads the knowledge graph and the vector store, then calls your language model. On the event bus it listens for configuration updates.
+
+### After a record is searchable
+
+Indexing makes a record searchable first, and enriches it afterwards with the language model. The enrichment runs as two background **stages**:
+
+- **Classification** (`classify`) writes the record's summary, categories, topics and departments.
+- **Named-entity extraction** (`entities`) extracts the named entities the record mentions.
+
+Both start as soon as the record's vectors are written, and neither waits for the other. Each has its own queue on the event bus and its own retries, and both draw on the same cap on language model calls. A slow or unavailable language model therefore never holds up indexing through these two stages: records keep becoming searchable while the stages wait. Model calls made while the record itself is indexed are not stages. During an outage, image descriptions and table summaries can slow a record down, and it is indexed without them (the images undescribed, the tables with a plain summary). OCR of scanned pages with a vision model fails the record instead, so it is retried. During a model provider outage, classification pauses and resumes once the provider is back, without using up its retries, however long the outage lasts. Named-entity extraction does not pause: during a longer outage its jobs use up their retries and end `FAILED`, and the records keep their previous entities. Retry them once the provider is back.
+
+Reindexing content that has not changed makes no new language model call when the reindex keeps the record's virtual record ID (connector types with reconciliation enabled) and nothing else classification depends on has changed: the model, the prompt, the organization's departments, the record's name and type, and whether entity resolution is on and in which mode. Other reindexes classify the record again, and a forced reindex always does.
+
+#### Statuses
+
+| Field | What it tracks | Values |
+|---|---|---|
+| `indexingStatus` | Parsing, embedding, and whether the record is searchable | `COMPLETED` once the record is searchable |
+| `extractionStatus` | Classification only | `QUEUED` until classification finishes, then `COMPLETED`, `SKIPPED` or `FAILED` |
+
+`SKIPPED` comes with a reason in the record's `reason` field, for example when classification is turned off, the record has nothing to classify, or the organization has no language model configured. A model call that fails or returns nothing usable is retried, and `extractionStatus` stays `QUEUED` meanwhile; it becomes `FAILED` only when the retries run out, or at once when the Extraction service rejects the document. A model provider or Extraction service outage pauses classification instead of failing it. The record stays searchable throughout.
+
+Named-entity extraction has no status field on the record. Its progress is kept per stage, and the record page shows it in the **Pipeline** track as the **Entities** step, after **Parsed**, **Searchable** and **Classified**. The details button next to a step shows its attempt count and any failure or skip reason. The Entities step appears only on records that have run that stage.
+
+Connector and collection statistics count records by classification result and by named-entity extraction result, beside the indexing counts.
+
+#### Retrying classification or named-entity extraction
+
+The connector's **Overview** and the collection's **Analytics** panel have a **Data extraction with AI** section (collapsed by default; its header shows how many records failed). It has a **Classification** row and an **Entity extraction** row, and each shows **Retry** when the stage failed for some records. Retry re-runs only that stage for those records: nothing is parsed or embedded again, except that a record indexed before background stages existed gets a full reindex. Retry is available while the connector is enabled.
+
+The same is available over the API, for classification and for named-entity extraction, with `POST /api/v1/connectors/:connectorId/reindex` and a `stages` field. See [Reindex a connector's records](/system-overview/connector-manager#api-endpoints).
+
+#### Operating the stages
+
+- **Concurrency.** `MAX_CONCURRENT_INDEXING_LLM_CALLS` (default `24`) caps the indexing-time language model calls one process makes at once, in the indexing service and, when they run, the Parsing and Extraction services. The cap covers classification, named-entity extraction, image descriptions, VLM OCR and table summaries together. Each stage also runs at most that many jobs at a time, and both stages draw on the same cap.
+- **Event bus.** On Kafka the stages use their own topics, `pipeline.classify` and `pipeline.entities`. See [Kafka topics for classification and named entities](/system-overview/external-services#kafka-topics-for-classification-and-named-entities). Redis Streams needs no setup.
+- **Health.** `GET /health` on the indexing service (port `8091`) has a `stages` block: `publisher_bound`, and for each stage its topic, its limit and how its jobs have ended since the service started. `publisher_bound: false` means the stage topics could not be created yet: records are still indexed and searchable, the stages wait, and the indexing service keeps retrying in the background.
+- **`DEFER_EXTRACTION` is removed.** With it set to `true`, classification was skipped and records were left with `extractionStatus` `NOT_STARTED`; nothing ran it for them later. Drop it from custom Compose files, and see [Upgrading from 0.10.0 or earlier](/deployment/overview#upgrading-from-0-10-0-or-earlier) in Deployment for the records it left behind.
 
 ### Embedding server
 

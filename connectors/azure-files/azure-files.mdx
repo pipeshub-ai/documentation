@@ -182,7 +182,7 @@ Azure File Shares is Microsoft's cloud version of a shared network drive, the ki
       width="55%"
     />
 
-    Before the first sync, PipesHub checks that it can list your shares and read a file. If something is missing, sync stays off and the message tells you which permission to add (see [Troubleshooting](#troubleshooting)).
+    Before the first sync, PipesHub runs a quick check: it lists your shares, opens the top folder of the shares you picked (or of the first share, if you picked none) and reads the details of one item there. It doesn't open every share or file, so a later sync can still report a share it can't read. If the check fails, sync stays off and the message tells you which permission to add (see [Troubleshooting](#troubleshooting)).
   </Step>
 </Steps>
 
@@ -198,7 +198,7 @@ All of these are on the **Configure records** tab. Add a sync filter with **Add 
 | **Sync interval** | How often a scheduled sync runs. 1 hour is the default. |
 | **Enable Manual Indexing** | **Off** (default): every synced file becomes searchable. **On**: files are synced but not made searchable until you choose them. |
 | **File Share Names** | Pick the shares to sync, or the shares to skip. Leave it empty to sync every share the credential can see. Search matches the start of a share name. |
-| **Folders** | Sync only some folders (**In**) or skip them (**Not In**). Type each folder as a path from the top of the share, such as `reports/2026`, and press Enter. Leave it empty to sync the whole share. |
+| **Folders** | Sync only some folders (**In**) or skip them (**Not In**). Type each folder as a path from the top of the share, such as `reports/2026`, and press Enter. The same path applies in every share you sync. Leave it empty to sync the whole share. |
 | **File Extensions** | Sync only some file types, such as `pdf` and `docx`, or skip some, such as images. |
 | **Modified Date** | Sync only files changed before, after or between dates. |
 | **Created Date** | Sync only files created before, after or between dates. |
@@ -211,10 +211,10 @@ The file type and date filters never hide folders, so the folder tree in PipesHu
 
 ## What gets synced and how it stays up to date
 
-- **What you get**: the files and folders in the shares you picked, with their folder structure. Documents (PDF, Word, PowerPoint, Excel, OpenDocument, RTF, EPUB), text files (TXT, Markdown, CSV, JSON, XML, HTML), code files and images (JPG, PNG, WebP) are searchable by their content. Other files, such as video, audio, GIFs and ZIP archives, are found by name only.
+- **What you get**: the files and folders in the shares you picked, with their folder structure. Documents (PDF, Word, PowerPoint, Excel, OpenDocument, RTF, EPUB), text files (TXT, Markdown, CSV, JSON, XML, HTML), code files and images (JPG, PNG, WebP) are searchable by their content. Other files, such as video, audio, GIFs and ZIP archives, are found by name only. Images are searchable by their content only if your PipesHub has an AI model that can read images: a multimodal chat or embedding model under **Workspace** → **AI models**. Without one, images and scanned PDFs (pages that are pictures, with no text you can select) are synced but not searchable.
 - **How often**: on your sync interval, or when you start a sync. The first sync reads everything and can take hours for a big share. Later syncs only process what changed, so they are much faster.
 - **Edits**: changed files are refreshed on the next sync.
-- **Moves and renames**: a moved or renamed file or folder keeps its place in PipesHub and is not processed again. Renaming a folder carries everything inside it along.
+- **Moves and renames**: a moved or renamed file or folder keeps its place in PipesHub and is not processed again, as long as the file itself didn't change. Renaming a folder carries everything inside it along. A file that was both edited and moved between two syncs shows up as a new file, and its old entry is removed.
 - **Deletes**: files, folders and shares you delete in Azure disappear from PipesHub on the next sync. So do files a new filter leaves out, and shares you take out of **File Share Names**.
 - **Safe on errors**: PipesHub removes files only after it has read a whole share. If a share can't be read, or Azure refuses the credential, nothing is removed and you get a notification. The next sync tries again.
 - **Opening files**: search results and citations open the file inside PipesHub, not in the Azure portal.
@@ -231,7 +231,7 @@ The file type and date filters never hide folders, so the folder tree in PipesHu
 <Accordion title='Sync does not turn on: "the credential needs the ... permission"'>
   The message names what the credential is missing:
 
-  - **List (service level)**: it can't list the storage account's shares. Pick your shares in **File Share Names**, or create a SAS with the **Service** resource type.
+  - **List (service level)**: it can't list the storage account's shares. Create a SAS with the **Service** resource type and the **List** permission. The **File Share Names** list needs this too: you can't type share names in by hand.
   - **List**: it can't list a share. Create a SAS with the **List** permission and the **Container** resource type.
   - **Read**: it can't read files. Create a SAS with the **Read** permission and the **Object** resource type.
 
@@ -264,11 +264,15 @@ The file type and date filters never hide folders, so the folder tree in PipesHu
   - Large files take longer to process; check again later.
 </Accordion>
 
+<Accordion title="Images or scanned PDFs are not searchable">
+  Reading an image needs an AI model that understands images. Add a multimodal chat or embedding model under **Workspace** → **AI models**, then index the files again.
+</Accordion>
+
 </AccordionGroup>
 
 <Accordion title="Details for administrators">
   - **Permissions**: the connector only lists and reads. A SAS needs the File service, the Service, Container and Object resource types, and the Read and List permissions. Entra ID needs the Storage File Data Privileged Reader role on the storage account. A SAS made for the File service only does not work for the Azure Blob connector, but an account key connection string works for both.
-  - **Connection test**: when sync is turned on, PipesHub lists the shares (only if **File Share Names** is empty), lists the top folder of each selected share, and reads one file. A selected share that no longer exists does not block sync; the next sync removes its files and sends one notification. Remove the share from the filter if it is gone for good.
+  - **Connection test**: when sync is turned on, PipesHub lists the shares (only if **File Share Names** is empty, and then tests only the first one), lists the top folder of each selected share, and reads the properties of one item in the first readable one: a file if there is one, otherwise a folder. An empty top folder skips that read, and no file is downloaded. Passing the test doesn't prove every share and file is readable. A selected share that no longer exists does not block sync; the next sync removes its files and sends one notification. Remove the share from the filter if it is gone for good.
   - **Endpoints**: the connection string's file endpoint and the **File Endpoint** field must be public `https://` addresses. Plain `http` and private network addresses are refused when you turn sync on.
   - **Failures during a sync**: if one share or folder can't be read, its files are kept, the other shares still sync, and you get a notification naming the share. If no share can be read, or the share list can't be read, the sync is marked as failed. Throttled requests are retried.
   - **Storage**: PipesHub stores the connection string and client secret encrypted, and never shows them in logs or to other users.

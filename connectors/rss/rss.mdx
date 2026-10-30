@@ -81,13 +81,13 @@ RSS has no sync filters. These are the settings on the **Configure records** tab
 |---|---|
 | **Sync strategy** | **Manual** (the default) syncs only when you start a sync. **Scheduled** syncs on its own at a set interval (every hour by default). Pick **Scheduled** to keep news and blog feeds up to date without doing anything. |
 | **Feed URLs** | Required. The feeds to sync. Addresses that don't start with `http://` or `https://` are ignored, and repeats are removed. |
-| **Max Articles Per Feed** | How many of the newest articles PipesHub reads from each feed on every sync: 1 to 500, 50 by default. |
-| **Fetch Full Content** | On by default. PipesHub opens each article's web page and saves the full text. Turn it off to save only the short summary the feed itself contains. That is faster, but less is searchable. |
+| **Max Articles Per Feed** | How many articles PipesHub reads from each feed on every sync: 1 to 500, 50 by default. It takes them in the order the feed lists them. Most feeds put the newest first, but some don't, so a low limit can leave out newer posts. |
+| **Fetch Full Content** | On by default. PipesHub opens each article's web page and saves the full text. If a new article's page doesn't load, it saves the text the feed carries instead. An article it already has keeps its saved text. Turn this off to use only the text in the feed: its full content if it has one, otherwise its summary. That is faster, but often less is searchable. Even with it off, PipesHub opens the article page when the feed has no text at all for that article. |
 | **Enable Manual Indexing** | Off by default: every new or changed article is indexed (made searchable). When on, PipesHub syncs new articles but doesn't index them until you choose them in **All records**. An article you already indexed stays indexed, and is indexed again on its own when its text changes. A changed article you never indexed stays unindexed until you choose it. |
 
 ## What gets synced and how it stays up to date
 
-- **What you get:** One item per article, with its title, link and text. An article without a link is still saved, using the text in the feed.
+- **What you get:** One item per article, with its title, link and text. An article without a link is still saved, using the text in the feed, as long as the feed gives it an ID. An article with neither a link nor an ID is skipped.
 - **When it refreshes:** On every sync, PipesHub reads each feed again and saves only new or changed articles. With **Manual**, that happens when you start a sync; with **Scheduled**, at your interval. Articles are not updated in real time.
 - **Edited articles:** When an article's text changes, PipesHub saves the new text. Whether it is indexed again depends on **Enable Manual Indexing** (see the table above). A change to only the title or link is saved without indexing the article again.
 - **Older articles:** Feeds list only recent posts. An article that drops off the feed stays searchable in PipesHub.
@@ -112,6 +112,8 @@ Some sites block automated visitors, need a login, or only show their text after
 
 <Accordion title="A feed is down or keeps failing">
 PipesHub keeps the articles it already has, syncs the other feeds as usual, and sends you a notification naming the failing feed and the reason. It tries the feed again on the next sync. If no feed can be read at all, the sync fails.
+
+For a feed split over several pages, this only applies to the first page. If a later page fails, PipesHub keeps the articles from the pages it read, sends no notification and counts the feed as synced. It tries the rest again on the next sync.
 </Accordion>
 
 <Accordion title="New articles are not appearing">
@@ -131,6 +133,6 @@ For safety, PipesHub refuses feeds on private or local network addresses. See **
 <Accordion title="Details for administrators">
 - **Internal feeds:** Feeds on private, loopback or cloud-metadata addresses are refused. To allow a feed from an internal host, list that host name in the `WEB_CONNECTOR_ALLOWED_HOSTS` environment variable (comma-separated) of the PipesHub deployment. Link-local and cloud-metadata addresses stay blocked.
 - **Paged feeds:** If a feed splits its posts over several pages, PipesHub reads up to 10 pages per sync, stopping once it reaches **Max Articles Per Feed**.
-- **Article identity:** Each article is identified by its ID within its feed, so two feeds that reuse the same IDs keep separate articles.
+- **Article identity:** A short article ID, such as `42`, counts only within its feed, so two feeds that both use `42` keep separate articles. An ID that is a web address, a `urn:` or a `tag:` ID counts across all feeds. If two feeds carry the same such ID, PipesHub keeps the first article and skips the other.
 - **Feeds that need a login:** Feeds behind a login, cookies or other sign-in are not supported.
 </Accordion>

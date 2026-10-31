@@ -1,4 +1,7 @@
-# User Management API
+---
+title: "User Management API"
+description: "Endpoints to manage users, organizations, user groups and teams"
+---
 
 The User Management API provides comprehensive functionality for managing users, organizations, user groups, and teams within your application. This service handles organizational structure, user profiles, permissions, and team collaboration features.
 
@@ -1655,40 +1658,6 @@ The response format depends on the connector backend implementation. If the back
 </Tabs>
 </Accordion>
 
-<Accordion title="GET /users/teams/list - Get User Teams (Users Endpoint)">
-Retrieves teams that the authenticated user belongs to via connector backend.
-
-<Tabs>
-<Tab title="Request">
-**Endpoint:** `GET /api/v1/users/teams/list`
-
-**Headers:**
-- `Authorization: Bearer YOUR_TOKEN`
-
-**Middleware Chain:**
-- `authMiddleware.authenticate`
-- `metricsMiddleware`
-
-**Query Parameters:**
-- `page`: Page number for pagination
-- `limit`: Number of teams per page
-- `search`: Search term for filtering teams
-
-**Description:** Proxies request to AI connector backend for team membership data.
-
-**Proxy Behavior:** Request forwarded to `${config.connectorBackend}/api/v1/entity/user/teams`
-
-**Note:** This is different from the teams endpoint `/user/teams`. This endpoint is managed by the UserController and has different query parameter handling.
-</Tab>
-
-<Tab title="Response">
-**Status:** `200 OK`
-
-The response format depends on the connector backend implementation. If the backend returns a non-200 status, this endpoint throws `BadRequestError("Failed to get user teams")`.
-</Tab>
-</Tabs>
-</Accordion>
-
 </AccordionGroup>
 </Accordion>
 
@@ -2278,37 +2247,6 @@ The response format depends on the connector backend implementation. If the back
 </Tabs>
 </Accordion>
 
-<Accordion title="GET /teams - List Teams">
-Retrieves all teams with pagination via connector backend.
-
-<Tabs>
-<Tab title="Request">
-**Endpoint:** `GET /api/v1/teams`
-
-**Headers:**
-- `Authorization: Bearer YOUR_TOKEN`
-
-**Middleware Chain:**
-- `authMiddleware.authenticate`
-- `metricsMiddleware`
-- `ValidationMiddleware.validate(listTeamsValidationSchema)`
-
-**Query Parameters:**
-- `page`: Page number (number, min 1, default 1, preprocessed from string)
-- `limit`: Items per page (number, min 1, max 100, default 10, preprocessed from string)
-- `search`: Search term for team names/descriptions (string, optional)
-
-**Proxy Behavior:** Query parameters passed to `${config.connectorBackend}/api/v1/entity/team/list`
-</Tab>
-
-<Tab title="Response">
-**Status:** `200 OK`
-
-The response format depends on the connector backend implementation. If the backend returns a non-200 status, this endpoint throws `BadRequestError("Failed to get teams")`.
-</Tab>
-</Tabs>
-</Accordion>
-
 <Accordion title="GET /teams/:teamId - Get Team">
 Retrieves a specific team by ID via connector backend.
 
@@ -2406,6 +2344,8 @@ Deletes a team via connector backend.
 **Status:** `200 OK`
 
 The response format depends on the connector backend implementation. If the backend returns a non-200 status, this endpoint throws `BadRequestError("Failed to delete team")`.
+
+Only a team's Owner can delete it. The default "All" team can never be deleted (`403`, "The default All team cannot be deleted"). A caller with no role on the team, or a team that does not exist, gets `404`; a Reader or Writer gets `403`.
 </Tab>
 </Tabs>
 </Accordion>
@@ -2435,140 +2375,6 @@ Retrieves all users in a specific team via connector backend.
 **Status:** `200 OK`
 
 The response format depends on the connector backend implementation. If the backend returns a non-200 status, this endpoint throws `BadRequestError("Failed to get team users")`.
-</Tab>
-</Tabs>
-</Accordion>
-
-<Accordion title="POST /teams/:teamId/users - Add Users to Team">
-Adds users to a team via connector backend.
-
-<Tabs>
-<Tab title="Request">
-**Endpoint:** `POST /api/v1/teams/:teamId/users`
-
-**Headers:**
-- `Authorization: Bearer YOUR_TOKEN`
-
-**Middleware Chain:**
-- `authMiddleware.authenticate`
-- `metricsMiddleware`
-- `ValidationMiddleware.validate(addUsersToTeamValidationSchema)`
-
-**Path Parameters:**
-- `teamId`: Team ID (string, min 1 character, required)
-
-**Request Body Parameters:**
-
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| userIds | string[] | Yes | Array of user IDs to add (min 1 item) |
-
-**Proxy Behavior:** Request forwarded to `${config.connectorBackend}/api/v1/entity/team/${teamId}/users`
-
-```json
-{
-  "userIds": [
-    "60d21b4667d0d8992e610c88",
-    "60d21b4667d0d8992e610c89"
-  ]
-}
-```
-</Tab>
-
-<Tab title="Response">
-**Status:** `200 OK`
-
-The response format depends on the connector backend implementation. If the backend returns a non-200 status, this endpoint throws `BadRequestError("Failed to add users to team")`.
-</Tab>
-</Tabs>
-</Accordion>
-
-<Accordion title="DELETE /teams/:teamId/users - Remove Users from Team">
-Removes users from a team via connector backend.
-
-<Tabs>
-<Tab title="Request">
-**Endpoint:** `DELETE /api/v1/teams/:teamId/users`
-
-**Headers:**
-- `Authorization: Bearer YOUR_TOKEN`
-
-**Middleware Chain:**
-- `authMiddleware.authenticate`
-- `metricsMiddleware`
-- `ValidationMiddleware.validate(removeUsersFromTeamValidationSchema)`
-
-**Path Parameters:**
-- `teamId`: Team ID (string, min 1 character, required)
-
-**Request Body Parameters:**
-
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| userIds | string[] | Yes | Array of user IDs to remove (min 1 item) |
-
-**Note:** Request body is optional in the validation schema, but userIds are required when the body is provided.
-
-**Proxy Behavior:** Request forwarded to `${config.connectorBackend}/api/v1/entity/team/${teamId}/users`
-
-```json
-{
-  "userIds": [
-    "60d21b4667d0d8992e610c88"
-  ]
-}
-```
-</Tab>
-
-<Tab title="Response">
-**Status:** `200 OK`
-
-The response format depends on the connector backend implementation. If the backend returns a non-200 status, this endpoint throws `BadRequestError("Failed to remove user from team")`.
-</Tab>
-</Tabs>
-</Accordion>
-
-<Accordion title="PUT /teams/:teamId/users/permissions - Update Team User Permissions">
-Updates permissions for team members via connector backend.
-
-<Tabs>
-<Tab title="Request">
-**Endpoint:** `PUT /api/v1/teams/:teamId/users/permissions`
-
-**Headers:**
-- `Authorization: Bearer YOUR_TOKEN`
-
-**Middleware Chain:**
-- `authMiddleware.authenticate`
-- `metricsMiddleware`
-- `ValidationMiddleware.validate(updateTeamUsersPermissionsValidationSchema)`
-
-**Path Parameters:**
-- `teamId`: Team ID (string, min 1 character, required)
-
-**Request Body Parameters:**
-
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| userIds | string[] | Yes | Array of user IDs to update (min 1 item) |
-| role | string | No | New role for the users |
-
-**Proxy Behavior:** Request forwarded to `${config.connectorBackend}/api/v1/entity/team/${teamId}/users/permissions`
-
-```json
-{
-  "userIds": [
-    "60d21b4667d0d8992e610c87"
-  ],
-  "role": "lead"
-}
-```
-</Tab>
-
-<Tab title="Response">
-**Status:** `200 OK`
-
-The response format depends on the connector backend implementation. If the backend returns a non-200 status, this endpoint throws `BadRequestError("Failed to update team users permissions")`.
 </Tab>
 </Tabs>
 </Accordion>
@@ -2910,21 +2716,6 @@ const createTeamValidationSchema = z.object({
   }),
 });
 
-// List Teams Validation with pagination
-const listTeamsValidationSchema = z.object({
-  query: z.object({
-    search: z.string().optional(),
-    limit: z.preprocess(
-      (arg) => Number(arg), 
-      z.number().min(1).max(100).default(10)
-    ).optional(),
-    page: z.preprocess(
-      (arg) => Number(arg), 
-      z.number().min(1).default(1)
-    ).optional(),
-  }),
-});
-
 // Team operations validation
 const getTeamValidationSchema = z.object({
   params: z.object({
@@ -2948,33 +2739,6 @@ const deleteTeamValidationSchema = z.object({
   }),
 });
 
-const addUsersToTeamValidationSchema = z.object({
-  params: z.object({
-    teamId: z.string().min(1, 'Team ID is required'),
-  }),
-  body: z.object({
-    userIds: z.array(z.string()).min(1, 'User IDs are required'),
-  }),
-});
-
-const removeUsersFromTeamValidationSchema = z.object({
-  params: z.object({
-    teamId: z.string().min(1, 'Team ID is required'),
-  }),
-  body: z.object({
-    userIds: z.array(z.string()).min(1, 'User IDs are required'),
-  }).optional(),
-});
-
-const updateTeamUsersPermissionsValidationSchema = z.object({
-  params: z.object({
-    teamId: z.string().min(1, 'Team ID is required'),
-  }),
-  body: z.object({
-    userIds: z.array(z.string()).min(1, 'User IDs are required'),
-    role: z.string().optional(),
-  }),
-});
 
 const getTeamUsersValidationSchema = z.object({
   params: z.object({
@@ -3128,11 +2892,6 @@ All endpoints return structured error responses:
     - Scoped tokens for service-to-service communication (USER_LOOKUP, FETCH_CONFIG)
     - Role-based access through user group membership
     - Admin-only operations clearly enforced through middleware
-
-16. **Duplicate User Teams Endpoints:**
-    - `/teams/user/teams` (managed by TeamsController) - Returns empty array on backend errors
-    - `/users/teams/list` (managed by UserController) - Throws BadRequestError on backend errors
-    - Both proxy to connector backend but have different error handling strategies
 
 17. **File Upload Middleware:**
     - `FileProcessorFactory.createBufferUploadProcessor()` returns an object with `getMiddleware` array

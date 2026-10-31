@@ -1,6 +1,6 @@
 ---
 title: "FAQ"
-description: "Frequently asked questions about PipesHub Workplace AI"
+description: "Short answers about deploying, upgrading and configuring PipesHub"
 icon: "question"
 ---
 
@@ -8,11 +8,41 @@ icon: "question"
 
 <AccordionGroup>
   <Accordion title="What are the minimum system requirements to run PipesHub?">
-    To ensure optimal performance, we recommend the following minimum specifications:
-    - **RAM**: 16 GB or more
-    - **CPU Cores**: 4 cores or more
-    
-    These requirements ensure smooth operation of PipesHub and its various components.
+    The installer checks for:
+    - **CPU**: 4 cores or more. It stops below that.
+    - **RAM**: a 16 GB-class machine for the `slim` and `full` types, or 8 GB for the `eval` type. It warns below that.
+    - **Disk**: 20 GB free for Docker. It warns below that.
+    - **Docker Compose**: 2.20 or later.
+
+    See [System Requirements](/deployment/system-requirements).
+  </Accordion>
+
+  <Accordion title="Which deployment type should I choose: slim, full or eval?">
+    - **slim** (default): smaller image that downloads the embedding model on first use, with Redis as the message broker.
+    - **full**: image with the embedding model built in, with Kafka as the message broker. Use it for production servers and hosts without internet access.
+    - **eval**: like slim, without the coding sandbox. For 8 GB machines and demos.
+
+    See [Deployment types](/deployment/system-requirements#deployment-types).
+  </Accordion>
+
+  <Accordion title="How do I upgrade PipesHub?">
+    Back up first, then run `./install.sh --upgrade` from the install directory. Upgrading from 0.x to 1.0 migrates the graph database one way; read [Upgrading to 1.0](/deployment/upgrade-to-1-0) before you start.
+  </Accordion>
+
+  <Accordion title="How do I back up my data?">
+    Stop PipesHub, copy each Docker volume and the `.env` file, then start it again. See [Backup and Restore](/deployment/backup-restore).
+  </Accordion>
+
+  <Accordion title="Where do I change settings that are not in the UI?">
+    In the `.env` file in the install directory. After editing it, run `docker compose -p pipeshub-ai up -d` from that directory. See [Environment Variables](/deployment/environment-variables).
+  </Accordion>
+
+  <Accordion title="How do I turn off telemetry?">
+    Turn off **Data collection settings** under **Workspace → General**, or set `TELEMETRY_COLLECTION_FLAG=false` in `.env` to stop collection in every service.
+  </Accordion>
+
+  <Accordion title="Can I run PipesHub on Kubernetes?">
+    Yes, with the Helm chart in the pipeshub-ai repository. See [Kubernetes (Helm)](/deployment/kubernetes).
   </Accordion>
 
   <Accordion title="What should I consider when deploying PipesHub's Docker image to the cloud?">
@@ -35,9 +65,13 @@ icon: "question"
     
     Note: While PipesHub may work with HTTP in local development environments, cloud deployments must use HTTPS to function properly.
   </Accordion>
+
+  <Accordion title="Something else is wrong. Where do I start?">
+    See [Troubleshooting](/additional-resources/troubleshooting) for health checks, logs and fixes for common problems.
+  </Accordion>
 </AccordionGroup>
 
-## AI Models
+## AI models
 
 <AccordionGroup>
   <Accordion title="Does PipesHub support OpenAI-compatible endpoints for AI and embedding models?">

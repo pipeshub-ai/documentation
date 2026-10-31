@@ -1,96 +1,153 @@
 ---
-title: "API References"
-description: "Explore the APIs of the PipesHub Workplace AI platform with detailed documentation for each service."
+title: "API reference"
+description: "Base URL, authentication, common request bodies and the reference pages for each PipesHub service API."
 icon: "server"
 ---
 
-## API Documentation
+New to the API? Start with the [API Quickstart](/developer/api-quickstart).
 
-### Authentication Service
-Comprehensive documentation for user authentication, session management, and authorization endpoints.
+## Using the API
 
-<Card
-  title="Authentication API"
-  icon="lock"
-  href="/system-overview/authentication"
->
-  Complete guide to authentication methods, token management, and security features including password, OTP, OAuth, SAML SSO, and multi-factor authentication.
+- **Base URL:** your instance URL followed by `/api/v1`, for example `https://your-pipeshub-instance.com/api/v1`.
+- **Authentication:** send `Authorization: Bearer <token>` with a [personal access token](/developer/personal-access-tokens) or an [OAuth 2.0](/developer/oauth2) access token.
+- **Full reference:** every instance serves an interactive API reference at `/api/v1/docs`. Use it for every endpoint, field and response. The OpenAPI spec is the [OpenAPI file](https://github.com/pipeshub-ai/pipeshub-ai/blob/main/backend/nodejs/apps/src/modules/api-docs/pipeshub-openapi.yaml) on GitHub.
+- **Errors:** an error response has an `error` object with `code`, `message` and `requestId`. A missing or invalid token returns `401`; a token without the required scope returns `403`.
+
+## Common request bodies
+
+These examples cover the first calls most integrations make. Field names come from the OpenAPI spec; see it for the optional fields.
+
+<AccordionGroup>
+
+<Accordion title="Create a knowledge base: POST /knowledgeBase">
+
+Needs `kb:write`. `kbName` is required.
+
+```bash
+curl -s -X POST "$PIPESHUB_URL/api/v1/knowledgeBase" \
+  -H "Authorization: Bearer $PIPESHUB_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"kbName": "Engineering handbook"}'
+```
+
+</Accordion>
+
+<Accordion title="Create a folder: POST /knowledgeBase/{kbId}/folder">
+
+Needs `kb:write`. `folderName` is required.
+
+```bash
+curl -s -X POST "$PIPESHUB_URL/api/v1/knowledgeBase/KB_ID/folder" \
+  -H "Authorization: Bearer $PIPESHUB_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"folderName": "Runbooks"}'
+```
+
+</Accordion>
+
+<Accordion title="Upload files: POST /knowledgeBase/{kbId}/upload">
+
+Needs `kb:upload`. A `multipart/form-data` request. Send each file as a `files` part (up to 1000 per request). Records are named after their files.
+
+The response streams progress as server-sent events: one `file:succeeded` or `file:failed` event per file with its `recordId`, then a `done` event with a `summary` of `total`, `succeeded` and `failed`.
+
+```bash
+curl -s -X POST "$PIPESHUB_URL/api/v1/knowledgeBase/KB_ID/upload" \
+  -H "Authorization: Bearer $PIPESHUB_TOKEN" \
+  -F "files=@./deploy-guide.pdf" \
+  -F "files=@./oncall.md"
+```
+
+</Accordion>
+
+<Accordion title="Start a conversation: POST /conversations/create">
+
+Needs `conversation:chat`. `query` is required. Use `POST /conversations/stream` with a `chatMode` to stream the answer instead; see the [API Quickstart](/developer/api-quickstart).
+
+```bash
+curl -s -X POST "$PIPESHUB_URL/api/v1/conversations/create" \
+  -H "Authorization: Bearer $PIPESHUB_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"query": "What is our on-call rotation?"}'
+```
+
+</Accordion>
+
+<Accordion title="Create an agent: POST /agents/create">
+
+Needs `agent:write`. `name` is required.
+
+The default `MCP_SCOPES` does not include `agent:write`, so a personal access token cannot hold it and this call returns `403`. Add `agent:write` to `MCP_SCOPES` on the backend before you create the token. See [Personal Access Tokens](/developer/personal-access-tokens).
+
+```bash
+curl -s -X POST "$PIPESHUB_URL/api/v1/agents/create" \
+  -H "Authorization: Bearer $PIPESHUB_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Support assistant",
+    "description": "Answers support questions from the help center",
+    "instructions": "Answer from the connected knowledge only and cite sources."
+  }'
+```
+
+</Accordion>
+
+</AccordionGroup>
+
+## Service APIs
+
+Each page below covers the endpoints of one PipesHub service.
+
+### Authentication
+
+<Card title="Authentication API" icon="lock" href="/system-overview/authentication">
+  Sign in, manage sessions and tokens, and configure sign-in methods.
 </Card>
 
-### Configuration Management Service
-Centralized configuration management for all system components and integrations.
+### Configuration manager
 
-<Card
-  title="Configuration Manager API"
-  icon="gear"
-  href="/system-overview/configuration-manager"
->
-  Comprehensive guide to managing storage backends, database connections, authentication providers, AI models, connectors, and system-wide configurations with secure encryption and health checks.
+<Card title="Configuration Manager API" icon="gear" href="/system-overview/configuration-manager">
+  Read and update platform settings, such as storage, databases, AI models and sign-in providers.
 </Card>
 
-### Connector Manager Service
-Comprehensive connector configuration and OAuth token management for third-party platform integrations.
-<Card
-title="Connector Manager API"
-icon="key"
-href="/system-overview/connector-manager"
->
+### Connector manager
 
-Complete guide to connector lifecycle management with support for token management with oauth for Google Workspace, Microsoft 365, Atlassian, and other platforms. Features include automatic token refresh, encrypted credential storage, connector configuration, OAuth flow management, event-driven updates, and secure multi-platform authentication with comprehensive admin controls.
+<Card title="Connector Manager API" icon="key" href="/system-overview/connector-manager">
+  Configure connectors and manage their OAuth sign-in and tokens.
 </Card>
 
-### Crawling Manager Service
-Automated data ingestion and synchronization across multiple enterprise platforms and data sources.
+### Crawling manager
 
-<Card
-title="Crawling Manager API"
-icon="robot"
-href="/system-overview/crawling-manager"
->
-Complete guide to scheduling and managing automated data crawling jobs across Gmail, Google Drive, OneDrive, SharePoint, Confluence, and Slack. Includes flexible scheduling options (hourly, daily, weekly, monthly, custom cron), job lifecycle management (pause, resume, remove), queue monitoring, and real-time job status tracking with comprehensive statistics and error handling.
+<Card title="Crawling Manager API" icon="robot" href="/system-overview/crawling-manager">
+  Schedule connector sync jobs, and pause, resume, remove and check them.
 </Card>
 
-### Enterprise Search Service
-Intelligent search capabilities across organizational data with AI-powered conversations and semantic search.
+### Enterprise search
 
-<Card
-  title="Enterprise Search API"
-  icon="magnifying-glass"
-  href="/system-overview/enterprise-search"
->
-  Complete guide to conversational AI interactions, agent management, semantic search, real-time streaming, citation management, and collaborative features including sharing, archiving, and feedback systems across multiple data sources.
+<Card title="Enterprise Search API" icon="magnifying-glass" href="/system-overview/enterprise-search">
+  Run conversations and searches, manage agents, and share, archive and rate chats.
 </Card>
 
-### Knowledge Base Service
-Centralized document repository for managing and accessing organizational data with intelligent indexing capabilities.
+### Knowledge base
 
-<Card title="Knowledge Base API" icon="database" href="/system-overview/knowledge-base" >
-Complete guide to knowledge base and record management with folder organization, bulk file uploads, document versioning, and permission controls. Features include AI-powered content indexing, connector synchronization across multiple data sources, real-time event broadcasting, administrative operations for bulk reindexing, and seamless integration with Enterprise Search for intelligent document discovery.
+<Card title="Knowledge Base API" icon="database" href="/system-overview/knowledge-base">
+  Manage knowledge bases, folders and records, upload files and reindex them.
 </Card>
 
-### Mail Service Comprehensive
-<Card title="Mail Service API" icon="envelope" href="/system-overview/mail-service" >
-Complete guide to email communication with support for multiple SMTP providers, template-based email generation, and delivery tracking. Features include customizable email templates, Handlebars templating engine, attachment support, CC/BCC functionality, delivery logging, authentication integration, and seamless SMTP provider switching with comprehensive email validation and security.
+### Mail service
+
+<Card title="Mail Service API" icon="envelope" href="/system-overview/mail-service">
+  Send email through your SMTP settings and manage templates.
 </Card>
 
-### Storage Service
-Robust file storage, versioning, and retrieval capabilities with multi-vendor backend support.
+### Storage service
 
-<Card
-  title="Storage Service API"
-  icon="hard-drive"
-  href="/system-overview/storage"
->
-  Complete guide to document management with support for Amazon S3, Azure Blob Storage, and local storage. Features include file upload/download, version control, metadata management, direct upload for large files, soft deletion, and seamless storage vendor switching with comprehensive MIME type support.
+<Card title="Storage Service API" icon="hard-drive" href="/system-overview/storage">
+  Upload, download and version files in local storage, Amazon S3 or Azure Blob Storage.
 </Card>
 
-### User Management Service
-Comprehensive user, organization, and access control management with role-based permissions and team collaboration.
+### User management
 
-<Card
-  title="User Management API"
-  icon="users"
-  href="/system-overview/user-management"
->
-  Complete guide to managing users, organizations, and access control with role-based permissions, team collaboration, and administrative functions. Features include organization setup and branding, user profile management with display pictures, bulk user invitations with email automation, user groups for access control, team management via connector backend, image compression for logos and profiles, event publishing via Kafka, and comprehensive admin controls with audit trails.
+<Card title="User Management API" icon="users" href="/system-overview/user-management">
+  Manage users, organizations, user groups and teams, and invite people.
 </Card>

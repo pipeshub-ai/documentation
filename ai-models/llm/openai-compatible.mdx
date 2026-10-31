@@ -1,11 +1,12 @@
 ---
-title: OpenAI API Compatible
+title: "OpenAI API Compatible LLM"
+sidebarTitle: "OpenAI API Compatible"
 description: "Configure PipesHub Workplace AI to use OpenAI-compatible API providers"
 ---
 
-# OpenAI API Compatible Configuration
-
-![OpenAI Compatible Configuration Interface](/images/ai-models/llm/OpenAICompatible_LLMConfig.png)
+<Frame>
+  <img src="/images/ai-models/llm/OpenAICompatible_LLMConfig.png" alt="OpenAI Compatible Configuration Interface" width="600" />
+</Frame>
 
 *The OpenAI API Compatible configuration screen in PipesHub where you'll enter your endpoint URL, API Key, and Model Name*
 
@@ -42,8 +43,8 @@ The Model Name field defines which specific model you want to use from your prov
 **Example model names by provider:**
 
 **Together AI / compatible providers:**
-- `deepseek-ai/DeepSeek-V3`
-- `meta-llama/Llama-4-Maverick-17B-128E-Instruct-FP8`
+- `deepseek-ai/DeepSeek-V4.1-Flash`
+- `moonshotai/Kimi-K3`
 
 **How to choose a model:**
 - Check your provider's model catalog for available options
@@ -69,7 +70,7 @@ Enable this checkbox if your selected model supports multimodal input (text + im
 Enable this checkbox if your selected model has enhanced reasoning capabilities.
 
 **When to enable:**
-- Your model is designed for complex reasoning tasks (e.g., DeepSeek-V3, OpenAI o1-style models)
+- Your model is designed for complex reasoning tasks (e.g., DeepSeek V4 in thinking mode, OpenAI o1-style models)
 - You need advanced problem-solving capabilities
 - Your use case involves mathematical or logical reasoning
 
@@ -77,7 +78,7 @@ Enable this checkbox if your selected model has enhanced reasoning capabilities.
 
 **Default reasoning effort.** For a model with **Reasoning** on, PipesHub sends the model's saved `defaultReasoningEffort` whenever a chat or agent doesn't pick a reasoning effort. With no saved default, it sends `high`, the platform default. The check run when you save the model sends the same effort. If the provider rejects that effort, the model fails its check when you save it, and chats fail later. To fix it, set the model's default reasoning effort to a level the provider accepts. When `high` is the effort rejected, choose `low`, `medium` or `max`.
 
-A level picked in a chat or agent still wins over the model's default. The reasoning effort picker starts with **Model default**, labelled with that default when the model has one, for example **Model default (Low)**. In an agent chat with its own default, the option reads **Agent default (Medium)**, for example. Choose it to go back to the default after picking a level. A picked level lasts until you close or reload PipesHub, and reopening a conversation doesn't bring back the level it used. When no level is picked, the chat input and a project's chat defaults show the default, for example **Default (Low)**.
+A level picked in a chat or agent still wins over the model's default. The picker offers **Low**, **Medium**, **High** and **Max**. To go back to the default, click the selected level again. When no level is picked, the hint reads "Defaults to Low, this model's own default, when not set." for a model whose default is Low. A picked level lasts until you close or reload PipesHub, and reopening a conversation doesn't bring back the level it used. When no level is picked, the chat input and a project's chat defaults show the default, for example **Default (Low)**.
 
 The Add Model dialog doesn't have this setting. Set it through the API as `configuration.defaultReasoningEffort` (see "AI Model Provider Management" in the [Configuration Manager](/system-overview/configuration-manager) API reference).
 
@@ -85,7 +86,7 @@ The Add Model dialog doesn't have this setting. Set it through the API as `confi
 
 As shown in the image above:
 
-1. Select "OpenAI API Compatible" as your Provider Type from the dropdown
+1. Click **Configure** on the **OpenAI Compatible** provider card
 2. Enter the Endpoint URL for your chosen provider (marked with *)
 3. Enter your API Key in the designated field (marked with *)
 4. Specify the exact Model Name as listed by your provider (marked with *)
@@ -107,6 +108,10 @@ PipesHub's OpenAI-compatible configuration works with any provider that implemen
 - **Fireworks AI** - Fast inference for open-source models
 - **Deepinfra** - Cost-effective access to open-source models
 - **Local providers** - Self-hosted solutions like vLLM, Ollama with OpenAI compatibility
+
+## Forward user identity
+
+An OpenAI-compatible gateway can receive who is asking with each request, so the gateway can apply per-user budgets, rate limits and model access. See [Identity forwarding](/ai-models/identity-forwarding).
 
 ## Usage Considerations
 
@@ -137,7 +142,7 @@ PipesHub's OpenAI-compatible configuration works with any provider that implemen
 **Response Errors:**
 - Ensure the selected model is currently available (not deprecated)
 - Verify that multimodal/reasoning flags match the model's actual capabilities
-- If the provider rejects the reasoning effort (for example, `high`), set the model's default reasoning effort to a level it accepts (see [Reasoning](#reasoning)). Also check the level picked in the chat and the agent's own default, which both override the model's default. Change a rejected level to one the provider accepts. In a chat, **Model default** goes back to the model's default. In an agent chat the same option reads **Agent default** and uses the agent's level, so to drop a rejected agent default, set the agent's reasoning effort to **Model default** in the agent builder
+- If the provider rejects the reasoning effort (for example, `high`), set the model's default reasoning effort to a level it accepts (see [Reasoning](#reasoning)). Also check the level picked in the chat and the agent's own default, which both override the model's default. Change a rejected level to one the provider accepts. In a chat, click the selected level again to go back to the default. To drop a rejected agent default, click the selected **Default reasoning effort** level again in the agent builder to clear it
 - Check your provider's status page for any ongoing issues
 
 For additional support, refer to your provider's documentation or contact PipesHub support.

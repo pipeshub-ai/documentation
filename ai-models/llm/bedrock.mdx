@@ -3,9 +3,9 @@ title: AWS Bedrock
 description: "Configure PipesHub Workplace AI to use AWS Bedrock models"
 ---
 
-# AWS Bedrock Configuration
-
-![AWS Bedrock Configuration Interface](/images/ai-models/llm/Bedrock_LLMConfig.png)
+<Frame>
+  <img src="/images/ai-models/llm/Bedrock_LLMConfig.png" alt="AWS Bedrock Configuration Interface" width="600" />
+</Frame>
 
 *The AWS Bedrock configuration screen in PipesHub where you'll enter your AWS credentials, region, model name, and provider settings*
 
@@ -36,13 +36,14 @@ The AWS Region where your Bedrock service is deployed.
 The Model Name field specifies the model ID or ARN you want to use with PipesHub.
 
 **Model ID format examples:**
-- `us.anthropic.claude-sonnet-4-20250514-v1:0`
-- `anthropic.claude-3-5-sonnet-20241022-v2:0`
-- `amazon.titan-text-express-v1`
-- `meta.llama3-70b-instruct-v1:0`
+- `us.anthropic.claude-sonnet-5-5` (US inference profile)
+- `global.anthropic.claude-sonnet-5-5` (global inference profile)
+- `us.amazon.nova-2-lite-v1:0`
+
+Use a model ID or inference profile ID that the Converse API accepts. Short names such as `claude-sonnet-5-5` are not valid on Bedrock. Some models, including recent Claude models, are offered only through an inference profile (the `us.`, `eu.` or `global.` prefix). Each model's page in the [Bedrock model cards](https://docs.aws.amazon.com/bedrock/latest/userguide/model-cards.html) lists its IDs.
 
 **Inference Profile ARN format:**
-- `arn:aws:bedrock:us-east-1:106782021127:inference-profile/apac.anthropic.claude-sonnet-4-20250514-v1:0`
+- `arn:aws:bedrock:us-east-1:<account-id>:inference-profile/us.anthropic.claude-sonnet-5-5`
 
 **How to find model IDs:**
 1. Go to the [AWS Bedrock Console](https://console.aws.amazon.com/bedrock/)
@@ -55,14 +56,16 @@ The Model Name field specifies the model ID or ARN you want to use with PipesHub
 Select the provider of the foundation model you're using. This helps PipesHub properly format requests for the specific model.
 
 **Available providers:**
-- **Anthropic (Claude)** - Claude models
+- **Anthropic (Claude)** - Claude models (the default)
+- **OpenAI** - OpenAI models
 - **Mistral** - Mistral and Mixtral models
 - **Qwen** - Alibaba's Qwen models
 - **DeepSeek** - DeepSeek models
+- **Meta (Llama)** - Meta's Llama models
 - **Cohere** - Cohere Command models
-- **Amazon (Titan)** - Amazon's Titan models
+- **Amazon (Nova / Titan)** - Amazon's Nova and Titan models
 - **AI21 Labs** - AI21 Labs models
-- **Other** - For any other providers (requires Custom Provider Name)
+- **Other (Custom)** - For any other providers (requires Custom Provider Name)
 
 ### Custom Provider Name
 
@@ -123,7 +126,7 @@ Enable this option if your model supports advanced reasoning capabilities. This 
 
 As shown in the image above:
 
-1. Click **Configure** on the Amazon Bedrock provider card
+1. Click **Configure** on the **Bedrock** provider card
 2. Specify your AWS Region (marked with *)
 3. Enter the Model Name (model ID or ARN) (marked with *)
 4. Select the appropriate Provider from the dropdown (marked with *)

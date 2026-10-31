@@ -88,6 +88,10 @@ flowchart LR
         "message.im"
       ]
     },
+    "interactivity": {
+      "is_enabled": true,
+      "request_url": "{node_backend_url}/slack/events"
+    },
     "org_deploy_enabled": false,
     "socket_mode_enabled": false,
     "token_rotation_enabled": false
@@ -105,6 +109,7 @@ flowchart LR
 - `oauth_config.scopes.bot`: Bot token permissions.
 - `settings.event_subscriptions.request_url`: Must be your backend event endpoint.
 - `settings.event_subscriptions.bot_events`: Events Slack should deliver to your bot.
+- `settings.interactivity`: Lets Slack send button clicks and form submissions to your backend. Use the same request URL as event subscriptions. It is required for [approving actions from Slack](#approve-actions-from-slack).
 
 
 
@@ -186,6 +191,17 @@ The following events are subscribed exactly as provided in your manifest:
 | `message.channels` | Receive message activity in public channels. |
 | `message.groups` | Receive message activity in private channels. |
 | `message.im` | Receive direct message activity between users and the bot. |
+
+## Approve actions from Slack
+
+When an agent wants to take an action that needs approval, the bot posts a card in the thread. You can approve it, deny it, or change something else and send it back to the agent. Only the person who asked the question can answer the card.
+
+To turn it on:
+
+1. In your Slack app, add the `settings.interactivity` block from the manifest above, with the same request URL as event subscriptions. For an existing app, update its manifest or open **Interactivity & Shortcuts**, turn it on and enter the URL.
+2. In PipesHub, open the bot's settings and turn on **Approve actions from Slack**.
+
+If you leave it off, Slack does not run actions that need approval. Approve them in the PipesHub web app instead.
 
 ## File Attachments
 

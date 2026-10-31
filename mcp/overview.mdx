@@ -41,22 +41,24 @@ Here's Claude Code using PipesHub over MCP, with each person's own permissions:
 <Note>
   Most **client setup guides below** (Cursor, Gemini CLI, Claude.ai, LibreChat) connect over OAuth — you'll need an OAuth app for those. [Claude Code](/mcp/claude-code) and [Omnigent](/mcp/omnigent) are the exceptions: they attach with an `Authorization` header, so a personal access token is all you need. Claude Code can also use an OAuth app for shared or admin-managed setups.
 
-  For your own tooling, skip OAuth entirely: create a **[Personal Access Token](/developer/personal-access-tokens)** under **Developer Settings > Personal Access Tokens** and use it as a `Bearer` token — either directly against `/mcp`, as `--bearer-auth` with the [Local Server (Stdio)](/mcp/local-server) package, or with any MCP client you configure yourself with a custom `Authorization` header.
+  For your own tooling, skip OAuth entirely: create a **[Personal Access Token](/developer/personal-access-tokens)** under **Developer settings > Personal access tokens** and use it as a `Bearer` token — either directly against `/mcp`, as `--bearer-auth` with the [Local Server (Stdio)](/mcp/local-server) package, or with any MCP client you configure yourself with a custom `Authorization` header.
 </Note>
 
 ## Step 1: Create an OAuth App
 
 <Steps>
-  <Step title="Open Developer Settings">
-    Log in to your PipesHub instance as an admin and navigate to **Settings > Developer Settings > OAuth Apps**.
+  <Step title="Open OAuth 2.0 apps">
+    Sign in to PipesHub, open **Workspace settings**, and select **OAuth 2.0 apps** under **Developer settings**. Any member can create an app; an admin is offered more scopes to grant it.
   </Step>
   <Step title="Create the app">
-    Click **Create OAuth App** and fill in the app details:
-    - **Name**: e.g., `MCP Integration`
-    - **Redirect URIs**: Add the redirect URIs for the clients you plan to use (see the table below).
+    Click **New OAuth application**. On the **General** tab, fill in:
+    - **App name**: e.g., `MCP Integration`
+    - **Redirect URI**: add the redirect URI of each client you plan to use (see the table below), up to 10.
+
+    Click **Next**. On **Permissions & scopes**, select every scope the [discovery endpoint](#customizing-default-scopes) lists, then click **Create app**.
   </Step>
-  <Step title="Save and copy credentials">
-    Save the app and copy the **Client ID** and **Client Secret**.
+  <Step title="Copy the credentials">
+    Copy the **Client ID** and **Client secret**. The secret is not shown again.
   </Step>
 </Steps>
 
@@ -66,7 +68,7 @@ Add all the redirect URIs for the clients you plan to use:
 
 | Client | Redirect URI |
 |---|---|
-| **Cursor** | `cursor://anysphere.cursor-mcp/oauth/callback` |
+| **Cursor** | `https://www.cursor.com/agents/mcp/oauth/callback` (web and Cursor Agents) and `http://localhost:8787/callback` (desktop app). See [Cursor](/mcp/cursor#redirect-uris). |
 | **Claude Code** | `http://localhost:<PORT>/callback` (e.g., `http://localhost:8080/callback`) |
 | **Claude.ai (Web)** | `https://claude.ai/api/mcp/auth_callback` |
 | **Claude Desktop** (custom connector) | `https://claude.ai/api/mcp/auth_callback` |
@@ -74,20 +76,26 @@ Add all the redirect URIs for the clients you plan to use:
 | **LibreChat** | `http://localhost:3080/api/mcp/<server-identifier>/oauth/callback` |
 
 <Warning>
-  The scopes in [`MCP_SCOPES`](https://github.com/pipeshub-ai/pipeshub-ai/blob/main/backend/env.template#L57) must match the scopes granted to your OAuth app — a mismatch will result in an authorization error.
+  Your OAuth app must be granted every scope the discovery endpoint lists (see [Customizing Default Scopes](#customizing-default-scopes)). Clients such as Claude Code request all of them, and a scope the app lacks causes an authorization error.
 </Warning>
 
 ### Customizing Default Scopes
 
-By default, PipesHub exposes some default scopes in its `/.well-known/oauth-protected-resource/mcp` discovery endpoint. You can customize which scopes are exposed by setting the [`MCP_SCOPES`](https://github.com/pipeshub-ai/pipeshub-ai/blob/main/backend/env.template#L57) environment variable on your PipesHub instance. This is useful for clients like Claude Code that automatically request all exposed scopes.
-
-This is the `MCP_SCOPES` value PipesHub ships (`backend/env.template`). It covers chat, search, the directory, agents and code, and lets an agent create collections and upload into them (`kb:write`, `kb:upload`):
+The [`MCP_SCOPES`](https://github.com/pipeshub-ai/pipeshub-ai/blob/main/backend/env.template) environment variable is the most any personal access token or OAuth token on your instance may hold. The discovery endpoint, `/.well-known/oauth-protected-resource/mcp`, does not list all of it: its `scopes_supported` holds only the `MCP_SCOPES` entries that the MCP tools use. Clients such as Claude Code request every scope in that list, so check it before you grant scopes to an OAuth app:
 
 ```bash
-MCP_SCOPES=openid,profile,email,offline_access,semantic:write,conversation:write,conversation:chat,kb:read,kb:write,kb:upload,team:read,user:read,usergroup:read,config:read,agent:read,agent:execute,connector:read,code:read
+curl -s PIPESHUB_INSTANCE_URL/.well-known/oauth-protected-resource/mcp
 ```
 
-Leave `kb:write` and `kb:upload` out to stop agents creating collections and uploading: tokens without them are not offered those tools. Other tools that can act, such as `pipeshub_chat` with an agent whose toolsets take actions, are governed by their own scopes.
+The scopes the MCP tools use are `offline_access`, `semantic:write`, `conversation:chat`, `agent:read`, `agent:execute`, `kb:read`, `kb:write`, `kb:upload`, `connector:read`, `config:read`, `user:read`, `team:read`, `usergroup:read` and `code:read`. A scope you remove from `MCP_SCOPES` also drops out of discovery.
+
+This is the `MCP_SCOPES` value PipesHub ships (`backend/env.template`). It covers chat, search, the directory, agents, code and projects, and lets an agent create collections and upload into them (`kb:write`, `kb:upload`):
+
+```bash
+MCP_SCOPES=openid,profile,email,offline_access,semantic:write,conversation:write,conversation:chat,kb:read,kb:write,kb:upload,team:read,user:read,usergroup:read,config:read,agent:read,agent:execute,connector:read,code:read,project:read,project:write,project:delete
+```
+
+Leave `kb:write` and `kb:upload` out to stop agents creating collections and uploading: tokens without them are not offered those tools. Other tools that can act, such as `pipeshub_chat` with an agent whose actions can change data in other apps, are governed by their own scopes.
 
 An instance that sets `MCP_SCOPES` in its `.env` keeps that list after an upgrade until you edit it. After you add the two scopes and restart, new personal access tokens get them, and the built-in PipesHub agent app (device login) adds them to its allowed scopes on the next discovery request. Tokens already issued keep their scopes: mint a new token, or sign the agent in again.
 
@@ -175,7 +183,7 @@ This returns all OAuth endpoints automatically:
 
 PipesHub accepts MCP requests of up to 5 MB. A larger request is refused with HTTP 413 and a JSON-RPC error that gives the limit.
 
-Real tool calls are far smaller. A chat question can be at most 100,000 characters, and no tool uploads files. If a client hits the limit, send less in one call, such as a shorter question or fewer IDs.
+Real tool calls are far smaller. A chat question can be at most 100,000 characters, and `pipeshub_upload` sends at most about 3 MB per call; use `pipeshub upload` from the [CLI](/mcp/cli) for larger files. If a client hits the limit, send less in one call, such as a shorter question or fewer IDs.
 
 ## Troubleshooting
 
@@ -185,7 +193,7 @@ Real tool calls are far smaller. A chat question can be at most 100,000 characte
   </Accordion>
   <Accordion title="Authentication fails / redirect error">
     Ensure the **Redirect URI** in your OAuth app matches exactly what the client uses:
-    - **Cursor**: `cursor://anysphere.cursor-mcp/oauth/callback`
+    - **Cursor**: `https://www.cursor.com/agents/mcp/oauth/callback` (web and Cursor Agents) or `http://localhost:8787/callback` (desktop app)
     - **Claude Code**: `http://localhost:<callbackPort>/callback`
     - **Claude.ai**: `https://claude.ai/api/mcp/auth_callback`
     - **Gemini CLI**: `http://localhost:7777/oauth/callback`
@@ -211,8 +219,8 @@ Real tool calls are far smaller. A chat question can be at most 100,000 characte
 
 <AccordionGroup>
   <Accordion title="How do I update the scopes for my MCP integration?">
-    1. **Update the [`MCP_SCOPES`](https://github.com/pipeshub-ai/pipeshub-ai/blob/main/backend/env.template#L57) environment variable** on your PipesHub instance to include the new scopes you want exposed via the discovery endpoint.
-    2. **Update the OAuth app scopes** in PipesHub: go to **Settings > Developer Settings > OAuth Apps**, select your OAuth app, and add or remove scopes as needed.
+    1. **Update the [`MCP_SCOPES`](https://github.com/pipeshub-ai/pipeshub-ai/blob/main/backend/env.template) environment variable** on your PipesHub instance and restart. Discovery lists only the scopes the MCP tools use (see [Customizing Default Scopes](#customizing-default-scopes)).
+    2. **Update the OAuth app scopes** in PipesHub: open **Workspace settings > Developer settings > OAuth 2.0 apps**, click **Manage** on your app, and add or remove scopes.
     3. **Re-authenticate the client** — existing tokens carry the old scopes, so you need to re-authenticate to get a new token with the updated scopes:
        - **Cursor**: Remove and re-add the MCP server, or clear the cached OAuth token and reconnect.
        - **Claude Code**: Run `/mcp` and complete the browser login flow again.

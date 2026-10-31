@@ -6,42 +6,20 @@ icon: "/logo/claude.svg"
 
 Claude Code connects to PipesHub's remote MCP endpoint over HTTP. There are two ways to authenticate:
 
-- **A Personal Access Token** (recommended for your own use) — one command, no admin involvement, results respect your own permissions.
+- **A personal access token** (recommended for your own use) — one command, no admin involvement, results respect your own permissions.
 - **An OAuth app** — for shared, team, or admin-managed setups where an administrator issues credentials.
 
 <Tip>
   Coding agents: read [For coding agents](/for-agents) first. If they have no PipesHub yet, start on [PipesHub Cloud](https://app.pipeshub.com/?ref=docs), or self-host with the [Local Docker demo](/for-agents-local-demo) (do not scaffold LangChain). MCP config is not enough — also install the skill into **this** repo (`npx skills add pipeshub-ai/mcp-server`) and append the `AGENTS.md` snippet on that page. Otherwise the next chat still invents RAG.
 </Tip>
 
-## Plugin (fastest)
-
-Installs the MCP server, the PipesHub skill, and two commands: `/pipeshub:ask <question>` and `/pipeshub:setup`.
-
-Run these in your terminal, not inside a Claude Code session:
-
-```bash
-claude plugin marketplace add pipeshub-ai/mcp-server
-claude plugin install pipeshub@pipeshub
-```
-
-Newer Claude Code versions also accept the one-step form `claude plugin install pipeshub --marketplace pipeshub-ai/mcp-server`.
-
-It reads two environment variables. Set them in your shell profile, not in a chat, then restart Claude Code:
-
-```bash
-export PIPESHUB_MCP_TOKEN=phpat_...                       # a personal access token, see below
-export PIPESHUB_MCP_URL=https://your-instance/mcp         # optional; defaults to PipesHub Cloud
-```
-
-Without `PIPESHUB_MCP_URL` the plugin connects to PipesHub Cloud (`https://app.pipeshub.com/mcp`). Run `/pipeshub:setup` to check the connection. To mint the token, follow the first step below.
-
-## Personal Access Token (recommended)
+## Personal access token (recommended)
 
 Requires PipesHub **0.7.0 or later**. Any user can do this; you do not need to be an admin.
 
 <Steps>
   <Step title="Mint a token">
-    In PipesHub, go to **Workspace → Developer settings → Personal Access Tokens → New token**. Name it (for example `claude-code`), pick an expiry, keep the default scopes, and copy the two lines shown — they appear only once:
+    In PipesHub, open **Workspace settings**, select **Personal access tokens** under **Developer settings**, and click **New token**. Name it (for example `claude-code`), pick an expiry, keep the default scopes, and copy the two lines shown — they appear only once:
 
     ```bash
     PIPESHUB_MCP_URL=https://your-instance/mcp
@@ -50,7 +28,7 @@ Requires PipesHub **0.7.0 or later**. Any user can do this; you do not need to b
 
     The token is sent as a bearer header on every request, so the URL must be `https://` for anything other than a local instance — `http://localhost:3000/mcp` is fine on your own machine, `http://` to a remote host is not.
 
-    Export both in your shell. See [Personal Access Tokens](/developer/personal-access-tokens) for scopes and revocation.
+    Export both in your shell. See [Personal access tokens](/developer/personal-access-tokens) for scopes and revocation. To use the plugin instead of adding the server by hand, skip to [Plugin](#plugin).
   </Step>
   <Step title="Add the server">
     ```bash
@@ -69,7 +47,7 @@ Requires PipesHub **0.7.0 or later**. Any user can do this; you do not need to b
     npx skills add pipeshub-ai/mcp-server
     ```
 
-    and add the "Company knowledge" block from [For coding agents](/for-agents#agents-md) to your `CLAUDE.md`. Without this, a fresh chat has the tools but no reason to reach for them.
+    and add the "Company knowledge" block from [For coding agents](/for-agents#agentsmd) to your `CLAUDE.md`. Without this, a fresh chat has the tools but no reason to reach for them.
   </Step>
   <Step title="Verify">
     ```bash
@@ -103,8 +81,30 @@ If you prefer a checked-in config, keep the token in the environment and referen
 ```
 
 <Warning>
-  Never commit a token, paste one into a chat, or pass one on a command line that gets logged. If a token leaks, revoke it from the same Personal Access Tokens page.
+  Never commit a token, paste one into a chat, or pass one on a command line that gets logged. If a token leaks, revoke it from the same **Personal access tokens** page.
 </Warning>
+
+## Plugin
+
+Mint a token first ([step 1 above](#personal-access-token-recommended)). The plugin installs the MCP server, the PipesHub skill, and two commands: `/pipeshub:ask <question>` and `/pipeshub:setup`.
+
+Run these in your terminal, not inside a Claude Code session:
+
+```bash
+claude plugin marketplace add pipeshub-ai/mcp-server
+claude plugin install pipeshub@pipeshub
+```
+
+Newer Claude Code versions also accept the one-step form `claude plugin install pipeshub --marketplace pipeshub-ai/mcp-server`.
+
+It reads two environment variables. Set them in your shell profile, not in a chat, then restart Claude Code:
+
+```bash
+export PIPESHUB_MCP_TOKEN=phpat_...                       # the personal access token from step 1
+export PIPESHUB_MCP_URL=https://your-instance/mcp         # optional; defaults to PipesHub Cloud
+```
+
+Without `PIPESHUB_MCP_URL` the plugin connects to PipesHub Cloud (`https://app.pipeshub.com/mcp`). Run `/pipeshub:setup` to check the connection.
 
 ## OAuth app (shared or admin-managed setups)
 
@@ -115,7 +115,7 @@ Claude Code also supports remote HTTP MCP servers with static OAuth credentials 
 </Note>
 
 <Warning>
-  Claude Code does **not** support configuring specific scopes. It fetches `/.well-known/oauth-protected-resource/mcp`, reads the `scopes_supported` list, and requests **all** of them. Your OAuth app in PipesHub **must have access to all scopes** listed in the discovery endpoint, otherwise the authorization request will fail. To limit the exposed scopes, see [Customizing Default Scopes](/mcp/overview#customizing-default-scopes).
+  Claude Code does **not** support configuring specific scopes. It fetches `/.well-known/oauth-protected-resource/mcp`, reads the `scopes_supported` list, and requests **all** of them. That list is the part of your instance's `MCP_SCOPES` that the MCP tools use, not the whole of `MCP_SCOPES`. Your OAuth app in PipesHub **must have access to every scope** in it, otherwise the authorization request will fail. To see or limit the list, see [Customizing Default Scopes](/mcp/overview#customizing-default-scopes).
 </Warning>
 
 ### Add with CLI

@@ -9,9 +9,9 @@ icon: "/logo/omnigent.svg"
 Each person uses **their own** PipesHub [personal access token](/developer/personal-access-tokens), so results respect their own permissions. Never share one token across a team.
 
 <Note>
-  **Attach with a bearer token, not an OAuth app.** Cursor and Claude Code use a registered OAuth app with a static client ID and secret. Omnigent's MCP attach takes an `Authorization` header, and its browser-OAuth path relies on dynamic client registration, which PipesHub does not support — so a PAT is the working credential here.
+  **Attach with a bearer token, not an OAuth app.** Cursor and Claude Code use a registered OAuth app with a static client ID and secret. Omnigent's MCP attach takes an `Authorization` header, and its browser-OAuth path relies on dynamic client registration, which is off on a PipesHub instance unless an administrator enables it (see [Dynamic Client Registration](/developer/oauth2#dynamic-client-registration)) — so a PAT is the working credential here.
 
-  To be clear about identity: an OAuth app using the **authorization code** flow *does* run as the signed-in user, exactly like a PAT. It is only `client_credentials` that has no user identity — see [Unattended runs](#unattended-runs).
+  To be clear about identity: an OAuth app using the **authorization code** flow *does* run as the signed-in user, exactly like a PAT. A `client_credentials` token instead acts as the service account bound to the app — see [Unattended runs](#unattended-runs).
 </Note>
 
 ## What you need
@@ -125,8 +125,8 @@ A `401` here means the credential is the problem, not the agent.
 
 ## Unattended runs
 
-For CI or scheduled jobs where no specific person is asking, an OAuth app with `client_credentials` is the right shape — see [OAuth 2.0 Applications](/developer/oauth2).
+For CI or scheduled jobs where no specific person is asking, an OAuth app with `client_credentials` is the right shape. The app must be bound to a service account when an administrator creates it — see [OAuth 2.0 Applications](/developer/oauth2).
 
 <Warning>
-  A `client_credentials` token has **no user identity**. It is not filtered per person, so it should never back an agent that several people query. Use a personal access token for anything user-facing.
+  A `client_credentials` token acts as the bound **service account**, not as the person asking. Everyone who queries through it sees what the service account can see, so it should never back an agent that several people query. Use a personal access token for anything user-facing.
 </Warning>

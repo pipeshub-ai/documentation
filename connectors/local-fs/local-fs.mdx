@@ -53,7 +53,7 @@ Four things to know up front:
 - It works through the **PipesHub desktop app**. The desktop app on your computer reads the folder and sends the files to PipesHub. The PipesHub server never opens the folder itself.
 - PipesHub only **reads** the folder. It doesn't move, rename, copy, or delete anything.
 - There's **no login**. No password, no API key, no cloud account. You just pick a folder.
-- It's a **personal** connector — you set it up under **Workspace Settings → Your Connectors**, and the files you index are searchable by **you** inside PipesHub. It is not shared with the rest of your team.
+- It's a **personal** connector — you set it up under **Workspace settings → Your Connectors**, and the files you index are searchable by **you** inside PipesHub. It is not shared with the rest of your team.
 
 ### Words you'll see
 
@@ -81,7 +81,7 @@ A folder on a server, or one mounted into a Docker or Kubernetes container, can'
    - **Linux** — [AppImage](https://github.com/pipeshub-ai/pipeshub-ai/releases/latest/download/PipesHub-linux-x64.AppImage) or [.deb](https://github.com/pipeshub-ai/pipeshub-ai/releases/latest/download/PipesHub-linux-x64.deb)
    - **Linux (ARM)** — [AppImage](https://github.com/pipeshub-ai/pipeshub-ai/releases/latest/download/PipesHub-linux-arm64.AppImage) or [.deb](https://github.com/pipeshub-ai/pipeshub-ai/releases/latest/download/PipesHub-linux-arm64.deb)
 
-2. A PipesHub account where you can open **Workspace Settings** (profile menu at the bottom of the main sidebar) and see **Your Connectors** under the **Personal** section.
+2. A PipesHub account where you can open **Workspace settings** (profile menu at the bottom of the main sidebar) and see **Your Connectors** under the **Personal** section.
 3. A folder you want to make searchable.
 
 ---
@@ -96,23 +96,19 @@ A folder on a server, or one mounted into a Docker or Kubernetes container, can'
 
 ### Step 1 — Open Local FS in the PipesHub desktop app
 
-1. In the **desktop app**, open your **user profile** menu at the bottom of the left sidebar, then choose **Workspace Settings**.
+1. In the **desktop app**, open your **user profile** menu at the bottom of the left sidebar, then choose **Workspace settings**.
 2. In the workspace settings sidebar, under **Personal**, click **Your Connectors**.
 3. Find the **Local FS** card.
 4. Click **+ Setup** on the card.
 
-<div className="text-center">
-  <img
-    src="/images/connectors/local-fs/your_connectors_catalog.png"
-    alt="Your Connectors catalog with Local FS and + Setup"
-    className="block mx-auto w-11/12"
-  />
-</div>
+<Frame>
+  <img src="/images/connectors/local-fs/your_connectors_catalog.png" alt="Your Connectors catalog with Local FS and + Setup" />
+</Frame>
 
 A panel slides in from the right with two tabs: **Authenticate Instance** and **Configure Records**. You'll fill them in order.
 
 <Info>
-  Local FS is a **personal** connector — set it up from **Workspace Settings → Your Connectors**, not **Workspace Settings → Connectors** (team scope). Open Workspace Settings from the profile menu at the bottom of the main sidebar; do not use the **Personal** section of the main app sidebar (that area is for actions like toolsets, not connector setup).
+  Local FS is a **personal** connector — set it up from **Workspace settings → Your Connectors**, not **Workspace settings → Connectors** (team scope). Open Workspace settings from the profile menu at the bottom of the main sidebar; do not use the **Personal** section of the main app sidebar (that area is for actions, not connector setup).
 </Info>
 
 <Info>
@@ -332,7 +328,7 @@ These get parsed so you can search the actual contents:
 - E-books — **EPUB**, unless copy-protected (DRM). Their text is searchable, but they can't be previewed in PipesHub; download the book to read it
 - Plain text and data — **TXT**, **MD**, **MDX**, **CSV**, **TSV**, **JSON**, **YAML**, **HTML**
 - Code — **.py**, **.js**, **.ts**, **.java**, and most others
-- Images — **JPG**, **JPEG**, **PNG**, **WebP**, **SVG**, **HEIC**, **HEIF**
+- Images — **JPG**, **JPEG**, **PNG**, **WebP**, **SVG**, and **HEIC** and **HEIF** when `USE_PARSING_SERVICE=true` is set
 
 ### Stored but not searched inside
 

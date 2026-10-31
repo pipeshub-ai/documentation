@@ -1,6 +1,8 @@
 ---
-title: "Overview"
+title: "Connectors overview"
+sidebarTitle: "Overview"
 description: "Connectors are software components that enable different applications, systems, or platforms to communicate and share data with each other."
+icon: "plug"
 ---
 
 ## What are Connectors?
@@ -19,8 +21,30 @@ Connectors are software components that **sync and index data** from external ap
 </Warning>
 
 <Note>
-  **When you want to use both Connector and Toolset:** In the Agent Builder add nodes from **Knowledge** (Collections, API Apps) for document search and context retrieval, and add nodes from **Tools** for performing actions. Connect both to your Agent Core so the agent can search context and take action in the same conversation.
+  **When you want to use both Connector and Action:** In the Agent Builder add nodes from **Knowledge** (Collections, API Apps) for document search and context retrieval, and add nodes from **Tools** for performing actions. Connect both to your Agent node so the agent can search context and take action in the same conversation.
 </Note>
+
+---
+
+## Setting up a connector
+
+Connectors for the whole organization are set up under **Workspace settings** > **Connectors**. Use the **All**, **Configured** and **Not configured** tabs to filter the catalog, and click **Set up** on a card to start.
+
+<Frame>
+  <img src="/images/product/workspace/connectors-list.png" alt="Workspace connectors catalog with Set up buttons" />
+</Frame>
+
+Connectors that sync only your own account are under **Your connectors** (the button at the top right of the page).
+
+<Frame>
+  <img src="/images/connectors/common/personal_connectors_list-new.png" alt="Personal connectors catalog under Your connectors" />
+</Frame>
+
+The setup dialog has two tabs. On **Authenticate**, read the setup guides, enter an **Instance name** and choose the **Authentication method**, then click **Next** to go to **Configure records**. Each connector's page lists the fields it needs.
+
+<Frame>
+  <img src="/images/product/connectors/connector-setup-dialog-confluence.png" alt="Connector setup dialog for Confluence on the Authenticate tab" width="612" />
+</Frame>
 
 ---
 
@@ -32,42 +56,36 @@ Our platform supports a wide range of connectors organized by ecosystem to help 
 
 ### Google Workspace
 
-| Connector        | Description |
-|------------------|-------------|
-| **Gmail**        | Access and manage email communications, create automated workflows |
-| **Google Calendar** | Sync events, create meetings, and manage scheduling |
-| **Google Drive** | File storage, sharing, and collaboration management |
-| **Google Docs**  | Document creation, editing, and collaboration |
-| **Google Sheets**| Spreadsheet data management and analysis |
-| **Google Slides**| Presentation creation and sharing |
-| **Google Forms** | Survey and form data collection |
-| **Google Meet**  | Video conferencing integration |
-| **Google Admin** | Workspace administration and user management |
-| **YouTube**      | Video content management and analytics |
+| Connector | Description |
+|-----------|-------------|
+| **[Gmail](/connectors/google-workspace/gmail/gmail)** | Sync email messages and attachments (team and personal) |
+| **[Google Drive](/connectors/google-workspace/drive/drive)** | Sync files and folders from Google Drive (team and personal) |
+
+Calendar, Docs, Sheets, Slides, Meet, and the other Google actions are [actions](/toolsets/overview) that let agents act in those apps. They are not connectors.
 
 ---
 
 ### Microsoft Ecosystem
 
-| Connector        | Description |
-|------------------|-------------|
-| **Outlook**      | Email and calendar management |
-| **OneDrive**     | Cloud file storage and synchronization |
-| **OneNote**      | Note-taking and knowledge management |
-| **Teams**        | Team collaboration and communication |
-| **SharePoint**   | Document management and team sites |
-| **Planner**      | Task and project management |
+| Connector | Description |
+|-----------|-------------|
+| **[Outlook](/connectors/microsoft-365/outlook)** | Email sync from Outlook mailboxes |
+| **[Outlook Personal](/connectors/microsoft-365/outlook-personal)** | Email sync from your own Outlook mailbox (personal) |
+| **[OneDrive](/connectors/microsoft-365/one-drive)** | Files and folders from users' OneDrive |
+| **[SharePoint](/connectors/microsoft-365/sharepoint)** | Document libraries and pages from SharePoint Online sites |
+
+Microsoft Teams is available as an agent [action](/toolsets/microsoft-365/teams).
 
 ---
 
 ### Atlassian
 
-| Connector    | Description |
-|--------------|-------------|
-| **Jira Cloud** (team & personal) | Issue tracking, project management, and agile workflows |
-| **Jira Data Center** (team & personal) | Issue tracking and project management for self-hosted Jira |
-| **Confluence Cloud** | Team collaboration and knowledge base management |
-| **Confluence Data Center** | Team collaboration and knowledge base for self-hosted Confluence |
+| Connector | Description |
+|-----------|-------------|
+| **[Jira Cloud](/connectors/jira/jira)** | Issue tracking, project management, and agile workflows (team and personal) |
+| **[Jira Data Center](/connectors/jira/jira-data-center)** | Issue tracking and project management for self-hosted Jira (team and personal) |
+| **[Confluence Cloud](/connectors/confluence/confluence)** | Team collaboration and knowledge base management |
+| **[Confluence Data Center](/connectors/confluence/confluence-data-center)** | Team collaboration and knowledge base for self-hosted Confluence (team and personal) |
 
 ---
 
@@ -75,10 +93,11 @@ Our platform supports a wide range of connectors organized by ecosystem to help 
 
 | Connector | Description |
 |-----------|-------------|
-| **Slack** | Team messaging and collaboration |
-| **Zammad** | Open-source helpdesk and ticketing system |
+| **[Slack](/connectors/slack/slack)** (Slack Workspace and Slack) | Team messaging and collaboration |
+| **[Zammad](/connectors/zammad/zammad)** | Open-source helpdesk and ticketing system |
 | **[Zendesk](/connectors/zendesk/zendesk)** | Customer support and ticket management |
 | **[Zoom](/connectors/zoom/zoom)** | Past meetings, participants, and AI Companion meeting transcripts |
+| **[ServiceNow](/connectors/servicenow/servicenow)** | Knowledge base and service management records from ServiceNow |
 
 ---
 
@@ -94,30 +113,32 @@ Our platform supports a wide range of connectors organized by ecosystem to help 
 
 | Connector | Description |
 |-----------|-------------|
-| **Web** | Crawl and index publicly reachable pages and files from a website URL |
-| **RSS** | Subscribe to and sync items from public RSS and Atom feeds (optional full article text) |
+| **[Web](/connectors/web/web)** | Crawl and index publicly reachable pages and files from a website URL |
+| **[RSS](/connectors/rss/rss)** | Subscribe to and sync items from public RSS and Atom feeds (optional full article text) |
 
 ---
 
-### Local & network storage
+### Local storage and file shares
 
 | Connector | Description |
 |-----------|-------------|
-| **Local FS** | Index a folder on the connector host; set up under **Workspace Settings → Your Connectors**; optional desktop watcher in the Electron app |
-| **SMB** | Sync one Windows / Samba / NAS file share over SMB 2/3; team or personal |
+| **[Local FS](/connectors/local-fs/local-fs)** | Index a folder on the connector host; set up under **Workspace settings → Your Connectors**; optional desktop watcher in the Electron app |
+| **[SMB](/connectors/smb/smb)** | Files and folders from one SMB 2 or SMB 3 network share |
 
 ---
 
 ### Cloud Storage & Infrastructure
 
-| Connector        | Description |
-|------------------|-------------|
-| **Amazon S3**    | Scalable object storage and data management |
-| **Microsoft Azure** | Cloud computing platform and services |
-| **Google Cloud Platform (GCP)** | Google's cloud infrastructure services |
-| **Box**          | Enterprise content management and collaboration |
-| **Dropbox**      | File synchronization and cloud storage |
-| **Nextcloud**    | Self-hosted file sync and share platform |
+| Connector | Description |
+|-----------|-------------|
+| **[Amazon S3](/connectors/s3/s3)** | Scalable object storage and data management |
+| **MinIO** | S3-compatible object storage |
+| **[Azure Blob Storage](/connectors/azure-blob/azure-blob)** | Containers and blobs from an Azure storage account |
+| **[Azure Files](/connectors/azure-files/azure-files)** | File shares from an Azure storage account |
+| **[Google Cloud Storage (GCS)](/connectors/gcs/gcs)** | Buckets and objects from Google Cloud Storage |
+| **[Box](/connectors/box/box)** | Enterprise content management and collaboration |
+| **Dropbox** ([Dropbox](/connectors/dropbox/dropbox_teams) and [Dropbox Personal](/connectors/dropbox/dropbox_personal)) | File synchronization and cloud storage |
+| **[Nextcloud](/connectors/nextcloud/nextcloud)** | Self-hosted file sync and share platform |
 
 ---
 
@@ -125,9 +146,9 @@ Our platform supports a wide range of connectors organized by ecosystem to help 
 
 | Connector | Description |
 |-----------|-------------|
-| **[GitHub](/connectors/github/github)** (GitHub and GitHub Teams) | Version control, code collaboration, issues, and pull requests |
+| **[GitHub](/connectors/github/github)** (GitHub Teams and Github) | Version control, code collaboration, issues, and pull requests |
 | **[GitLab](/connectors/gitlab/gitlab)** (GitLab and GitLab Personal) | Version control, code collaboration, and merge request tracking |
-| **Linear** | Modern issue tracking and project management |
+| **[Linear](/connectors/linear/linear)** | Modern issue tracking and project management |
 | **[Notion](/connectors/notion/notion)** (Notion and Notion Personal) | Pages, databases, and files — team (workspace members matched by email) or personal (only you) |
 
 ---
@@ -137,6 +158,7 @@ Our platform supports a wide range of connectors organized by ecosystem to help 
 | Connector | Description |
 |-----------|-------------|
 | **[Drupal Wiki](/connectors/drupal-wiki/drupal-wiki)** | Spaces, pages, and attachments from a self-hosted or cloud Drupal Wiki, with per-space permissions |
+| **[BookStack](/connectors/bookstack/bookstack)** | Shelves, books, chapters, and pages from a BookStack instance |
 
 ---
 
@@ -144,15 +166,15 @@ Our platform supports a wide range of connectors organized by ecosystem to help 
 
 | Connector | Description |
 |-----------|-------------|
-| **Airtable** | Flexible database and project management |
-| **MariaDB** | Tables and rows sync from a MariaDB database |
-| **PostgreSQL** | Schemas, tables, and rows sync from a PostgreSQL database |
+| **[MariaDB](/connectors/mariadb/mariadb)** | Tables and rows sync from a MariaDB database |
+| **[PostgreSQL](/connectors/postgres/postgres)** | Schemas, tables, and rows sync from a PostgreSQL database |
+| **Snowflake** | Databases, tables, views, stages, and files from Snowflake |
 
 ---
 
-## Security & Compliance
+## Security
 
-All connectors are built with enterprise-grade security in mind, supporting OAuth 2.0 or token-based authentication (depending on the source), data encryption, and compliance with major industry standards including SOC 2, GDPR, and HIPAA where applicable.
+Each connector signs in to its source with OAuth 2.0 or a token, depending on the source. PipesHub stores connector credentials encrypted. See [Security and privacy](/security-and-privacy).
 
 ---
 
@@ -160,25 +182,25 @@ All connectors are built with enterprise-grade security in mind, supporting OAut
 
 <AccordionGroup>
 
-<Accordion title="What's the difference between Connectors and Toolsets?">
+<Accordion title="What's the difference between Connectors and Actions?">
 
-| Aspect | Connectors | Toolsets |
+| Aspect | Connectors | Actions |
 |--------|-----------|----------|
 | **Purpose** | Sync and index data for search | Enable agents to perform actions |
 | **Data Flow** | One-way (import data into PipesHub) | Two-way (read and write via API) |
 | **When to Use** | Query/search data | Perform actions on data |
 
-**Example:** Use a **Gmail Connector** to index and search your email history. Use a **Gmail Toolset** to send new emails through an agent.
+**Example:** Use a **Gmail Connector** to index and search your email history. Use a **Gmail action** to send new emails through an agent.
 
 </Accordion>
 
-<Accordion title="When should I use a Connector vs a Toolset?">
+<Accordion title="When should I use a Connector vs an Action?">
 
 **Connector** — Use when you need document context search: connectors sync and index your documents, emails, and pages so your assistant can find and use that context, and they do not perform actions.
 
-**Toolset** — When you need **actions**: create or update content, send messages, or run analytical queries (e.g. JQL, CQL, reports).
+**Action** — Use when the agent needs to do something in another app: create or update content, send messages, or run analytical queries (e.g. JQL, CQL, reports).
 
-**Quick takeaway:** Search & context → **Connector**. Actions → **Toolset**.
+**Quick takeaway:** Search & context → **Connector**. Do something in another app → **Action**.
 
 </Accordion>
 
@@ -186,8 +208,8 @@ All connectors are built with enterprise-grade security in mind, supporting OAut
 
 The callback URL is displayed in PipesHub when configuring a connector:
 
-1. Go to **Settings > Connectors**
-2. Click **"Configure"** on the connector you want to set up
+1. Go to **Workspace settings > Connectors** (or **Your connectors** for a personal connector)
+2. Click **Set up** on the connector you want to configure
 3. Copy the **Redirect URI** shown in the dialog
 4. Add it to your OAuth app's allowed redirect URIs in the service's developer console
 
@@ -197,15 +219,15 @@ The callback URL must match exactly between PipesHub and the OAuth app for authe
 
 <Accordion title="What permissions or OAuth scopes do Connectors require?">
 
-Connectors only read and index data; they never modify or delete anything in your external applications. Connectors use OAuth 2.0 or token-based authentication, depending on the source. For OAuth, grant only the scopes listed on the connector's documentation page when you create your OAuth app in the service's developer console. For a token, the connector's page says what access the token's user needs.
+Connectors only read and index data; they never delete anything in your external applications. The one change is in Dropbox: the connector creates a shared link for each new file and folder, set so it grants no one new access, and uses it as the record's link. Connectors use OAuth 2.0 or token-based authentication, depending on the source. For OAuth, grant only the scopes listed on the connector's documentation page when you create your OAuth app in the service's developer console. For a token, the connector's page says what access the token's user needs.
 
 Some sources only expose what a connector needs to read through broader permissions. For example, GitHub lists a private repository's collaborators only to accounts with Write access, and Salesforce's `api` scope covers both reading and writing. Use the least access each connector's page asks for.
 
 </Accordion>
 
-<Accordion title="What happens when I turn off Sync Enabled on a connector?">
+<Accordion title="What happens when I turn off Sync enabled on a connector?">
 
-Turning off **Sync Enabled** on a connector's instance card pauses that connector. PipesHub asks you to confirm before it does.
+Turning off **Sync enabled** on a connector's instance card pauses that connector. PipesHub asks you to confirm before it does.
 
 - **Indexed records stay searchable.** Records that were fully indexed before you turned sync off still show up in search, chat, and agents, for the people who could see them before.
 - **Records that were never indexed stay unsearchable.** For example, records left out by **Enable Manual Indexing** or by the connector's indexing filters were not searchable before, and turning sync off does not change that.
@@ -227,10 +249,10 @@ There are three common causes:
    - **Fix:** Reconfigure the connector and authenticate using the same email as your PipesHub account.
 
 2. **Records not displaying in "All Records"** - Documents or data from the connector are not showing up at all in the All Records section.
-   - **Fix:** Check permissions in the connector configuration, verify email match, and go to **Settings > Connectors** to ensure all records have synced successfully.
+   - **Fix:** Check permissions in the connector configuration, verify email match, and go to **Workspace settings > Connectors** to ensure all records have synced successfully.
 
 3. **Data not yet indexed** - The connector is still syncing or hasn't completed the initial indexing process.
-   - **Fix:** Go to **Settings > Connectors**, check the sync status, and wait for indexing to complete.
+   - **Fix:** Go to **Workspace settings > Connectors**, check the sync status, and wait for indexing to complete.
 
 </Accordion>
 

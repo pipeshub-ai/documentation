@@ -137,8 +137,8 @@ The Google Drive connector uses OAuth 2.0 for authentication. This requires user
 3. Click **Manage Domain Wide Delegation**
 4. Click **Add new** and paste the service account's client ID
 5. Add the following OAuth scopes required for Google Drive sync:
-```
-https://www.googleapis.com/auth/admin.directory.group.readonly,https://www.googleapis.com/auth/admin.reports.audit.readonly,https://www.googleapis.com/auth/admin.directory.user.readonly,https://www.googleapis.com/auth/admin.directory.domain.readonly,https://www.googleapis.com/auth/admin.directory.orgunit,https://www.googleapis.com/auth/drive.readonly,https://www.googleapis.com/auth/drive.metadata.readonly,https://www.googleapis.com/auth/drive.metadata,https://www.googleapis.com/auth/documents.readonly,https://www.googleapis.com/auth/spreadsheets.readonly,https://www.googleapis.com/auth/presentations.readonly,https://www.googleapis.com/auth/drive.file,https://www.googleapis.com/auth/drive
+```text
+https://www.googleapis.com/auth/admin.directory.group.readonly,https://www.googleapis.com/auth/admin.reports.audit.readonly,https://www.googleapis.com/auth/admin.directory.user.readonly,https://www.googleapis.com/auth/admin.directory.domain.readonly,https://www.googleapis.com/auth/drive.readonly,https://www.googleapis.com/auth/drive.metadata.readonly,https://www.googleapis.com/auth/documents.readonly,https://www.googleapis.com/auth/spreadsheets.readonly,https://www.googleapis.com/auth/presentations.readonly,https://www.googleapis.com/auth/drive.file
 ```
 
 <Info>
@@ -146,9 +146,7 @@ https://www.googleapis.com/auth/admin.directory.group.readonly,https://www.googl
   These scopes are required for Google Drive synchronization:
   - `drive.readonly`: Read-only access to Drive files
   - `drive.metadata.readonly`: Read-only access to Drive file metadata
-  - `drive.metadata`: Access to Drive file metadata
   - `drive.file`: Access to files created by the app
-  - `drive`: Full access to Drive files
   - `documents.readonly`: Access to Google Docs files
   - `spreadsheets.readonly`: Access to Google Sheets files
   - `presentations.readonly`: Access to Google Slides files
@@ -193,26 +191,16 @@ https://www.googleapis.com/auth/admin.directory.group.readonly,https://www.googl
 ### Configuring and enabling connector
 
 
-1. Navigate to **Workspace Settings** > Under **Workspace** section in sidebar > **Connectors** in your application.
-<div style={{ textAlign: "center" }}>
-  <img
-    src="/images/connectors/common/go_to_workspace_settings.png"
-    alt="Go to Workspace Settings"
-    style={{ display: 'block', margin: '0 auto' }}
-    width="90%"
-  />
-</div>
+1. Navigate to **Workspace settings** > Under **Workspace** section in sidebar > **Connectors** in your application.
+<Frame>
+  <img src="/images/connectors/common/go_to_workspace_settings.png" alt="Go to Workspace settings" width="520" />
+</Frame>
 
 2. Search for the **Drive Workspace** connector and click on **Setup** to configure a connector instance.
 
-<div style={{ textAlign: "center" }}>
-  <img
-    src="/images/connectors/googleWorkspace/enterprise/search_for_drive_connector.png"
-    alt="Search for Drive Workspace connector"
-    style={{ display: 'block', margin: '0 auto' }}
-    width="90%"
-  />
-</div>
+<Frame>
+  <img src="/images/connectors/googleWorkspace/enterprise/search_for_drive_connector.png" alt="Search for Drive Workspace connector" />
+</Frame>
 
 
 3. In the configuration dialog that opens:
@@ -220,14 +208,9 @@ https://www.googleapis.com/auth/admin.directory.group.readonly,https://www.googl
    - Enter the **Admin Email** (Admin user's email with which you created the Google Cloud credentials)
    - Select the **JSON** key file to upload
    - Click on the **Next** button to save the configuration and move to configure connector settings page. You can learn about the connector settings in the [Connector Settings](/connectors/google-workspace/drive/drive#connector-settings) section.
-<div style={{ textAlign: "center" }}>
-  <img
-    src="/images/connectors/googleWorkspace/enterprise/drive_configuration.png"
-    alt="Configure Google Drive connector"
-    style={{ display: 'block', margin: '0 auto' }}
-    width="90%"
-  />
-</div>
+<Frame>
+  <img src="/images/connectors/googleWorkspace/enterprise/drive_configuration.png" alt="Configure Google Drive connector" width="600" />
+</Frame>
 
 4. After configuring connector settings, you can click on **Save Configuration**.
 
@@ -294,64 +277,6 @@ Click on the **Save** button
 
 After completing these steps, return to [Step 5](#step-5%3A-create-a-json-key-for-the-service-account) and try creating the service account key again.
 
-## Google PubSub Configuration
-
-PubSub setup enables real-time updates for Google Drive content. While optional, it's highly recommended for maintaining up-to-date content in Enterprise search.
-
-### Step 1: Set Up a Cloud Pub/Sub Topic
-
-1. Navigate to **Pub/Sub > Topics** in the Cloud Console sidebar
-2. Click **Create Topic**
-3. Enter a unique name (e.g., `projects/your-project-id/topics/drive-webhook-topic`)
-4. Check **"Add a default subscription"**
-5. Click **Create** to confirm
-
-<div style={{ textAlign: "center" }}>
-  <img
-    src="/images/connectors/googleWorkspace/enterprise/topic.png"
-    alt="Create Topic"
-    style={{ display: 'block', margin: '0 auto' }}
-    width="80%"
-  />
-</div>
-
-### Step 2: Configure the Subscription
-
-1. Go to **Pub/Sub > Topics**
-2. Select the subscription created with the topic
-3. Click **Edit**
-4. Change Delivery type to **"Push"**
-5. Set Endpoint URL as **"_your_base_url_/drive/webhook"**
-6. Adjust Expiry Period as needed
-7. Click **Update**
-
-<Warning>
-  Ensure your base URL matches the Enterprise search connector service base URL
-</Warning>
-
-### Step 3: Set Topic Permissions
-
-1. In **Pub/Sub > Topics**, select your topic
-2. Open the Info Panel (right side)
-3. Click **Add Principals**
-4. Add `drive-api-push@system.gserviceaccount.com`
-5. Assign the **Pub/Sub Publisher** role
-
-<div style={{ textAlign: "center" }}>
-  <img
-    src="/images/connectors/googleWorkspace/enterprise/publisher_principals.png"
-    alt="Add Principals"
-    style={{ display: 'block', margin: '0 auto' }}
-    width="60%"
-  />
-</div>
-
-6. Click **Save**
-
-<Info>
-  If you encounter an organizational policy constraint error, modify the policy in organizational policies to allow the given domain. Allow 5-10 minutes for changes to propagate.
-</Info>
-
 </div>
 
 </Accordion>
@@ -379,11 +304,7 @@ The Google Drive connector uses OAuth 2.0 for authentication. This requires user
 ### Step 2: Enable Required APIs
 
 1. Navigate to **APIs & Services > Library** in the Cloud Console
-2. Search for and enable the following APIs required for Google Drive sync:
-   - **Google Drive API** (required for Drive file access)
-   - **Google Docs API** (required for Google Docs files)
-   - **Google Sheets API** (required for Google Sheets files)
-   - **Google Slides API** (required for Google Slides files)
+2. Search for and enable the **Google Drive API**. The personal connector calls only this API; it exports Google Docs, Sheets, and Slides through it.
 
 <div style={{ textAlign: "center", padding: "5px" }}>
   <img
@@ -396,7 +317,7 @@ The Google Drive connector uses OAuth 2.0 for authentication. This requires user
 
 
 <Warning>
-  Make sure that all of the listed APIs are enabled to ensure smooth operation of the Google Drive connector.
+  Make sure the API is enabled to ensure smooth operation of the Google Drive connector.
 </Warning>
 
 ### Step 3: Configure OAuth Consent Screen
@@ -411,11 +332,11 @@ The Google Drive connector uses OAuth 2.0 for authentication. This requires user
 2. Click **Create Credentials** and select **OAuth client ID**
 3. Select **Web application** as the application type
 4. Set the **Authorized redirect URI** to:
-   ```
+   ```text
    http://your-frontend-dns/connectors/oauth/callback/Drive
    ```
    or for HTTPS:
-   ```
+   ```text
    https://your-frontend-dns/connectors/oauth/callback/Drive
    ```
 5. Click **Create** and note your **Client ID** and **Client Secret**
@@ -430,46 +351,26 @@ The Google Drive connector uses OAuth 2.0 for authentication. This requires user
 ### Step 5: Configure OAuth Scopes
 
 1. In the **OAuth consent screen**, navigate to the **Scopes** section
-2. Add the following OAuth scopes required for Google Drive sync:
+2. Add the one OAuth scope the connector requests:
    - `https://www.googleapis.com/auth/drive.readonly` - Read-only access to Drive files
-   - `https://www.googleapis.com/auth/drive.metadata.readonly` - Read-only access to Drive file metadata
-   - `https://www.googleapis.com/auth/drive.metadata` - Access to Drive file metadata
-   - `https://www.googleapis.com/auth/documents.readonly` - Read Google Docs files
-   - `https://www.googleapis.com/auth/spreadsheets.readonly` - Read Google Sheets files
-   - `https://www.googleapis.com/auth/presentations.readonly` - Read Google Slides files
-   - `https://www.googleapis.com/auth/drive.file` - Access to files created by the app
-   - `https://www.googleapis.com/auth/drive` - Full access to Drive files
 
 <Info>
-  These scopes allow the connector to:
-  - Access and read files from Google Drive
-  - Access file metadata for indexing and search
-  - Access Google Docs, Sheets, and Slides files stored in Drive
+  This scope lets the connector read your Drive files and their metadata, including Google Docs, Sheets, and Slides, for indexing and search.
 </Info>
 
 ### Configuring and enabling connector
 
-1. Navigate to **Workspace Settings** > Under **Personal** section in sidebar > **Your Connectors** in your application.
-<div style={{ textAlign: "center" }}>
-  <img
-    src="/images/connectors/common/go_to_workspace_settings.png"
-    alt="Go to Workspace Settings"
-    style={{ display: 'block', margin: '0 auto' }}
-    width="90%"
-  />
-</div>
+1. Navigate to **Workspace settings** > Under **Personal** section in sidebar > **Your Connectors** in your application.
+<Frame>
+  <img src="/images/connectors/common/go_to_workspace_settings.png" alt="Go to Workspace settings" width="520" />
+</Frame>
 
 
 2. You will see a list of connectors with Individual Setup.
 
-<div style={{ textAlign: "center", padding: "5px" }}>
-  <img
-    src="/images/connectors/common/personal_connectors_list.png"
-    alt="Connector registry"
-    style={{ display: 'block', margin: '0 auto' }}
-    width="80%"
-  />
-</div>
+<Frame>
+  <img src="/images/connectors/common/personal_connectors_list-new.png" alt="Personal connectors catalog under Your connectors" />
+</Frame>
 
 3. Search for the **Drive** connector and click on **Setup** to configure a connector instance.
 
@@ -479,13 +380,9 @@ The Google Drive connector uses OAuth 2.0 for authentication. This requires user
    - Enter the **Google Client Secret** from your Google Cloud Console
    - Click on the **Next** button to save the configuration and move to Authorize page.
 
-     <div style={{ textAlign: "center" }}>
-       <img
-         src="/images/connectors/googleWorkspace/individual/drive_configuration.png"
-         alt="Google Drive auth configuration"
-         width="90%"
-       />
-     </div>
+     <Frame>
+       <img src="/images/connectors/googleWorkspace/individual/drive_configuration.png" alt="Google Drive auth configuration" width="600" />
+     </Frame>
 
 <Note>
   Configuring OAuth App can only be performed by Admins. If you are not an Admin, you must request an Admin to configure the OAuth App for you. You can then access configured OAuth Apps via a dropdown menu.
@@ -523,10 +420,6 @@ The Google Drive connector uses OAuth 2.0 for authentication. This requires user
   **Important:** Authorize using the same email address as your PipesHub account. Using a different email will cause permission issues on the PipesHub platform.
 </Warning>
 
-<Info>
-  For setting up Google PubSub notifications, see the **Google PubSub Configuration** section earlier in this Enterprise Setup guide.
-</Info>
-
 </div>
 
 </Accordion>
@@ -554,8 +447,8 @@ On Workspace, a file deleted or moved to the trash in Google Drive is usually re
 
 **Shared drives.** A shared-drive file moved to the trash is removed for everyone as soon as one synced user's sync sees it there. A shared-drive file that just disappears for one person is never removed for everyone on that alone, because Google reports a delete and an unshare the same way. What happens next depends on the drive:
 
-- **A shared drive that PipesHub syncs** (the **Drive IDs** filter includes it, and at least one synced user is a member, directly or through a group): only the person who lost the file loses access. If the file was really deleted, that drive's own sync removes it. A group whose members the directory won't list counts as a member, because it may hold a synced user. If it holds none, no synced user's sync reads that drive, so the file stays for anyone else with access to it in PipesHub.
-- **A shared drive the Drive IDs filter leaves out, or one no synced user is a member of:** the connector asks the other synced users with access to the file in PipesHub (directly, or through a group the directory lists them in) whether they can still open it. If one can, only the person who lost it loses access. If none can, the file is removed for everyone, including from search for anyone who reached it another way. If the directory won't list the members of a group with access to the file, the connector can't rule out that someone in it can still open the file, so the file is kept and only the person who lost it loses access.
+- **A shared drive that PipesHub syncs** (the **Shared Drives** filter includes it, and at least one synced user is a member, directly or through a group): only the person who lost the file loses access. If the file was really deleted, that drive's own sync removes it. A group whose members the directory won't list counts as a member, because it may hold a synced user. If it holds none, no synced user's sync reads that drive, so the file stays for anyone else with access to it in PipesHub.
+- **A shared drive the Shared Drives filter leaves out, or one no synced user is a member of:** the connector asks the other synced users with access to the file in PipesHub (directly, or through a group the directory lists them in) whether they can still open it. If one can, only the person who lost it loses access. If none can, the file is removed for everyone, including from search for anyone who reached it another way. If the directory won't list the members of a group with access to the file, the connector can't rule out that someone in it can still open the file, so the file is kept and only the person who lost it loses access.
 
 **When Google can't be read.** If Google can't answer because of an outage or a rate limit, nothing is removed and the change is checked again on the next sync. If Google refuses the check with an access error (HTTP 403) that gives no reason PipesHub recognises, the change is checked again on each sync, up to five syncs in a row. After that, only the person who lost the file loses access, and the change isn't checked again. The file stays for everyone else until one of these removes it:
 
@@ -586,6 +479,12 @@ This removal runs even when the full sync skips its cleanup (see **When a full s
 The folders above a folder you listed in **Folder IDs** are removed by the full sync's cleanup, not by this step, so they stay when that cleanup is skipped.
 
 **When a listed folder can't be read.** Removal waits while a listed folder's contents are unknown: the folder can be seen but nobody could list what's inside it, or Google refuses it with an access error PipesHub doesn't recognise. For that unrecognised error, removal keeps waiting on every sync while the folder stays in **Folder IDs**, even after the fifth run, when the rest of the sync goes on without it (see **Folder IDs**). A listed folder known to be gone or out of reach (deleted, not visible to any synced user, or refused with a known permission error) doesn't hold removal back: the files the new filters exclude are removed on that sync, including the files in its subfolders. Files directly inside such a folder are removed by the cleanup at the end of the full sync, or straight away if they're in the trash. They stay only when they aren't in the trash and the full sync skips its cleanup (see **When a full sync skips its cleanup**, above).
+
+### Shared Drives
+
+Workspace connector only. Pick shared drives from a list loaded from your Google Workspace. Use **In** to sync only the drives you pick, or **Not In** to sync every shared drive except them. Leave it empty to sync all shared drives. The filter doesn't affect users' own My Drive files.
+
+A shared drive that this filter leaves out isn't synced for its members: its files don't come in through a member's "Shared with me" list either. One exception: a file or folder from that drive shared directly with someone who isn't a member of the drive still syncs for that person.
 
 ### Folder IDs
 
@@ -635,16 +534,16 @@ To index records manually go to the **All Records** section, go to a record, cli
 
 ### Index Shared Items
 
-When enabled, files shared with others are indexed alongside personal files. Disable this to exclude shared content and index only files that are not shared with others.
+Individual connector only. When enabled, files shared with others are indexed alongside personal files. Disable this to exclude shared content and index only files that are not shared with others.
 
 
-### Index Shared with Me
+### Index Items Shared With Me
 
-When enabled, files that others have shared with the user are indexed. Disable this to exclude externally shared content and index only files the user owns or created. (Only available for Enterprise setup)
+Workspace connector only. When enabled, files that others have shared with the user are indexed. Disable this to exclude externally shared content and index only files the user owns or created.
 
-### Index Shared by Me
+### Index Items Shared by me
 
-When enabled, files the user has shared with others are indexed. Disable this to exclude content the user has shared outward and index only their private or unshared files. (Only available for Enterprise setup)
+Workspace connector only. When enabled, files the user has shared with others are indexed. Disable this to exclude content the user has shared outward and index only their private or unshared files.
 
 </Accordion>
 
@@ -652,19 +551,40 @@ When enabled, files the user has shared with others are indexed. Disable this to
 
 ---
 
+## Permissions
+
+PipesHub copies each file's Google Drive sharing on every sync, and people are matched to PipesHub accounts by email.
+
+**Drive Workspace connector**
+
+| Sharing in Google Drive | Who can find the file in PipesHub |
+|---|---|
+| **Shared with a user** | That user. Owner and organizer roles become owner access; editor and file organizer become write; commenter and viewer become read. All of them can find the file. |
+| **Shared with a Google group** | The group's members, as synced from the Workspace directory. |
+| **Shared drive membership** | The shared drive's members. |
+| **Shared with your whole domain** ("Anyone in your organization") | Not copied. Only people with their own user, group or shared-drive access to the file can find it. |
+| **Anyone with the link** | Not copied as a grant. A synced user whose own Drive lists the file gets access. |
+
+- Suspended and archived users get no access to files.
+- If PipesHub can't read a file's sharing list for a user who can open the file, that user still gets read access.
+
+**Drive (individual connector)**: everything it syncs is visible only to the user who connected it.
+
+---
+
 ## FAQ
 
 <AccordionGroup>
 
-<Accordion title="What's the difference between Drive Connector and Drive Toolset?">
+<Accordion title="What's the difference between Drive Connector and Drive Action?">
 
-| Aspect | Drive Connector | Drive Toolset |
+| Aspect | Drive Connector | Drive Action |
 |--------|----------------|---------------|
 | **Purpose** | Sync and index files for search | Enable agents to perform file actions |
 | **Data Flow** | One-way (import data into PipesHub) | Two-way (read and write via API) |
 | **When to Use** | Query/search files and folders | Create files, manage folders |
 
-**Example:** Use **Drive Connector** to search and retrieve document content. Use **Drive Toolset** to let agents create folders and manage file organization.
+**Example:** Use **Drive Connector** to search and retrieve document content. Use **Drive action** to let agents create folders and manage file organization.
 
 </Accordion>
 

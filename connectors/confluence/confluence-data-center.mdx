@@ -75,7 +75,7 @@ Check these before you start:
 | **Admin account** | Use a Confluence administrator account so the connector can read every space, the full user list, and the audit log |
 
 <Warning>
-  **You need Confluence Data Center 9.1 or later.** Space permissions were only added to the REST API in 9.1 ([CONFSERVER-78176](https://jira.atlassian.com/browse/CONFSERVER-78176)). On older versions the connector cannot read who is allowed to see a space, so it stops with a clear error instead of syncing spaces without permissions. Upgrade to 9.1 or later before you set this up.
+  **You need Confluence Data Center 9.1 or later.** Space permissions were only added to the REST API in 9.1 ([CONFSERVER-78176](https://jira.atlassian.com/browse/CONFSERVER-78176)). On older versions the connector cannot read who is allowed to see a space. It logs an error in the connector service log and still syncs each space, but with no space permissions, so that content is hidden from every user. The connector does not stop and the PipesHub UI shows no warning. Upgrade to 9.1 or later before you set this up.
 </Warning>
 
 ### Prerequisite: Email visibility
@@ -165,7 +165,7 @@ The setting has three options:
 
 #### Step 2: Authenticate Instance tab — enter your credentials
 
-1. In PipesHub, go to **Workspace Settings** → **Connectors**, find **Confluence Data Center**, and click **+ Setup**.
+1. In PipesHub, go to **Workspace settings** → **Connectors**, find **Confluence Data Center**, and click **Set up**.
 2. The connector panel opens as a drawer on the right.
 3. On the **Authenticate Instance** tab, select **Personal Access Token** in the **Authentication method** dropdown.
 4. Enter:
@@ -173,13 +173,9 @@ The setting has three options:
    - **Personal Access Token** — the token you copied in Step 1
 5. Click **Next**. PipesHub checks the credentials and moves you to the **Configure Records** tab.
 
-<div className="text-center">
-  <img
-    src="/images/connectors/confluence-data-center/connector_pat_form.png"
-    alt="Authenticate Instance tab with Personal Access Token method — Base URL and token fields"
-    className="block mx-auto w-11/12"
-  />
-</div>
+<Frame>
+  <img src="/images/connectors/confluence-data-center/connector_pat_form.png" alt="Authenticate Instance tab with Personal Access Token method — Base URL and token fields" width="612" />
+</Frame>
 
 #### Step 3: Configure Records tab
 
@@ -198,7 +194,7 @@ Use this on instances that do not support Personal Access Tokens, or where an ad
 
 #### Step 2: Authenticate Instance tab — enter your credentials
 
-1. In PipesHub, go to **Workspace Settings** → **Connectors**, find **Confluence Data Center**, and click **+ Setup**.
+1. In PipesHub, go to **Workspace settings** → **Connectors**, find **Confluence Data Center**, and click **Set up**.
 2. On the **Authenticate Instance** tab, select **Basic Authentication** in the **Authentication method** dropdown.
 3. Enter:
    - **Base URL** — the root URL of your Confluence, such as `https://confluence.yourcompany.com`, with no trailing slash
@@ -206,13 +202,9 @@ Use this on instances that do not support Personal Access Tokens, or where an ad
    - **Password** — the account password
 4. Click **Next**. PipesHub checks the credentials and moves you to the **Configure Records** tab.
 
-<div className="text-center">
-  <img
-    src="/images/connectors/confluence-data-center/connector_basic_auth_form.png"
-    alt="Authenticate Instance tab with Basic Authentication — Base URL, Username, Password fields"
-    className="block mx-auto w-11/12"
-  />
-</div>
+<Frame>
+  <img src="/images/connectors/confluence-data-center/connector_basic_auth_form.png" alt="Authenticate Instance tab with Basic Authentication — Base URL, Username, Password fields" width="612" />
+</Frame>
 
 <Warning>
   Enter the Confluence **username**, not the email address. On many instances these are different.
@@ -279,6 +271,7 @@ Available sync filters:
 
 **Indexing filters** — these decide what gets prepared for AI search. Everything is synced, but only what you enable here is indexed.
 
+- **Enable Manual Indexing** (default: off) — when on, synced content is not indexed until you pick it; when off, everything synced is indexed
 - **Pages:** Index Pages / Index Page Attachments / Index Page Comments (all on by default)
 - **Blog posts:** Index Blogposts / Index Blogpost Attachments / Index Blogpost Comments (all on by default)
 
@@ -301,6 +294,15 @@ Click **Save**. PipesHub shows a dialog saying **"Instance is configured and rea
 </div>
 
 Pick **Start syncing now** to start straight away, or **I'll do it later** to turn the connector on without syncing yet. Watch **Indexing Progress** to see how the sync is going.
+
+## Personal connector
+
+**Confluence Data Center Personal** is a separate connector that syncs the Confluence Data Center spaces and pages your own account can see into your personal workspace. Set it up under Workspace settings → **Personal** → **Your Connectors**.
+
+- **What it syncs:** only the spaces, pages, and blog posts visible to the credentials you provide.
+- **Who can see it:** only you, the user who created the connector. It doesn't read Confluence space permissions or other users.
+- **Sign-in:** a Personal Access Token or Basic authentication (username and password), with the same fields as the team connector. Use your own token or account, not a service account.
+- **Configure records:** the same sync settings, filters, and indexing options as the team connector.
 
 ## Supported Features
 
@@ -332,7 +334,7 @@ Each sync lists what the connector's account can see in every synced space, sepa
 - **When Confluence can't be read:** if a space's list can't be read to the end, or PipesHub can't read what it has stored, nothing is removed for that space and content type. If one removal fails, only that page or blog post stays; the rest still go ahead. Either way, the next sync repeats what's left. A space list that can't be read, or that comes back with no spaces at all, removes no space.
 
 <Info>
-  **Want agents to act in Confluence?** This connector only syncs data into PipesHub. To let agents create and update pages, set up the [Confluence Data Center toolset](/toolsets/confluence/confluence-data-center) as well.
+  **Want agents to act in Confluence?** This connector only syncs data into PipesHub. To let agents create and update pages, set up the [Confluence Data Center action](/toolsets/confluence/confluence-data-center) as well.
 </Info>
 
 ## Useful Links
@@ -351,8 +353,8 @@ Each sync lists what the connector's account can see in every synced space, sepa
 
 ### Common issues
 
-**Spaces fail to sync with a version error:**
-- Your Confluence is older than 9.1, so it cannot report space permissions over the REST API. The connector stops on purpose rather than syncing content with no permissions. Upgrade to 9.1 or later.
+**Synced spaces return no results for any user, and the connector log shows a version error:**
+- Your Confluence is older than 9.1, so it cannot report space permissions over the REST API. The connector logs `does not support REST space permissions` for each space and syncs the space with no permissions, so its content is hidden from everyone. Upgrade to 9.1 or later.
 
 **Base URL problems:**
 - Start with `https://`
@@ -492,7 +494,7 @@ Pick the one that matches your setup. They cannot be swapped.
 
 <Accordion title="Why do I need Confluence Data Center 9.1 or later?">
 
-Space permissions were only added to the REST API in Confluence Data Center 9.1 ([CONFSERVER-78176](https://jira.atlassian.com/browse/CONFSERVER-78176)). Without that, the connector cannot tell who is allowed to see a space. If it indexed content anyway, that content would either be hidden from everyone or shown to too many people. So it stops with a clear error instead.
+Space permissions were only added to the REST API in Confluence Data Center 9.1 ([CONFSERVER-78176](https://jira.atlassian.com/browse/CONFSERVER-78176)). Without that, the connector cannot tell who is allowed to see a space. On older versions the connector logs an error and syncs each space with no permissions, so its content is hidden from every user until you upgrade.
 
 </Accordion>
 

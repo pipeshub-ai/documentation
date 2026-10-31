@@ -1,0 +1,84 @@
+---
+title: "Custom Instructions"
+description: "Set organization-wide instructions for the Chat Assistant, such as answer length, tone, language or format"
+icon: "pen-to-square"
+---
+
+Custom instructions are text that PipesHub adds to Chat Assistant conversations across your organization. The settings page sets them for Agent mode, the default chat mode; Internal Search and Web Search modes have their own, set through the API (see below). Use them to set house rules for answers, for example:
+
+- "Keep answers under 150 words. Lead with the answer, then the details."
+- "Use bullet points, and end with the sources you used."
+- "Always answer in German."
+- "Prefer internal knowledge for company-specific questions."
+
+PipesHub adds your text to the assistant's system prompt (the standing instructions the AI model reads before each question) under a **Custom Instructions** heading. Its own rules for citations and safety still apply.
+
+## Set custom instructions
+
+<Steps>
+  <Step title="Open the settings">
+    As an admin, go to **Workspace → Prompts**.
+  </Step>
+  <Step title="Write your instructions">
+    Type your instructions in the **Agent** box.
+  </Step>
+  <Step title="Save">
+    Click **Save**. New messages use the instructions straight away.
+  </Step>
+</Steps>
+
+To remove them, click **Reset to Default** and save. With the box empty, Agent mode gets no custom instructions. Instructions set for Internal Search or Web Search through the API stay as they are.
+
+## What they apply to
+
+| Where you chat | Uses these instructions |
+| --- | --- |
+| Chat Assistant in **Agent** mode | Yes |
+| Chat Assistant in **Internal Search** or **Web Search** mode | Not the **Agent** box. Each mode has its own instructions, which you set through the API (below) |
+| Agents built in **Agent Builder** | No. Each agent uses the instructions set on the agent itself |
+| Conversations in a **Project** | Yes, together with the project's own instructions |
+
+To change how a particular agent answers, edit that agent's instructions in Agent Builder. See [Agents overview](/agent-guide/overview).
+
+## Set instructions for every mode with the API
+
+The settings page edits only the Agent mode instructions. The API reads and writes all three. The caller must be an admin, and the token needs the `config:read` scope to read and `config:write` to save.
+
+<Note>
+A default install does not allow `config:write` on a [personal access token](/developer/personal-access-tokens): a token can only have scopes listed in the server's `MCP_SCOPES` setting, which includes `config:read` but not `config:write`. To save through the API, whoever runs the server adds `config:write` to `MCP_SCOPES`, restarts PipesHub, and an admin creates a new token with that scope.
+</Note>
+
+```bash
+export PIPESHUB_URL="https://your-pipeshub-instance.com"
+export PIPESHUB_TOKEN="phpat_..."
+
+# Read the current instructions
+curl -s "$PIPESHUB_URL/api/v1/configurationManager/prompts/system" \
+  -H "Authorization: Bearer $PIPESHUB_TOKEN"
+
+# Replace them
+curl -s -X PUT "$PIPESHUB_URL/api/v1/configurationManager/prompts/system" \
+  -H "Authorization: Bearer $PIPESHUB_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "customSystemPrompt": "Keep answers under 150 words. Lead with the answer.",
+    "customSystemPromptWebSearch": "Keep answers under 150 words. Cite every page you used.",
+    "customSystemPromptAgent": "Keep answers under 150 words. Lead with the answer."
+  }'
+```
+
+| Field | Mode |
+| --- | --- |
+| `customSystemPrompt` | Internal Search |
+| `customSystemPromptWebSearch` | Web Search |
+| `customSystemPromptAgent` | Agent (the box on the settings page) |
+
+<Warning>
+A `PUT` replaces all three, so read the current values first and send all three back. A field sent as `""` is cleared. A request without `customSystemPrompt` or `customSystemPromptWebSearch` is rejected; one without `customSystemPromptAgent` clears the Agent mode instructions.
+</Warning>
+
+## Tips
+
+- Short, concrete rules work better than long descriptions. "At most five bullet points" is clearer to the model than "be concise".
+- If answers are still too long, check the model as well: some models write more than others. See [AI Providers](/ai-models/overview).
+- Ask a few typical questions after you save, and adjust.

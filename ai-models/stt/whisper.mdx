@@ -3,16 +3,16 @@ title: Whisper (Local)
 description: "Configure PipesHub to use a self-hosted Whisper speech-to-text model"
 ---
 
-# Whisper (Local) Speech to Text Configuration
-
-![Whisper Local STT Configuration Interface](/images/ai-models/stt/Whisper_STTConfig.png)
+<Frame>
+  <img src="/images/ai-models/stt/Whisper_STTConfig.png" alt="Whisper Local STT Configuration Interface" width="600" />
+</Frame>
 
 *The Whisper local STT configuration screen in PipesHub where you'll select your model size and compute settings*
 
 PipesHub supports running Whisper entirely on your own infrastructure using the faster-whisper library. No API key is required — all audio processing happens locally, keeping your data private and eliminating per-request API costs.
 
 <Note>
-Whisper model weights are downloaded from HuggingFace on first use. Ensure the PipesHub backend host has internet access during initial setup. The `faster-whisper` Python package must also be installed on the backend host.
+Whisper model weights are downloaded from HuggingFace on first use. Ensure the PipesHub backend host has internet access during initial setup. faster-whisper ships with PipesHub, so you don't install it yourself.
 </Note>
 
 ## Required Fields
@@ -89,7 +89,7 @@ As shown in the image above:
 
 ## Troubleshooting
 
-- If the health check fails, confirm the `faster-whisper` Python package is installed on the backend host
+- If the health check fails on a custom build of PipesHub, confirm the `faster-whisper` Python package is installed
 - If model weights fail to download, check that the backend host has internet access and can reach HuggingFace (huggingface.co)
 - If transcription is very slow, consider switching to a smaller model or enabling GPU inference with CUDA
 - If you get out-of-memory errors, switch to a smaller model or use `int8` compute type

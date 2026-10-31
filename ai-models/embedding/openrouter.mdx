@@ -1,9 +1,8 @@
 ---
-title: OpenRouter
+title: "OpenRouter Embeddings"
+sidebarTitle: "OpenRouter"
 description: "Configure PipesHub to generate embeddings through OpenRouter"
 ---
-
-# OpenRouter Embedding Configuration
 
 OpenRouter is a hosted gateway that routes requests to many model providers through a single API key, so you can switch models without opening a new account each time.
 
@@ -29,17 +28,17 @@ The model identifier in OpenRouter's `provider/model` form. Browse the current l
 
 A label shown in the PipesHub interface so you can tell several configurations apart. If you leave it blank, the model name is used.
 
-### Dimensions
+### Output Dimensions
 
-The number of dimensions in the vectors this model produces. PipesHub uses it to size the vector collection.
+Override the size of the vectors the model produces. Leave it blank to use the model's default. Set it only for a model that accepts a dimensions parameter.
+
+### Multimodal
+
+Turn this on only if the model can embed images as well as text. It is off by default. With it on, saving the model also checks that it can embed a test image; see [Health check messages for other model types](/ai-models/overview#health-check-messages-for-other-model-types).
 
 <Warning>
-Changing the embedding model or its dimensions after documents are indexed means existing vectors no longer match new ones. Re-index your content after switching.
+While content is indexed, PipesHub refuses to switch the embedding model in use to a different model or vector size. See [Changing the embedding model in use](/ai-models/overview#changing-the-embedding-model-in-use).
 </Warning>
-
-### Is Multimodal
-
-Turn this on if the model can embed images as well as text. It is off by default.
 
 ## Related
 

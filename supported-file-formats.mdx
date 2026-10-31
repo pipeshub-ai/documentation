@@ -1,0 +1,84 @@
+---
+title: "Supported file formats"
+description: "Which files PipesHub indexes for search and chat, which it only stores, and what some formats need first"
+icon: "file-lines"
+---
+
+PipesHub keeps a record of every file you upload or a connector syncs. Search and chat can only use a file's content once it has been indexed. A file in a format PipesHub can't index still appears by name, with the status **File type not supported**.
+
+## Formats PipesHub indexes
+
+| Kind | Extensions |
+| --- | --- |
+| PDF | `pdf` |
+| Word | `docx`, `doc` |
+| Excel | `xlsx`, `xls` |
+| PowerPoint | `pptx`, `ppt` |
+| Tables as text | `csv`, `tsv` |
+| Text and markup | `txt`, `md`, `mdx`, `html`, `htm` |
+| Structured data | `json`, `yaml`, `yml` |
+| E-books | `epub` |
+| Images | `png`, `jpg`, `jpeg`, `webp`, `svg` |
+| Code | py, js, jsx, mjs, cjs, ts, tsx, java, c, h, cpp, cc, cxx, hpp, hxx, cs, go, rs, rb, php, swift, kt, kts, dart, sh, bash |
+| Google Workspace files | Google Docs, Sheets and Slides, synced from Google Drive |
+| Email | Gmail messages, synced from Gmail |
+
+Pages, tickets, messages and other items that connectors sync from apps are indexed as well.
+
+### Formats with extra requirements
+
+- **PDF:** scanned PDFs need a model that can read images. See [Scanned PDFs](#scanned-pdfs).
+- **E-books:** copy-protected (DRM) books can't be indexed.
+- **Images:** need a multimodal model. See [Images](#images).
+- **Code:** repositories synced from GitHub or GitLab also index other source files, such as `scala`, `vue`, `sql`, `proto` and `tf`.
+
+## Formats PipesHub stores but doesn't index
+
+Any other format gets the status **File type not supported**. That includes:
+
+- Images in other formats, such as `gif`, `bmp`, `tiff`, `avif`, `heic` and `heif`. With `USE_PARSING_SERVICE=true`, `heic` and `heif` images are indexed like other images.
+- Other document formats, such as `odt`, `rtf` and `xml`.
+- Audio and video files.
+- Archives and other binary files, such as `zip`.
+
+To make one searchable, convert it to a format in the table above and upload it again. For example, export an `odt` file as `docx` or PDF, or a `heic` photo as `jpg`.
+
+## Images
+
+Indexing an image needs a model that can read images: either a chat model with **Multimodal** turned on or a multimodal embedding model. See [AI models](/ai-models/overview).
+
+Without one, the image gets the status **Needs multimodal model**. Add or turn on a multimodal model, then use **Retry indexing** on the file.
+
+What indexing keeps of each image:
+
+- Images are scaled down to at most 2000 pixels on the long edge and 5 MB.
+- A single file keeps at most 50 MB of images. Images past that limit aren't kept.
+- SVG images are converted to PNG first.
+
+## Scanned PDFs
+
+A PDF with a text layer is read directly. It is never sent to OCR.
+
+PipesHub treats a PDF as scanned when at least half of the pages it checks have no readable text. Reading those pages needs a model that can read images. Add a chat model with **Multimodal** turned on in **Workspace → AI models**, then reindex the file. Without one, the file fails with a message that says so.
+
+OCR makes one model call per page, so a scan longer than 500 pages is refused.
+
+## Password-protected files
+
+PipesHub can't read a file that needs a password to open. These files get the status **Password protected**:
+
+- PDFs that need a password to open. A PDF restricted only by an owner password (for example, against printing) opens and is indexed.
+- `docx`, `xlsx` and `pptx` files with a password.
+
+Remove the password and upload the file again. For a file synced from a connected app, remove the password at the source; **Retry indexing** reads it again.
+
+Password-protected `doc`, `xls` and `ppt` files aren't detected as such. They fail with an error instead.
+
+## Upload size
+
+Uploads to a collection are limited to 30 MB per file by default. An admin can change the limit, up to 1000 MB, under **Workspace → Labs → File upload limit**.
+
+## Related
+
+- [Indexing status](/indexing-status): what each status means and what to do.
+- [AI models](/ai-models/overview): add a multimodal model.

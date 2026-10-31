@@ -22,15 +22,18 @@ Edit `~/.gemini/settings.json`:
 {
   "mcpServers": {
     "pipeshub": {
-      "url": "PIPESHUB_INSTANCE_URL/mcp",
+      "httpUrl": "PIPESHUB_INSTANCE_URL/mcp",
       "oauth": {
         "clientId": "YOUR_CLIENT_ID",
         "clientSecret": "YOUR_CLIENT_SECRET",
         "scopes": [
           "openid", "profile", "email", "offline_access",
-          "semantic:write",
-          "conversation:write", "conversation:chat",
-          "kb:read", "team:read", "user:read", "config:read"
+          "semantic:write", "conversation:chat",
+          "agent:read", "agent:execute",
+          "kb:read", "kb:write", "kb:upload",
+          "connector:read", "config:read",
+          "user:read", "team:read", "usergroup:read",
+          "code:read"
         ]
       }
     }
@@ -48,7 +51,7 @@ Edit `~/.gemini/settings.json`:
 gemini mcp add --transport http pipeshub PIPESHUB_INSTANCE_URL/mcp
 ```
 
-Then edit `~/.gemini/settings.json` to add the `oauth` block as shown above.
+Then edit `~/.gemini/settings.json` to add the `oauth` block as shown above. Gemini CLI reads `httpUrl` as a Streamable HTTP endpoint; a plain `url` key is treated as a Server-Sent Events endpoint and will not connect to `/mcp`.
 
 ## Authenticate
 
@@ -90,7 +93,11 @@ gemini mcp enable pipeshub
 | `scopes` | No | OAuth scopes to request |
 | `authorizationUrl` | No | Override authorization endpoint (auto-discovered by default) |
 | `tokenUrl` | No | Override token endpoint (auto-discovered by default) |
-| `redirectUri` | No | Override redirect URI (defaults to `http://localhost:7777/oauth/callback`) |
+| `redirectUri` | No | Override redirect URI. By default Gemini CLI picks a random free local port: `http://localhost:<random-port>/oauth/callback` |
+
+<Note>
+  Because the default port changes on each run, set `redirectUri` to a fixed value such as `http://localhost:7777/oauth/callback` and register that same URI in your PipesHub OAuth app. Otherwise PipesHub rejects the login with a redirect URI mismatch.
+</Note>
 
 <Warning>
   OAuth requires a local browser. It will not work in headless environments, remote SSH without X11 forwarding, or containers without browser access.

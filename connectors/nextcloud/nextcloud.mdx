@@ -16,7 +16,7 @@ icon: "/logo/nextcloud.svg"
         ✅ Ready
       </span>
       <span className="px-3 py-1.5 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-full text-sm font-medium">
-        📚 Documentation Available
+        📖 Documentation Available
       </span>
     </div>
   </div>
@@ -80,7 +80,7 @@ You need:
   </Step>
   <Step title="Fill in the Authenticate tab">
     - **Instance name**: a label for this connection, such as `My Nextcloud`.
-    - **Base URL**: your Nextcloud address, starting with `https://`, for example `https://cloud.example.com`. If Nextcloud lives under a sub-folder, include it (`https://example.com/nextcloud`). Use the address Nextcloud ends up on in your browser, without a slash at the end and without anything after it such as `/remote.php/...`.
+    - **Base URL**: your Nextcloud address, starting with `https://`, for example `https://cloud.example.com`. If Nextcloud lives under a sub-folder, include it (`https://example.com/nextcloud`). Use the address Nextcloud ends up on in your browser, without anything after it such as `/remote.php/...`.
     - **Username**: the name you sign in to Nextcloud with (the **Login** from Step 1). An email address works too, if that is how you sign in.
     - **App Password / Token**: the app password you copied in Step 1.
 
@@ -110,7 +110,7 @@ These are the settings on the **Configure records** tab.
 
 | Setting | What it does |
 |---|---|
-| **Sync strategy** | **Scheduled** syncs automatically. **Manual** syncs only when you start a sync from the connector's card. |
+| **Sync strategy** | **Scheduled** (the default) syncs automatically. **Manual** syncs only when you start a sync from the connector's card. |
 | **Sync interval** | How often a scheduled sync runs. Default: 1 hour. |
 | **Batch Size** | How many files PipesHub saves at a time (25, 50 or 100; default 50). Leave it as it is unless your administrator asks you to lower it. |
 | **Enable Manual Indexing** | **On**: synced files are not made searchable until you choose them. **Off** (default): every synced file is made searchable. |
@@ -172,9 +172,9 @@ Notifications from this connector start with the connector's instance name, for 
 
   **Fix:** check that the Base URL:
   - starts with `https://`;
-  - is the address Nextcloud ends up on in your browser (PipesHub doesn't follow redirects);
+  - is the address Nextcloud ends up on in your browser (PipesHub doesn't follow a redirect to another address, including from `http://` to `https://`);
   - includes the sub-folder Nextcloud is installed under, if any, but nothing like `/remote.php/dav`;
-  - has no slash at the end.
+  - contains no `?` or `#`.
 
   If it is right, ask your PipesHub administrator whether the PipesHub server can reach your Nextcloud.
 </Accordion>
@@ -228,7 +228,7 @@ Notifications from this connector start with the connector's instance name, for 
 
 <Accordion title="Details for administrators">
   - **Plain HTTP.** The Base URL must use `https://`. If a Nextcloud server is only reachable over `http://` on a network you trust, you can allow it by setting `PIPESHUB_NEXTCLOUD_ALLOW_INSECURE_HTTP=true` on the PipesHub server. The app password is then sent unencrypted.
-  - **Blocked addresses.** PipesHub never connects to its own server (`localhost`), link-local addresses or cloud metadata addresses. If `PIPESHUB_BLOCK_PRIVATE_ADDRESSES` is set, private network addresses are refused too. The Base URL can't contain `?`, `#`, or a user name and password, and redirects (even from `http://` to `https://` on the same host) are refused.
+  - **Blocked addresses.** PipesHub never connects to its own server (`localhost`), link-local addresses or cloud metadata addresses. If `PIPESHUB_BLOCK_PRIVATE_ADDRESSES` is set, private network addresses are refused too. The Base URL can't contain `?`, `#`, or a user name and password, and redirects that leave the Base URL's server (including from `http://` to `https://`) are refused.
   - **Rejected passwords.** After Nextcloud rejects an app password, PipesHub stops sending it until the user turns the connector off and on. Nextcloud's brute-force protection counts rejected sign-ins per address, so repeated attempts would slow down every Nextcloud connector on the same PipesHub server.
-  - **Memory.** A full check holds the drive's whole file list in memory, about 6 KB per file (about 60 MB for 10,000 files). It builds that list before it applies sync filters or **Batch Size**, so neither setting reduces it. For very large drives, give the server that runs PipesHub's connectors enough memory.
+  - **Memory.** A full check holds the drive's whole file list in memory. It builds that list before it applies sync filters or **Batch Size**, so neither setting reduces it. For very large drives, give the server that runs PipesHub's connectors enough memory.
 </Accordion>

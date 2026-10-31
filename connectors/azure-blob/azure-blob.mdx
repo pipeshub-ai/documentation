@@ -26,395 +26,242 @@ icon: "/logo/azure-blob.png"
   </div>
 </div>
 
-## What is this?
-
-Azure Blob Storage is Microsoft's cloud place to keep files — documents, images, backups, anything.
-
-This connector copies those files into PipesHub so you can **search them from the PipesHub chat and knowledge base**, just like any other document.
-
-You do **not** move or delete anything in Azure. PipesHub only reads the files.
-
-### How Azure organises your files
-
-Three words you'll see again and again:
-
-| Word | Means |
-|------|-------|
-| **Storage account** | Your top-level Azure storage. Like a house. |
-| **Container** | A folder at the top of the house. You can have many. |
-| **Blob** | One file inside a container (PDF, image, CSV — anything). |
-
-When you set up this connector, PipesHub will read the blobs from the containers you pick.
-
-### What you need before you start
-
-1. An Azure account with access to a Storage account.
-2. Permission to view the storage account's **Access keys** (usually Owner or Contributor role).
-3. A PipesHub account where you can add connectors.
-
-That's it. You don't need to install anything.
-
----
-
-## Setup
-
-<AccordionGroup type="single" collapsible>
-
-<Accordion title="Setup" defaultOpen>
-
-<div className="mt-4">
-
-### Step 1 — Get the connection string from Azure
-
-The **connection string** is one long password-like line that tells PipesHub how to reach your storage. We just need to copy it.
-
-1. Go to [https://portal.azure.com](https://portal.azure.com) and sign in.
-2. In the search bar at the top, type **Storage accounts** and click it.
-3. Click the storage account you want PipesHub to read.
-4. In the left menu, click **Security + networking → Access keys**.
-
-<div className="text-center">
-  <img
-    src="/images/connectors/azure-blob/storage_account_access_keys.png"
-    alt="Azure Access keys page"
-    className="block mx-auto w-11/12"
-  />
-</div>
-
-5. Under **key1**, click **Show** next to **Connection string**.
-6. Click the **copy** icon next to it.
-
-You now have the connection string in your clipboard. Don't close the tab yet — if something goes wrong you'll want to come back.
+The Azure Blob connector brings the files in your Azure Blob Storage containers into PipesHub, so you can find them in search and chat like any other document. PipesHub only reads your files. It never changes, moves or deletes anything in Azure.
 
 <Warning>
-  Treat this string like a password. Anyone who gets it can read (and change) your storage. Don't paste it into chat, email, or a public file.
+  PipesHub does not copy Azure permissions. Everyone who can use the connector can search every file it syncs. If you set it up as a **team connector**, that means everyone in your organization. If you set it up as a **personal connector**, only you can search the files. Use a team connector only for containers the whole organization may read.
 </Warning>
 
----
+## Before you start
 
-### Step 2 — Open Azure Blob in PipesHub
+You need:
 
-1. In PipesHub, look at the left sidebar.
-2. Under **Workspace**, click **Connectors**.
-3. In the list, find **Azure Blob**.
-4. Click **Setup** on its tile.
+- An Azure storage account that holds your files. In Azure, files ("blobs") sit inside **containers**, and containers sit inside a **storage account**.
+- Access to that storage account in the [Azure portal](https://portal.azure.com). To create a shared access signature you need a role that can see the account's keys, such as **Owner** or **Contributor**. For Microsoft Entra ID you need to be allowed to register apps and assign roles.
+- A PipesHub account that can add connectors.
 
-A panel slides in from the right. This is where you enter your details.
+## Step 1: Get a sign-in for PipesHub in Azure
 
----
+PipesHub needs a way to sign in to your storage account. Pick one. Give PipesHub only read access: it never needs more.
 
-### Step 3 — Paste your connection string
+<Tabs>
+  <Tab title="Shared access signature (recommended)">
+    A shared access signature (SAS) is a read-only pass to your storage account that expires on a date you choose. PipesHub uses it as a **connection string**: one long line of text that tells PipesHub where your storage is and how to sign in.
 
-The panel opens on the first tab, **Authenticate Instance**.
+    <Steps>
+      <Step title="Open the storage account">
+        In the [Azure portal](https://portal.azure.com), open the storage account that holds your containers.
+      </Step>
+      <Step title="Open Shared access signature">
+        In the left menu, click **Security + networking → Shared access signature**.
+      </Step>
+      <Step title="Choose the settings">
+        - **Allowed services**: tick **Blob** only.
+        - **Allowed resource types**: tick **Service**, **Container** and **Object**.
+        - **Allowed permissions**: tick **Read** and **List** only.
+        - **End**: pick the date the SAS expires. On that date syncing stops until you give PipesHub a new one.
+      </Step>
+      <Step title="Copy the connection string">
+        Click **Generate SAS and connection string**, then copy the **Connection string**. You paste it into PipesHub in Step 2.
+      </Step>
+    </Steps>
+  </Tab>
+  <Tab title="Microsoft Entra ID">
+    With Microsoft Entra ID, PipesHub signs in as an app you register, and the app gets read-only access to your files.
 
-<div className="text-center">
-  <img
-    src="/images/connectors/azure-blob/authenticate_tab.png"
-    alt="Authenticate Instance tab with Connection String field"
-    className="block mx-auto w-11/12"
-  />
-</div>
+    <Steps>
+      <Step title="Register an app">
+        In the Azure portal, open **Microsoft Entra ID → App registrations → New registration**. Give it a name, such as `PipesHub`, and click **Register**.
+      </Step>
+      <Step title="Copy the IDs">
+        On the app's **Overview** page, copy the **Directory (tenant) ID** and the **Application (client) ID**.
+      </Step>
+      <Step title="Create a client secret">
+        Open **Certificates & secrets → New client secret**, then copy the secret's **Value**. Azure shows it only once. Note when it expires: syncing stops on that date until you add a new secret.
+      </Step>
+      <Step title="Give the app read access">
+        Open your storage account, then **Access control (IAM) → Add → Add role assignment**. Pick the **Storage Blob Data Reader** role and assign it to the app you registered.
+      </Step>
+      <Step title="Copy the blob endpoint">
+        On the storage account, open **Settings → Endpoints** and copy the **Blob service** address. It looks like `https://<account>.blob.core.windows.net`.
+      </Step>
+    </Steps>
+  </Tab>
+  <Tab title="Account key (not recommended)">
+    The connection string under **Access keys** also works, but it holds the account key, which can read, change and delete everything in the storage account. Use a SAS or Microsoft Entra ID if you can.
 
-1. In **Instance name**, type a short name so you can recognise it later (for example `Azure blob` or `Marketing files`).
-2. Scroll to **Connection String**.
-3. Paste the string you copied from Azure.
-4. Click **Next →** at the bottom.
+    1. In the [Azure portal](https://portal.azure.com), open your storage account.
+    2. In the left menu, click **Security + networking → Access keys**.
+    3. Under **key1**, click **Show** next to **Connection string**, then copy it.
 
-<Info>
-  The eye icon next to the Connection String field hides and shows the value. Use it if you need to double-check what you pasted.
-</Info>
+    <img
+      src="/images/connectors/azure-blob/storage_account_access_keys.png"
+      alt="Azure portal Access keys page with Show buttons next to each key and connection string"
+      style={{ display: 'block', margin: '0 auto' }}
+      width="95%"
+    />
+  </Tab>
+</Tabs>
 
 <Warning>
-  If you see "authentication failed", the string probably has extra spaces or got cut off. Go back to Azure, click **Copy** on the connection string again, and paste it fresh.
+  Treat the connection string and client secret like passwords. Don't paste them into chat, email or shared files.
 </Warning>
 
----
-
-### Step 4 — Choose how often to sync
-
-The panel moves you to the second tab, **Configure Records**.
-
-<div className="text-center">
-  <img
-    src="/images/connectors/azure-blob/configure_tab.png"
-    alt="Configure Records tab with Sync settings"
-    className="block mx-auto w-11/12"
-  />
-</div>
-
-Under **Sync settings** there are two choices:
-
-- **Sync Strategy** — leave as **Scheduled** if you want PipesHub to update on its own. Pick **Manual** if you want to press a button every time.
-- **Sync Interval** — how often PipesHub checks Azure for new files. **1 Hour** is a good starting point.
-
-<Info>
-  Not sure? Keep **Scheduled** and **1 Hour**. You can change it later.
-</Info>
-
----
-
-### Step 5 — (Optional) Narrow down what gets synced
-
-If your storage account has lots of files you don't need, you can tell PipesHub to skip some.
-
-Scroll to **Indexing & sync filters**. Click **+ Add filter** on the right.
-
-A small menu opens with the fields you can filter by:
-
-<div className="text-center">
-  <img
-    src="/images/connectors/azure-blob/filter_fields.png"
-    alt="+ Add filter menu showing Container Names, File Extensions, Modified Date, Created Date"
-    className="block mx-auto w-11/12"
-  />
-</div>
-
-- **Container Names** — pick specific containers
-- **Folders** — include or exclude folders inside a container, as paths from the container root (e.g. `reports`, which covers `reports/2026/q1.pdf` too)
-- **File Extensions** — pick file types (e.g. PDFs only)
-- **Modified Date** — only files changed after / before / between dates
-- **Created Date** — only files created after / before / between dates
-
-You only need filters if one of these is true:
-
-- You want only **certain containers** (not all of them).
-- You want only **some file types** (e.g. PDFs, not images).
-- You want only **recent files** (say, the last year).
-
-Common examples:
-
-- **PDFs only** — field: *File Extensions* · operator: *In* · value: `pdf`
-- **Skip images** — field: *File Extensions* · operator: *Not In* · value: `jpg, png, gif`
-- **Only one container** — field: *Container Names* · operator: *In* · pick the container
-
-<Info>
-  If you don't add any filters, PipesHub will sync every file it can read. That's fine for small accounts.
-
-  When you narrow filters later, PipesHub removes the files they now leave out, search results included:
-
-  - **Folders:** files the new **Folders** filter leaves out are removed on the next sync: outside the named folders with **In**, inside them with **Not In**.
-  - **File Extensions** and dates: files left out are removed once a sync has listed everything in scope from start to finish (the whole container, or each included folder when **Folders** is set to **In**).
-  - **Container Names:** with *In*, only the containers you pick sync; with *Not In*, every container except those. A container the filter newly leaves out stops syncing, and the files already synced from it are removed on the next sync.
-</Info>
-
-When you're done, click **Save Configuration** at the bottom of the panel.
-
----
-
-### Step 6 — Turn sync on
-
-You're now on the **Azure Blob** instance page. You'll see one row (your new instance).
-
-<div className="text-center">
-  <img
-    src="/images/connectors/azure-blob/instance_card.png"
-    alt="Azure Blob instance card — sync not yet enabled"
-    className="block mx-auto w-11/12"
-  />
-</div>
-
-Right now it says **Sync Paused**. To start syncing:
-
-1. Find the **Sync Enabled** toggle on the right side of the row.
-2. Click it.
-
-The status changes to **Syncing** and PipesHub starts reading your files.
-
----
-
-### Step 7 — Check progress
-
-Click anywhere on the row to open the **Overview** panel on the right.
-
-<div className="text-center">
-  <img
-    src="/images/connectors/azure-blob/instance_panel.png"
-    alt="Overview panel with Records Status tiles"
-    className="block mx-auto w-11/12"
-  />
-</div>
-
-Here you can see:
-
-- **Total** — how many files PipesHub has found.
-- **Failed** — files it couldn't read (usually permission or file-type issues).
-- **Processing** — files it's still reading right now.
-- **Not Started** — files waiting their turn.
-- **Sync** / **Full sync** buttons — press if you want to run a sync right now.
-- **Manage Configuration** — open the setup panel again to change credentials or filters.
-
-You can close the panel and come back any time — the sync keeps running in the background.
-
-That's it! 🎉 Your Azure Blob files are now searchable in PipesHub.
-
-</div>
-
-</Accordion>
-
-<Accordion title="How syncing works">
-
-<div className="mt-4">
-
-### First sync (full scan)
-
-The very first time, PipesHub reads **everything** in the containers you chose (with a **Folders** filter set to **In**, everything in the included folders). Big accounts take longer:
-
-| Number of files | Roughly how long |
-|-----------------|------------------|
-| Under 1,000 | 5 – 15 minutes |
-| 1,000 – 10,000 | 15 – 60 minutes |
-| 10,000 – 100,000 | 1 – 3 hours |
-| Over 100,000 | Several hours or more |
-
-Tip: using filters (e.g. PDFs only) makes the first sync much faster.
-
-### Later syncs
-
-After the first sync, PipesHub still lists everything in scope: the whole container, or each included folder when a **Folders** filter is set to **In** (with **Not In**, the excluded folders are skipped). It downloads and indexes only what changed:
-
-- New files — added.
-- Updated files — refreshed.
-- Unchanged files — counted as still there and skipped.
-- Deleted files — their records are deleted from PipesHub and they leave search, once a sync has listed everything in scope from start to finish without an error. If a listing fails, deleted files aren't removed on that sync; the next complete listing removes them. Files a narrowed **Folders** filter leaves out don't wait: they're removed on the next sync.
-
-Later syncs are faster than the first because unchanged files aren't downloaded again, but the listing still grows with the number of blobs.
-
-### Who can see the synced files?
-
-When you set up the connector you picked a scope:
-
-- **Personal** — only you can search the files inside PipesHub.
-- **Team** — everyone in your organisation can search them.
-
-This only controls PipesHub. It does **not** change access in Azure.
-
-</div>
-
-</Accordion>
-
-<Accordion title="What PipesHub can read">
-
-<div className="mt-4">
-
-### Indexed for search
-
-Text-based files get read word-for-word so you can search inside them:
-
-- Documents — **PDF**, **DOCX**, **PPTX**, **XLSX**, **ODT**, **RTF**
-- E-books — **EPUB**, unless copy-protected (DRM). Their text is searchable, but they can't be previewed in PipesHub; download the book to read it
-- Plain text — **TXT**, **MD**, **CSV**, **JSON**, **XML**, **HTML**
-- Code — **.py**, **.js**, **.ts**, **.java**, and more
-- Images — **JPG**, **PNG**, **WebP**
-
-### Synced but not searched inside
-
-These are stored as records but their contents aren't indexed for text search:
-
-- GIF images
-- Video and audio
-- Archives (ZIP, RAR, …)
-- Other binary files
-
-They still show up in results by filename.
-
-</div>
-
-</Accordion>
-
-</AccordionGroup>
-
----
+## Step 2: Connect Azure Blob in PipesHub
+
+<Steps>
+  <Step title="Find the connector">
+    In PipesHub, go to **Workspace → Connectors** and search for **Azure Blob**. Click **Set up** on its card.
+
+    To set it up only for yourself, click **Your connectors** and set it up there instead.
+
+    <img
+      src="/images/connectors/azure-blob/pipeshub-find-connector.png"
+      alt="Connectors page with Azure Blob found by search and its Set up button"
+      style={{ display: 'block', margin: '0 auto' }}
+      width="95%"
+    />
+  </Step>
+  <Step title="Choose team or personal">
+    A team connector shows the dialog **Everyone in your organization will see this data**. Click **Continue with team connector** if everyone may read these files. Otherwise click **Set up personal connector**.
+
+    <img
+      src="/images/connectors/azure-blob/pipeshub-team-warning.png"
+      alt="Dialog warning that everyone in the organization will see the data, with Cancel, Continue with team connector and Set up personal connector buttons"
+      style={{ display: 'block', margin: '0 auto' }}
+      width="70%"
+    />
+  </Step>
+  <Step title="Fill in the Authenticate tab">
+    1. **Instance name**: a name you will recognize later, such as `Marketing files`.
+    2. **Authentication method**: pick the one you set up in Step 1. You can't change it after you create the connector.
+    3. Fill in the fields:
+       - **Connection String**: paste the SAS (or account key) connection string.
+       - **Microsoft Entra ID**: fill in **Blob Endpoint**, **Tenant ID**, **Client ID** and **Client Secret**.
+    4. Click **Next**.
+
+    <Tabs>
+      <Tab title="Connection String">
+        <img
+          src="/images/connectors/azure-blob/pipeshub-authenticate-connection-string.png"
+          alt="Authenticate tab with Instance name, Authentication method set to Connection String, and the Connection String field"
+          style={{ display: 'block', margin: '0 auto' }}
+          width="60%"
+        />
+      </Tab>
+      <Tab title="Microsoft Entra ID">
+        <img
+          src="/images/connectors/azure-blob/pipeshub-authenticate-entra-id.png"
+          alt="Authenticate tab with Authentication method set to Microsoft Entra ID and the Blob Endpoint, Tenant ID, Client ID and Client Secret fields"
+          style={{ display: 'block', margin: '0 auto' }}
+          width="60%"
+        />
+      </Tab>
+    </Tabs>
+  </Step>
+  <Step title="Fill in the Configure records tab">
+    Choose how often to sync and, if you like, what to sync. See [Choose what to sync](#choose-what-to-sync) below. If you're not sure, keep the defaults: **Scheduled**, every **1 hour**, no filters.
+
+    Then click **Save configuration**.
+
+    <img
+      src="/images/connectors/azure-blob/pipeshub-configure-records.png"
+      alt="Configure records tab with Sync strategy, Sync interval, Enable Manual Indexing and Sync filters with a Folders filter"
+      style={{ display: 'block', margin: '0 auto' }}
+      width="60%"
+    />
+  </Step>
+  <Step title="Start syncing">
+    In the dialog **Instance is configured and ready to sync!**, click **Start syncing now**. If you click **I'll do it later**, turn on **Sync enabled** on the connector's card when you're ready.
+
+    <img
+      src="/images/connectors/azure-blob/pipeshub-ready-to-sync.png"
+      alt="Dialog saying the instance is configured and ready to sync, with I'll do it later and Start syncing now buttons"
+      style={{ display: 'block', margin: '0 auto' }}
+      width="60%"
+    />
+
+    PipesHub first checks that it can reach your storage. If a check fails, syncing stays off and the message says what's missing (see [Troubleshooting](#troubleshooting)).
+  </Step>
+</Steps>
+
+## Choose what to sync
+
+All of these are on the **Configure records** tab. You can change them later.
+
+| Setting | What it does | When to use it |
+|---------|--------------|----------------|
+| **Sync strategy** | **Scheduled** syncs on its own. **Manual** syncs only when you start it. | Keep **Scheduled** unless you want full control. |
+| **Sync interval** | How often a scheduled sync runs. The default is **1 hour**. | Make it longer for very large accounts. |
+| **Enable Manual Indexing** | On: synced files are not searchable until you choose them. Off: every synced file is made searchable. | Leave it off unless you want to pick files one by one. |
+| **Folders** | Folders inside each container, such as `reports/2026`. **In** syncs only these folders (and their subfolders). **Not In** syncs everything except them. The same path applies in every container you sync. Press Enter after each folder. | When you need only part of a container. |
+| **Container Names** | **In** syncs only the containers you pick. **Not In** syncs every container except those. Empty means every container the sign-in can see. | Almost always, on a team connector, to keep private containers out. |
+| **File Extensions** | Sync only certain file types (**In**), or skip them (**Not In**), such as `pdf` or `png`. | To skip images, videos or other files you don't need to search. |
+| **Modified Date** | Sync only files changed before, after or between dates. | To leave out old files. |
+| **Created Date** | Sync only files created before, after or between dates. | Same, by creation date. |
+
+Click **Add filter** to add **Container Names**, **File Extensions**, **Modified Date** or **Created Date**. The **Folders** filter is already there.
+
+<Note>
+  When you narrow a filter later, PipesHub removes the files it now leaves out from search.
+</Note>
+
+## What gets synced and how it stays up to date
+
+- **What appears:** every file in the containers and folders you chose, with its folder structure. You can search inside documents (PDF, Word, PowerPoint, Excel, text, CSV, HTML and more), code files, e-books (EPUB) and images (JPG, PNG, WebP). Other files, such as videos, audio, GIFs and ZIP archives, can be found by their name only. Images are searchable by their content only if your PipesHub has an AI model that can read images: a multimodal chat or embedding model under **Workspace** → **AI models**. Without one, images and scanned PDFs (pages that are pictures, with no text you can select) are synced but not searchable.
+- **Opening files:** search results and citations open the file in PipesHub's viewer, not in the Azure portal.
+- **First sync:** PipesHub reads everything in scope, so a large account can take hours. Filters make it faster.
+- **Later syncs:** on each scheduled sync, PipesHub picks up new and changed files and skips files that haven't changed.
+- **Moved or renamed files** move in PipesHub too, without being read again, as long as the file itself didn't change. A file that was both edited and moved between two syncs shows up as a new file, and its old entry is removed.
+- **Deleted files and containers** disappear from PipesHub after the next sync that finishes without errors.
+- **Archive tier:** files in Azure's **Archive** tier show up but aren't searchable, because Azure can't read them. After you move one to the Hot or Cool tier, the next sync makes it searchable.
+- **When something goes wrong:** a sign-in, permission or network problem never removes anything from PipesHub. You get a notification, and the next sync tries again.
 
 ## Troubleshooting
 
-<AccordionGroup type="single" collapsible>
+<AccordionGroup>
+  <Accordion title="Saving fails, or I get a 'Credentials rejected' notification">
+    Azure didn't accept the sign-in. Usually the SAS has expired, the account key was changed, or the client secret expired.
 
-<Accordion title="I get an 'authentication failed' error">
+    - Copy the connection string again in Azure and paste it fresh. Make sure no spaces or line breaks came with it. If you see "The AccountKey in the connection string is not a valid storage account key", the string was cut off.
+    - With Microsoft Entra ID, check the tenant ID, client ID and secret, and that the app still has the **Storage Blob Data Reader** role.
+    - To enter new details, open the connector in PipesHub, open its configuration, and paste them on the **Authenticate** tab.
 
-- Go back to Azure, click **Copy** on the Connection string again, and paste it fresh in PipesHub.
-- Check you didn't paste an extra space or line break.
-- If the connection string was recently rotated in Azure, you need the new one.
-- Make sure the storage account still exists.
+    Nothing already synced is removed while the sign-in fails.
+  </Accordion>
+  <Accordion title="Syncing won't start: 'Cannot list containers', 'Cannot list blobs in' or 'Cannot create download links for files'">
+    PipesHub's check before the first sync found a missing permission. The message ends with Azure's reason.
 
-</Accordion>
-
-<Accordion title="I can't see my containers in the filter">
-
-- Double-check the connection string is the right one.
-- Make sure the storage account has containers (blob containers, not file shares).
-- Some storage accounts have firewall rules — ask your Azure admin to allow PipesHub.
-
-</Accordion>
-
-<Accordion title="Sync is on but I see 0 files">
-
-- Give it a minute. The first sync on a large account takes time.
-- Check your filters — they might be excluding everything.
-- Make sure the connection string's storage account actually has files.
-
-</Accordion>
-
-<Accordion title="Sync is very slow">
-
-- Add filters (container names, file extensions, date range) to sync only what you need.
-- Very large accounts (millions of files) will always take several hours on the first run. Later syncs are fast.
-
-</Accordion>
-
-<Accordion title="Files don't show up in search">
-
-- Check the indexed file types listed above. JPG, PNG, and WebP image content is searchable; GIF, video, audio, and archives are stored without content indexing.
-- Wait a bit — big files take longer to index.
-- Make sure the file isn't password-protected.
-
-</Accordion>
-
-<Accordion title="It used to work, but now it doesn't">
-
-Usually this means the Azure access keys were changed.
-
-- Go back to Step 1 and copy the new connection string.
-- In PipesHub, open the instance panel and click **Manage Configuration**.
-- Paste the new string on the Authenticate Instance tab and save.
-
-</Accordion>
-
+    - **Cannot list containers**: the sign-in can't see the list of containers. Create a SAS with the **Service** resource type and the **List** permission. The **Container Names** list needs this too: you can't type container names in by hand.
+    - **Cannot list blobs in** a container: give the SAS the **List** permission and the **Container** resource type.
+    - **Cannot create download links for files**: with Microsoft Entra ID, give the app the **Storage Blob Data Reader** role. With a SAS, include **Read** and the **Object** resource type.
+  </Accordion>
+  <Accordion title="My containers don't appear in the Container Names filter">
+    - Type the start of the container's name. The search matches from the beginning.
+    - Check that you used the right storage account, and that it has blob containers (not file shares).
+    - If the storage account has a firewall, ask your Azure admin to allow PipesHub.
+  </Accordion>
+  <Accordion title="Syncing is on but no files show up">
+    - Give it time. The first sync of a large account can take a while.
+    - Check your filters. They may leave out everything.
+    - If you see a **Some containers failed to sync** or **Some files failed to sync** notification, read its reason. The next sync tries again.
+  </Accordion>
+  <Accordion title="A file shows up but I can't search inside it">
+    - Only some file types can be searched inside (see [What gets synced](#what-gets-synced-and-how-it-stays-up-to-date)).
+    - Large files take longer to become searchable.
+    - Password-protected and copy-protected files can't be read.
+    - A file in Azure's **Archive** tier can't be read. Move it to the Hot or Cool tier in Azure, and the next sync makes it searchable.
+    - Images and scanned PDFs need an AI model that can read images. Add a multimodal chat or embedding model under **Workspace** → **AI models**, then index the files again.
+  </Accordion>
 </AccordionGroup>
 
----
-
-## Frequently asked questions
-
-<AccordionGroup type="single" collapsible>
-
-<Accordion title="Can I connect more than one storage account?">
-  Yes. On the Azure Blob instance page click **+ Add Another Instance** and repeat the steps with the new connection string.
+<Accordion title="Details for administrators">
+  - **Deletes:** a deleted file is removed only after a sync that lists everything in scope from start to finish. If a listing fails partway, nothing is removed on that sync. A container is removed only when Azure reports that it no longer exists, never because of a sign-in or network error.
+  - **Narrowed filters:** files a narrowed **Folders** filter leaves out are removed on the next sync. Files left out by **File Extensions** or date filters are removed after the next complete listing. Files from a container that **Container Names** newly leaves out are removed on the next sync.
+  - **Moves:** a moved or renamed file is read again only if it was stored without a Content-MD5 hash (some large uploads have none). A copy of a file gets its own record.
+  - **Folders:** folder marker blobs and Data Lake Storage Gen2 directories appear as folders, not as empty files.
+  - **Blob endpoint:** the endpoint can't point to the PipesHub server itself (such as `localhost`), a link-local address or a cloud metadata address. If your deployment sets `PIPESHUB_BLOCK_PRIVATE_ADDRESSES`, private addresses are refused too.
+  - **More than one storage account:** add another instance of the connector for each storage account.
+  - **Secrets:** PipesHub stores the connection string and client secret encrypted.
+  - **Azure docs:** [Shared access signatures](https://learn.microsoft.com/azure/storage/common/storage-sas-overview), [Assign the Storage Blob Data Reader role](https://learn.microsoft.com/azure/storage/blobs/assign-azure-role-data-access), [Connection strings](https://learn.microsoft.com/azure/storage/common/storage-configure-connection-string).
 </Accordion>
-
-<Accordion title="Does PipesHub change anything in Azure?">
-  No. The connector only **reads** files. It doesn't upload, move, rename, or delete anything.
-</Accordion>
-
-<Accordion title="What happens if I delete a file in Azure?">
-  PipesHub deletes the file's record, and the file leaves search, on the next sync that lists everything in scope from start to finish without an error (the whole container, or each included folder when a **Folders** filter is set to **In**). If a listing fails, the file isn't removed on that sync; the next complete listing removes it.
-</Accordion>
-
-<Accordion title="Can I sync just one folder inside a container?">
-  Yes. Add a **Folders** filter with the folder's path from the container root, for example `reports`, and set it to **In**. Subfolders are included. Set it to **Not In** to sync everything except that folder.
-  
-  If you change the folders later, files the filter now leaves out are removed from PipesHub on the next sync.
-</Accordion>
-
-<Accordion title="Is the connection string encrypted?">
-  Yes. PipesHub stores it as a secret — it's not visible in logs or to other users.
-</Accordion>
-
-</AccordionGroup>
-
----
-
-## Useful links
-
-- **Azure Portal** — [https://portal.azure.com](https://portal.azure.com)
-- **Azure Blob Storage docs** — [https://learn.microsoft.com/azure/storage/blobs/](https://learn.microsoft.com/azure/storage/blobs/)
-- **What is a connection string?** — [https://learn.microsoft.com/azure/storage/common/storage-configure-connection-string](https://learn.microsoft.com/azure/storage/common/storage-configure-connection-string)

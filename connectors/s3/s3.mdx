@@ -118,7 +118,7 @@ To limit PipesHub to some buckets, create a policy in IAM (**Policies** → **Cr
 ```
 
 <Info>
-  **When `s3:ListAllMyBuckets` is needed.** PipesHub uses it to show your buckets in the **Bucket Names** list, so keep it while you set up the connector or change that filter. It is also needed for every sync if **Bucket Names** is empty (PipesHub then finds all your buckets itself) or set to **Not In**. Once you have saved bucket names with **In**, syncs read those buckets directly, and you can remove this permission. Add it back before you edit the bucket list.
+  **When `s3:ListAllMyBuckets` is needed.** PipesHub uses it to show your buckets in the **Bucket Names** list, so keep it while you set up the connector or change that filter. It is also needed for every sync if **Bucket Names** is empty (PipesHub then finds all your buckets itself) or set to **Not in**. Once you have saved bucket names with **In**, syncs read those buckets directly, and you can remove this permission. Add it back before you edit the bucket list.
 </Info>
 
 If a bucket is encrypted with your own AWS KMS key (SSE-KMS), also allow `kms:Decrypt` on that key.
@@ -185,8 +185,8 @@ These settings are on the **Configure records** tab. You can change them later; 
 | **Sync strategy** | **Scheduled** checks S3 for changes automatically. **Manual** syncs only when you click **Sync**. |
 | **Sync interval** | How often a scheduled sync runs. The default is every hour. |
 | **Enable Manual Indexing** | Off: every synced file becomes searchable. On: files are synced but only become searchable after you choose them. Leave it off unless you want to pick files one by one. |
-| **Folders** filter | Folder paths inside each bucket, such as `reports/2026`. Press Enter after each one. **In** syncs only those folders and their subfolders; **Not In** syncs everything except them. |
-| **Bucket Names** filter | Pick buckets from the list (search matches the start of the name). **In** syncs only those buckets; **Not In** syncs every bucket except them. Leave it out to sync every bucket the key can list. |
+| **Folders** filter | Folder paths inside each bucket, such as `reports/2026`. Press Enter after each one. **In** syncs only those folders and their subfolders; **Not in** syncs everything except them. |
+| **Bucket Names** filter | Pick buckets from the list (search matches the start of the name). **In** syncs only those buckets; **Not in** syncs every bucket except them. Leave it out to sync every bucket the key can list. |
 | **File Extensions** filter | Sync only certain file types, or leave some out, for example `pdf, docx, txt`. |
 | **Modified Date** filter | Sync only files last changed before, after or between the dates you choose. S3 doesn't record a creation date, so there is no Created Date filter. |
 
@@ -198,17 +198,17 @@ Add the last three with **Add filter**. Filters are the easiest way to make a la
 
 ## What gets synced and how it stays up to date
 
-- **What you see:** each bucket appears in PipesHub with its folders and files. Documents, text and code files, and JPG, PNG and WebP images become searchable. Videos, audio, archives and password-protected files are listed but their content isn't searchable.
+- **What you see:** each bucket appears in PipesHub with its folders and files. Documents, text and code files, and JPG, PNG, WebP and SVG images become searchable. Videos, audio, GIFs, archives and password-protected files are listed but their content isn't searchable. Images are searchable by their content only if your PipesHub has an AI model that can read images: a multimodal chat or embedding model under **Workspace** → **AI models**.
 - **How often:** on the schedule you chose (every hour by default), or when you click **Sync**. The first sync of a large bucket can take hours; later syncs only download files that are new or changed.
 - **Edits:** a changed file is downloaded and indexed again on the next sync. A file that is moved or renamed without changes keeps its place in search.
-- **Deletes:** a file deleted in S3 is removed from PipesHub after the next sync that finishes without errors. A deleted bucket is removed after two syncs in a row can't find it.
+- **Deletes:** a file deleted in S3 is removed from PipesHub after the next sync that finishes without errors. A deleted bucket is removed on the next sync, once S3 reports that it no longer exists.
 - **Who can see it:** a team connector makes the files searchable by everyone in your organization. A personal connector keeps them to you. S3 bucket policies and ACLs only limit what the key can read.
 
 **Not synced:**
 
-- Files in S3 Glacier or Glacier Deep Archive. Restore them to a normal storage class first.
+- The content of files in S3 Glacier Flexible Retrieval or Glacier Deep Archive. Restore them first.
 - Files encrypted with your own keys (SSE-C) or encrypted before upload.
-- Requester Pays buckets.
+- Requester Pays buckets owned by another AWS account.
 - Other S3-compatible storage. For MinIO, use the separate MinIO connector.
 
 ## Troubleshooting
@@ -224,7 +224,7 @@ Add the last three with **Add filter**. Filters are the easiest way to make a la
     The list needs `s3:ListAllMyBuckets`. Add it to the IAM user behind your access key, or to the role if you use **IAM Role (AssumeRole)**, then reopen the filter. When you search, type the start of the bucket name.
   </Accordion>
   <Accordion title="Sync fails with “Failed to list buckets”">
-    **Bucket Names** is empty or set to **Not In**, so PipesHub has to list all buckets, and the IAM user behind your access key (or the role, with AssumeRole) lacks `s3:ListAllMyBuckets`. Add the permission there, or pick your buckets in **Bucket Names** with **In**.
+    **Bucket Names** is empty or set to **Not in**, so PipesHub has to list all buckets, and the IAM user behind your access key (or the role, with AssumeRole) lacks `s3:ListAllMyBuckets`. Add the permission there, or pick your buckets in **Bucket Names** with **In**.
   </Accordion>
   <Accordion title="A notification says some buckets were skipped">
     The key can see those buckets but not read them. Give it read access, or leave those buckets out with the **Bucket Names** filter. Files already synced from them stay in PipesHub.

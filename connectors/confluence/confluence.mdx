@@ -184,16 +184,12 @@ Use the left sidebar to navigate between **Permissions**, **Authorization**, and
 </div>
 
 4. **Get the Redirect URL from PipesHub:**
-   - In PipesHub, go to **Workspace Settings** → **Connectors**, find **Confluence**, and click **+ Setup** for a new instance.
+   - In PipesHub, go to **Workspace settings** → **Connectors**, find **Confluence**, and click **Set up** for a new instance.
    - The connector panel opens as a right-side drawer. On the **Authenticate Instance** tab, copy the **Redirect URL**.
 
-<div className="text-center">
-  <img
-    src="/images/connectors/confluence/confluence_config.png"
-    alt="PipesHub Confluence Authenticate Instance tab — copy the Redirect URL"
-    className="block mx-auto w-11/12"
-  />
-</div>
+<Frame>
+  <img src="/images/connectors/confluence/confluence_config.png" alt="PipesHub Confluence Authenticate Instance tab — copy the Redirect URL" width="612" />
+</Frame>
 
 5. Paste the copied URL into the **Callback URL** field in Atlassian Developer Console.
 6. Click **Save changes**.
@@ -335,13 +331,9 @@ The connector drawer in PipesHub has three tabs: **Authenticate Instance**, **Au
    - **Grant Jira user access** — select **Yes** or **No** (see note below).
 4. Click **Next** to move to the **Authorize** tab.
 
-<div className="text-center">
-  <img
-    src="/images/connectors/confluence/connector_add_creds.png"
-    alt="Authenticate Instance tab — enter Client ID, Client Secret, and Grant Jira user access"
-    className="block mx-auto w-11/12"
-  />
-</div>
+<Frame>
+  <img src="/images/connectors/confluence/connector_add_creds.png" alt="Authenticate Instance tab — enter Client ID, Client Secret, and Grant Jira user access" width="612" />
+</Frame>
 
 <Info>
   **Grant Jira user access.** Choose **Yes** only if your Atlassian OAuth app includes Jira and you've added the `read:jira-user` scope. PipesHub will request that scope during authorization and may use Jira to resolve user emails when Confluence profiles hide them. Choose **No** if you don't use Jira on this site or haven't added that scope.
@@ -511,7 +503,7 @@ Use this method when you want the fastest setup and only need a single user acco
 
 #### Step 2: Authenticate Instance tab — enter credentials
 
-1. In PipesHub, go to **Workspace Settings** → **Connectors**, find **Confluence**, and click **+ Setup**.
+1. In PipesHub, go to **Workspace settings** → **Connectors**, find **Confluence**, and click **Set up**.
 2. The connector panel opens as a right-side drawer with three tabs: **Authenticate Instance**, **Authorize**, and **Configure Records**.
 3. On the **Authenticate Instance** tab, pick **API Token** in the **Authentication method** dropdown.
 4. Enter:
@@ -520,13 +512,9 @@ Use this method when you want the fastest setup and only need a single user acco
    - **API Token** — the token you copied in Step 1
 5. Click **Next**. PipesHub validates the credentials and advances directly to the **Configure Records** tab (the **Authorize** tab is skipped for API Token because the token authenticates on its own).
 
-<div className="text-center">
-  <img
-    src="/images/connectors/confluence/connector_api_token_form.png"
-    alt="Authenticate Instance tab with API Token method — Base URL, Email, API Token fields"
-    className="block mx-auto w-11/12"
-  />
-</div>
+<Frame>
+  <img src="/images/connectors/confluence/connector_api_token_form.png" alt="Authenticate Instance tab with API Token method — Base URL, Email, API Token fields" width="612" />
+</Frame>
 
 <Warning>
   The **Email** must match the Atlassian account that owns the API token. Using a different email causes authentication to fail.
@@ -783,15 +771,15 @@ Choose **OAuth** for production and anything that needs per-user attribution. Ch
 
 </Accordion>
 
-<Accordion title="What's the difference between Confluence Connector and Confluence Toolset?">
+<Accordion title="What's the difference between Confluence Connector and Confluence actions?">
 
-| Aspect | Confluence Connector | Confluence Toolset |
+| Aspect | Confluence Connector | Confluence actions |
 |--------|---------------------|-------------------|
 | **Purpose** | Sync and index Confluence data for search | Enable agents to perform actions in Confluence |
 | **Data Flow** | One-way (import data into PipesHub) | Two-way (read and write via API) |
 | **When to Use** | Query/search pages, spaces, blog posts | Create pages, update content, manage spaces |
 
-**Example:** Use **Confluence Connector** to search and retrieve documentation. Use **Confluence Toolset** to let agents create or update Confluence pages.
+**Example:** Use **Confluence Connector** to search and retrieve documentation. Use **Confluence actions** to let agents create or update Confluence pages.
 
 </Accordion>
 

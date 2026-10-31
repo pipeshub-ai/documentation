@@ -201,8 +201,8 @@ Box is a **team** connector — only an organization admin can configure it, and
 
 ### Step 1: Open the Connector Catalog
 
-1. In PipesHub, navigate to **Workspace Settings** > **Connectors** > **Team**.
-2. Find the **Box** card and click **Setup**.
+1. In PipesHub, navigate to **Workspace settings** > **Connectors**.
+2. Find the **Box** card and click **Set up**.
 
 ### Step 2: Authenticate
 
@@ -213,12 +213,9 @@ On the **Authenticate** tab, enter:
 - **Client Secret:** From the Box Developer Console (Step 3 above).
 - **Box Enterprise ID:** From the Box Admin Console (Step 3 above).
 
-<img
-  src="/images/connectors/box/t1.png"
-  alt="Box connector Authenticate tab with Client ID, Client Secret, and Enterprise ID fields"
-  style={{ display: 'block', margin: '0 auto' }}
-  width="90%"
-/>
+<Frame>
+  <img src="/images/connectors/box/t1.png" alt="Box connector Authenticate tab with Client ID, Client Secret, and Enterprise ID fields" width="600" />
+</Frame>
 
 <Warning>
   **Email must match.** The Box admin who authorized the app should use the same email address as the PipesHub admin configuring this connector. A mismatch breaks permission resolution and users will not see their synced records in search.
@@ -575,7 +572,7 @@ The connector automatically determines the optimal sync approach:
 
 ### One sync at a time
 
-Scheduled syncs, manual syncs and Box webhooks never run two syncs of the same connector at once. A webhook that arrives while a sync is running queues one follow-up sync, and any more webhooks before it starts are folded into that same run.
+Scheduled and manual syncs never run two syncs of the same connector at once. Box syncs are pull-based: the connector reads the event stream when a sync runs, and Box does not push changes to PipesHub.
 
 </Accordion>
 

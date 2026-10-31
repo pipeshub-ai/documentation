@@ -72,7 +72,7 @@ The user generating the token must have a role assigned that includes the **"Acc
 
 <img
     src="/images/connectors/bookstack/b1.png"
-    alt="BookStack"
+    alt="BookStack profile menu open with My Account highlighted"
     style={{ display: 'block', margin: '0 auto' }}
     width="90%"
   />
@@ -83,20 +83,20 @@ The user generating the token must have a role assigned that includes the **"Acc
 
 <img
     src="/images/connectors/bookstack/b2.png"
-    alt="BookStack"
+    alt="BookStack My Account, Access & Security tab, with the Create Token button in API Tokens"
     style={{ display: 'block', margin: '0 auto' }}
     width="90%"
   />
 
 4. **Enter Details:**
-   - **Name:** Enter a descriptive name for the token (e.g., "Pipeshub-Integration").
+   - **Name:** Enter a descriptive name for the token (e.g., "PipesHub-Integration").
    - **Expiry Date (Optional):** Set an expiration date if you want the token to automatically become invalid after a certain time for security purposes.
 
 5. **Save and Copy:** Click "Save".
 
   <img
     src="/images/connectors/bookstack/b3.png"
-    alt="BookStack"
+    alt="BookStack API Token form with Token ID, Token Secret, Name, Expiry Date and Save"
     style={{ display: 'block', margin: '0 auto' }}
     width="90%"
   />
@@ -109,35 +109,31 @@ The user generating the token must have a role assigned that includes the **"Acc
 
 The integration requires three pieces of information:
 
-- **BookStack Base URL** (the URL in which your BookStack instance is deployed, e.g., `https://bookstack.mycompany.com`)
-- **API Token ID**
-- **API Token Secret**
+- **Bookstack Base URL** (the URL in which your BookStack instance is deployed, e.g., `https://bookstack.mycompany.com`)
+- **Token ID**
+- **Token Secret**
 
 ### Connection Steps
 
-#### Step 1: Access and Configure Connector
+#### Step 1: Open the connector
 
-- Go to **Connector Settings** in the PipesHub dashboard.
-- Select the **BookStack Connector**.
-- Click the **Configure Setting** button.
+- In PipesHub, go to **Workspace settings** > **Connectors**, find **BookStack**, and click **Set up**.
 
-#### Step 2: Input Credentials
+#### Step 2: Authenticate
 
-- Paste the **BookStack Base URL**.
-- Paste the **BookStack Token ID**.
-- Paste the **BookStack Token Secret**.
+On the **Authenticate** tab, fill in:
+
+- **Bookstack Base URL**: the address of your BookStack instance.
+- **Token ID**: the Token ID from your BookStack profile.
+- **Token Secret**: the Token Secret from your BookStack profile.
 
 <Warning>
   **Important:** Use API credentials generated from a BookStack account that has the same email address as your PipesHub account. Using a different email will cause permission issues on the PipesHub platform.
 </Warning>
 
-#### Step 3: Set Sync Strategy
-  - Set your sync strategy as **Manual** or **Webhooks** (to be implemented)
+#### Step 3: Configure records
 
-#### Step 4: Activate Connection
-
-- Click **Enable App** button.
-- The BookStack Connector is now active and will start syncing the shelves, books, chapters, and pages.
+On the **Configure records** tab, set the sync strategy to **Scheduled** or **Manual**, and add any filters. Save the configuration, then start the sync.
 
 </Accordion>
 
@@ -160,13 +156,18 @@ The integration requires three pieces of information:
 </Accordion>
 
 <Accordion title="What permissions are required?">
-  The user account generating the token **must** have the **"Access system API"** role permission. 
-  
-  We strongly recommend using an **Admin** account because non-admin users cannot access the "Audit Log," which the connector uses to track changes and keep your data in sync efficiently.
+  The user account generating the token **must** have the **"Access system API"** role permission. When you set up the connector, PipesHub also checks that the token's user can:
+
+  - list users (**Manage users**)
+  - list roles (**Manage roles & role permissions**)
+  - read the audit log (**Manage app settings** and **Manage users**)
+  - read content permissions (**Manage all book, chapter & page permissions**)
+
+  If one is refused, the connection test fails. The default **Admin** role has all of them.
 </Accordion>
 
 <Accordion title="How often does the connector sync data?">
-  The connector can be configured to sync data on a schedule or manually. Webhooks are planned for future implementation to enable real-time synchronization.
+  The connector can be configured to sync data on a schedule or manually. It does not sync in real time.
 </Accordion>
 
 <Accordion title="What happens to pages I delete in BookStack, or leave out with a filter?">
@@ -245,7 +246,7 @@ Since BookStack does not have a native incremental user API, the connector relie
 
 This is done by adding query params to the Audit Log API, e.g.:
 
-```
+```text
 ?filter[type]=user_update&filter[created_at:gte]=2025-10-16T00:00:00Z
 ```
 

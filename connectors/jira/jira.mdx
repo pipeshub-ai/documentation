@@ -205,16 +205,12 @@ Use the left sidebar to navigate between **Permissions**, **Authorization**, and
 </div>
 
 4. **Get the Redirect/Callback URL from PipesHub:**
-   - In PipesHub, go to **Workspace Settings** → **Connectors**, find **Jira**, and click **Set up** for a new instance.
+   - In PipesHub, go to **Workspace settings** → **Connectors**, find **Jira**, and click **Set up** for a new instance.
    - The connector panel opens as a right-side drawer. On the **Authenticate** tab, copy the **Redirect/Callback URL**. It ends in `connectors/oauth/callback/Jira`.
 
-<div className="text-center">
-  <img
-    src="/images/connectors/jira/jira_config.png"
-    alt="PipesHub Jira Authenticate Instance tab — copy the Redirect URL"
-    className="block mx-auto w-11/12"
-  />
-</div>
+<Frame>
+  <img src="/images/connectors/jira/jira_config.png" alt="PipesHub Jira Authenticate Instance tab — copy the Redirect URL" width="612" />
+</Frame>
 
 5. Paste the copied URL into the **Callback URL** field in Atlassian Developer Console.
 6. Click **Save changes**.
@@ -351,13 +347,9 @@ The connector drawer in PipesHub has three tabs: **Authenticate**, **Authorize**
    - **Client Secret** — from Step 6
 5. Click **Next** to move to the **Authorize** tab.
 
-<div className="text-center">
-  <img
-    src="/images/connectors/jira/connector_add_creds.png"
-    alt="Authenticate Instance tab — enter Client ID and Client Secret"
-    className="block mx-auto w-11/12"
-  />
-</div>
+<Frame>
+  <img src="/images/connectors/jira/connector_add_creds.png" alt="Authenticate Instance tab — enter Client ID and Client Secret" width="612" />
+</Frame>
 
 #### Step 8: Authorize tab — complete the OAuth flow
 
@@ -513,7 +505,7 @@ Use this method when you want the fastest setup and only need a single user acco
 
 #### Step 2: Authenticate tab — enter credentials
 
-1. In PipesHub, go to **Workspace Settings** → **Connectors**, find **Jira**, and click **Set up**.
+1. In PipesHub, go to **Workspace settings** → **Connectors**, find **Jira**, and click **Set up**.
 2. The connector panel opens as a right-side drawer with three tabs: **Authenticate**, **Authorize**, and **Configure records**.
 3. On the **Authenticate** tab, enter an **Instance name** (required), such as `Jira Production`.
 4. Pick **API Token** in the **Authentication method** dropdown.
@@ -523,13 +515,9 @@ Use this method when you want the fastest setup and only need a single user acco
    - **API Token** — the token you copied in Step 1
 6. Click **Next**. PipesHub validates the credentials and advances directly to the **Configure records** tab (the **Authorize** tab is skipped for API Token because the token authenticates on its own).
 
-<div className="text-center">
-  <img
-    src="/images/connectors/jira/connector_api_token_form.png"
-    alt="Authenticate Instance tab with API Token method — Base URL, Email, API Token fields"
-    className="block mx-auto w-11/12"
-  />
-</div>
+<Frame>
+  <img src="/images/connectors/jira/connector_api_token_form.png" alt="Authenticate Instance tab with API Token method — Base URL, Email, API Token fields" width="612" />
+</Frame>
 
 <Warning>
   The **Email** must match the Atlassian account that owns the API token. Using a different email causes authentication to fail.
@@ -594,15 +582,11 @@ Choose **Start syncing now** to kick off the initial sync immediately, or **I'll
 
 ## Personal connector
 
-**Jira Cloud Personal** is a separate connector that syncs Jira Cloud issues your own account can see into your personal workspace. Set it up under Workspace Settings → **Personal** → **Your Connectors**.
+**Jira Cloud Personal** is a separate connector that syncs Jira Cloud issues your own account can see into your personal workspace. Set it up under Workspace settings → **Personal** → **Your Connectors**.
 
-<div className="text-center">
-  <img
-    src="/images/connectors/jira/ph-jira-cloud-personal-setup.png"
-    alt="Set up Jira Cloud Personal: Authenticate tab"
-    className="block mx-auto w-2/3"
-  />
-</div>
+<Frame>
+  <img src="/images/connectors/jira/ph-jira-cloud-personal-setup.png" alt="Set up Jira Cloud Personal: Authenticate tab" width="600" />
+</Frame>
 
 - **What it syncs:** only the projects and issues visible to the credentials you provide.
 - **Who can see it:** only you, the user who created the connector. It doesn't read Jira permission schemes, groups, other users, or the audit log, so it doesn't need Jira admin rights.
@@ -849,15 +833,15 @@ Choose **OAuth** for production. Choose **API Token** when you cannot register a
 
 </Accordion>
 
-<Accordion title="What's the difference between Jira Connector and Jira Toolset?">
+<Accordion title="What's the difference between Jira Connector and Jira Action?">
 
-| Aspect | Jira Connector | Jira Toolset |
+| Aspect | Jira Connector | Jira Action |
 |--------|----------------|--------------|
 | **Purpose** | Sync and index Jira data for search | Enable agents to perform actions in Jira |
 | **Data Flow** | One-way (import data into PipesHub) | Two-way (read and write via API) |
 | **When to Use** | Query/search issues, projects, comments | Create issues, update tickets, add comments |
 
-**Example:** Use **Jira Connector** to search and retrieve existing ticket information. Use **Jira Toolset** to let agents create new issues or update ticket status.
+**Example:** Use **Jira Connector** to search and retrieve existing ticket information. Use **Jira action** to let agents create new issues or update ticket status.
 
 </Accordion>
 

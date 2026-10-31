@@ -1,30 +1,28 @@
 ---
 title: "Onboarding"
-description: "This guide walks through setting up the system when first time logging in, starting with AI model configuration, followed by optional configurations for storage, connectors, and SMTP."
+description: "This guide walks through the setup shown the first time an admin signs in: an AI model, an embedding model and storage."
 icon: "gear"
 ---
 
+The first time an admin signs in, setup has three steps: an AI model, an embedding model and storage. The AI model and embedding model steps must be completed. Storage is optional and defaults to local storage. Email (SMTP), connectors and the rest are configured afterwards in **Workspace settings**.
+
 ## Step 1: Configure AI Model (Required)
 
-Before proceeding with the setup, configuring an AI model is mandatory.
+Before proceeding with the setup, configuring an AI model is mandatory. **Enter Pipeshub** stays disabled until this step is saved.
 
-1. Select the AI Provider (OpenAI or Azure OpenAI).
-2. Enter the Client ID (if applicable).
-3. Provide the API Key to authenticate the AI model.
-4. Specify the Model Name (e.g., gpt-4-turbo).
-5. Click **Continue** to proceed.
+1. Select the AI provider.
+2. Provide the fields the provider asks for (for example the API key and the model name).
+3. Save the model, then click **Next**.
 
-<img
-  src="/images/onboarding/aiModels.png"
-  alt="AI models onboarding"
-  width="100%"
-/>
+<Frame>
+  <img src="/images/onboarding/aiModels-new.png" alt="Onboarding AI model step with the list of model providers" />
+</Frame>
 
 ### For more info, refer to [AI models Configuration Guide](/ai-models/overview).
 
 <Info>AI model configuration is required to enable AI-powered features.</Info>
 
-## Step 2: Configure Embeddings Model (Optional)
+## Step 2: Configure Embeddings Model (Required)
 
 The Embeddings Configuration section is part of the System Setup workflow for
 enabling semantic search and document retrieval features in your application.
@@ -32,117 +30,41 @@ This configuration step allows you to define the embedding provider and
 specify the model used for generating vector representations of textual
 content.
 
-1. Select the Embeddings Provider (OpenAI, Azure OpenAI or Sentence Tranformer).
-2. Enter the Endpoint (if applicable).
-3. Provide the API Key to authenticate the AI model (if applicable).
-4. Specify the Model Name (e.g., gpt-4-turbo).
-5. Click **Continue** to proceed.
+1. Select the embedding provider.
+2. Provide the fields the provider asks for (for example the endpoint, API key and model name).
+3. Save the model, then click **Next**.
 
-<img
-  src="/images/onboarding/embeddings.png"
-  alt="Embeddings onboarding"
-  width="100%"
-/>
+<Frame>
+  <img src="/images/onboarding/embeddings-new.png" alt="Onboarding embedding model step with providers and Skip button" />
+</Frame>
 
-<Info>You can skip this step.</Info>
+<Info>Next stays disabled until an embedding model is saved. If your deployment offers a system-provided default, **Skip** opens its setup; press **Add model** there to save it. You can change the embedding model later in workspace settings.</Info>
 
 ## Step 3: Configure Storage (Optional)
 
 Setting up storage allows the system to save and retrieve data efficiently.
 By default, local storage (local machine) will be used to store the files.
 
-1. Choose a Storage Provider (e.g., AWS S3, Local, Azure Blob Storage).
+1. Under **Provider type**, choose **Local (system default)** or **Amazon S3**.
 
 2. Enter the corresponding configuration.
 
-- Mount Name and Base Url for **Local Storage**.
-- Access Key and Secret Key for authentication and bucket Name or storage container details for **Amazon S3**.
-- Account name, container name,account key, protocol and endpoint suffix for **Azure Blob**.
+- Mount name and Base URL (both optional) for **Local (system default)**.
+- Bucket and Region, plus an optional Access key and Secret key, for **Amazon S3**. Leave both keys blank to use the server's IAM role.
 
-Click **Continue** to save the configuration.
+Click **Save**, then **Enter Pipeshub**.
 
-<img
-  src="/images/onboarding/storage.png"
-  alt="storage onboarding"
-  width="100%"
-/>
+<Frame>
+  <img src="/images/onboarding/storage-new.png" alt="Onboarding storage step with Local storage selected" />
+</Frame>
 
 ### For more info, refer to [Storage Service documentation](/system-overview/storage).
 
 <Info>You can skip this step. By default Local storage will be chosen.</Info>
 
-## Step 4: Configure Public URLs (Optional)
+## After onboarding
 
-The Public URL Configuration step allows you to define the publicly accessible URLs for your frontend and connector services. These URLs are critical for operations like OAuth authentication, redirect flows, and webhook callbacks in your system.
+Click **Enter Pipeshub** to finish. Then, in **Workspace settings**:
 
-1. Enter the Frontend Endpoint (if applicable).
-2. Enter the Connector Endpoint (if applicable).
-3. Click **Continue** to save the configuration.
-
-<img
-  src="/images/onboarding/publicUrls.png"
-  alt="Public Urls onboarding"
-  width="100%"
-/>
-
-### For more info, refer to [Internal Services Configuration Guide](/system-overview/internal-services).
-
-<Info>You can skip this step.</Info>
-
-## Step 5: Configure Connectors (Optional)
-
-Connectors help integrate third-party services with the system.
-Enter the necessary API credentials to authenticate the connection.
-
-### - Enterprise
-
-Service credentials (json file) is required and Admin Email of your google admin account.
-
-For more information, refer to [the Google Drive connector guide](/connectors/google-workspace/drive/drive).
-
-### - Individual
-
-Google Client Id and Client Secret are required, set Redirect Uri in Google Cloud Console as given in the window.
-
-For more information, refer to [the Google Drive connector guide](/connectors/google-workspace/drive/drive).
-
-<img
-  src="/images/onboarding/connectors.png"
-  alt="connectors onboarding"
-  width="100%"
-/>
-
-Click **Continue** to save the configuration.
-
-<Info>
-  You can skip this step and later configure them in settings under profile tab.
-</Info>
-
-## Step 6: Configure SMTP (Optional)
-
-SMTP configuration allows the system to send emails (invite new users, forgot password etc).
-
-1. Enter the SMTP Server Address (e.g., smtp.example.com).
-
-2. Provide the Port Number (e.g., 587 for TLS).
-
-3. Enter the Username and Password for authentication.
-
-4. Set up the From Email Address (e.g., noreply@example.com).
-
-Click **Save** to finalize the setup and then proceed.
-
-<img src="/images/onboarding/smtp.png" alt="smtp onboarding" width="100%" />
-
-### For Smtp Configuration, refer to [SMTP Configuration Guide](/smtp).
-
-<Info>
-  You can skip this step if email functionality is not needed and later add in
-  authentication tab in settings.
-</Info>
-
-Finalizing Setup Once you complete the AI model setup (required) and any optional
-configurations, the system will be ready for use.
-
-✅ Required: AI Model Configuration
-⚡ Optional: Storage, Connectors, SMTP
+- Set up email (SMTP) under **Workspace** > **Mail**. See the [SMTP guide](/smtp).
+- Add connectors under **Connectors**. See [Connectors](/connectors/overview).

@@ -52,7 +52,7 @@ The connector uses **OAuth 2.0** with Microsoft Graph **application permissions*
 
 ## Configuration Guide
 
-Follow the steps below: first register an app in Azure and grant permissions, then add the Outlook connector under **Workspace Settings** in PipesHub.
+Follow the steps below: first register an app in Azure and grant permissions, then add the Outlook connector under **Workspace settings** in PipesHub.
 
 ### How to configure and enable the Outlook connector
 
@@ -168,30 +168,22 @@ Follow the steps below: first register an app in Azure and grant permissions, th
 </div>
 
 <Warning>
-  Admin consent is required for application permissions. Only **Global Administrators** or **Application Administrators** (per your tenant’s role assignments) can grant this consent.
+  Admin consent is required for application permissions. For Microsoft Graph application permissions, only a **Privileged Role Administrator** or a **Global Administrator** can grant this consent.
 </Warning>
 
 #### Step 6: Open Connectors and start Outlook setup
 
-1. In the main app, open your **user profile** menu at the bottom of the left sidebar → **Workspace Settings**.
+1. In the main app, open your **user profile** menu at the bottom of the left sidebar → **Workspace settings**.
 2. Under **Workspace**, select **Connectors**.
 3. Find **Outlook** and start setup (**+ Setup** on the card), or open an existing instance to edit.
 
-<div className="text-center">
-  <img
-    src="/images/connectors/outlook/enterprise/outlook-connector-home-nav.png"
-    alt="User profile menu with Workspace Settings"
-    className="block mx-auto w-11/12"
-  />
-</div>
+<Frame>
+  <img src="/images/connectors/outlook/enterprise/outlook-connector-home-nav.png" alt="User profile menu with Workspace settings" width="300" />
+</Frame>
 
-<div className="text-center">
-  <img
-    src="/images/connectors/outlook/enterprise/outlook-connector-connectors-page.png"
-    alt="Workspace Connectors page with Outlook"
-    className="block mx-auto w-11/12"
-  />
-</div>
+<Frame>
+  <img src="/images/connectors/outlook/enterprise/outlook-connector-connectors-page.png" alt="Workspace Connectors page with Outlook" />
+</Frame>
 
 #### Step 7: Authenticate the Outlook instance
 
@@ -204,13 +196,9 @@ Follow the steps below: first register an app in Azure and grant permissions, th
 4. Enable **Has Admin Consent** if consent was granted in Azure (Step 5).
 5. Click **Next →**. Use the in-product **Setup Documentation** links if you want Azure steps side-by-side.
 
-<div className="text-center">
-  <img
-    src="/images/connectors/outlook/enterprise/outlook-connector-config.png"
-    alt="Outlook Configuration — Authenticate Instance tab"
-    className="block mx-auto w-11/12"
-  />
-</div>
+<Frame>
+  <img src="/images/connectors/outlook/enterprise/outlook-connector-config.png" alt="Outlook Configuration — Authenticate Instance tab" width="612" />
+</Frame>
 
 #### Step 8: Configure records (sync strategy and filters)
 
@@ -364,6 +352,20 @@ The Outlook connector syncs the following data:
 
 </AccordionGroup>
 
+## Permissions
+
+People are matched to PipesHub accounts by email (their `mail` or user principal name in Microsoft Entra ID).
+
+| Synced content | Who can find it in PipesHub |
+|---|---|
+| **A user's mailbox** (folders, messages, attachments) | Only that user. An admin who sets up the connector doesn't get access to other people's mail. |
+| **Microsoft 365 group conversations** | The group's members, as read from Microsoft Entra ID on each sync. Nested groups are expanded. |
+
+- A user whose account is disabled in Microsoft Entra ID (`accountEnabled` false) loses access to their mailbox and group conversations in PipesHub. Enabling the account again restores it.
+- If a group's members can't be read on a sync, the members from the previous sync are kept.
+
+---
+
 ## Data sync behavior
 
 <AccordionGroup>
@@ -402,7 +404,7 @@ There are three common causes:
    - **Fix:** Verify sync filters and indexing toggles on **Configure Records**, and ensure indexing has finished for those items.
 
 3. **Data not yet indexed** — The connector is still syncing or has not finished initial indexing.  
-   - **Fix:** Open **Workspace Settings** → **Connectors**, select **Outlook**, check the instance **Overview** and sync status, and wait for indexing to complete.
+   - **Fix:** Open **Workspace settings** → **Connectors**, select **Outlook**, check the instance **Overview** and sync status, and wait for indexing to complete.
 
 </Accordion>
 

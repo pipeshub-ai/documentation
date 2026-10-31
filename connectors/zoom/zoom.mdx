@@ -48,7 +48,7 @@ Zoom is the video conferencing and online meeting platform used by teams for cal
 ### Prerequisite: Admin-managed app + admin access
 
 <Warning>
-  The Zoom connector requires an **Admin-managed OAuth app** (not User-managed) and **admin access** to the Zoom account. One admin authorization covers all users — unlike the Zoom Toolset, which is User-managed and authorized per user.
+  The Zoom connector requires an **Admin-managed OAuth app** (not User-managed) and **admin access** to the Zoom account. One admin authorization covers all users — unlike the Zoom Action, which is User-managed and authorized per user.
 </Warning>
 
 #### Step 1: Create a Zoom General App
@@ -94,16 +94,12 @@ In the app creation dialog, choose:
 
 Before filling in the Zoom form, copy the Redirect/Callback URL from PipesHub so the values match exactly.
 
-1. In PipesHub, go to **Workspace Settings** → **Connectors**, find **Zoom**, and click **Set up** for a new instance.
+1. In PipesHub, go to **Workspace settings** → **Connectors**, find **Zoom**, and click **Set up** for a new instance.
 2. The connector panel opens as a right-side drawer. On the **Authenticate** tab, enter an **Instance name** and copy the **Redirect/Callback URL**.
 
-<div className="text-center">
-  <img
-    src="/images/connectors/zoom/zoom_config.png"
-    alt="PipesHub Zoom Authenticate tab — copy the Redirect/Callback URL"
-    className="block mx-auto w-11/12"
-  />
-</div>
+<Frame>
+  <img src="/images/connectors/zoom/zoom_config.png" alt="PipesHub Zoom Authenticate tab — copy the Redirect/Callback URL" width="612" />
+</Frame>
 
 #### Step 4: Configure OAuth information in Zoom
 
@@ -187,13 +183,9 @@ Return to the PipesHub connector drawer. On the **Authenticate** tab:
    - **Client Secret** — from Step 6
 3. Click **Next** to move to the **Authorize** tab.
 
-<div className="text-center">
-  <img
-    src="/images/connectors/zoom/connector_add_creds.png"
-    alt="Authenticate tab — enter Client ID and Client Secret"
-    className="block mx-auto w-11/12"
-  />
-</div>
+<Frame>
+  <img src="/images/connectors/zoom/connector_add_creds.png" alt="Authenticate tab — enter Client ID and Client Secret" width="612" />
+</Frame>
 
 #### Step 8: Authorize tab — complete the OAuth flow
 
@@ -339,6 +331,24 @@ The Zoom connector syncs the following from your Zoom account:
 
 </AccordionGroup>
 
+## Permissions
+
+Each meeting is visible in PipesHub only to the people Zoom lists for that meeting, matched to PipesHub accounts by email:
+
+| Person in Zoom | Access in PipesHub |
+|---|---|
+| **Host** | Owner |
+| **Alternative hosts** (from the meeting settings) | Read |
+| **Participants** (from Zoom's participant report) | Read |
+| **Invitees** (from the meeting settings) | Read |
+
+- A participant who joined without an email address (for example, an anonymous guest) gets no access.
+- A person whose Zoom email has no matching PipesHub account gets no access until an account with that email exists.
+- Other people in your organization can't find the meeting, even though the connector reads every user's meeting history. Admin scopes let PipesHub read all meetings; they don't widen who can see them.
+- If the participant report can't be read for a meeting, that meeting is still synced with the host, alternative hosts and invitees.
+
+---
+
 ## Data Sync Behavior
 
 <AccordionGroup>
@@ -389,9 +399,9 @@ Every sync runs in this order:
 
 <AccordionGroup>
 
-<Accordion title="What's the difference between Zoom Connector and Zoom Toolset?">
+<Accordion title="What's the difference between Zoom Connector and Zoom Action?">
 
-| Aspect | Zoom Connector | Zoom Toolset |
+| Aspect | Zoom Connector | Zoom Action |
 |--------|----------------|--------------|
 | **Purpose** | Sync and index Zoom meetings, participants, recording links, and transcripts for search | Enable agents to schedule meetings, update recurring series, fetch transcripts on demand |
 | **Data Flow** | One-way (import data into PipesHub) | Two-way (read and write via API) |
@@ -399,7 +409,7 @@ Every sync runs in this order:
 | **Scopes** | Admin-scoped (`*:admin`) | User-scoped |
 | **When to Use** | Query/search past meetings, find transcripts | Book meetings, cancel occurrences, pull transcripts in-conversation |
 
-**Example:** Use **Zoom Connector** to search past meeting transcripts across your organization. Use **Zoom Toolset** to let agents schedule meetings, reschedule a specific occurrence, or pull a transcript on demand.
+**Example:** Use **Zoom Connector** to search past meeting transcripts across your organization. Use **Zoom action** to let agents schedule meetings, reschedule a specific occurrence, or pull a transcript on demand.
 
 </Accordion>
 

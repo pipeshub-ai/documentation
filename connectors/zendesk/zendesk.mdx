@@ -12,13 +12,18 @@ The Zendesk connector makes tickets, their public comments and attachments, and 
   The connector signs in with OAuth only. Zendesk is removing Support API tokens (used by the Ticketing and Help Center APIs): accounts can't create new ones from October 27, 2026, and all remaining Support API tokens stop working on April 30, 2027. Messaging and Chat API tokens are not affected. See [Zendesk's announcement](https://support.zendesk.com/hc/en-us/articles/10851263566234-Announcing-the-removal-of-API-tokens-as-an-authentication-method-for-API-requests).
 </Note>
 
-## Set up Zendesk
+## Prerequisites
 
-You need a **Zendesk admin account** and access to **Workspace Settings** in PipesHub. Use the same email address in both apps so your access is matched correctly.
+- A **Zendesk admin account** to authorize the connector. The connector reads Zendesk's incremental ticket and user exports, which only admins may call. If you authorize with an agent account, the sync stops and asks you to reconnect with an admin account.
+- Permission in Zendesk Admin Center to create an OAuth client. The connector asks for the `read` scope only.
+- A PipesHub admin account, with access to **Workspace settings**. Zendesk is a team connector; there is no personal version.
+- The same email address in PipesHub and Zendesk for each person, so their access is matched correctly.
+
+## Set up Zendesk
 
 ### 1. Copy the redirect URL
 
-In PipesHub, go to **Workspace Settings** → **Connectors** → **Zendesk** → **Set up**. On the **Authenticate** tab, enter an **Instance name** (required) and copy the **Redirect/Callback URL**.
+In PipesHub, go to **Workspace settings** → **Connectors** → **Zendesk** → **Set up**. On the **Authenticate** tab, enter an **Instance name** (required) and copy the **Redirect/Callback URL**.
 
 ### 2. Create an OAuth client in Zendesk
 
@@ -46,13 +51,9 @@ Return to the **Authenticate** tab. If you have already saved a Zendesk OAuth ap
 
 Replace `acme` with your Zendesk subdomain, then click **Next**. PipesHub always signs in at `https://<subdomain>.zendesk.com`, so enter your `zendesk.com` subdomain even if your help center uses a custom domain.
 
-<div className="text-center">
-  <img
-    src="/images/connectors/zendesk/ph-zendesk-authenticate.png"
-    alt="Set up Zendesk: Redirect/Callback URL, OAuth app name, Subdomain, Authorize URL, Token URL and client credentials"
-    className="block mx-auto w-2/3"
-  />
-</div>
+<Frame>
+  <img src="/images/connectors/zendesk/ph-zendesk-authenticate.png" alt="Set up Zendesk: Redirect/Callback URL, OAuth app name, Subdomain, Authorize URL, Token URL and client credentials" width="600" />
+</Frame>
 
 ### 4. Authorize and start syncing
 

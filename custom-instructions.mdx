@@ -4,7 +4,7 @@ description: "Set organization-wide instructions for the Chat Assistant, such as
 icon: "pen-to-square"
 ---
 
-Custom instructions are text that PipesHub adds to every Chat Assistant conversation in your organization. Use them to set house rules for answers, for example:
+Custom instructions are text that PipesHub adds to Chat Assistant conversations across your organization. The settings page sets them for Agent mode, the default chat mode; Internal Search and Web Search modes have their own, set through the API (see below). Use them to set house rules for answers, for example:
 
 - "Keep answers under 150 words. Lead with the answer, then the details."
 - "Use bullet points, and end with the sources you used."
@@ -27,7 +27,7 @@ PipesHub adds your text to the assistant's system prompt (the standing instructi
   </Step>
 </Steps>
 
-To remove them, click **Reset to Default** and save. With the box empty, PipesHub adds no custom instructions.
+To remove them, click **Reset to Default** and save. With the box empty, Agent mode gets no custom instructions. Instructions set for Internal Search or Web Search through the API stay as they are.
 
 ## What they apply to
 
@@ -42,7 +42,11 @@ To change how a particular agent answers, edit that agent's instructions in Agen
 
 ## Set instructions for every mode with the API
 
-The settings page edits only the Agent mode instructions. The API reads and writes all three. You need an admin's [personal access token](/developer/personal-access-tokens).
+The settings page edits only the Agent mode instructions. The API reads and writes all three. The caller must be an admin, and the token needs the `config:read` scope to read and `config:write` to save.
+
+<Note>
+A default install does not allow `config:write` on a [personal access token](/developer/personal-access-tokens): a token can only have scopes listed in the server's `MCP_SCOPES` setting, which includes `config:read` but not `config:write`. To save through the API, whoever runs the server adds `config:write` to `MCP_SCOPES`, restarts PipesHub, and an admin creates a new token with that scope.
+</Note>
 
 ```bash
 export PIPESHUB_URL="https://your-pipeshub-instance.com"
@@ -70,7 +74,7 @@ curl -s -X PUT "$PIPESHUB_URL/api/v1/configurationManager/prompts/system" \
 | `customSystemPromptAgent` | Agent (the box on the settings page) |
 
 <Warning>
-A `PUT` replaces all three. A field you leave out or send as `""` is cleared, so read the current values first and send all three back.
+A `PUT` replaces all three, so read the current values first and send all three back. A field sent as `""` is cleared. A request without `customSystemPrompt` or `customSystemPromptWebSearch` is rejected; one without `customSystemPromptAgent` clears the Agent mode instructions.
 </Warning>
 
 ## Tips

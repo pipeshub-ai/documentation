@@ -1,0 +1,88 @@
+---
+title: "Indexing status"
+description: "What happens after a file is uploaded or synced, what each indexing status means, and how to retry"
+icon: "list-check"
+---
+
+Every file you upload and every item a connector syncs becomes a record. Search and chat can only use a record's content once it is indexed. Until then, the record still shows by name, with a status that says why it isn't searchable yet.
+
+## What happens after a file arrives
+
+1. **Queued.** The record waits its turn.
+2. **Type check.** PipesHub checks the format. A format it can't index stops here with **File type not supported**. See [Supported file formats](/supported-file-formats).
+3. **Reading.** PipesHub extracts the file's text, tables and images. Scanned PDFs and images need a model that can read images.
+4. **Indexing.** The content is split into blocks, turned into embeddings with your embedding model, and stored in the vector database. The record is now **Completed** and searchable.
+5. **Data extraction with AI.** In the background, PipesHub adds a summary, topics and categories to the record. Search doesn't wait for this step. Entity extraction, if it is on, runs here too.
+
+## Where to see statuses
+
+- In a collection or **All records**, each file shows its status. Some statuses add a short reason, for example why a file failed.
+- On a connector's **Overview** tab, under **Workspace → Connectors**, **Records status** counts the records in each status. Select a count to list those records.
+
+<Frame>
+  <img src="/images/product/knowledge-base/all-records.png" alt="All records page listing two files of a collection with their Status icons and Source, Size and date columns" />
+</Frame>
+
+## Statuses and what to do
+
+| Status | What it means and what to do |
+| --- | --- |
+| **Completed** | Indexed and searchable.<br/>**Do:** nothing. |
+| **Queued** | Waiting to be indexed.<br/>**Do:** wait. |
+| **In progress** | Being indexed now.<br/>**Do:** wait. |
+| **Not started** | Synced, but indexing hasn't started.<br/>**Do:** wait, or use **Start indexing**. |
+| **Manual indexing** | Synced but not indexed, because the connector has manual indexing on, or because its connector is turned off.<br/>**Do:** use **Start indexing**, or turn the connector on again. |
+| **Paused** | Indexing of its source is paused.<br/>**Do:** nothing. PipesHub resumes it on its own. |
+| **Failed** | Indexing failed. The reason shows next to the status.<br/>**Do:** fix what the reason says, then use **Retry indexing**. |
+| **File type not supported** | PipesHub can't index this format.<br/>**Do:** convert the file to a [supported format](/supported-file-formats) and upload it again. |
+| **Needs multimodal model** | The file is an image, and no model that can read images is set up.<br/>**Do:** add or turn on a multimodal model in [AI models](/ai-models/overview), then use **Retry indexing**. |
+| **Password protected** | The file needs a password to open.<br/>**Do:** remove the password and upload the file again. For a synced file, remove it at the source, then use **Retry indexing**. |
+| **Empty** | There was no text to index. The label says whether the file is 0 bytes or just has no text.<br/>**Do:** check the file. If it is a scan, see [Scanned PDFs](/supported-file-formats#scanned-pdfs). |
+| **Skipped** | This step doesn't apply to the record.<br/>**Do:** nothing. |
+
+Common reasons for **Failed**:
+
+- No embedding model is set up, or PipesHub couldn't reach it. An admin can check it in **Workspace → AI models**, then reindex the file.
+- The file is a scanned document and no model can read images. Add a multimodal model, then reindex.
+- The file took too long to process. Reindex it. If it keeps failing, split it into smaller files.
+- An e-book is copy-protected (DRM). Upload a copy without copy protection.
+
+## Retry or reindex from the UI
+
+Open the actions menu on a file or folder in a collection or **All records**. The menu shows the action that fits the file's status:
+
+| File status | Action |
+| --- | --- |
+| Completed | **Force reindex** |
+| Failed, Empty, Needs multimodal model, Password protected | **Retry indexing** |
+| Manual indexing, Not started | **Start indexing** |
+| Queued, In progress, File type not supported | No action |
+
+For a folder, the menu offers **Reindex all** (or **Index all** if nothing in it has been indexed), **Reindex failed**, and **Start indexing** for files waiting on manual indexing. A collection offers **Reindex all** and **Reindex failed**.
+
+On a connector's **Overview** tab, **Reindex failed** retries every failed record from that connector.
+
+Files from a code repository (GitHub, GitLab) can't be reindexed one by one. Sync the connector instead.
+
+## Data extraction with AI
+
+A connector's **Overview** tab shows **Data extraction with AI** with progress for each step:
+
+- **Classification** adds a summary, topics and categories.
+- **Entity extraction** finds people, organizations and places. It shows only when entity extraction is on.
+
+If records fail a step, use **Retry failed classification** or **Retry failed entity extraction**.
+
+### Turn on entity extraction
+
+Entity extraction is off by default. To turn it on for the whole workspace, an admin goes to **Workspace → Labs**, selects **Show advanced feature flags**, and turns on **Extract Named Entities**.
+
+It is also always on when the deployment sets `HIGH_ACCURACY_MODE=true`, which turns on other higher-cost features too. In that case the Labs flag can't turn it off.
+
+Records indexed before you turned it on get entities the next time they are indexed. Reindex them if you need entities now.
+
+## Related
+
+- [Supported file formats](/supported-file-formats)
+- [AI models](/ai-models/overview)
+- [Trash and Recently deleted](/trash)

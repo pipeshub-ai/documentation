@@ -1,0 +1,171 @@
+---
+title: "Chat and search"
+description: "Ask questions over your company knowledge, pick sources and models, read cited answers, and manage and share your chats"
+icon: "comments"
+---
+
+Chat answers questions from the apps and collections you can see, and from the web when web search is on. Each answer cites where it came from.
+
+## Start a chat
+
+1. Select **New chat** at the top of the sidebar, or press <kbd>Cmd</kbd>/<kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>K</kbd>.
+2. Type your question in the box that says **Ask anything**.
+3. Press <kbd>Enter</kbd> to send. Press <kbd>Shift</kbd> + <kbd>Enter</kbd> for a new line.
+
+<Frame>
+  <img src="/images/product/chat/chat-home.png" alt="Chat home page with the sidebar and message composer" />
+</Frame>
+
+While an answer is being written, select **Stop generating** to stop it. The part of the answer that was already written is kept and marked **Stopped**.
+
+If an answer finishes in a chat you are not looking at, an **Answer ready** message appears with an **Open chat** button. The chat also gets an unread dot in the sidebar until you open it.
+
+## The composer
+
+### Choose where to search
+
+Select the **+** button (**Add files & capabilities**) to see these options:
+
+| Option | What it does |
+| --- | --- |
+| **Attach files** | Adds files to your message. See [Attach files](#attach-files). |
+| **Internal search** | Lets the assistant search your connectors and collections. On by default. |
+| **Web search** | Lets the assistant search the web and read pages. On by default. See [Web search](/web-search). |
+
+<Frame>
+  <img src="/images/product/chat/attach-and-search-toggles.png" alt="Composer menu with attach files and search toggles" />
+</Frame>
+
+The assistant decides per question whether to use internal search, web search or both. Under each answer, the footer shows what it used: **Internal search**, **Web search** or **Internal + web search**.
+
+### Narrow the sources
+
+By default, every connector and collection you can see is searched. To narrow it, open **Connectors, collections & actions** in the composer (tabs **Connectors**, **Collections**, **Actions** and **MCP**) and pick whole sources, or open a source to pick folders and files inside it.
+
+<Frame>
+  <img src="/images/product/chat/source-scope-picker.png" alt="Source picker for narrowing chat to connectors or collections" />
+</Frame>
+
+You can also type `@` in the message box. A menu opens with **Your apps** and **Collections**, and you can search by name for folders and files. What you pick is added to the sources for the chat. The `@` menu does not open in agent chats or project chats, or while you edit or regenerate a message.
+
+### Pick a model and reasoning effort
+
+The model button in the composer shows the current model. Select it to see **Configured models** and pick another one. Admins also see **Manage models**, which opens **Workspace → AI models**.
+
+For a model that supports reasoning, the same panel shows **Reasoning effort**: **Low**, **Medium**, **High** or **Max**. Select the active level again to go back to the model's default.
+
+If no model is set up yet, the panel says **No AI models are configured yet**. An admin adds one in [AI models](/ai-models/overview).
+
+<Frame>
+  <img src="/images/product/chat/model-picker-no-models.png" alt="Model picker when no AI models are configured" />
+</Frame>
+
+### Attach files
+
+- Types: PDF, PNG, JPEG, JPG, TXT, MD, DOCX, XLSX, CSV (and TSV).
+- Up to 10 files per message.
+- Up to 5 MB per file.
+
+You can also drag files onto the composer (**Drop files here**). If you paste a long text (more than 5,000 characters or more than 10 lines), it becomes a **Pasted text** attachment instead of filling the box. Pasted text is kept up to 128 KB; the rest is cut off.
+
+### Voice input
+
+Select the microphone (**Voice input**) and speak. Select it again to stop.
+
+- If an admin has added a Speech-to-Text model, your audio is sent to that model. See [Speech to Text models](/ai-models/overview#speech-to-text-stt-models).
+- If not, the browser's own speech recognition is used, where the browser has it.
+- If neither is available, the button is turned off and its tooltip says: **Configure a Speech-to-Text (STT) model in AI models settings to enable voice input.**
+
+## Read an answer
+
+An answer has up to three tabs:
+
+- **Answer**: the response, with numbered citations in the text.
+- **Sources**: the records the answer drew on.
+- **Citation**: each cited passage.
+
+Select a citation number to see the passage. From there, **Preview** opens the record inside PipesHub, and **Open in** (for example, **Open in collections** or the app's name) opens the original.
+
+Tables have **Expand table**, which opens a **Full table view** with **Download as CSV**. Diagrams have **Expand diagram**, zoom controls, **Copy source** and **Copy image**.
+
+## Answer actions
+
+Below each answer:
+
+| Action | What it does |
+| --- | --- |
+| **Copy** | Choose **Markdown with citations** or **Only text without citations**. |
+| **Helpful** | Optional feedback: **Excellent answer**, **Well explained**, **Helpful citations** or **Other...** with your own words. |
+| **Not helpful** | Feedback: **Incorrect information**, **Missing information**, **Irrelevant information**, **Unclear explanation**, **Poor citations** or **Other...**. |
+| **Regenerate** | Writes the last answer again. Only on the last answer. |
+| **Fork chat** / **Fork from here** | Starts a new chat that contains the conversation up to this answer. |
+| **Read aloud** | Reads the answer out. Uses the admin's Text-to-Speech model if one is set up ([Text to Speech models](/ai-models/overview#text-to-speech-tts-models)), otherwise the browser's voice. Select **Stop reading** to stop. |
+
+To change your last question, select the edit icon next to it. The question goes back into the composer (**Edit query**). Press <kbd>Esc</kbd> to cancel.
+
+## Questions and approvals in agent answers
+
+An agent can stop to ask you something. The card shows **Step 1 of 2** and so on. Pick an option, or choose **Something else** and type your answer. You can **Skip** a question, **Skip all**, or **Submit**. If you wait too long, the card says **This question has expired. Reply in the chat to continue.**
+
+An agent can also ask before it runs a tool. The card says **Needs your approval** and shows how long until it expires. Select **Allow** or **Deny**. Turn on **Don't ask again for this tool** to skip the prompt for that tool next time. Only the person who owns the chat can approve.
+
+## Manage your chats
+
+The sidebar lists your chats under **Recents**:
+
+- **Shared chats**: chats other people shared with you, with **Shared by** and their name.
+- **Your chats**: your own chats, grouped by **Pinned**, **Today**, **Yesterday**, **Last 7 days** and **Older**.
+
+Open a chat's menu in the sidebar to:
+
+- **Rename** it.
+- **Pin** or **Unpin** it. Pinned chats stay at the top.
+- **Export** it as a Markdown (`.md`) file.
+- **Archive** it.
+- **Delete** it. This can't be undone. Everyone you shared the chat with loses access, and files the assistant created in the chat are deleted too.
+
+To find a chat, select **Search chats** in the sidebar or press <kbd>Cmd</kbd>/<kbd>Ctrl</kbd> + <kbd>K</kbd>.
+
+<Frame>
+  <img src="/images/product/chat/search-chats-palette.png" alt="Search chats palette opened with Ctrl+K" />
+</Frame>
+
+Archived chats are in **Workspace → Archived chats**. Select one to preview it, then **Restore** it or **Permanently delete** it.
+
+## Share a chat
+
+1. Open the chat and select **Share** at the top.
+2. Search for people by name or email, and add them.
+
+Rules:
+
+- Only the person who started the chat can share it or remove people.
+- You can share only with people in your organization.
+- People you share with can read the chat. They cannot rename, delete, fork or regenerate it.
+- Files attached in the chat, and files the assistant created in it, become readable for them too. Removing someone takes this access away again.
+- Each new person gets a notification: "*Name* shared a chat with you". The chat shows up under **Shared chats** in their sidebar.
+
+## Admin settings that affect chat
+
+Admins find these under **Workspace**:
+
+- **Prompts**: custom instructions for the chat assistant, for example to answer in a certain language or follow a format. They apply to new conversations right away. **Reset to default** clears them. They do not change agents made in Agent Builder, which have their own instructions.
+- **AI models**: the models people can pick, and the Speech-to-Text and Text-to-Speech models used for voice input and read aloud. See [AI models](/ai-models/overview).
+- **Web search**: the web search provider. See [Web search](/web-search).
+
+<Frame>
+  <img src="/images/product/workspace/prompts.png" alt="Prompts page with custom instructions for Agent mode" />
+</Frame>
+
+## Keyboard shortcuts
+
+| Keys | What it does |
+| --- | --- |
+| <kbd>Enter</kbd> | Send the message |
+| <kbd>Shift</kbd> + <kbd>Enter</kbd> | New line |
+| <kbd>Esc</kbd> | Cancel editing or regenerating a message |
+| <kbd>Cmd</kbd>/<kbd>Ctrl</kbd> + <kbd>K</kbd> | Search chats |
+| <kbd>Cmd</kbd>/<kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>K</kbd> | New chat |
+| <kbd>Cmd</kbd>/<kbd>Ctrl</kbd> + <kbd>N</kbd> | New chat |
+
+More in [Getting around the app](/app-basics).

@@ -1,5 +1,5 @@
 ---
-title: "Jira Data Center Toolset"
+title: "Jira Data Center actions"
 description: "Issue tracking and project management integration for AI agents on self-hosted Jira"
 icon: "/logo/jira.png"
 ---
@@ -12,7 +12,7 @@ icon: "/logo/jira.png"
         alt="Jira Logo" 
         className="w-8 h-8 object-contain flex-shrink-0"
       />
-      <div className="text-xl font-semibold text-gray-900 dark:text-white">Jira Data Center Toolset</div>
+      <div className="text-xl font-semibold text-gray-900 dark:text-white">Jira Data Center actions</div>
     </div>
     <p className="text-base text-gray-700 dark:text-gray-300 mt-0 mb-5">Issue tracking and project management on self-hosted Jira</p>
     <div className="flex flex-wrap items-center gap-2">
@@ -28,10 +28,10 @@ icon: "/logo/jira.png"
 
 ## Overview
 
-The Jira Data Center toolset lets AI agents work with the Jira you run on your own servers. Agents can create issues, search tickets, add comments, update issues, and more. Use it to automate project management work and to bring Jira into a conversation with an agent.
+The Jira Data Center action lets AI agents work with the Jira you run on your own servers. Agents can create issues, search tickets, add comments, update issues, and more. Use it to automate project management work and to bring Jira into a conversation with an agent.
 
 <Info>
-  If Atlassian hosts your Jira for you, that is Jira Cloud. Use the [Jira Cloud toolset](/toolsets/jira/jira) instead. The two toolsets are not interchangeable.
+  If Atlassian hosts your Jira for you, that is Jira Cloud. Use the [Jira Cloud action](/toolsets/jira/jira) instead. The two actions are not interchangeable.
 </Info>
 
 ### Key Capabilities
@@ -55,6 +55,7 @@ The Jira Data Center toolset lets AI agents work with the Jira you run on your o
 | `get_issue` | Get details of a specific issue | Search |
 | `search_issues` | Search issues using JQL | Search |
 | `add_comment` | Add a comment to an issue | Action |
+| `add_attachments` | Attach files the user shared to an existing issue | Action |
 | `get_comments` | Get comments on an issue | Search |
 | `get_projects` | Get all projects you can see | Search |
 | `get_project` | Get details of a specific project | Search |
@@ -67,17 +68,17 @@ The Jira Data Center toolset lets AI agents work with the Jira you run on your o
 
 ## Configuration Guide
 
-The Jira Data Center toolset supports **two ways to sign in**: Personal Access Token (PAT) and Basic Authentication.
+The Jira Data Center action supports **two ways to sign in**: Personal Access Token (PAT) and Basic Authentication.
 
 In both cases the work is split between an admin and each user:
 
-- **The admin** sets up the shared instance under **Workspace Settings → Actions** and enters only the **Base URL**.
+- **The admin** sets up the shared instance under **Workspace settings → Actions** and enters only the **Base URL**.
 - **Each user** then opens **Your actions** and enters their own credentials.
 
-Every user who wants to use the toolset needs their own credentials, because each agent action runs as that user in Jira.
+Every user who wants to use the action needs their own credentials, because each agent action runs as that user in Jira.
 
 <Warning>
-  **This toolset supports Personal Access Token and Basic Authentication only.** OAuth apps you create in the Atlassian Developer Console are for Jira Cloud and will not work here.
+  **This action supports Personal Access Token and Basic Authentication only.** OAuth apps you create in the Atlassian Developer Console are for Jira Cloud and will not work here.
 </Warning>
 
 | Method | Best for |
@@ -91,12 +92,12 @@ Every user who wants to use the toolset needs their own credentials, because eac
 
 #### Step 1: Each user creates a Personal Access Token
 
-Every user who will use the toolset needs their own token.
+Every user who will use the action needs their own token.
 
 1. Sign in to your Jira.
 2. Click your **profile picture** in the top right, then select **Profile**.
 3. Open the **Personal Access Tokens** tab and click **Create token**.
-4. Give it a name you will recognise, such as `PipesHub Jira Toolset`, set an expiry if you want, then click **Create**.
+4. Give it a name you will recognise, such as `PipesHub Jira actions`, set an expiry if you want, then click **Create**.
 
 <div className="text-center">
   <img
@@ -128,20 +129,16 @@ Every user who will use the toolset needs their own token.
 
 The admin sets only the Base URL here. No credentials are entered at this step.
 
-1. In PipesHub, go to **Workspace Settings** → **Actions**.
-2. Find **Jira Data Center** and click **+ Setup** for a new instance.
+1. In PipesHub, go to **Workspace settings** → **Actions**.
+2. Find **Jira Data Center** and click **Set up** for a new instance.
 3. Choose **Personal Access Token** as the sign-in method, then enter:
    - **Instance Name** (e.g., `Jira Production`)
    - **Base URL** — the root URL of your Jira, such as `https://jira.company.com`, with no trailing slash
 4. Click **Create**.
 
-<div className="text-center">
-  <img
-    src="/images/toolsets/jira-data-center/actions_admin_setup.png"
-    alt="Admin Actions dialog — Instance Name and Base URL only"
-    className="block mx-auto w-11/12"
-  />
-</div>
+<Frame>
+  <img src="/images/toolsets/jira-data-center/actions_admin_setup.png" alt="Admin Actions dialog — Instance Name and Base URL only" width="612" />
+</Frame>
 
 <Info>
   Opening the instance settings later brings this dialog back, where you can change the **Instance Name** and **Base URL**. A button below it opens **Your actions** so each user can add their own credentials.
@@ -149,7 +146,7 @@ The admin sets only the Base URL here. No credentials are entered at this step.
 
 #### Step 3: Each user — add their token in Your actions
 
-Every user who wants to use the toolset does this with their own token.
+Every user who wants to use the action does this with their own token.
 
 1. In PipesHub, open **Your actions** (under **Personal** in the sidebar).
 2. Find the Jira Data Center instance and open it.
@@ -164,18 +161,18 @@ Every user who wants to use the toolset does this with their own token.
   />
 </div>
 
-The tile in **Your actions** now shows **Authenticated**. The toolset is connected for you only. Every other user has to repeat this step with their own token.
+The tile in **Your actions** now shows **Authenticated**. The action is connected for you only. Every other user has to repeat this step with their own token.
 
-#### Step 4: Add the toolset to an agent
+#### Step 4: Add the action to an agent
 
 1. Go to the **Home** page.
 2. Next to **Agents**, click **+** to create a new agent.
-3. Name the agent, drag the **Jira Data Center** toolset onto the canvas, connect it to the **Agent Core** node along with your model and chat input and output, then create the agent.
+3. Name the agent, drag the **Jira Data Center** action onto the canvas, connect it to the **Agent** node along with your model and chat input and output, then create the agent.
 
 <div className="text-center">
   <img
     src="/images/toolsets/jira-data-center/create_agent.png"
-    alt="Agent builder with the Jira Data Center toolset connected"
+    alt="Agent builder with the Jira Data Center action connected"
     className="block mx-auto w-11/12"
   />
 </div>
@@ -190,24 +187,20 @@ Use this on instances that do not support Personal Access Tokens, or where an ad
 
 The admin sets only the Base URL here. No credentials are entered at this step.
 
-1. In PipesHub, go to **Workspace Settings** → **Actions**.
-2. Find **Jira Data Center** and click **+ Setup** for a new instance.
+1. In PipesHub, go to **Workspace settings** → **Actions**.
+2. Find **Jira Data Center** and click **Set up** for a new instance.
 3. Choose **Basic Authentication** as the sign-in method, then enter:
    - **Instance Name** (e.g., `Jira Production`)
    - **Base URL** — the root URL of your Jira, such as `https://jira.company.com`, with no trailing slash
 4. Click **Create**.
 
-<div className="text-center">
-  <img
-    src="/images/toolsets/jira-data-center/actions_admin_setup_basic_auth.png"
-    alt="Admin Actions dialog with Basic Authentication — Instance Name and Base URL only"
-    className="block mx-auto w-11/12"
-  />
-</div>
+<Frame>
+  <img src="/images/toolsets/jira-data-center/actions_admin_setup_basic_auth.png" alt="Admin Actions dialog with Basic Authentication — Instance Name and Base URL only" width="612" />
+</Frame>
 
 #### Step 2: Each user — add their username and password in Your actions
 
-Every user who wants to use the toolset does this with their own account.
+Every user who wants to use the action does this with their own account.
 
 1. In PipesHub, open **Your actions** (under **Personal** in the sidebar).
 2. Find the Jira Data Center instance and open it.
@@ -228,16 +221,16 @@ Every user who wants to use the toolset does this with their own account.
   Enter the Jira **username**, not the email address. On many instances these are different.
 </Warning>
 
-#### Step 3: Add the toolset to an agent
+#### Step 3: Add the action to an agent
 
 1. Go to the **Home** page.
 2. Next to **Agents**, click **+** to create a new agent.
-3. Name the agent, drag the **Jira Data Center** toolset onto the canvas, connect it to the **Agent Core** node along with your model and chat input and output, then create the agent.
+3. Name the agent, drag the **Jira Data Center** action onto the canvas, connect it to the **Agent** node along with your model and chat input and output, then create the agent.
 
 <div className="text-center">
   <img
     src="/images/toolsets/jira-data-center/create_agent.png"
-    alt="Agent builder with the Jira Data Center toolset connected"
+    alt="Agent builder with the Jira Data Center action connected"
     className="block mx-auto w-11/12"
   />
 </div>
@@ -252,9 +245,9 @@ Every user who wants to use the toolset does this with their own account.
 
 <AccordionGroup>
 
-<Accordion title="Can I use OAuth with the Jira Data Center toolset?">
+<Accordion title="Can I use OAuth with the Jira Data Center action?">
 
-No. This toolset supports **Personal Access Token** and **Basic Authentication** only. OAuth apps created in the Atlassian Developer Console are for Jira Cloud and will not work here.
+No. This action supports **Personal Access Token** and **Basic Authentication** only. OAuth apps created in the Atlassian Developer Console are for Jira Cloud and will not work here.
 
 </Accordion>
 
@@ -270,15 +263,15 @@ Use a **Personal Access Token** unless your instance cannot create them.
 
 </Accordion>
 
-<Accordion title="What is the difference between the Jira Data Center connector and toolset?">
+<Accordion title="What is the difference between the Jira Data Center connector and action?">
 
-| Aspect | Connector | Toolset |
+| Aspect | Connector | Action |
 |--------|-----------|---------|
 | **Purpose** | Sync and index Jira data so you can search it | Let agents do things in Jira |
 | **Direction** | One way, Jira into PipesHub | Two ways, read and write |
 | **Use it to** | Search issues, projects, and comments | Create issues, update tickets, add comments |
 
-**Example:** use the [connector](/connectors/jira/jira-data-center) to search existing tickets. Use the toolset to let an agent create a new issue or change a ticket's status.
+**Example:** use the [connector](/connectors/jira/jira-data-center) to search existing tickets. Use the action to let an agent create a new issue or change a ticket's status.
 
 </Accordion>
 
@@ -293,7 +286,7 @@ Every agent action runs as a real Jira user. Using your own token means agents c
 ---
 
 <Info>
-  When searching issues, include a time range, such as "from the last 30 days" or "updated this week". The toolset asks for one so searches stay bounded and results stay accurate.
+  When searching issues, include a time range, such as "from the last 30 days" or "updated this week". The action asks for one so searches stay bounded and results stay accurate.
 </Info>
 
 ---

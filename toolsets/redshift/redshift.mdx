@@ -1,5 +1,5 @@
 ---
-title: "Redshift Toolset"
+title: "Redshift actions"
 description: "Run SQL queries on Amazon Redshift from your AI agents"
 icon: "/logo/redshift.png"
 ---
@@ -12,7 +12,7 @@ icon: "/logo/redshift.png"
         alt="Redshift Logo"
         className="w-8 h-8 object-contain flex-shrink-0"
       />
-      <div className="text-xl font-semibold text-gray-900 dark:text-white">Redshift Toolset</div>
+      <div className="text-xl font-semibold text-gray-900 dark:text-white">Redshift actions</div>
     </div>
     <p className="text-base text-gray-700 dark:text-gray-300 mt-0 mb-5">Schema introspection and SQL execution on Amazon Redshift</p>
     <div className="flex flex-wrap items-center gap-2">
@@ -28,15 +28,30 @@ icon: "/logo/redshift.png"
 
 ## Overview
 
-The Redshift toolset lets agents query your Amazon Redshift database.
+The Redshift action lets agents query your Amazon Redshift database.
 
 <Note>
-  Admin creates the Redshift toolset once. After that, each user authenticates with their own Redshift username and password.
+  Admin creates the Redshift action once. After that, each user authenticates with their own Redshift username and password.
 </Note>
 
 <Warning>
   Authenticate with a database user that can only read (`SELECT` only). Queries that are not plain reads wait for your approval, but a read-only user is the guarantee. See [Use a read-only database user](/toolsets/read-only-database-user).
 </Warning>
+
+---
+
+## Available Tools
+
+| Tool | Description |
+|------|-------------|
+| `list_schemas` | List all schemas in the Redshift database |
+| `list_tables` | List all tables in a specific schema |
+| `list_schemas_and_tables` | List all schemas and their tables in one call |
+| `get_table_ddl` | Get the `CREATE TABLE` DDL for a specific table |
+| `get_schema_ddl` | Get DDL for all tables in a schema |
+| `get_tables_schema` | Get column and key info for specific tables |
+| `fetch_db_schema` | Fetch the full database schema with all tables and views |
+| `execute_query` | Execute a SQL query against Redshift. Results are limited to 100 rows for display; larger result sets are exported as CSV in the background |
 
 ---
 
@@ -119,45 +134,33 @@ psql "sslmode=require host=redshift-dev-wg.891377406506.ap-south-1.redshift-serv
 
 </Accordion>
 
-<Accordion title="Step 3: Create Redshift toolset (admin only)" icon="gear">
+<Accordion title="Step 3: Create Redshift action (admin only)" icon="gear">
 
 <Note>
-  Only admin can create the Redshift toolset instance in the workspace.
+  Only admin can create the Redshift action instance in the workspace.
 </Note>
 
-### Go to toolset creation flow
+### Go to action creation flow
 
-1. In PipesHub, open **Workspace Settings**.
+1. In PipesHub, open **Workspace settings**.
 2. Click **Actions**.
-3. Click **Create Toolset**.
+3. Find **Redshift** and click **Set up**.
 
-<div className="text-center">
-  <img
-    src="/images/toolsets/redshift/open-workspace-settings.png"
-    alt="Open Workspace Settings"
-    className="block mx-auto w-11/12"
-  />
-</div>
+<Frame>
+  <img src="/images/toolsets/redshift/open-workspace-settings.png" alt="Open Workspace settings" width="300" />
+</Frame>
 
-<div className="text-center">
-  <img
-    src="/images/toolsets/redshift/navigate-to-actions.png"
-    alt="Navigate to Actions"
-    className="block mx-auto w-11/12"
-  />
-</div>
+<Frame>
+  <img src="/images/toolsets/redshift/navigate-to-actions.png" alt="Navigate to Actions" width="232" />
+</Frame>
 
-<div className="text-center">
-  <img
-    src="/images/toolsets/redshift/click-create-toolset.png"
-    alt="Click Create Toolset"
-    className="block mx-auto w-11/12"
-  />
-</div>
+<Frame>
+  <img src="/images/toolsets/redshift/click-create-toolset.png" alt="Click Set up on the Redshift card" width="325" />
+</Frame>
 
 ### Select Redshift and configure
 
-1. Choose **Redshift** from toolsets.
+1. Choose **Redshift** from actions.
 2. Fill the form:
 
 | Field | Value |
@@ -169,13 +172,9 @@ psql "sslmode=require host=redshift-dev-wg.891377406506.ap-south-1.redshift-serv
 
 3. Click **Create**.
 
-<div className="text-center">
-  <img
-    src="/images/toolsets/redshift/redshift-setup-card.png"
-    alt="Redshift setup card"
-    className="block mx-auto w-11/12"
-  />
-</div>
+<Frame>
+  <img src="/images/toolsets/redshift/redshift-setup-card.png" alt="Redshift setup card" width="600" />
+</Frame>
 
 
 <Info>
@@ -186,10 +185,10 @@ psql "sslmode=require host=redshift-dev-wg.891377406506.ap-south-1.redshift-serv
 
 <Accordion title="Step 4: Authenticate Redshift (each user)" icon="key">
 
-After admin creates the toolset, each user must authenticate with their own Redshift credentials.
+After admin creates the action, each user must authenticate with their own Redshift credentials.
 
-1. Open **Workspace Settings > Actions**.
-2. Open the **Redshift** toolset instance.
+1. Open **Workspace settings > Actions**.
+2. Open the **Redshift** action instance.
 3. Click **Authenticate**.
 4. Enter your Redshift **Username** and **Password**.
 5. Click **Save credentials**.
@@ -197,7 +196,7 @@ After admin creates the toolset, each user must authenticate with their own Reds
 <div className="text-center">
   <img
     src="/images/toolsets/redshift/redshift-inactive-instance.png"
-    alt="Redshift toolset instance inactive before authentication"
+    alt="Redshift action instance inactive before authentication"
     className="block mx-auto w-11/12"
   />
 </div>
@@ -213,7 +212,7 @@ After admin creates the toolset, each user must authenticate with their own Reds
 <div className="text-center">
   <img
     src="/images/toolsets/redshift/redshift-authenticated.png"
-    alt="Redshift toolset authenticated"
+    alt="Redshift action authenticated"
     className="block mx-auto w-11/12"
   />
 </div>
@@ -230,7 +229,7 @@ After admin creates the toolset, each user must authenticate with their own Reds
 <div className="text-center">
   <img
     src="/images/toolsets/redshift/redshift-in-agent-builder.png"
-    alt="Redshift toolset in agent builder"
+    alt="Redshift action in agent builder"
     className="block mx-auto w-11/12"
   />
 </div>
@@ -247,7 +246,7 @@ After admin creates the toolset, each user must authenticate with their own Reds
 
 <Accordion title="Who creates and who authenticates?">
 
-- **Admin** creates the Redshift toolset instance once.
+- **Admin** creates the Redshift action instance once.
 - **Each user** authenticates with their own Redshift username and password.
 
 </Accordion>

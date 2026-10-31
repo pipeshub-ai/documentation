@@ -1,5 +1,5 @@
 ---
-title: "Outlook Toolset"
+title: "Outlook actions"
 description: "Email, calendar, and meeting management integration for AI agents"
 icon: "/logo/outlook.png"
 ---
@@ -12,7 +12,7 @@ icon: "/logo/outlook.png"
         alt="Outlook Logo" 
         className="w-8 h-8 object-contain flex-shrink-0"
       />
-      <div className="text-xl font-semibold text-gray-900 dark:text-white">Outlook Toolset</div>
+      <div className="text-xl font-semibold text-gray-900 dark:text-white">Outlook actions</div>
     </div>
     <p className="text-base text-gray-700 dark:text-gray-300 mt-0 mb-5">Email, calendar, and meeting management</p>
     <div className="flex flex-wrap items-center gap-2">
@@ -28,7 +28,7 @@ icon: "/logo/outlook.png"
 
 ## Overview
 
-The Outlook toolset enables AI agents to send, read, and manage emails, calendar events, recurring meetings, and meeting transcripts in Microsoft Outlook via the Microsoft Graph API. It uses delegated OAuth (user-consent) so agents act on behalf of the authenticated user.
+The Outlook action enables AI agents to send, read, and manage emails, calendar events, recurring meetings, and meeting transcripts in Microsoft Outlook via the Microsoft Graph API. It uses delegated OAuth (user-consent) so agents act on behalf of the authenticated user.
 
 ### Key Capabilities
 
@@ -41,32 +41,36 @@ The Outlook toolset enables AI agents to send, read, and manage emails, calendar
 
 ## Available Tools
 
+Parameters marked `?` are optional.
+
 ### Email Tools
 
-| Tool | Description |
-|------|-------------|
-| `send_email` | Send an email with subject, body, recipients, CC, and BCC |
-| `reply_to_message` | Reply to an existing email message |
-| `reply_all_to_message` | Reply-all to an email message |
-| `forward_message` | Forward an email to one or more recipients |
-| `search_messages` | Search or list emails using OData queries (`$search`, `$filter`, `$orderby`) |
-| `get_message` | Get the full details of a specific email by message ID |
-| `get_mail_folders` | List mail folders (Inbox, Sent Items, Drafts, custom folders) |
+| Tool | Description | Parameters |
+|------|-------------|------------|
+| `send_email` | Send an email with subject, body, recipients, CC, and BCC | `to_recipients`, `subject`, `body`, `body_type?`, `cc_recipients?`, `bcc_recipients?`, `attachment_record_ids?` |
+| `reply_to_message` | Reply to an existing email message | `message_id`, `comment` |
+| `reply_all_to_message` | Reply-all to an email message | `message_id`, `comment` |
+| `forward_message` | Forward an email to one or more recipients | `message_id`, `to_recipients`, `comment?` |
+| `search_messages` | Search or list emails using OData queries (`$search`, `$filter`, `$orderby`) | `search?`, `filter?`, `top?`, `orderby?` |
+| `get_message` | Get the full details of a specific email by message ID | `message_id` |
+| `get_mail_folders` | List mail folders (Inbox, Sent Items, Drafts, custom folders) | `top?` |
+| `list_message_attachments` | List attachments on an email message (id, name, content type, size) without downloading them | `message_id`, `top?` |
+| `stage_attachment_to_blob` | Download an Outlook attachment into PipesHub as a record, so other actions can use it by `record_id` | `message_id`, `attachment_id` |
 
 ### Calendar Tools
 
-| Tool | Description |
-|------|-------------|
-| `create_calendar_event` | Create a new calendar event with optional attendees, location, recurrence, and online meeting link |
-| `update_calendar_event` | Update an existing event (subject, time, attendees, location, recurrence, etc.) |
-| `delete_calendar_event` | Delete a calendar event |
-| `get_calendar_events` | Get calendar events within a date/time range |
-| `get_calendar_event` | Get details of a specific calendar event by event ID |
-| `search_calendar_events` | Search calendar events by keyword (subject, body, location) |
-| `get_recurring_events` | Get all recurring event series with their occurrences in a date range |
-| `get_recurring_events_ending` | Find recurring events whose series ends within a specified time frame |
-| `delete_recurring_event_occurrence` | Delete specific occurrences of a recurring event by date |
-| `get_meeting_transcripts` | Retrieve Teams meeting transcripts with speaker names and text |
+| Tool | Description | Parameters |
+|------|-------------|------------|
+| `create_calendar_event` | Create a new calendar event with optional attendees, location, recurrence, and online meeting link | `subject`, `start_datetime`, `end_datetime`, `timezone?`, `body?`, `location?`, `attendees?`, `recurrence?`, `is_online_meeting?` |
+| `update_calendar_event` | Update an existing event (subject, time, attendees, location, recurrence, etc.) | `event_id`, `subject?`, `start_datetime?`, `end_datetime?`, `timezone?`, `body?`, `location?`, `attendees?`, `is_online_meeting?`, `recurrence?` |
+| `delete_calendar_event` | Delete a calendar event | `event_id` |
+| `get_calendar_events` | Get calendar events within a date/time range | `start_datetime`, `end_datetime`, `top?` |
+| `get_calendar_event` | Get details of a specific calendar event by event ID | `event_id` |
+| `search_calendar_events` | Search calendar events by keyword (subject, body, location) | `search`, `top?` |
+| `get_recurring_events` | Get all recurring event series with their occurrences in a date range | `start_date?`, `end_date?`, `timezone?`, `top?` |
+| `get_recurring_events_ending` | Find recurring events whose series ends within a specified time frame | `end_before`, `end_after?`, `timezone?`, `top?` |
+| `delete_recurring_event_occurrence` | Delete specific occurrences of a recurring event by date | `event_id`, `occurrence_dates`, `timezone?` |
+| `get_meeting_transcripts` | Retrieve Teams meeting transcripts with speaker names and text | `join_url?`, `event_id?` |
 
 ---
 
@@ -105,18 +109,13 @@ On the **App registrations** page, click **+ New registration**.
 
 ### Step 3: Register the application
 
-1. **Name**: Enter a display name (for example, `PipesHub Outlook Toolset`).
+1. **Name**: Enter a display name (for example, `PipesHub Outlook actions`).
 2. **Supported account types**: Choose who can sign in—for example **Accounts in any organizational directory and personal Microsoft accounts** for the broadest support, or a single-tenant option if you only use your organization.
-3. **Redirect URI**: Get the Redirect URI from the PipesHub **Configure Outlook** dialog in **connector settings** (where Outlook is set up—for example **Workspace → Actions** and Outlook **+ Setup** / **Configure**).
+3. **Redirect URI**: Get the Redirect URI from the PipesHub **Action configuration** dialog (where Outlook is set up—for example **Workspace → Actions** and **Set up** on Outlook).
 
-<div style={{ textAlign: "center" }}>
-  <img
-    src="/images/toolsets/outlook/outlook_toolset_page.png"
-    alt="PipesHub Configure Outlook dialog showing Redirect URI"
-    style={{ display: 'block', margin: '0 auto' }}
-    width="90%"
-  />
-</div>
+<Frame>
+  <img src="/images/toolsets/outlook/outlook_toolset_page.png" alt="PipesHub Configure Outlook dialog showing Redirect URI" width="612" />
+</Frame>
 
 4. Click **Register**.
 
@@ -134,7 +133,7 @@ On the **App registrations** page, click **+ New registration**.
 On the **Overview** page for your app, copy:
 
 - **Application (client) ID** — used as **Client ID** in PipesHub.
-- **Directory (tenant) ID** — used as **Tenant ID** in PipesHub (or use `common` / leave blank per the toolset dialog if you want both work/school and personal accounts).
+- **Directory (tenant) ID** — used as **Tenant ID** in PipesHub (or use `common` / leave blank per the action dialog if you want both work/school and personal accounts).
 
 <div style={{ textAlign: "center" }}>
   <img
@@ -195,7 +194,7 @@ On the **Overview** page for your app, copy:
 </div>
 
 <Info>
-  The Outlook toolset uses **Delegated** permissions so actions run as the signed-in user, not as the app alone.
+  The Outlook action uses **Delegated** permissions so actions run as the signed-in user, not as the app alone.
 </Info>
 
 ### Step 7: Grant admin consent
@@ -211,23 +210,18 @@ Click **Grant admin consent for** your organization (the button includes your te
   />
 </div>
 
-### Step 8: Configure the Outlook toolset in PipesHub
+### Step 8: Configure the Outlook action in PipesHub
 
 1. In PipesHub, go to **Workspace** → **Actions**.
-2. Find **Outlook** and open setup / configuration (**+ Setup** or **Configure**).
+2. Find **Outlook** and click **Set up** to open its setup dialog.
 3. Confirm the **Redirect URI** in the dialog matches the **Web** redirect URI you registered in Azure **Step 3**.
 4. Enter **Client ID**, **Client Secret**, and optionally **Tenant ID** (`common` or your tenant/domain per the form), then create or save the instance.
 
-<div style={{ textAlign: "center" }}>
-  <img
-    src="/images/toolsets/outlook/outlook_toolset_page.png"
-    alt="Workspace Actions Outlook toolset configuration"
-    style={{ display: 'block', margin: '0 auto' }}
-    width="90%"
-  />
-</div>
+<Frame>
+  <img src="/images/toolsets/outlook/outlook_toolset_page.png" alt="Workspace Actions Outlook action configuration" width="612" />
+</Frame>
 
-### Step 9: Authenticate the toolset under Your actions
+### Step 9: Authenticate the action under Your actions
 
 1. Open **Your actions** (or the equivalent **Your actions** entry under **Personal** in the sidebar).
 2. Select your **Outlook** instance and complete **Authenticate with OAuth** (popup sign-in to Microsoft, then accept permissions).
@@ -235,7 +229,7 @@ Click **Grant admin consent for** your organization (the button includes your te
 <div style={{ textAlign: "center" }}>
   <img
     src="/images/toolsets/outlook/outlook_auth_page.png"
-    alt="Authenticate Outlook toolset with OAuth"
+    alt="Authenticate Outlook action with OAuth"
     style={{ display: 'block', margin: '0 auto' }}
     width="90%"
   />
@@ -245,12 +239,12 @@ Click **Grant admin consent for** your organization (the button includes your te
 
 1. Go to the **Home** page.
 2. Next to **Agents**, click **+** to create a new agent.
-3. Give the agent a name, drag the **Outlook** toolset onto the canvas, connect it to the **Agent** node with your model and chat input/output, then create the agent.
+3. Give the agent a name, drag the **Outlook** action onto the canvas, connect it to the **Agent** node with your model and chat input/output, then create the agent.
 
 <div style={{ textAlign: "center" }}>
   <img
     src="/images/toolsets/outlook/create_agent.png"
-    alt="Agent builder with Outlook toolset connected"
+    alt="Agent builder with Outlook action connected"
     style={{ display: 'block', margin: '0 auto' }}
     width="90%"
   />
@@ -266,16 +260,16 @@ Click **Grant admin consent for** your organization (the button includes your te
 
 <AccordionGroup>
 
-<Accordion title="What's the difference between Outlook Connector and Outlook Toolset?">
+<Accordion title="What's the difference between Outlook Connector and Outlook Action?">
 
-| Aspect | Outlook Connector | Outlook Toolset |
+| Aspect | Outlook Connector | Outlook Action |
 |--------|-------------------|-----------------|
 | **Purpose** | Sync and index emails for search | Enable agents to perform email and calendar actions |
 | **Data Flow** | One-way (import data into PipesHub) | Two-way (read and write via API) |
 | **Auth Type** | Application permissions (admin-consent) | Delegated permissions (user-consent) |
 | **When to Use** | Query/search email history and conversations | Send emails, manage calendar, create meetings |
 
-**Example:** Use **Outlook Connector** to search past email conversations across your organization. Use **Outlook Toolset** to let agents send replies, schedule meetings, or manage calendar events on behalf of the user.
+**Example:** Use **Outlook Connector** to search past email conversations across your organization. Use **Outlook action** to let agents send replies, schedule meetings, or manage calendar events on behalf of the user.
 
 </Accordion>
 

@@ -1,5 +1,5 @@
 ---
-title: "Slack Toolset"
+title: "Slack actions"
 description: "Team messaging and communication integration for AI agents"
 icon: "/logo/slack.png"
 ---
@@ -12,7 +12,7 @@ icon: "/logo/slack.png"
         alt="Slack Logo" 
         className="w-8 h-8 object-contain flex-shrink-0"
       />
-      <div className="text-xl font-semibold text-gray-900 dark:text-white">Slack Toolset</div>
+      <div className="text-xl font-semibold text-gray-900 dark:text-white">Slack actions</div>
     </div>
     <p className="text-base text-gray-700 dark:text-gray-300 mt-0 mb-5">Team messaging, channels, and collaboration</p>
     <div className="flex flex-wrap items-center gap-2">
@@ -28,7 +28,7 @@ icon: "/logo/slack.png"
 
 ## Overview
 
-The Slack toolset enables AI agents to interact with your Slack workspace. Send messages, search conversations, manage channels, and collaborate with your team.
+The Slack action enables AI agents to interact with your Slack workspace. Send messages, search conversations, manage channels, and collaborate with your team.
 
 ### Key Capabilities
 
@@ -44,41 +44,46 @@ The Slack toolset enables AI agents to interact with your Slack workspace. Send 
 
 ## Available Tools
 
+Parameters marked `?` are optional.
+
 | Tool | Description |
-|------|-------------|
-| `send_message` | Send a message to a channel |
-| `send_direct_message` | Send a direct message to a user |
-| `send_message_with_mentions` | Send a message with user mentions |
-| `send_message_to_multiple_channels` | Send a message to multiple channels |
-| `reply_to_message` | Reply to a specific message in a channel |
-| `update_message` | Update an existing message in a channel |
-| `delete_message` | Delete a message from a channel |
-| `schedule_message` | Schedule a message to be sent at a specific time |
-| `get_scheduled_messages` | Get scheduled messages |
-| `get_channel_history` | Get message history from a channel |
-| `get_unread_messages` | Get unread messages from a channel |
-| `get_thread_replies` | Get replies in a thread |
-| `get_message_permalink` | Get a permalink for a specific message |
-| `search_all` | Search messages, files, and channels |
-| `search_messages` | Search for messages in Slack |
-| `fetch_channels` | Fetch all conversations in the workspace |
-| `get_user_conversations` | Get all conversations for the authenticated user |
-| `get_user_channels` | Get all conversations that the user is a member of |
-| `get_channel_info` | Get information about a channel |
-| `get_channel_members` | Get the members of a channel |
-| `get_channel_members_by_id` | Get the members of a channel by ID |
-| `get_user_info` | Get information about a Slack user |
-| `get_users_list` | Get list of all users in the organization |
-| `resolve_user` | Resolve a Slack user ID to display name and email |
-| `get_user_groups` | Get list of user groups in the organization |
-| `get_user_group_info` | Get information about a specific user group |
-| `set_user_status` | Set or clear user status |
-| `add_reaction` | Add an emoji reaction to a message |
-| `remove_reaction` | Remove a reaction from a message |
-| `get_reactions` | Get reactions for a specific message |
-| `pin_message` | Pin a message to a channel |
-| `unpin_message` | Unpin a message from a channel |
-| `get_pinned_messages` | Get pinned messages from a channel |
+|---|---|
+| `send_message` | Send a message to a channel<br/>**Params:** `channel`, `message`, `attachment_record_ids?` |
+| `send_direct_message` | Send a direct message to a user<br/>**Params:** `user`, `message`, `attachment_record_ids?` |
+| `send_message_with_mentions` | Send a message with user mentions<br/>**Params:** `channel`, `message`, `mentions?` |
+| `send_message_to_multiple_channels` | Send a message to multiple channels<br/>**Params:** `channels`, `message` |
+| `reply_to_message` | Reply to a specific message in a channel<br/>**Params:** `channel`, `message`, `thread_ts?`, `latest_message?`, `attachment_record_ids?` |
+| `update_message` | Update an existing message in a channel<br/>**Params:** `channel`, `timestamp`, `text`, `blocks?`, `as_user?` |
+| `delete_message` | Delete a message from a channel<br/>**Params:** `channel`, `timestamp`, `as_user?` |
+| `upload_file_to_channel` | Upload files to a Slack channel<br/>**Params:** `channel`, `filename?`, `file_content?`, `title?`, `initial_comment?`, `attachment_record_ids?` |
+| `schedule_message` | Schedule a message to be sent at a specific time<br/>**Params:** `channel`, `message`, `post_at` |
+| `get_scheduled_messages` | Get scheduled messages<br/>**Params:** `channel?` |
+| `get_channel_history` | Get message history from a channel<br/>**Params:** `channel`, `limit?`, `oldest?`, `latest?`, `inclusive?` |
+| `get_dm_history` | Get direct message history with a specific user<br/>**Params:** `user`, `limit?`, `oldest?`, `latest?`, `inclusive?` |
+| `get_unread_messages` | Get unread messages from a channel<br/>**Params:** `channel` |
+| `get_thread_replies` | Get replies in a thread<br/>**Params:** `channel`, `timestamp`, `limit?`, `oldest?`, `latest?`, `inclusive?` |
+| `get_message_permalink` | Get a permalink for a specific message<br/>**Params:** `channel`, `timestamp` |
+| `search_all` | Search messages, files, and channels<br/>**Params:** `query`, `limit?` |
+| `search_messages` | Search for messages in Slack<br/>**Params:** `query`, `channel?`, `with_user?`, `from_user?`, `count?`, `sort?`, `sort_dir?`, `after?`, `before?` |
+| `fetch_channels` | Fetch all conversations in the workspace<br/>**Params:** `types?`, `exclude_archived?` |
+| `get_user_conversations` | Get all conversations for the authenticated user<br/>**Params:** `types?`, `exclude_archived?`, `limit?` |
+| `get_user_channels` | Get all conversations that the user is a member of<br/>**Params:** `exclude_archived?`, `types?` |
+| `get_channel_info` | Get information about a channel<br/>**Params:** `channel` |
+| `get_channel_members` | Get the members of a channel<br/>**Params:** `channel` |
+| `get_channel_members_by_id` | Get the members of a channel by ID<br/>**Params:** `channel_id` |
+| `get_user_info` | Get information about a Slack user<br/>**Params:** `user` |
+| `get_users_list` | Get list of all users in the organization<br/>**Params:** `include_deleted?`, `limit?` |
+| `search_users` | Search Slack users by name<br/>**Params:** `name`, `include_bots?` |
+| `resolve_user` | Resolve a Slack user ID to display name and email<br/>**Params:** `user_id` |
+| `get_user_groups` | Get list of user groups in the organization<br/>**Params:** `include_users?`, `include_disabled?` |
+| `get_user_group_info` | Get information about a specific user group<br/>**Params:** `usergroup`, `include_disabled?` |
+| `set_user_status` | Set or clear user status<br/>**Params:** `status_text`, `status_emoji?`, `duration_seconds?` |
+| `add_reaction` | Add an emoji reaction to a message<br/>**Params:** `channel`, `timestamp`, `name` |
+| `remove_reaction` | Remove a reaction from a message<br/>**Params:** `channel`, `timestamp`, `name` |
+| `get_reactions` | Get reactions for a specific message<br/>**Params:** `channel`, `timestamp`, `full?` |
+| `pin_message` | Pin a message to a channel<br/>**Params:** `channel`, `timestamp` |
+| `unpin_message` | Unpin a message from a channel<br/>**Params:** `channel`, `timestamp` |
+| `get_pinned_messages` | Get pinned messages from a channel<br/>**Params:** `channel` |
 | `check_token_info` | Check Slack token information and available scopes |
 
 ---
@@ -145,18 +150,13 @@ The Slack toolset enables AI agents to interact with your Slack workspace. Send 
 
 Before configuring the Redirect URL in Slack, copy the Redirect URI from PipesHub so the values match exactly.
 
-1. In PipesHub, go to **Workspace Settings** → **Actions**.
-2. Find **Slack** in the list and click **+ Setup** (or **Configure**).
+1. In PipesHub, go to **Workspace settings** → **Actions**.
+2. Find **Slack** in the list and click **Set up**.
 3. Copy the **Redirect URI** shown in the dialog.
 
-<div style={{ textAlign: "center" }}>
-  <img
-    src="/images/toolsets/slack/pipeshub-config.png"
-    alt="PipesHub Configure Slack toolset — copy the Redirect URI"
-    style={{ display: 'block', margin: '0 auto' }}
-    width="90%"
-  />
-</div>
+<Frame>
+  <img src="/images/toolsets/slack/pipeshub-config.png" alt="PipesHub Configure Slack action — copy the Redirect URI" width="611" />
+</Frame>
 
 ### Step 3: Configure the Redirect URL in Slack
 
@@ -175,12 +175,12 @@ Before configuring the Redirect URL in Slack, copy the Redirect URI from PipesHu
 </div>
 
 <Warning>
-  The Redirect URL must match exactly between Slack and PipesHub — protocol, host, path, and trailing slash. Any mismatch causes authentication to fail.
+  The Redirect URL must match exactly between Slack and PipesHub: protocol, host, path, and trailing slash. Any mismatch causes authentication to fail.
 </Warning>
 
 ### Step 4: Add required scopes
 
-In **OAuth & Permissions**, scroll to **Scopes**. Slack splits scopes into two sections — **Bot Token Scopes** and **User Token Scopes** — and you'll need to add some in each.
+In **OAuth & Permissions**, scroll to **Scopes**. Slack splits scopes into two sections, **Bot Token Scopes** and **User Token Scopes**, and you'll need to add some in each.
 
 #### Bot Token Scopes
 
@@ -227,7 +227,7 @@ Add these under the **Bot Token Scopes** section.
 
 #### User Token Scopes
 
-Scroll further down on the same page to the **User Token Scopes** section and add these. They are not available as Bot Token Scopes — you must add them here for the corresponding tools to work.
+Scroll further down on the same page to the **User Token Scopes** section and add these. They are not available as Bot Token Scopes. You must add them here for the corresponding tools to work.
 
 | Scope | Purpose |
 |-------|---------|
@@ -244,7 +244,7 @@ Scroll further down on the same page to the **User Token Scopes** section and ad
 </div>
 
 <Info>
-  If you change scopes after the toolset is already authenticated, existing users must re-authorize to pick up the new scopes.
+  If you change scopes after the action is already authenticated, existing users must re-authorize to pick up the new scopes.
 </Info>
 
 ### Step 5: Copy Client ID and Client Secret
@@ -252,8 +252,8 @@ Scroll further down on the same page to the **User Token Scopes** section and ad
 1. In Slack app settings, open **Basic Information**.
 2. Scroll to **App Credentials**.
 3. Copy:
-   - **Client ID** — used as **Client ID** in PipesHub.
-   - **Client Secret** — click **Show** to reveal, then copy. Used as **Client Secret** in PipesHub.
+   - **Client ID**: Used as **Client ID** in PipesHub.
+   - **Client Secret**: Click **Show** to reveal, then copy. Used as **Client Secret** in PipesHub.
 
 <div style={{ textAlign: "center" }}>
   <img
@@ -268,31 +268,26 @@ Scroll further down on the same page to the **User Token Scopes** section and ad
   Store the Client Secret securely. It can be regenerated if needed, but you'll have to update your PipesHub configuration with the new value and re-authorize.
 </Warning>
 
-### Step 6: Configure the Slack toolset in PipesHub
+### Step 6: Configure the Slack action in PipesHub
 
-1. In PipesHub, return to **Workspace Settings** → **Actions**.
+1. In PipesHub, return to **Workspace settings** → **Actions**.
 2. Find **Slack** and reopen the setup dialog.
 3. Confirm the **Redirect URI** matches the Redirect URL you saved in Slack in Step 3.
 4. Paste your **Client ID** and **Client Secret**, then save the instance.
 
-<div style={{ textAlign: "center" }}>
-  <img
-    src="/images/toolsets/slack/enter-credentials.png"
-    alt="Enter Slack Client ID and Client Secret in PipesHub"
-    style={{ display: 'block', margin: '0 auto' }}
-    width="90%"
-  />
-</div>
+<Frame>
+  <img src="/images/toolsets/slack/enter-credentials.png" alt="Enter Slack Client ID and Client Secret in PipesHub" width="611" />
+</Frame>
 
-### Step 7: Authenticate the Slack toolset
+### Step 7: Authenticate the Slack action
 
 Authentication uses the same OAuth flow in either location:
 
-- **Admins** can authenticate the shared instance directly under **Workspace Settings → Actions**.
+- **Admins** can authenticate the shared instance directly under **Workspace settings → Actions**.
 - **Users** can authenticate their own personal instance under **Your actions** (in the **Personal** section of the sidebar).
 
 1. On the Slack tile (in **Actions** or **Your actions**), click **Authenticate with OAuth**.
-2. A popup opens to Slack's authorization page — select your workspace, review the requested scopes, and click **Allow**.
+2. A popup opens to Slack's authorization page. Select your workspace, review the requested scopes, and click **Allow**.
 
 <div style={{ textAlign: "center" }}>
   <img
@@ -313,7 +308,7 @@ Authentication uses the same OAuth flow in either location:
 
 1. Go to the **Home** page.
 2. Next to **Agents**, click **+** to create a new agent.
-3. Give the agent a name, drag the **Slack** toolset onto the canvas, connect it to the **Agent Core** node with your model and chat input/output, then create the agent.
+3. Give the agent a name, drag the **Slack** action onto the canvas, connect it to the **Agent** node with your model and chat input/output, then create the agent.
 
 </Accordion>
 
@@ -325,15 +320,15 @@ Authentication uses the same OAuth flow in either location:
 
 <AccordionGroup>
 
-<Accordion title="What's the difference between Slack Connector and Slack Toolset?">
+<Accordion title="What's the difference between Slack Connector and Slack Action?">
 
-| Aspect | Slack Connector | Slack Toolset |
+| Aspect | Slack Connector | Slack Action |
 |--------|----------------|---------------|
 | **Purpose** | Sync and index messages for search | Enable agents to perform Slack actions |
 | **Data Flow** | One-way (import data into PipesHub) | Two-way (read and write via API) |
 | **When to Use** | Query/search messages and conversations | Send messages, add reactions, manage channels |
 
-**Example:** Use **Slack Connector** to search past message history. Use **Slack Toolset** to let agents send messages or post updates.
+**Example:** Use **Slack Connector** to search past message history. Use **Slack action** to let agents send messages or post updates.
 
 </Accordion>
 
@@ -350,13 +345,13 @@ Ask your agent to "send a message to #marketing" with your content.
 Ask to "send a DM to John about the meeting" or "directly message sarah@company.com". The agent can send private messages to any user. Giving the person's email is the surest way to reach the right person. An email address nobody in the workspace has is refused rather than matched to someone with a similar name, and a longer name you type (such as "Joanna") no longer matches a shorter one in the directory (such as "Ann"). If Slack won't let the agent read the directory (a rate limit or a missing scope), the agent says so instead of "User not found".
 
 **Are long lists complete?**  
-Listing tools (channel members, users, conversations) read every page Slack returns. If Slack stops partway, the agent is told the list is incomplete rather than being handed part of it as if it were the whole. Errors come back in plain words with what to do next, worded for the user token this toolset signs in with.
+Listing tools (channel members, users, conversations) read every page Slack returns. If Slack stops partway, the agent is told the list is incomplete rather than being handed part of it as if it were the whole. Errors come back in plain words with what to do next, worded for the user token this action signs in with.
 
-**Does the toolset work with Slack token rotation?**  
+**Does the action work with Slack token rotation?**  
 Yes. If your Slack app has **token rotation** turned on, its sign-in expires about every 12 hours, and PipesHub renews it automatically before then.
 
-- If the agent says *"The Slack sign-in has expired. PipesHub renews it automatically, so try again in a few minutes."*, wait a few minutes and ask again. If it keeps happening, reconnect the Slack toolset in **Settings > Toolsets**.
-- If the agent says *"Slack did not accept the saved sign-in."*, Slack has refused the sign-in (for example, it was revoked or the app was reinstalled), and renewing can't fix it. Reconnect the Slack toolset in **Settings > Toolsets**.
+- If the agent says *"The Slack sign-in has expired. PipesHub renews it automatically, so try again in a few minutes."*, wait a few minutes and ask again. If it keeps happening, reconnect the Slack action in **Workspace > Actions**.
+- If the agent says *"Slack did not accept the saved sign-in."*, Slack has refused the sign-in (for example, it was revoked or the app was reinstalled), and renewing can't fix it. Reconnect the Slack action in **Workspace > Actions**.
 
 **How do I reply to a message?**  
 Ask to "reply to that message in thread" or "respond to the latest message in #engineering". The agent can reply in threads to keep conversations organized.

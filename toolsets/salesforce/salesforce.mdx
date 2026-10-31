@@ -1,5 +1,5 @@
 ---
-title: "Salesforce Toolset"
+title: "Salesforce actions"
 description: "Salesforce CRM integration for managing accounts, contacts, leads, opportunities, cases, and more"
 icon: "/logo/salesforce.png"
 ---
@@ -12,7 +12,7 @@ icon: "/logo/salesforce.png"
         alt="Salesforce Logo" 
         className="w-8 h-8 object-contain flex-shrink-0"
       />
-      <div className="text-xl font-semibold text-gray-900 dark:text-white">Salesforce Toolset</div>
+      <div className="text-xl font-semibold text-gray-900 dark:text-white">Salesforce actions</div>
     </div>
     <p className="text-base text-gray-700 dark:text-gray-300 mt-0 mb-5">CRM integration for accounts, contacts, leads, opportunities, cases, and more</p>
     <div className="flex flex-wrap items-center gap-2">
@@ -28,7 +28,7 @@ icon: "/logo/salesforce.png"
 
 ## Overview
 
-The Salesforce toolset enables AI agents to interact with your Salesforce CRM — searching and creating records, running SOQL/SOSL queries, managing the sales pipeline, posting to Chatter, and more. It uses OAuth so agents act on behalf of the authenticated user via a Salesforce External Client App.
+The Salesforce action enables AI agents to interact with your Salesforce CRM — searching and creating records, running SOQL/SOSL queries, managing the sales pipeline, posting to Chatter, and more. It uses OAuth so agents act on behalf of the authenticated user via a Salesforce External Client App.
 
 ### Key Capabilities
 
@@ -38,6 +38,7 @@ The Salesforce toolset enables AI agents to interact with your Salesforce CRM �
 - **Case management** - Create and search support cases
 - **Product catalog** - Search products, list price books, and add products to opportunities
 - **Task management** - Create and track activities across any related record
+- **Files** - Upload PipesHub files to Salesforce Files and link them to records
 - **Chatter** - Read Chatter feeds and post comments or updates on any record
 - **Generic record CRUD** - Get, create, and update any standard or custom Salesforce object
 - **Object metadata** - Describe any object to discover its fields and picklist values
@@ -46,87 +47,97 @@ The Salesforce toolset enables AI agents to interact with your Salesforce CRM �
 
 ## Available Tools
 
+Parameters marked `?` are optional.
+
 ### Query Tools
 
-| Tool | Description |
-|------|-------------|
-| `soql_query` | Execute a SOQL query against any Salesforce object |
-| `sosl_search` | Execute a full-text SOSL search across multiple objects |
+| Tool | Description | Parameters |
+|------|-------------|------------|
+| `soql_query` | Execute a SOQL query against any Salesforce object | `query` |
+| `sosl_search` | Execute a full-text SOSL search across multiple objects | `search` |
 
 ### Generic Record Tools
 
-| Tool | Description |
-|------|-------------|
-| `get_record` | Retrieve a Salesforce record by its ID |
-| `create_record` | Create a new record for any standard or custom object |
-| `update_record` | Update fields on an existing record by ID |
-| `describe_object` | Get field metadata, picklist values, and relationships for an object |
-| `list_recent_records` | List the most recently viewed records of a given object type |
+| Tool | Description | Parameters |
+|------|-------------|------------|
+| `get_record` | Retrieve a Salesforce record by its ID | `sobject`, `record_id`, `fields?` |
+| `create_record` | Create a new record for any standard or custom object | `sobject`, `data?` |
+| `update_record` | Update fields on an existing record by ID | `sobject`, `record_id`, `data?` |
+| `describe_object` | Get field metadata, picklist values, and relationships for an object | `sobject` |
+| `list_recent_records` | List the most recently viewed records of a given object type | `sobject`, `limit?` |
 
 ### Account Tools
 
-| Tool | Description |
-|------|-------------|
-| `search_accounts` | Search accounts by name and/or industry |
-| `create_account` | Create a new Account record |
+| Tool | Description | Parameters |
+|------|-------------|------------|
+| `search_accounts` | Search accounts by name and/or industry | `name?`, `industry?`, `limit?` |
+| `create_account` | Create a new Account record | `name`, `industry?`, `phone?`, `website?`, `description?`, `billing_city?`, `billing_state?`, `billing_country?` |
 
 ### Contact Tools
 
-| Tool | Description |
-|------|-------------|
-| `search_contacts` | Search contacts by name, email, or parent account |
-| `create_contact` | Create a new Contact record |
+| Tool | Description | Parameters |
+|------|-------------|------------|
+| `search_contacts` | Search contacts by name, email, or parent account | `name?`, `email?`, `account_id?`, `limit?` |
+| `create_contact` | Create a new Contact record | `last_name`, `first_name?`, `email?`, `phone?`, `title?`, `account_id?`, `department?` |
 
 ### Lead Tools
 
-| Tool | Description |
-|------|-------------|
-| `search_leads` | Search leads by name, company, or status |
-| `create_lead` | Create a new Lead record |
+| Tool | Description | Parameters |
+|------|-------------|------------|
+| `search_leads` | Search leads by name, company, or status | `name?`, `company?`, `status?`, `limit?` |
+| `create_lead` | Create a new Lead record | `last_name`, `company`, `first_name?`, `email?`, `phone?`, `title?`, `status?`, `industry?` |
 
 ### Opportunity Tools
 
-| Tool | Description |
-|------|-------------|
-| `search_opportunities` | Search opportunities by name, stage, or account |
-| `create_opportunity` | Create a new Opportunity record |
+| Tool | Description | Parameters |
+|------|-------------|------------|
+| `search_opportunities` | Search opportunities by name, stage, or account | `name?`, `stage?`, `account_id?`, `limit?` |
+| `create_opportunity` | Create a new Opportunity record | `name`, `stage_name`, `close_date`, `account_id?`, `amount?`, `description?`, `probability?`, `attachment_record_ids?` |
 
 ### Case Tools
 
-| Tool | Description |
-|------|-------------|
-| `search_cases` | Search cases by subject, status, priority, or account |
-| `create_case` | Create a new Case (support ticket) |
+| Tool | Description | Parameters |
+|------|-------------|------------|
+| `search_cases` | Search cases by subject, status, priority, or account | `subject?`, `status?`, `priority?`, `account_id?`, `limit?` |
+| `create_case` | Create a new Case (support ticket) | `subject`, `status?`, `priority?`, `origin?`, `description?`, `account_id?`, `contact_id?`, `attachment_record_ids?` |
 
 ### Product & Pricebook Tools
 
-| Tool | Description |
-|------|-------------|
-| `search_products` | Search the product catalog by name, code, or family |
-| `create_product` | Add a new product to the Salesforce product catalog |
-| `list_pricebooks` | List available price books (Pricebook2) |
-| `add_product_to_opportunity` | Add a product line item to an opportunity |
+| Tool | Description | Parameters |
+|------|-------------|------------|
+| `search_products` | Search the product catalog by name, code, or family | `name?`, `product_code?`, `family?`, `active_only?`, `limit?` |
+| `create_product` | Add a new product to the Salesforce product catalog | `name`, `product_code?`, `description?`, `family?`, `is_active?`, `quantity_unit_of_measure?` |
+| `list_pricebooks` | List available price books (Pricebook2) | `name?`, `active_only?`, `limit?` |
+| `create_pricebook_entry` | List a product in a price book with a unit price | `product_id`, `pricebook_id`, `unit_price`, `is_active?` |
+| `add_product_to_opportunity` | Add a product line item to an opportunity | `opportunity_id`, `pricebook_entry_id?`, `product_id?`, `pricebook_id?`, `quantity?`, `unit_price?`, `description?` |
+
+### File Tools
+
+| Tool | Description | Parameters |
+|------|-------------|------------|
+| `upload_file_to_salesforce` | Upload PipesHub records (chat attachments, artifacts, knowledge base files) as Salesforce Files, and optionally link them to a record | `attachment_record_ids`, `link_to_salesforce_id?` |
+| `attach_file_to_record` | Link an existing Salesforce file to a record | `content_document_id`, `record_id`, `share_type?`, `visibility?` |
 
 ### Task Tools
 
-| Tool | Description |
-|------|-------------|
-| `search_tasks` | Search tasks by subject, status, priority, owner, or related record |
-| `create_task` | Create a new Task activity |
+| Tool | Description | Parameters |
+|------|-------------|------------|
+| `search_tasks` | Search tasks by subject, status, priority, owner, or related record | `subject?`, `status?`, `priority?`, `owner_id?`, `what_id?`, `who_id?`, `limit?` |
+| `create_task` | Create a new Task activity | `subject`, `status?`, `priority?`, `activity_date?`, `description?`, `owner_id?`, `what_id?`, `who_id?` |
 
 ### Chatter Tools
 
-| Tool | Description |
-|------|-------------|
-| `get_record_chatter` | Get the Chatter feed (posts, comments, activity) for any record |
-| `post_chatter_comment` | Reply to an existing Chatter feed item |
-| `post_chatter_to_record` | Post a new top-level Chatter update on a record |
+| Tool | Description | Parameters |
+|------|-------------|------------|
+| `get_record_chatter` | Get the Chatter feed (posts, comments, activity) for any record | `record_id` |
+| `post_chatter_comment` | Reply to an existing Chatter feed item | `feed_element_id`, `text`, `is_rich_text?` |
+| `post_chatter_to_record` | Post a new top-level Chatter update on a record | `record_id`, `text`, `is_rich_text?` |
 
 ### User Tools
 
-| Tool | Description |
-|------|-------------|
-| `get_current_user` | Get the currently authenticated Salesforce user's profile and org details |
+| Tool | Description | Parameters |
+|------|-------------|------------|
+| `get_current_user` | Get the currently authenticated Salesforce user's profile and org details | None |
 
 ---
 
@@ -168,7 +179,7 @@ The Salesforce toolset enables AI agents to interact with your Salesforce CRM �
 
 Fill in the **External Client App Manager** form:
 
-1. **External Client App Name** — Enter a name, for example `PipesHub Salesforce Toolset`.
+1. **External Client App Name** — Enter a name, for example `PipesHub Salesforce actions`.
 2. **API Name** — Auto-filled from the app name; leave as-is.
 3. **Contact Email** — Enter your admin email address.
 
@@ -186,7 +197,7 @@ Fill in the **External Client App Manager** form:
 Scroll down to the **API (Enable OAuth Settings)** section:
 
 1. Check **Enable OAuth**.
-2. **Callback URL** — Paste the **Redirect URI** shown in the PipesHub **Action configuration** dialog (go to **Workspace → Actions → Salesforce → + Setup**). It will look like `https://your-pipeshub-domain/toolsets/oauth/callback/salesforce`.
+2. **Callback URL** — Paste the **Redirect URI** shown in the PipesHub **Action configuration** dialog (go to **Workspace → Actions → Salesforce → Set up**). It will look like `https://your-pipeshub-domain/toolsets/oauth/callback/salesforce`.
 3. Under **OAuth Scopes**, move the following from **Available** to **Selected**:
 
 | Scope | Description |
@@ -266,10 +277,10 @@ Your **Instance URL** is your org's My Domain URL. In Setup, search for **My Dom
   />
 </div>
 
-### Step 8: Configure the Salesforce toolset in PipesHub
+### Step 8: Configure the Salesforce action in PipesHub
 
 1. In PipesHub, go to **Workspace → Actions**.
-2. Find **Salesforce** and click **+ Setup**.
+2. Find **Salesforce** and click **Set up**.
 3. In the **Action configuration** dialog, fill in:
    - **Instance name** — A label for this connection (e.g., `Salesforce`).
    - **Salesforce Instance URL** — the URL from Step 7.
@@ -279,18 +290,13 @@ Your **Instance URL** is your org's My Domain URL. In Setup, search for **My Dom
 4. Confirm that the **Redirect URI** at the top of the dialog matches the Callback URL you entered in Salesforce Step 4.
 5. Click **Create**.
 
-<div style={{ textAlign: "center" }}>
-  <img
-    src="/images/toolsets/salesforce/salesforce_toolsetconfig.png"
-    alt="PipesHub Action configuration dialog for Salesforce"
-    style={{ display: 'block', margin: '0 auto' }}
-    width="90%"
-  />
-</div>
+<Frame>
+  <img src="/images/toolsets/salesforce/salesforce_toolsetconfig.png" alt="PipesHub Action configuration dialog for Salesforce" width="600" />
+</Frame>
 
-### Step 9: Authenticate the toolset
+### Step 9: Authenticate the action
 
-1. In the sidebar, open **Your Actions** under the **Personal** section.
+1. In the sidebar, open **Your actions** under the **Personal** section.
 2. Select your **Salesforce** instance — you will see all available actions listed.
 3. Click **Authenticate with OAuth** in the dialog that appears.
 4. A sign-in popup will open — log in to Salesforce and approve the requested permissions.
@@ -308,13 +314,13 @@ Your **Instance URL** is your org's My Domain URL. In Setup, search for **My Dom
 
 1. Go to the **Home** page and click **+** next to **Agents**.
 2. Give the agent a name.
-3. From the **Palette**, drag the **Salesforce** toolset block onto the canvas.
+3. From the **Palette**, drag the **Salesforce** action block onto the canvas.
 4. Connect it to the **Agent** node (along with your model, chat input, and chat output), then click **Create agent**.
 
 <div style={{ textAlign: "center" }}>
   <img
     src="/images/toolsets/salesforce/create_agent.png"
-    alt="Agent builder canvas with Salesforce toolset connected to the Agent node"
+    alt="Agent builder canvas with Salesforce action connected to the Agent node"
     style={{ display: 'block', margin: '0 auto' }}
     width="90%"
   />
@@ -330,9 +336,9 @@ Your **Instance URL** is your org's My Domain URL. In Setup, search for **My Dom
 
 <AccordionGroup>
 
-<Accordion title="What's the difference between Salesforce Connector and Salesforce Toolset?">
+<Accordion title="What's the difference between Salesforce Connector and Salesforce Action?">
 
-| Aspect | Salesforce Connector | Salesforce Toolset |
+| Aspect | Salesforce Connector | Salesforce Action |
 |--------|----------------------|--------------------|
 | **Purpose** | Sync and index Salesforce records for search | Enable agents to perform CRM actions |
 | **Data Flow** | One-way (import data into PipesHub) | Two-way (read and write via API) |

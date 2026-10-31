@@ -1,23 +1,23 @@
 ---
 title: Slack Bot Configuration
-description: Create a Slack app from manifest, configure request URL, and connect it in Pipeshub frontend.
+description: Create a Slack app from manifest, configure request URL, and connect it in PipesHub frontend.
 ---
 
 ## Overview
 
-This guide explains the full setup for Slack bot integration in Pipeshub:
+This guide explains the full setup for Slack bot integration in PipesHub:
 
 1. Create a Slack app using a manifest.
 2. Configure Slack Events API request URL.
 3. Install the app and collect credentials.
-4. Add the configuration in Pipeshub frontend.
+4. Add the configuration in PipesHub frontend.
 
 
 ## Prerequisites
 
 - A HTTPS Node backend base URL (placeholder: `{node_backend_url}`).
 - Admin access in the target Slack workspace.
-- Pipeshub admin access (Slack Bot settings page is admin-only).
+- PipesHub admin access (Slack Bot settings page is admin-only).
 
 ## Request Flow
 
@@ -123,33 +123,29 @@ flowchart LR
    - **Bot User OAuth Token** (starts with `xoxb-`)
    - **Signing Secret**
 
-You will use these values in Pipeshub Slack Bot settings.
+You will use these values in PipesHub Slack Bot settings.
 
-## Step 3: Configure Slack Bot In Pipeshub Frontend
+## Step 3: Configure Slack Bot In PipesHub Frontend
 
 ### Navigation
 
-- **Workspace Settings** -> **Bots**
+- **Workspace settings** -> **Bots**
 - Route path: `/workspace/bots`
 
 ### Add Bot Configuration
 
-Click **Add Bot** then select **Slack Bot** and fill:
+Click **New bot**, select **Slack bot**, and fill in the **New Slack bot** form:
 
-- **Slack Bot Name**: Friendly display name in Pipeshub.
-- **Bot Token**: Paste Slack **Bot User OAuth Token**.
-- **Signing Secret**: Paste Slack app signing secret.
-- **Agent (Optional)**: Select a specific agent, or leave empty to use default/global chatbot handling.
+- **Name**: Friendly display name in PipesHub.
+- **Bot token**: Paste Slack **Bot User OAuth Token**.
+- **Signing secret**: Paste Slack app signing secret.
+- **Agent**: Select a specific agent, or keep **Default assistant** to use the default chat assistant.
 
 Click **Create** (or **Save** in edit mode).
 
-<div style={{ textAlign: "center" }}>
-     <img
-       src="/images/integrations/slack-bot.png"
-       alt="Slack bot configuration"
-       width="90%"
-     />
-   </div>
+<Frame>
+  <img src="/images/integrations/slack-bot.png" alt="New Slack bot form with name, bot token, signing secret and agent" width="612" />
+</Frame>
 ### Validation And Management Behavior
 
 - Name, Bot Token, and Signing Secret are required.
@@ -211,7 +207,7 @@ After setup, verify all layers:
 1. Slack app created successfully from manifest.
 2. Event Subscriptions Request URL verified in Slack.
 3. App installed to workspace after any scope/event changes.
-4. Bot token + signing secret saved in Pipeshub Slack Bot settings.
+4. Bot token + signing secret saved in PipesHub Slack Bot settings.
 5. Send test interactions:
    - Mention bot in a channel (`@YourBot hello`)
    - Send a direct message to the bot
@@ -227,17 +223,17 @@ After setup, verify all layers:
 
 ### 401 errors from Slack event delivery
 
-- Confirm Signing Secret in Pipeshub matches Slack app Signing Secret.
+- Confirm Signing Secret in PipesHub matches Slack app Signing Secret.
 - Confirm system clock skew is not larger than 5 minutes.
 
-### Bot does not respond in Pipeshub flow
+### Bot does not respond in PipesHub flow
 
 - Confirm app was reinstalled after manifest scope changes.
 - Confirm Bot Token entered is a valid `xoxb-` token.
 - Confirm the expected bot events are enabled in Event Subscriptions.
-- Confirm bot configuration exists in Pipeshub and is not deleted.
+- Confirm bot configuration exists in PipesHub and is not deleted.
 
-### Pipeshub save form errors
+### PipesHub save form errors
 
 - Ensure all required fields are non-empty:
   - Slack Bot Name

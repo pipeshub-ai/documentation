@@ -1,5 +1,5 @@
 ---
-title: "Gmail Toolset"
+title: "Gmail actions"
 description: "Email management integration for AI agents"
 icon: "/logo/gmail.png"
 ---
@@ -12,7 +12,7 @@ icon: "/logo/gmail.png"
         alt="Gmail Logo" 
         className="w-8 h-8 object-contain flex-shrink-0"
       />
-      <div className="text-xl font-semibold text-gray-900 dark:text-white">Gmail Toolset</div>
+      <div className="text-xl font-semibold text-gray-900 dark:text-white">Gmail actions</div>
     </div>
     <p className="text-base text-gray-700 dark:text-gray-300 mt-0 mb-5">Email management and communication</p>
     <div className="flex flex-wrap items-center gap-2">
@@ -28,7 +28,7 @@ icon: "/logo/gmail.png"
 
 ## Overview
 
-The Gmail toolset enables AI agents to send, read, and manage emails in Gmail.
+The Gmail action enables AI agents to send, read, and manage emails in Gmail.
 
 ### Key Capabilities
 
@@ -42,15 +42,17 @@ The Gmail toolset enables AI agents to send, read, and manage emails in Gmail.
 
 ## Available Tools
 
-| Tool | What it does |
-|------|-------------|
-| `send_email` | Send an email with subject, body, and recipients |
-| `reply` | Reply to an email message |
-| `draft_email` | Create a draft email |
-| `search_emails` | Search emails using Gmail search syntax |
-| `get_email_details` | Get details of a specific email |
-| `get_email_attachments` | Get attachments for a specific email |
-| `get_user_profile` | Get the authenticated user's Gmail profile |
+Parameters marked `?` are optional.
+
+| Tool | What it does | Parameters |
+|------|-------------|------------|
+| `send_email` | Send an email with subject, body, and recipients | `mail_to`, `mail_subject`, `mail_cc?`, `mail_bcc?`, `mail_body?`, `thread_id?`, `message_id?`, `attachment_record_ids?` |
+| `reply` | Reply to an email message | `message_id`, `mail_to`, `mail_subject`, `mail_cc?`, `mail_bcc?`, `mail_body?`, `thread_id?`, `attachment_record_ids?` |
+| `draft_email` | Create a draft email | `mail_to`, `mail_subject`, `mail_cc?`, `mail_bcc?`, `mail_body?`, `attachment_record_ids?` |
+| `search_emails` | Search emails using Gmail search syntax | `query`, `max_results?`, `page_token?` |
+| `get_email_details` | Get details of a specific email | `message_id` |
+| `get_email_attachments` | Get attachments for a specific email | `message_id` |
+| `get_user_profile` | Get the authenticated user's Gmail profile | `user_id?` |
 
 ---
 
@@ -94,7 +96,7 @@ The Gmail toolset enables AI agents to send, read, and manage emails in Gmail.
 1. Navigate to **APIs & Services > OAuth consent screen**
 2. Choose **External** user type (or **Internal** for Workspace accounts)
 3. Fill in app information:
-   - **App name**: e.g., "PipesHub Gmail Toolset"
+   - **App name**: e.g., "PipesHub Gmail Action"
    - **User support email**: Your email
    - **Developer contact email**: Your email
 4. Click **"Save and Continue"**
@@ -113,17 +115,13 @@ The Gmail toolset enables AI agents to send, read, and manage emails in Gmail.
 
 ### Step 5: Get Redirect URI from PipesHub
 
-1. In PipesHub, go to **Settings > Toolsets**
+1. In PipesHub, go to **Workspace > Actions**
 2. Find **Gmail** and click **"Configure"**
 3. Copy the **Redirect URI** shown in the dialog
 
-<div className="text-center">
-  <img
-    src="/images/toolsets/gmail/pipeshub-config.png"
-    alt="Copy Redirect URI from PipesHub"
-    className="block mx-auto w-11/12"
-  />
-</div>
+<Frame>
+  <img src="/images/toolsets/gmail/pipeshub-config.png" alt="Copy Redirect URI from PipesHub" width="612" />
+</Frame>
 
 ### Step 6: Create OAuth Client ID
 
@@ -147,13 +145,9 @@ The Gmail toolset enables AI agents to send, read, and manage emails in Gmail.
 2. Enter your **Client ID** and **Client Secret**
 3. Click **"Authenticate"**
 
-<div className="text-center">
-  <img
-    src="/images/toolsets/gmail/enter-credentials.png"
-    alt="Enter Credentials in PipesHub"
-    className="block mx-auto w-11/12"
-  />
-</div>
+<Frame>
+  <img src="/images/toolsets/gmail/enter-credentials.png" alt="Enter Credentials in PipesHub" width="612" />
+</Frame>
 
 ### Step 8: Authorize Access
 
@@ -170,7 +164,7 @@ The Gmail toolset enables AI agents to send, read, and manage emails in Gmail.
 </div>
 
 4. You'll be redirected back to PipesHub
-5. The toolset will show **"Authenticated"** status
+5. The action will show **"Authenticated"** status
 
 </Accordion>
 
@@ -182,15 +176,15 @@ The Gmail toolset enables AI agents to send, read, and manage emails in Gmail.
 
 <AccordionGroup>
 
-<Accordion title="What's the difference between Gmail Connector and Gmail Toolset?">
+<Accordion title="What's the difference between Gmail Connector and Gmail Action?">
 
-| Aspect | Gmail Connector | Gmail Toolset |
+| Aspect | Gmail Connector | Gmail Action |
 |--------|----------------|---------------|
 | **Purpose** | Sync and index emails for search | Enable agents to perform email actions |
 | **Data Flow** | One-way (import data into PipesHub) | Two-way (read and write via API) |
 | **When to Use** | Query/search email history and conversations | Send emails, manage messages, create drafts |
 
-**Example:** Use **Gmail Connector** to search past email conversations. Use **Gmail Toolset** to let agents send replies or forward messages.
+**Example:** Use **Gmail Connector** to search past email conversations. Use **Gmail action** to let agents send replies or forward messages.
 
 </Accordion>
 

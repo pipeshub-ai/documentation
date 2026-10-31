@@ -1,10 +1,10 @@
 ---
-title: "Google Docs Toolset"
+title: "Google Docs actions"
 description: "Let agents read, create and edit Google Docs"
 icon: "/logo/gdocs.png"
 ---
 
-The Google Docs toolset lets an agent read a Google Doc, create a new one, add text, replace text, and make other edits, acting as the Google account that connected the toolset.
+The Google Docs action lets an agent read a Google Doc, create a new one, add text, replace text, and make other edits, acting as the Google account that connected the action.
 
 ## What agents can do
 
@@ -22,7 +22,7 @@ Tools that change a document (`create_document`, `insert_text`, `replace_text`, 
 
 If `create_document` creates the document but can't add its starting text, it says so and gives the new document's id: the agent then adds the text with `insert_text` instead of creating a second document.
 
-A tool finds a document by its id: the part of the link after `/document/d/`. To work with a document you only know by name, also add the [Drive toolset](/toolsets/google-workspace/drive) so the agent can search for it.
+A tool finds a document by its id: the part of the link after `/document/d/`. To work with a document you only know by name, also add the [Drive action](/toolsets/google-workspace/drive) so the agent can search for it.
 
 ## Permissions it asks for
 
@@ -44,7 +44,7 @@ An admin sets the action up once; then each person who wants agents to use it si
     Add `https://www.googleapis.com/auth/documents` to your OAuth app's scopes. In the newer console layout that is **Google Auth Platform > Data Access > Add or Remove Scopes**; in the older one, **APIs & Services > OAuth consent screen > Scopes**.
   </Step>
   <Step title="Start the setup in PipesHub">
-    Go to **Workspace > Actions**, find **Docs** and click **Setup**. The **Action configuration** panel shows the **Redirect URI**; copy it.
+    Go to **Workspace > Actions**, find **Docs** and click **Set up**. The **Action configuration** panel shows the **Redirect URI**; copy it.
   </Step>
   <Step title="Create an OAuth client">
     In **APIs & Services > Credentials** (or **Google Auth Platform > Clients**), create an OAuth client of type **Web application**, paste the redirect URI under **Authorized redirect URIs**, and create it. Copy the **Client ID** and **Client secret**.
@@ -72,7 +72,7 @@ You can reuse the OAuth client of your other Google actions: add this action's r
 
 <AccordionGroup>
 <Accordion title="How is this different from the Google Docs connector?">
-The [connector](/connectors/google-workspace/docs/docs) indexes documents so they appear in search and chat answers. The toolset lets an agent act on documents: create them and change them. Use both if agents should find documents and also edit them.
+The [connector](/connectors/google-workspace/docs/docs) indexes documents so they appear in search and chat answers. The action lets an agent act on documents: create them and change them. Use both if agents should find documents and also edit them.
 </Accordion>
 <Accordion title="Can an agent read a document it found through search?">
 Yes. Search results link to the document, and `get_document` reads it by the id in that link, as long as the connected account can open it.

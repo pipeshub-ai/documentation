@@ -1,10 +1,10 @@
 ---
-title: "Google Sheets Toolset"
+title: "Google Sheets actions"
 description: "Let agents read and update Google Sheets"
 icon: "/logo/gsheets.png"
 ---
 
-The Google Sheets toolset lets an agent create a spreadsheet, read cells, write cells, add rows and clear ranges, acting as the Google account that connected the toolset.
+The Google Sheets action lets an agent create a spreadsheet, read cells, write cells, add rows and clear ranges, acting as the Google account that connected the action.
 
 ## What agents can do
 
@@ -24,7 +24,7 @@ Tools that change a spreadsheet (`create_spreadsheet`, `update_values`, `append_
 
 Reads return up to 20,000 cells; a larger range is cut and marked `truncated`, so ask for a smaller range.
 
-A tool finds a spreadsheet by its id: the part of the link after `/spreadsheets/d/`. To work with a spreadsheet you only know by name, also add the [Drive toolset](/toolsets/google-workspace/drive) so the agent can search for it.
+A tool finds a spreadsheet by its id: the part of the link after `/spreadsheets/d/`. To work with a spreadsheet you only know by name, also add the [Drive action](/toolsets/google-workspace/drive) so the agent can search for it.
 
 ## Permissions it asks for
 
@@ -46,7 +46,7 @@ An admin sets the action up once; then each person who wants agents to use it si
     Add `https://www.googleapis.com/auth/spreadsheets` to your OAuth app's scopes. In the newer console layout that is **Google Auth Platform > Data Access > Add or Remove Scopes**; in the older one, **APIs & Services > OAuth consent screen > Scopes**.
   </Step>
   <Step title="Start the setup in PipesHub">
-    Go to **Workspace > Actions**, find **Sheets** and click **Setup**. The **Action configuration** panel shows the **Redirect URI**; copy it.
+    Go to **Workspace > Actions**, find **Sheets** and click **Set up**. The **Action configuration** panel shows the **Redirect URI**; copy it.
   </Step>
   <Step title="Create an OAuth client">
     In **APIs & Services > Credentials** (or **Google Auth Platform > Clients**), create an OAuth client of type **Web application**, paste the redirect URI under **Authorized redirect URIs**, and create it. Copy the **Client ID** and **Client secret**.
@@ -74,7 +74,7 @@ You can reuse the OAuth client of your other Google actions: add this action's r
 
 <AccordionGroup>
 <Accordion title="How is this different from the Google Sheets connector?">
-The [connector](/connectors/google-workspace/sheets/sheets) indexes spreadsheets so they appear in search and chat answers. The toolset lets an agent act on spreadsheets: create them, write cells and add rows. Use both if agents should find spreadsheets and also update them.
+The [connector](/connectors/google-workspace/sheets/sheets) indexes spreadsheets so they appear in search and chat answers. The action lets an agent act on spreadsheets: create them, write cells and add rows. Use both if agents should find spreadsheets and also update them.
 </Accordion>
 <Accordion title="Can I undo a clear?">
 Not from PipesHub. Use **File > Version history** in Google Sheets to restore an earlier version.

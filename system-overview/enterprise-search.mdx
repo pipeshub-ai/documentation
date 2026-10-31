@@ -1,10 +1,13 @@
-# Enterprise Search API
+---
+title: "Enterprise Search API"
+description: "Endpoints for conversations, agent conversations, agents and semantic search"
+---
 
 The Enterprise Search Service provides intelligent search capabilities across your organization's data, enabling users to find information through natural language queries. The service consists of four main components:
 
 1. **Conversation Management** - Chat-style interactions with your data
 2. **Agent Conversations** - Specialized conversations with AI agents
-3. **Agent Management** - Manages AI agents and templates
+3. **Agent Management** - Manages AI agents
 4. **Semantic Search** - Direct search queries across your content
 
 ## Base URL
@@ -69,11 +72,11 @@ Start a new conversation thread.
 | recordIds | string[] | No | MongoDB ObjectIds (24-character hex strings) |
 | departments | string[] | No | Department MongoDB ObjectIds |
 | filters | object | No | Additional filters to narrow the search |
-| filters.apps | string[] | No | App types: "drive", "gmail", "onedrive", "sharepointOnline", "local" |
+| filters.apps | string[] | No | Connector instance UUIDs (not app names such as "drive"). Each must be a valid UUID, otherwise the request returns 400 |
 | filters.kb | string[] | No | Knowledge base UUIDs (not ObjectIds) |
 | modelKey | string | No | Model key for multi-model support. When neither `modelKey` nor `modelName` is sent, the model marked default answers (or, if none is marked, the first configured model), and it is recorded in the conversation's `modelInfo` and in the answer's `modelInfo` |
 | modelName | string | No | Model name for multi-model support |
-| chatMode | string | No | Chat mode (default: 'standard') |
+| chatMode | string | No | One of `quick` (default), `auto`, `deep`, `verification`, `agent`, `internal_search`, `web_search` |
 
 ```json
 {
@@ -81,12 +84,12 @@ Start a new conversation thread.
   "recordIds": ["60a2b5e3a1b3c4d5e6f7g8h9"], 
   "departments": ["507f1f77bcf86cd799439011"],
   "filters": {
-    "apps": ["drive", "gmail"],
+    "apps": ["3f2a9c1e-7b64-4d0a-9e55-1c8d2b6f4a10"],
     "kb": ["550e8400-e29b-41d4-a716-446655440000"]
   },
   "modelKey": "gpt-4",
   "modelName": "GPT-4",
-  "chatMode": "standard"
+  "chatMode": "quick"
 }
 ```
 </Tab>
@@ -203,7 +206,7 @@ Create a conversation with real-time streaming responses via Server-Sent Events.
 <Tab title="Request">
 **Endpoint:** `POST /api/v1/conversations/stream`
 
-**Request Body:** Same as Create Conversation
+**Request Body:** Same as Create Conversation, except `chatMode` is required and must be one of `agent`, `internal_search` or `web_search`.
 
 ```typescript
 const streamChat = async () => {
@@ -215,7 +218,8 @@ const streamChat = async () => {
     },
     body: JSON.stringify({
       query: "What is our vacation policy?",
-      filters: { apps: ["drive"] }
+      chatMode: "internal_search",
+      filters: { apps: ["3f2a9c1e-7b64-4d0a-9e55-1c8d2b6f4a10"] }
     })
   });
 
@@ -274,11 +278,11 @@ Add a new message to an existing conversation.
 |-----------|------|----------|-------------|
 | query | string | Yes | The user's follow-up question (1-100,000 characters) |
 | filters | object | No | Additional filters |
-| filters.apps | string[] | No | App types: "drive", "gmail", "onedrive", "sharepointOnline", "local" |
+| filters.apps | string[] | No | Connector instance UUIDs (not app names such as "drive"). Each must be a valid UUID, otherwise the request returns 400 |
 | filters.kb | string[] | No | Knowledge base UUIDs |
 | modelKey | string | No | Model key for multi-model support. When neither `modelKey` nor `modelName` is sent, the model marked default answers (or, if none is marked, the first configured model), and it is recorded in the new answer message's `modelInfo`; the conversation's `modelInfo` is updated to match |
 | modelName | string | No | Model name for multi-model support |
-| chatMode | string | No | Chat mode |
+| chatMode | string | No | Same values as create (default `quick`) |
 
 **Note:** `previousConversations` is automatically calculated from existing messages - do NOT include in request.
 
@@ -286,8 +290,8 @@ Add a new message to an existing conversation.
 {
   "query": "How much notice should I give before taking vacation?",
   "filters": { 
-    "apps": ["drive"],
-    "kb": ["kb-uuid-123"] 
+    "apps": ["3f2a9c1e-7b64-4d0a-9e55-1c8d2b6f4a10"],
+    "kb": ["550e8400-e29b-41d4-a716-446655440000"]
   },
   "modelKey": "gpt-4"
 }
@@ -623,14 +627,13 @@ Share a conversation with other users in your organization.
 
 ```json
 {
-  "userIds": ["507f1f77bcf86cd799439011", "507f1f77bcf86cd799439012"],
-  "accessLevel": "read"
+  "userIds": ["507f1f77bcf86cd799439011", "507f1f77bcf86cd799439012"]
 }
 ```
 
 **Request Validation:**
 - `userIds`: Array of MongoDB ObjectIds (24-character hex strings)
-- `accessLevel`: "read" or "write" (optional, defaults to "read")
+- Every share is read-only. An `accessLevel` field is ignored, so write sharing is not available for chats.
 - User existence is validated against IAM service
 </Tab>
 
@@ -641,7 +644,6 @@ Share a conversation with other users in your organization.
 {
   "id": "60d21b4667d0d8992e610c85",
   "isShared": true,
-  "shareLink": "https://app.example.com/conversations/60d21b4667d0d8992e610c85",
   "sharedWith": [
     {
       "userId": "507f1f77bcf86cd799439011",
@@ -684,7 +686,6 @@ Remove sharing access for specific users.
 {
   "id": "60d21b4667d0d8992e610c85",
   "isShared": true,
-  "shareLink": "https://app.example.com/conversations/60d21b4667d0d8992e610c85",
   "sharedWith": [
     {
       "userId": "507f1f77bcf86cd799439012",
@@ -700,7 +701,7 @@ Remove sharing access for specific users.
 }
 ```
 
-**Note:** If no users remain in `sharedWith`, `isShared` becomes `false` and `shareLink` is removed.
+**Note:** If no users remain in `sharedWith`, `isShared` becomes `false`.
 </Tab>
 </Tabs>
 </Accordion>
@@ -1013,12 +1014,12 @@ The Agent Conversation API enables interactions with specific AI agents. Agent c
 
 <AccordionGroup>
 
-<Accordion title="POST /agent/:agentKey/conversations - Create Agent Conversation">
+<Accordion title="POST /agents/:agentKey/conversations - Create Agent Conversation">
 Start a conversation with a specific agent.
 
 <Tabs>
 <Tab title="Request">
-**Endpoint:** `POST /api/v1/agent/:agentKey/conversations`
+**Endpoint:** `POST /api/v1/agents/:agentKey/conversations`
 
 **Path Parameters:**
 - `agentKey`: Unique string identifier for the agent (from the graph database)
@@ -1027,21 +1028,19 @@ Start a conversation with a specific agent.
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
 | query | string | Yes | The user's query (1-100,000 characters) |
-| quickMode | boolean | No | Enable quick response mode |
 | tools | string[] | No | Available tools for the agent |
 | recordIds | string[] | No | MongoDB ObjectIds to search within |
 | filters | object | No | Additional filters |
 | modelKey | string | No | Model key override |
 | modelName | string | No | Model name override |
-| chatMode | string | No | Chat mode (default: 'standard') |
+| chatMode | string | No | Only `quick` is accepted (default `quick`). The stream routes require it |
 
 ```json
 {
   "query": "What can you help me with?",
-  "quickMode": false,
-  "tools": ["search", "calculator", "ticket_lookup"],
+  "chatMode": "quick",
   "filters": {
-    "apps": ["drive", "gmail"]
+    "apps": ["3f2a9c1e-7b64-4d0a-9e55-1c8d2b6f4a10"]
   }
 }
 ```
@@ -1065,18 +1064,18 @@ Same structure as regular conversation but includes:
 </Tabs>
 </Accordion>
 
-<Accordion title="POST /agent/:agentKey/conversations/stream - Stream Agent Conversation">
+<Accordion title="POST /agents/:agentKey/conversations/stream - Stream Agent Conversation">
 Create an agent conversation with streaming responses.
 
 <Tabs>
 <Tab title="Request">
-**Endpoint:** `POST /api/v1/agent/:agentKey/conversations/stream`
+**Endpoint:** `POST /api/v1/agents/:agentKey/conversations/stream`
 
 **Request Body:** Same as Create Agent Conversation
 
 ```typescript
 const streamAgentConversation = async (agentKey) => {
-  const response = await fetch(`/api/v1/agent/${agentKey}/conversations/stream`, {
+  const response = await fetch(`/api/v1/agents/${agentKey}/conversations/stream`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -1084,8 +1083,7 @@ const streamAgentConversation = async (agentKey) => {
     },
     body: JSON.stringify({
       query: "Help me troubleshoot a customer issue",
-      quickMode: true,
-      tools: ["search", "ticket_lookup", "knowledge_base"]
+      chatMode: "quick"
     })
   });
 
@@ -1104,12 +1102,12 @@ const streamAgentConversation = async (agentKey) => {
 </Tabs>
 </Accordion>
 
-<Accordion title="POST /agent/:agentKey/conversations/:conversationId/messages - Add Agent Message">
+<Accordion title="POST /agents/:agentKey/conversations/:conversationId/messages - Add Agent Message">
 Add a message to an existing agent conversation.
 
 <Tabs>
 <Tab title="Request">
-**Endpoint:** `POST /api/v1/agent/:agentKey/conversations/:conversationId/messages`
+**Endpoint:** `POST /api/v1/agents/:agentKey/conversations/:conversationId/messages`
 
 **Request Body:** Same structure as regular add message, **without** `previousConversations` (calculated automatically)
 
@@ -1117,7 +1115,7 @@ Add a message to an existing agent conversation.
 {
   "query": "Can you look up ticket #12345?",
   "filters": {
-    "apps": ["jira"]
+    "apps": ["3f2a9c1e-7b64-4d0a-9e55-1c8d2b6f4a10"]
   }
 }
 ```
@@ -1129,12 +1127,12 @@ Same structure as regular add message response.
 </Tabs>
 </Accordion>
 
-<Accordion title="POST /agent/:agentKey/conversations/:conversationId/messages/stream - Stream Agent Message">
+<Accordion title="POST /agents/:agentKey/conversations/:conversationId/messages/stream - Stream Agent Message">
 Add a streaming message to an agent conversation.
 
 <Tabs>
 <Tab title="Request">
-**Endpoint:** `POST /api/v1/agent/:agentKey/conversations/:conversationId/messages/stream`
+**Endpoint:** `POST /api/v1/agents/:agentKey/conversations/:conversationId/messages/stream`
 </Tab>
 
 <Tab title="Response">
@@ -1143,12 +1141,12 @@ Add a streaming message to an agent conversation.
 </Tabs>
 </Accordion>
 
-<Accordion title="GET /agent/:agentKey/conversations - Get All Agent Conversations">
+<Accordion title="GET /agents/:agentKey/conversations - Get All Agent Conversations">
 Retrieve all conversations for a specific agent.
 
 <Tabs>
 <Tab title="Request">
-**Endpoint:** `GET /api/v1/agent/:agentKey/conversations`
+**Endpoint:** `GET /api/v1/agents/:agentKey/conversations`
 
 **Query Parameters:** Same as regular conversations
 </Tab>
@@ -1178,12 +1176,12 @@ Retrieve all conversations for a specific agent.
 </Tabs>
 </Accordion>
 
-<Accordion title="GET /agent/:agentKey/conversations/:conversationId - Get Agent Conversation">
+<Accordion title="GET /agents/:agentKey/conversations/:conversationId - Get Agent Conversation">
 Retrieve a specific agent conversation.
 
 <Tabs>
 <Tab title="Request">
-**Endpoint:** `GET /api/v1/agent/:agentKey/conversations/:conversationId`
+**Endpoint:** `GET /api/v1/agents/:agentKey/conversations/:conversationId`
 </Tab>
 
 <Tab title="Response">
@@ -1192,12 +1190,12 @@ Retrieve a specific agent conversation.
 </Tabs>
 </Accordion>
 
-<Accordion title="DELETE /agent/:agentKey/conversations/:conversationId - Delete Agent Conversation">
+<Accordion title="DELETE /agents/:agentKey/conversations/:conversationId - Delete Agent Conversation">
 Delete an agent conversation.
 
 <Tabs>
 <Tab title="Request">
-**Endpoint:** `DELETE /api/v1/agent/:agentKey/conversations/:conversationId`
+**Endpoint:** `DELETE /api/v1/agents/:agentKey/conversations/:conversationId`
 </Tab>
 
 <Tab title="Response">
@@ -1223,120 +1221,22 @@ Delete an agent conversation.
 </Accordion>
 
 <Accordion title="Agent Management">
-The Agent Management API provides endpoints for creating, managing, and configuring AI agents and their templates.
+The Agent Management API provides endpoints for creating, managing, and configuring AI agents.
 
 <AccordionGroup>
 
-<Accordion title="POST /agent/template - Create Agent Template">
-Create a new agent template.
+<Accordion title="POST /agents/create - Create Agent">
+Create a new agent.
 
 <Tabs>
 <Tab title="Request">
-**Endpoint:** `POST /api/v1/agent/template`
+**Endpoint:** `POST /api/v1/agents/create`
 
 ```json
 {
-  "name": "Customer Support Agent",
-  "description": "Handles customer support queries",
-  "instructions": "You are a helpful customer support agent...",
-  "tools": ["search", "ticket_lookup"],
-  "model": "gpt-4",
-  "capabilities": ["reasoning", "search"],
-  "constraints": {
-    "maxTokens": 4000,
-    "temperature": 0.7
-  }
-}
-```
-</Tab>
-
-<Tab title="Response">
-**Status:** `201 Created`
-
-**Response:** Created template object
-</Tab>
-</Tabs>
-</Accordion>
-
-<Accordion title="GET /agent/template/:templateId - Get Agent Template">
-Retrieve a specific agent template.
-
-<Tabs>
-<Tab title="Request">
-**Endpoint:** `GET /api/v1/agent/template/:templateId`
-</Tab>
-
-<Tab title="Response">
-**Status:** `200 OK`
-
-**Response:** Template object with all configuration details
-</Tab>
-</Tabs>
-</Accordion>
-
-<Accordion title="PUT /agent/template/:templateId - Update Agent Template">
-Update an existing agent template.
-
-<Tabs>
-<Tab title="Request">
-**Endpoint:** `PUT /api/v1/agent/template/:templateId`
-
-**Request Body:** Same structure as create template
-</Tab>
-
-<Tab title="Response">
-**Status:** `200 OK`
-
-**Response:** Updated template object
-</Tab>
-</Tabs>
-</Accordion>
-
-<Accordion title="DELETE /agent/template/:templateId - Delete Agent Template">
-Delete an agent template.
-
-<Tabs>
-<Tab title="Request">
-**Endpoint:** `DELETE /api/v1/agent/template/:templateId`
-</Tab>
-
-<Tab title="Response">
-**Status:** `200 OK`
-
-**Response:** Deletion confirmation
-</Tab>
-</Tabs>
-</Accordion>
-
-<Accordion title="GET /agent/template - List Agent Templates">
-Get all available agent templates.
-
-<Tabs>
-<Tab title="Request">
-**Endpoint:** `GET /api/v1/agent/template`
-</Tab>
-
-<Tab title="Response">
-**Status:** `200 OK`
-
-**Response:** Array of template objects
-</Tab>
-</Tabs>
-</Accordion>
-
-<Accordion title="POST /agent/create - Create Agent">
-Create a new agent instance from a template.
-
-<Tabs>
-<Tab title="Request">
-**Endpoint:** `POST /api/v1/agent/create`
-
-```json
-{
-  "templateId": "template123",
   "name": "My Support Agent",
-  "customInstructions": "Focus on billing issues",
-  "tools": ["search", "billing_lookup"]
+  "description": "Answers billing questions",
+  "instructions": "Focus on billing issues"
 }
 ```
 </Tab>
@@ -1349,12 +1249,12 @@ Create a new agent instance from a template.
 </Tabs>
 </Accordion>
 
-<Accordion title="GET /agent/:agentKey - Get Agent">
+<Accordion title="GET /agents/:agentKey - Get Agent">
 Retrieve agent details.
 
 <Tabs>
 <Tab title="Request">
-**Endpoint:** `GET /api/v1/agent/:agentKey`
+**Endpoint:** `GET /api/v1/agents/:agentKey`
 </Tab>
 
 <Tab title="Response">
@@ -1365,12 +1265,12 @@ Retrieve agent details.
 </Tabs>
 </Accordion>
 
-<Accordion title="PUT /agent/:agentKey - Update Agent">
+<Accordion title="PUT /agents/:agentKey - Update Agent">
 Update agent configuration.
 
 <Tabs>
 <Tab title="Request">
-**Endpoint:** `PUT /api/v1/agent/:agentKey`
+**Endpoint:** `PUT /api/v1/agents/:agentKey`
 
 **Request Body:** Agent configuration updates
 </Tab>
@@ -1383,12 +1283,12 @@ Update agent configuration.
 </Tabs>
 </Accordion>
 
-<Accordion title="DELETE /agent/:agentKey - Delete Agent">
+<Accordion title="DELETE /agents/:agentKey - Delete Agent">
 Delete an agent.
 
 <Tabs>
 <Tab title="Request">
-**Endpoint:** `DELETE /api/v1/agent/:agentKey`
+**Endpoint:** `DELETE /api/v1/agents/:agentKey`
 </Tab>
 
 <Tab title="Response">
@@ -1399,128 +1299,18 @@ Delete an agent.
 </Tabs>
 </Accordion>
 
-<Accordion title="GET /agent/ - List Agents">
+<Accordion title="GET /agents/ - List Agents">
 Get all available agents for the organization.
 
 <Tabs>
 <Tab title="Request">
-**Endpoint:** `GET /api/v1/agent/`
+**Endpoint:** `GET /api/v1/agents/`
 </Tab>
 
 <Tab title="Response">
 **Status:** `200 OK`
 
 **Response:** Array of agent objects with summary information
-</Tab>
-</Tabs>
-</Accordion>
-
-<Accordion title="GET /agent/tools/list - Get Available Tools">
-Retrieve all available tools for agents.
-
-<Tabs>
-<Tab title="Request">
-**Endpoint:** `GET /api/v1/agent/tools/list`
-</Tab>
-
-<Tab title="Response">
-**Status:** `200 OK`
-
-```json
-{
-  "tools": [
-    {
-      "name": "search",
-      "description": "Search organizational knowledge",
-      "parameters": {...}
-    },
-    {
-      "name": "calculator",
-      "description": "Perform calculations",
-      "parameters": {...}
-    }
-  ]
-}
-```
-</Tab>
-</Tabs>
-</Accordion>
-
-<Accordion title="GET /agent/:agentKey/permissions - Get Agent Permissions">
-Get permissions for a specific agent.
-
-<Tabs>
-<Tab title="Request">
-**Endpoint:** `GET /api/v1/agent/:agentKey/permissions`
-</Tab>
-
-<Tab title="Response">
-**Status:** `200 OK`
-
-**Response:** Agent permission configuration
-</Tab>
-</Tabs>
-</Accordion>
-
-<Accordion title="POST /agent/:agentKey/share - Share Agent">
-Share an agent with other users.
-
-<Tabs>
-<Tab title="Request">
-**Endpoint:** `POST /api/v1/agent/:agentKey/share`
-
-```json
-{
-  "userIds": ["user789"],
-  "accessLevel": "read"
-}
-```
-</Tab>
-
-<Tab title="Response">
-**Status:** `200 OK`
-
-**Response:** Updated agent sharing configuration
-</Tab>
-</Tabs>
-</Accordion>
-
-<Accordion title="POST /agent/:agentKey/unshare - Unshare Agent">
-Remove agent sharing.
-
-<Tabs>
-<Tab title="Request">
-**Endpoint:** `POST /api/v1/agent/:agentKey/unshare`
-
-```json
-{
-  "userIds": ["user789"]
-}
-```
-</Tab>
-
-<Tab title="Response">
-**Status:** `200 OK`
-
-**Response:** Updated agent sharing configuration
-</Tab>
-</Tabs>
-</Accordion>
-
-<Accordion title="PUT /agent/:agentKey/permissions - Update Agent Permissions">
-Update agent permissions.
-
-<Tabs>
-<Tab title="Request">
-**Endpoint:** `PUT /api/v1/agent/:agentKey/permissions`
-
-**Request Body:** Updated permission configuration
-</Tab>
-
-<Tab title="Response">
-**Status:** `200 OK`
-
-**Response:** Updated permissions
 </Tab>
 </Tabs>
 </Accordion>
@@ -1545,19 +1335,16 @@ Perform a semantic search across indexed content.
   "query": "vacation policy approval process",
   "limit": 10,
   "filters": {
-    "apps": ["drive", "gmail"],
+    "apps": ["3f2a9c1e-7b64-4d0a-9e55-1c8d2b6f4a10"],
     "kb": ["550e8400-e29b-41d4-a716-446655440000"]
-  },
-  "modelKey": "gpt-4",
-  "modelName": "GPT-4",
-  "chatMode": "search"
+  }
 }
 ```
 
 **Validation:**
 - `query`: Required, 1+ characters
 - `limit`: Optional, 1-100 (default: 10)
-- `filters.apps`: Array of valid app types
+- `filters.apps`: Array of connector instance UUIDs
 - `filters.kb`: Array of UUIDs
 </Tab>
 
@@ -1759,7 +1546,7 @@ Share a search result with other users.
 
 **Validation:**
 - User existence validated against IAM service
-- `shareLink` automatically generated
+- Every share is read-only
 </Tab>
 
 <Tab title="Response">
@@ -1770,7 +1557,6 @@ Share a search result with other users.
   "_id": "61f30c988a4e2e001b3c7d1a",
   "query": "vacation policy approval process",
   "isShared": true,
-  "shareLink": "https://app.example.com/search/61f30c988a4e2e001b3c7d1a",
   "sharedWith": [
     {
       "userId": "507f1f77bcf86cd799439011",
@@ -1806,7 +1592,6 @@ Remove search sharing.
 {
   "id": "61f30c988a4e2e001b3c7d1a",
   "isShared": false,
-  "shareLink": null,
   "sharedWith": [],
   "unsharedUsers": ["507f1f77bcf86cd799439011"],
   "meta": {

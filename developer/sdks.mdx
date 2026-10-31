@@ -1,0 +1,132 @@
+---
+title: "SDKs"
+description: "Install the Python, TypeScript and Go SDKs, sign in with a personal access token, and see which parts of the API each SDK covers"
+icon: "cube"
+---
+
+PipesHub has SDKs for Python, TypeScript and Go. They are generated from the PipesHub OpenAPI spec and cover the parts of the API most apps need: knowledge bases, chat, search, agents and connectors. For everything else, call the REST API directly. See [API Reference](/developer/api-reference).
+
+## Install
+
+<Tabs>
+  <Tab title="Python">
+    ```bash
+    pip install pipeshub-sdk
+    ```
+    Needs Python 3.10 or later.
+  </Tab>
+  <Tab title="TypeScript">
+    ```bash
+    npm add @pipeshub-ai/sdk
+    ```
+  </Tab>
+  <Tab title="Go">
+    ```bash
+    go get github.com/pipeshub-ai/pipeshub-sdk-go/v2@v2.0.0
+    ```
+    From 2.0.0 the Go module path ends in `/v2`. See [Versions](#versions).
+  </Tab>
+</Tabs>
+
+## Connect with a personal access token
+
+Create a [personal access token](/developer/personal-access-tokens) and pass it as the bearer token. Set the server URL to your instance URL followed by `/api/v1`.
+
+<Tabs>
+  <Tab title="Python">
+    ```python
+    import os
+    from pipeshub_sdk import Pipeshub, models
+
+    with Pipeshub(
+        server_url="https://your-pipeshub-instance.com/api/v1",
+        security=models.Security(bearer_auth=os.environ["PIPESHUB_BEARER_AUTH"]),
+    ) as pipeshub:
+        res = pipeshub.knowledge_base.list_knowledge_bases(page=1, limit=20)
+        print(res)
+    ```
+  </Tab>
+  <Tab title="TypeScript">
+    ```typescript
+    import { Pipeshub } from "@pipeshub-ai/sdk";
+
+    const pipeshub = new Pipeshub({
+      serverURL: "https://your-pipeshub-instance.com/api/v1",
+      security: { bearerAuth: process.env.PIPESHUB_BEARER_AUTH },
+    });
+
+    const result = await pipeshub.knowledgeBase.listKnowledgeBases({});
+    console.log(result);
+    ```
+  </Tab>
+  <Tab title="Go">
+    ```go
+    package main
+
+    import (
+        "context"
+        "log"
+        "os"
+
+        pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go/v2"
+        "github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/components"
+        "github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/operations"
+    )
+
+    func main() {
+        s := pipeshub.New(
+            pipeshub.WithServerURL("https://your-pipeshub-instance.com/api/v1"),
+            pipeshub.WithSecurity(components.Security{
+                BearerAuth: pipeshub.Pointer(os.Getenv("PIPESHUB_BEARER_AUTH")),
+            }),
+        )
+
+        res, err := s.KnowledgeBase.ListKnowledgeBases(context.Background(), operations.ListKnowledgeBasesRequest{})
+        if err != nil {
+            log.Fatal(err)
+        }
+        log.Println(res)
+    }
+    ```
+  </Tab>
+</Tabs>
+
+<Note>
+  If you leave out `security`, the Python SDK reads the token from the `PIPESHUB_BEARER_AUTH` environment variable. OAuth 2.0 access tokens work the same way. See [OAuth 2.0](/developer/oauth2).
+</Note>
+
+## What the SDKs cover
+
+Each SDK exposes one namespace per area. The names below are the TypeScript names; Python uses `snake_case` (`knowledge_base`) and Go uses `PascalCase` (`KnowledgeBase`).
+
+| Area | Namespaces |
+| --- | --- |
+| Knowledge bases and records | `knowledgeBase`, `knowledgeHub` |
+| Chat | `conversations` |
+| Search and retrieval | `semanticSearch`, `webSearch` |
+| Agents | `agents` |
+| Connectors | `connector`, `connectorRegistry`, `connectorInstances`, `connectorConfiguration`, `connectorControl`, `connectorFilters`, `connectorOAuth` |
+| AI models | `aiModelsProviders` |
+| Users and organizations | `userAccount`, `organizations`, `organizationAuthConfig` |
+| Tokens and OAuth | `personalAccessTokens`, `oAuthApps`, `oAuthProvider`, `oAuthConfiguration`, `openIDConnect` |
+
+The SDKs do not cover the rest of the API, for example skills, actions (`/api/v1/toolsets`; the API still calls them toolsets), MCP servers, projects, artifacts, notifications, service accounts, user and group administration, and the configuration manager. Call those endpoints over HTTP with the same token. Every instance serves its full reference at `https://<your-instance>/api/v1/docs`.
+
+The Python SDK also ships retrievers for LangChain and LlamaIndex (`pip install "pipeshub-sdk[langchain]"` or `"pipeshub-sdk[llamaindex]"`).
+
+## Versions
+
+| SDK | Package | Latest release |
+| --- | --- | --- |
+| Python | [`pipeshub-sdk`](https://pypi.org/project/pipeshub-sdk/) | 2.0.0 |
+| TypeScript | [`@pipeshub-ai/sdk`](https://www.npmjs.com/package/@pipeshub-ai/sdk) | 2.0.0 |
+| Go | `github.com/pipeshub-ai/pipeshub-sdk-go/v2` | v2.0.0 |
+
+What changed from 1.7.0 to 2.0.0:
+
+- **Retrieval.** `semanticSearch.retrieve` (`POST /api/v1/retrieve`, see [Retrieval API](/developer/retrieval-api)) was added.
+- **Connectors.** The `connectorRegistry`, `connectorInstances`, `connectorConfiguration`, `connectorControl`, `connectorFilters`, `connectorOAuth` and `oAuthConfiguration` namespaces were added.
+- **Projects.** The `projects` namespace was removed. Check your code for it before you upgrade.
+- **Go module path.** The Go module moved to `github.com/pipeshub-ai/pipeshub-sdk-go/v2`. Update your imports.
+
+Source code: [Python](https://github.com/pipeshub-ai/pipeshub-sdk-python), [TypeScript](https://github.com/pipeshub-ai/pipeshub-sdk-typescript), [Go](https://github.com/pipeshub-ai/pipeshub-sdk-go).

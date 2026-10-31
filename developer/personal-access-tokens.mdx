@@ -1,10 +1,10 @@
 ---
-title: "Personal Access Tokens"
+title: "Personal access tokens"
 description: "Create long-lived, scoped, revocable credentials that act as you — the recommended way to connect external agents and scripts to PipesHub"
 icon: "id-badge"
 ---
 
-A **Personal Access Token (PAT)** is a long-lived, scoped, revocable credential that you create for yourself. Unlike a session token, it doesn't expire after a day. Unlike an [OAuth 2.0 Application](/developer/oauth2), it authenticates as **you** — every request made with it respects your own per-user permissions, not an app's.
+A **personal access token (PAT)** is a long-lived, scoped, revocable credential that you create for yourself. Unlike a session token, it doesn't expire after a day. Unlike an [OAuth 2.0 app](/developer/oauth2), it authenticates as **you** — every request made with it respects your own per-user permissions, not an app's.
 
 Use a PAT when you want to connect something to PipesHub programmatically — most commonly, an MCP client (see [MCP Server Overview](/mcp/overview)) — without setting up an OAuth app or scraping a short-lived session token.
 
@@ -14,42 +14,51 @@ Use a PAT when you want to connect something to PipesHub programmatically — mo
 
 ---
 
-## Personal Access Tokens vs. OAuth Applications
+## Personal access tokens vs. OAuth apps
 
-| | Personal Access Token | OAuth 2.0 Application |
+| | Personal access token | OAuth 2.0 app |
 |---|---|---|
-| **Acts as** | You, the creator | The app itself. `client_credentials` has **no user identity** — don't use it where per-person permissions matter |
-| **Who can create one** | Any org member | Administrators only |
+| **Acts as** | You, the creator | With `authorization_code`, the person who approved the app. With `client_credentials`, a **service account** an admin picks when creating the app; the app cannot be saved without one |
+| **Who can create one** | Any org member | Any org member. Only an admin can create an app that uses `client_credentials` |
 | **Setup** | One click, no redirect URIs | Register an app, configure redirect URIs and grant types |
 | **Best for** | Personal scripts, MCP clients, quick integrations | Third-party apps, multi-user integrations, machine-to-machine services |
 
-If you're connecting your own tooling and want it to see exactly what you can see, use a PAT. If you're building something other people in the org will authorize separately, use an [OAuth Application](/developer/oauth2).
+If you're connecting your own tooling and want it to see exactly what you can see, use a PAT. If you're building something other people in the org will authorize separately, use an [OAuth 2.0 app](/developer/oauth2).
 
 ---
 
-## Creating a Personal Access Token
+## Create a personal access token
 
-### Step 1: Open Personal Access Tokens
+### Step 1: Open personal access tokens
 
 1. Sign in to your PipesHub account
-2. Navigate to **Workspace-settings**
-3. Select **Personal Access Tokens** under the **Developer Settings** section
+2. Open **Workspace settings**
+3. Select **Personal access tokens** under **Developer settings**
 
-### Step 2: Create a New Token
+<Frame>
+  <img src="/images/product/developer/personal-access-tokens.png" alt="Personal access tokens page with the New token button" />
+</Frame>
 
-Click **New token** and fill in:
+### Step 2: Create a new token
+
+Click **New token**. The **New personal access token** panel opens:
+
+<Frame>
+  <img src="/images/product/developer/personal-access-token-create-dialog.png" alt="New personal access token dialog with expiry and scopes" width="612" />
+</Frame>
 
 | Field | Required | Description |
 |-------|----------|-------------|
-| **Name** | Yes | A label to help you recognize the token later (e.g. `Claude Desktop`, `CI script`), 1–100 characters. |
-| **Expiry** | No | `30`, `90`, or `365` days, or `Never`. Defaults to **30 days** if not set — a token minted without a second thought shouldn't default to the longest lifetime. |
-| **Scopes** | No | Which permissions the token carries. Defaults to your instance's full configured MCP scope set if none are selected. Use **Select All** / **Clear all** to toggle every scope at once. |
+| **Token name** | Yes | A label to help you recognize the token later (e.g. `Claude Desktop`, `CI script`), 1–100 characters. |
+| **Expiry** | Yes | `30 days`, `90 days`, `365 days` or `Never`. **30 days** is selected when the panel opens. |
+| **What can this token see?** | No | **Everything I can see** (includes sources you add later) or **Only what I pick** (whole sources, or spaces, folders or files inside one). The token never sees more than you can. |
+| **Scopes** | Yes | Which permissions the token carries, grouped by category. Every scope your instance offers (its `MCP_SCOPES` set) is selected when the panel opens; keep at least one. Use **Clear all** / **Select all** to toggle every scope at once. |
 
 <Warning>
   A token with `Never` expiry has no automatic cutoff. Prefer a bounded expiry unless you have a specific, ongoing reason not to — you can always create a new token later.
 </Warning>
 
-### Step 3: Copy the Token
+### Step 3: Copy the token
 
 PipesHub generates the token and shows it to you **exactly once**, along with a ready-to-paste block for connecting an MCP client:
 
@@ -76,7 +85,7 @@ PIPESHUB_MCP_TOKEN=phpat_eyJhbGciOiJIUzI1NiIs...
 
 ---
 
-## Using a Personal Access Token
+## Use a personal access token
 
 Send it as a standard bearer token on PipesHub API requests, including the [MCP endpoint](/mcp/overview). A few account-security actions are the exception (see below):
 
@@ -105,13 +114,13 @@ It is **not** equivalent to being logged in. Session tokens skip scope checks en
 
 ---
 
-## Managing Your Tokens
+## Manage your tokens
 
-The **Personal Access Tokens** page lists every active token you've created, with its name, scopes, creation date, expiry (`Never` shown as-is, not a literal date), and last-used time.
+The **Personal access tokens** page lists every active token you've created, with its name, scopes, creation date, expiry (`Never` shown as-is, not a literal date), and last-used time.
 
-### Revoking a Token
+### Revoke a token
 
-Click the revoke icon next to a token and confirm. Revocation takes effect **immediately** — any request using that token (including one already in flight) is rejected on its next verification.
+Click the revoke icon next to a token, then **Revoke** in the **Revoke token?** dialog. Revocation takes effect **immediately** — any request using that token (including one already in flight) is rejected on its next verification.
 
 <Warning>
   Revocation is irreversible. Anything using the revoked token will need a new one.
@@ -119,7 +128,7 @@ Click the revoke icon next to a token and confirm. Revocation takes effect **imm
 
 ---
 
-## Admin Visibility and Revocation
+## Admin visibility and revocation
 
 Because a PAT can live for months or years, an org admin needs a way to see and revoke tokens they didn't create themselves — for example, when someone leaves the org or a laptop is compromised. This is available today via the API (no dedicated admin UI page yet):
 
@@ -171,7 +180,7 @@ Both endpoints are for organization admins only. A non-admin gets `403` with the
 
 ---
 
-## API Endpoints Reference
+## API endpoints reference
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
@@ -184,7 +193,7 @@ Both endpoints are for organization admins only. A non-admin gets `403` with the
 
 Every endpoint in this table needs a signed-in session token. A PAT or OAuth access token gets **403 Forbidden**.
 
-### Request Bodies
+### Request bodies
 
 **`POST /api/v1/personal-access-tokens`**
 
@@ -214,7 +223,7 @@ Both accept an optional body:
 
 ---
 
-## Security Notes
+## Security notes
 
 <CardGroup cols={2}>
 

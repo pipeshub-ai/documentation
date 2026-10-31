@@ -1,4 +1,7 @@
-# Configuration Manager API
+---
+title: "Configuration Manager API"
+description: "Endpoints to read and update stored service configuration"
+---
 
 The Configuration Manager Service provides a centralized way to manage configuration settings across your organization's services. It securely stores various configuration parameters in a key-value store (ETCD by default) and provides APIs to manage these configurations.
 
@@ -38,7 +41,7 @@ The Configuration Manager Service is built on a Node.js backend that leverages [
 The Configuration Manager handles various types of configurations:
 
 1. **Storage Configurations** - AWS S3, Azure Blob, or Local storage settings
-2. **Authentication Configurations** - Azure AD, Google, Microsoft, SSO, and OAuth settings
+2. **Authentication Configurations** - Google and Microsoft settings (SAML SSO and generic OAuth settings are Enterprise-only; Azure AD sign-in is configured as Microsoft)
 3. **SMTP Configurations** - Email service settings
 4. **AI Models Configurations** - Settings for LLM, embedding, OCR, SLM, reasoning, and multiModal models
 5. **Connector Configurations** - Google Workspace, Atlassian, OneDrive, and SharePoint integrations
@@ -246,66 +249,6 @@ The Authentication Configuration API allows you to manage various authentication
 
 <AccordionGroup>
 
-<Accordion title="Azure AD Authentication">
-Configure Azure Active Directory authentication.
-
-<AccordionGroup>
-
-<Accordion title="POST /authConfig/azureAd - Set Azure AD Config">
-<Tabs>
-<Tab title="Request">
-**Endpoint:** `POST /api/v1/configurationManager/authConfig/azureAd`
-
-**Request Body Parameters:**
-  
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| clientId | string | Yes | Azure AD client ID |
-| tenantId | string | No | Azure AD tenant ID (defaults to "common") |
-
-```json
-{
-  "clientId": "your-client-id",
-  "tenantId": "your-tenant-id"
-}
-```
-</Tab>
-
-<Tab title="Response">
-**Status:** `200 OK`
-
-```json
-{
-  "message": "Azure AD config created successfully"
-}
-```
-</Tab>
-</Tabs>
-</Accordion>
-
-<Accordion title="GET /authConfig/azureAd - Get Azure AD Config">
-<Tabs>
-<Tab title="Request">
-**Endpoint:** `GET /api/v1/configurationManager/authConfig/azureAd`
-</Tab>
-
-<Tab title="Response">
-**Status:** `200 OK`
-
-```json
-{
-  "clientId": "your-client-id",
-  "tenantId": "your-tenant-id",
-  "authority": "https://login.microsoftonline.com/your-tenant-id"
-}
-```
-</Tab>
-</Tabs>
-</Accordion>
-
-</AccordionGroup>
-</Accordion>
-
 <Accordion title="Microsoft Authentication">
 Configure Microsoft authentication.
 
@@ -413,145 +356,6 @@ Configure Google authentication.
 ```json
 {
   "clientId": "your-client-id"
-}
-```
-</Tab>
-</Tabs>
-</Accordion>
-
-</AccordionGroup>
-</Accordion>
-
-<Accordion title="SSO Authentication">
-Configure SAML-based Single Sign-On.
-
-<AccordionGroup>
-
-<Accordion title="POST /authConfig/sso - Set SSO Config">
-<Tabs>
-<Tab title="Request">
-**Endpoint:** `POST /api/v1/configurationManager/authConfig/sso`
-
-**Request Body Parameters:**
-  
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| entryPoint | string | Yes | SSO entry point URL |
-| certificate | string | Yes | SSO certificate |
-| emailKey | string | Yes | Key for email in SSO response |
-
-```json
-{
-  "entryPoint": "https://sso.example.com/saml",
-  "certificate": "-----BEGIN CERTIFICATE-----\nMIIC...\n-----END CERTIFICATE-----",
-  "emailKey": "email"
-}
-```
-</Tab>
-
-<Tab title="Response">
-**Status:** `200 OK`
-
-```json
-{
-  "message": "Sso config created successfully"
-}
-```
-</Tab>
-</Tabs>
-</Accordion>
-
-<Accordion title="GET /authConfig/sso - Get SSO Config">
-<Tabs>
-<Tab title="Request">
-**Endpoint:** `GET /api/v1/configurationManager/authConfig/sso`
-</Tab>
-
-<Tab title="Response">
-**Status:** `200 OK`
-
-```json
-{
-  "entryPoint": "https://sso.example.com/saml",
-  "certificate": "MIICertificateContent...",
-  "emailKey": "email"
-}
-```
-</Tab>
-</Tabs>
-</Accordion>
-
-</AccordionGroup>
-</Accordion>
-
-<Accordion title="OAuth Authentication">
-Configure custom OAuth authentication.
-
-<AccordionGroup>
-
-<Accordion title="POST /authConfig/oauth - Set OAuth Config">
-<Tabs>
-<Tab title="Request">
-**Endpoint:** `POST /api/v1/configurationManager/authConfig/oauth`
-
-**Request Body Parameters:**
-  
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| providerName | string | Yes | OAuth provider name |
-| clientId | string | Yes | OAuth client ID |
-| clientSecret | string | No | OAuth client secret |
-| authorizationUrl | string | No | Authorization URL |
-| tokenEndpoint | string | No | Token endpoint URL |
-| userInfoEndpoint | string | No | User info endpoint URL |
-| scope | string | No | OAuth scope |
-| redirectUri | string | No | Redirect URI |
-
-```json
-{
-  "providerName": "Custom OAuth Provider",
-  "clientId": "your-client-id",
-  "clientSecret": "your-client-secret",
-  "authorizationUrl": "https://provider.com/oauth/authorize",
-  "tokenEndpoint": "https://provider.com/oauth/token",
-  "userInfoEndpoint": "https://provider.com/oauth/userinfo",
-  "scope": "read:user",
-  "redirectUri": "https://yourapp.com/callback"
-}
-```
-</Tab>
-
-<Tab title="Response">
-**Status:** `200 OK`
-
-```json
-{
-  "message": "OAuth config created successfully"
-}
-```
-</Tab>
-</Tabs>
-</Accordion>
-
-<Accordion title="GET /authConfig/oauth - Get OAuth Config">
-<Tabs>
-<Tab title="Request">
-**Endpoint:** `GET /api/v1/configurationManager/authConfig/oauth`
-</Tab>
-
-<Tab title="Response">
-**Status:** `200 OK`
-
-```json
-{
-  "providerName": "Custom OAuth Provider",
-  "clientId": "your-client-id",
-  "clientSecret": "your-client-secret",
-  "authorizationUrl": "https://provider.com/oauth/authorize",
-  "tokenEndpoint": "https://provider.com/oauth/token",
-  "userInfoEndpoint": "https://provider.com/oauth/userinfo",
-  "scope": "read:user",
-  "redirectUri": "https://yourapp.com/callback"
 }
 ```
 </Tab>
@@ -1704,20 +1508,6 @@ message broker) are validated at service startup from the environment, not throu
 <Tabs>
 <Tab title="Authentication Config Schema">
 ```typescript
-// Azure AD Config
-interface AzureAdConfig {
-  clientId: string;
-  tenantId: string; // defaults to "common"
-  authority: string;
-}
-
-// SSO Config
-interface SsoConfig {
-  entryPoint: string;
-  certificate: string; // Certificate content (BEGIN/END markers removed)
-  emailKey: string;
-}
-
 // Google Auth Config
 interface GoogleAuthConfig {
   clientId: string;
@@ -1728,18 +1518,6 @@ interface MicrosoftAuthConfig {
   clientId: string;
   tenantId: string; // defaults to "common"
   authority: string;
-}
-
-// OAuth Config
-interface OAuthConfig {
-  providerName: string;
-  clientId: string;
-  clientSecret?: string;
-  authorizationUrl?: string;
-  tokenEndpoint?: string;
-  userInfoEndpoint?: string;
-  scope?: string;
-  redirectUri?: string;
 }
 ```
 </Tab>

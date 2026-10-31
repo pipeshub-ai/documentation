@@ -1,0 +1,117 @@
+---
+title: "API quickstart"
+description: "Create a personal access token, make your first API call, and install an SDK"
+icon: "rocket"
+---
+
+This page takes you from nothing to a working API call in a few minutes. You need a running PipesHub instance and an account on it.
+
+All API paths start with your instance URL followed by `/api/v1`. The examples use these shell variables:
+
+```bash
+export PIPESHUB_URL="https://your-pipeshub-instance.com"
+export PIPESHUB_TOKEN="phpat_..."   # from step 1
+```
+
+<Steps>
+<Step title="Create a personal access token">
+
+1. Sign in to PipesHub.
+2. Open **Workspace settings** and select **Personal access tokens** under **Developer settings**.
+3. Select **New token**, give it a name, and select the scopes you need. For this page, select `kb:read`, `semantic:write` and `conversation:chat`.
+4. Copy the token. PipesHub shows it only once.
+
+The token acts as you and can only do what its scopes allow. See [Personal Access Tokens](/developer/personal-access-tokens) for details.
+
+</Step>
+<Step title="List your knowledge bases">
+
+```bash
+curl -s "$PIPESHUB_URL/api/v1/knowledgeBase" \
+  -H "Authorization: Bearer $PIPESHUB_TOKEN"
+```
+
+The response has a `knowledgeBases` array. Each entry has an `id` and a `name`.
+
+A missing or revoked token returns `401`. A token without the required scope returns `403`.
+
+</Step>
+<Step title="Search">
+
+```bash
+curl -s "$PIPESHUB_URL/api/v1/search" \
+  -H "Authorization: Bearer $PIPESHUB_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"query": "onboarding checklist", "limit": 5}'
+```
+
+`limit` defaults to 10. Search needs the `semantic:write` scope, and returns results only from content PipesHub has indexed.
+
+By default, search also rewrites your query with your AI model. Without a model set up in **Workspace → AI models**, it returns `500`. Add `"rewriteQuery": false` to the body to search with your exact text and skip the model.
+
+To get ranked passages for your own RAG pipeline instead, use the [Retrieval API](/developer/retrieval-api).
+
+</Step>
+<Step title="Ask a question">
+
+Chat answers stream as server-sent events. `chatMode` is required on this endpoint and must be `internal_search`, `web_search` or `agent`:
+
+```bash
+curl -s -N "$PIPESHUB_URL/api/v1/conversations/stream" \
+  -H "Authorization: Bearer $PIPESHUB_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"query": "What is our onboarding checklist?", "chatMode": "internal_search"}'
+```
+
+The first event carries the new conversation's ID:
+
+```text
+event: CUSTOM
+data: {"type":"CUSTOM","name":"conversation_created","value":{"conversationId":"...","title":"What is our onboarding checklist?"}}
+```
+
+To get the whole answer in one response instead, send the same body without `chatMode` to `POST /api/v1/conversations/create`.
+
+Chat needs the `conversation:chat` scope and an AI model set up in **Workspace → AI models**. Without a model, `/conversations/create` returns `424`, and the stream sends the `conversation_created` event and then a `RUN_ERROR` event with `"code": "llm_initialization_failed"`.
+
+</Step>
+</Steps>
+
+## Use an SDK
+
+PipesHub has SDKs for Python, TypeScript and Go. Pass the same token and set the server URL to `$PIPESHUB_URL/api/v1`.
+
+<Tabs>
+  <Tab title="Python">
+    ```bash
+    pip install pipeshub-sdk
+    ```
+  </Tab>
+  <Tab title="TypeScript">
+    ```bash
+    npm add @pipeshub-ai/sdk
+    ```
+  </Tab>
+  <Tab title="Go">
+    ```bash
+    go get github.com/pipeshub-ai/pipeshub-sdk-go/v2@v2.0.0
+    ```
+  </Tab>
+</Tabs>
+
+See [SDKs](/developer/sdks) for a first call in each language and for which parts of the API each SDK covers.
+
+## Explore the full API
+
+Every instance serves an interactive API reference at `$PIPESHUB_URL/api/v1/docs`. The OpenAPI spec is the [OpenAPI file](https://github.com/pipeshub-ai/pipeshub-ai/blob/main/backend/nodejs/apps/src/modules/api-docs/pipeshub-openapi.yaml) on GitHub. See [API Reference](/developer/api-reference) for an overview by area.
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="OAuth 2.0" icon="key" href="/developer/oauth2">
+    Let other people authorize your app, or use the device flow for a CLI.
+  </Card>
+  <Card title="MCP Server" icon="plug" href="/mcp/overview">
+    Connect Claude, Cursor and other AI clients without writing code.
+  </Card>
+</CardGroup>

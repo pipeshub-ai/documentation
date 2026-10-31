@@ -22,12 +22,14 @@ PipesHub uses a modern, distributed database architecture:
 
 Before you begin, ensure your VM meets these specifications:
 
-- **CPU**: 4 cores (minimum)
-- **RAM**: 16 GB (minimum)
-- **Storage**: 100 GB SSD or higher (recommended)
+- **CPU**: 4 cores (minimum; the installer stops on fewer)
+- **RAM**: 16 GB (minimum for the `slim` and `full` deployments)
+- **Storage**: 100 GB SSD or higher (recommended; the installer itself only warns below 20 GB free)
   - PipesHub uses multiple databases (MongoDB, Neo4j, Qdrant, Redis, and optionally Kafka)
   - Storage requirements grow with indexed documents and vector embeddings
 - **OS**: Ubuntu 22.04 LTS or 24.04 LTS (recommended)
+
+The installer's exact checks are in [System Requirements](/deployment/system-requirements).
 
 <Note>
 For production workloads with large document collections, consider 200 GB or more storage to accommodate database growth and vector embeddings.
@@ -169,7 +171,7 @@ sudo apt install -y net-tools nginx git
 
   <Step title="Install PipesHub">
 
-Add your user to the `docker` group (see the Docker step above) and run `newgrp docker` (or log out and back in) **before** this step. `curl | bash` and later `./install.sh --stop` / `--uninstall` talk to Docker without sudo, so they fail if you skip the group. Commands that start with `sudo docker` still work without it.
+Add your user to the `docker` group (see the Docker step above) and run `newgrp docker` (or log out and back in) **before** this step. Without it, the installer runs itself again with `sudo` and asks for your password. Commands that start with `sudo docker` still work without it.
 
 The recommended install does not clone the repository. It downloads the installer and writes Compose files into `~/pipeshub`:
 
@@ -421,7 +423,7 @@ To pin a specific version instead of the rolling `latest`/`slim` tag, pass `--ve
 **Never use simple file copy methods (like `tar`) on live database volumes.** This can result in corrupted backups and data loss. Always use native database backup tools or stop the application before backing up.
 </Warning>
 
-PipesHub uses multiple databases and storage systems. Choose one of the following backup strategies:
+PipesHub uses multiple databases and storage systems. Choose one of the following backup strategies. The commands below cover MongoDB, Neo4j, Qdrant, Redis and the application data volume only; for a backup of every volume (including ArangoDB, etcd and Kafka when you use them), follow [Backup and Restore](/deployment/backup-restore).
 
 <Note>
 Backup and restore copy-paste blocks `cd ~/pipeshub` themselves so Compose finds `docker-compose.yml` and loads `COMPOSE_PROFILES` from `.env`. Compose names containers `{project}-{service}-1` (default project `pipeshub-ai`), so use `docker compose -p pipeshub-ai exec <service>` rather than `docker exec mongodb`. The `kafka-1` service only exists if you selected Kafka as the message broker during installation; if you're on the default (Redis broker), skip that command.
@@ -557,7 +559,7 @@ sudo docker run --rm \
 cp .env ~/pipeshub-backups/.env.backup-${BACKUP_DATE}
 
 # Restart PipesHub
-cd ~/pipeshub && ./install.sh
+cd ~/pipeshub && ./install.sh --no-pull
 
 echo "Backup completed: pipeshub-volumes-backup-${BACKUP_DATE}.tar.gz"
 ```
@@ -599,8 +601,8 @@ sudo docker run --rm \
   -v "$BACKUP_DIR":/backup \
   ubuntu tar czf /backup/pipeshub-backup-${BACKUP_DATE}.tar.gz /data
 
-# Restart services
-"$HOME/pipeshub/install.sh"
+# Restart services (--yes: cron has no terminal to answer the launch prompt)
+"$HOME/pipeshub/install.sh" --yes --no-pull
 
 # Delete old backups
 find "$BACKUP_DIR" -name "pipeshub-backup-*.tar.gz" -mtime +$RETENTION_DAYS -delete
@@ -616,6 +618,8 @@ chmod +x ~/backup-pipeshub.sh
 # Schedule with cron (daily at 2 AM)
 (crontab -l 2>/dev/null; echo "0 2 * * * ~/backup-pipeshub.sh >> ~/pipeshub-backup.log 2>&1") | crontab -
 ```
+
+The script runs `sudo docker`, which needs a password unless cron's user may run it without one. Add that user to the `docker` group and drop `sudo` from the script.
 
 **Features:**
 - Automated daily backups at 2 AM
@@ -771,7 +775,7 @@ sudo docker run --rm \
 cp ~/pipeshub-backups/.env.backup-${BACKUP_DATE} .env
 
 # Restart PipesHub
-cd ~/pipeshub && ./install.sh
+cd ~/pipeshub && ./install.sh --no-pull
 
 echo "Restore completed successfully"
 ```
@@ -809,7 +813,7 @@ sudo docker run --rm \
   ubuntu tar xzf /backup/pipeshub-backup-${BACKUP_DATE}.tar.gz -C /
 
 # Restart PipesHub
-cd ~/pipeshub && ./install.sh
+cd ~/pipeshub && ./install.sh --no-pull
 
 echo "Restore completed successfully"
 ```
@@ -860,7 +864,7 @@ echo "Access PipesHub at https://your-domain.com"
 
 ## Next Steps
 
-- [Configure AI Models](/ai-models/overview)
+- [Configure AI models](/ai-models/overview)
 - [Set Up Connectors](/connectors/overview)
 - [User Management](/user-management/user)
 - [System Overview](/system-overview)

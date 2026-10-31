@@ -1,5 +1,5 @@
 ---
-title: "OAuth 2.0 Applications"
+title: "OAuth 2.0 applications"
 description: "Create and manage OAuth 2.0 applications to integrate third-party services with PipesHub securely"
 icon: "key"
 ---
@@ -19,17 +19,12 @@ OAuth application management is available exclusively to **administrators**. Onl
 To access the OAuth application management page:
 
 1. Sign in to your PipesHub account with administrator credentials
-2. Navigate to **Workspace-settings** 
-3. Select **OAuth 2.0 Apps** under the **Developer Settings** section
+2. Open **Workspace settings**
+3. Select **OAuth 2.0 apps** under **Developer settings**
 
-<div style={{ textAlign: "center", padding: "10px" }}>
-  <img
-    src="/images/developer/oauth2/oauth2_app_list.png"
-    alt="OAuth 2.0 Applications list page showing registered applications"
-    style={{ display: 'block', margin: '0 auto' }}
-    width="90%"
-  />
-</div>
+<Frame>
+  <img src="/images/developer/oauth2/oauth2_app_list.png" alt="OAuth 2.0 Applications list page showing registered applications" />
+</Frame>
 
 This page displays all registered OAuth applications along with their current status (active or suspended).
 
@@ -41,7 +36,7 @@ Follow these steps to register a new OAuth application.
 
 ### Step 1: Open the Application Registration Form
 
-From the **OAuth 2.0 Apps** page, click the **New OAuth application** button.
+From the **OAuth 2.0 apps** page, click the **New OAuth application** button.
 
 
 
@@ -51,20 +46,15 @@ Fill in the following fields:
 
 | Field | Required | Description |
 |-------|----------|-------------|
-| **Application Name** | Yes | A descriptive name for the application (1-100 characters). This name is displayed to users during the consent process. |
+| **App name** | Yes | A descriptive name for the application (1-100 characters). This name is displayed to users during the consent process. |
 | **Description** | No | A brief explanation of what the application does (up to 500 characters). Helps users understand why they are granting access. |
-| **Homepage URL** | No | The URL of the application's homepage or landing page. |
-| **Privacy Policy URL** | No | Link to the application's privacy policy. |
-| **Terms of Service URL** | No | Link to the application's terms of service. |
+| **Home page URL** | No | The URL of the application's homepage or landing page. |
+| **Privacy policy URL** | No | Link to the application's privacy policy. |
+| **Terms of service URL** | No | Link to the application's terms of service. |
 
-<div style={{ textAlign: "center", padding: "10px" }}>
-  <img
-    src="/images/developer/oauth2/oauth2_create_app.png"
-    alt="Create new OAuth 2.0 application form"
-    style={{ display: 'block', margin: '0 auto' }}
-    width="90%"
-  />
-</div>
+<Frame>
+  <img src="/images/developer/oauth2/oauth2_create_app.png" alt="Create new OAuth 2.0 application form" width="612" />
+</Frame>
 
 <Tip>
   Providing a clear description and relevant URLs builds trust with users who are asked to grant access to their data during the consent flow.
@@ -94,6 +84,8 @@ This grant type supports **PKCE (Proof Key for Code Exchange)**, which is requir
 
 The **Client Credentials** grant is designed for server-to-server communication where no user interaction is involved. The application authenticates directly using its client ID and client secret.
 
+An application that allows this grant must be bound to a **service account** when it is created. Its tokens act as that service account, so they see only what the service account can access. Only an organization admin can create such an application, and the service account must be enabled in the same organization.
+
 **When to use:**
 - Background services or automation scripts
 - Machine-to-machine integrations
@@ -118,14 +110,9 @@ The **Refresh Token** grant allows your application to obtain a new access token
 
 Redirect URIs define where PipesHub sends users after they authorize (or deny) access. You may register up to **10 redirect URIs** per application.
 
-<div style={{ textAlign: "center", padding: "10px" }}>
-  <img
-    src="/images/developer/oauth2/oauth2_redirect_uris.png"
-    alt="Redirect URI configuration section"
-    style={{ display: 'block', margin: '0 auto' }}
-    width="90%"
-  />
-</div>
+<Frame>
+  <img src="/images/developer/oauth2/oauth2_redirect_uris.png" alt="Redirect URI configuration section" width="592" />
+</Frame>
 
 **Requirements:**
 - All redirect URIs must use **HTTPS**, except for `localhost` and `127.0.0.1` (permitted for local development)
@@ -136,14 +123,9 @@ Redirect URIs define where PipesHub sends users after they authorize (or deny) a
 
 Scopes define the specific permissions your application is requesting. Select only the scopes your application genuinely needs — following the principle of least privilege.
 
-<div style={{ textAlign: "center", padding: "10px" }}>
-  <img
-    src="/images/developer/oauth2/oauth2_scope_selector.png"
-    alt="OAuth scope selector grouped by category"
-    style={{ display: 'block', margin: '0 auto' }}
-    width="90%"
-  />
-</div>
+<Frame>
+  <img src="/images/developer/oauth2/oauth2_scope_selector.png" alt="OAuth scope selector grouped by category" width="612" />
+</Frame>
 
 Scopes are organized by category for ease of selection. The following table provides a complete reference:
 
@@ -153,10 +135,10 @@ Scopes are organized by category for ease of selection. The following table prov
 
 | Scope | Description |
 |-------|-------------|
-| `openid` | Required for OpenID Connect. Returns a unique user identifier. |
-| `profile` | Access to the user's basic profile information. |
-| `email` | Access to the user's email address. |
-| `offline_access` | Enables refresh tokens for long-lived sessions without repeated user consent. |
+| `openid` | OpenID Connect authentication. Does not need user consent. |
+| `profile` | User profile information (name, picture). |
+| `email` | User email address. |
+| `offline_access` | Access when the user is offline (refresh tokens). |
 
 </Accordion>
 
@@ -164,9 +146,9 @@ Scopes are organized by category for ease of selection. The following table prov
 
 | Scope | Description |
 |-------|-------------|
-| `org:read` | View organization details and settings. |
-| `org:write` | Modify organization settings and configuration. |
-| `org:admin` | Full administrative access to organization management. |
+| `org:read` | Read organization information. |
+| `org:write` | Update organization settings. |
+| `org:admin` | Full organization administration. |
 
 </Accordion>
 
@@ -174,10 +156,10 @@ Scopes are organized by category for ease of selection. The following table prov
 
 | Scope | Description |
 |-------|-------------|
-| `user:read` | View user profiles and details. |
-| `user:write` | Modify user information and settings. |
+| `user:read` | Read user profiles. |
+| `user:write` | Update user profiles. |
 | `user:invite` | Invite new users to the organization. |
-| `user:delete` | Remove users from the organization. |
+| `user:delete` | Delete users from the organization. |
 
 </Accordion>
 
@@ -185,10 +167,10 @@ Scopes are organized by category for ease of selection. The following table prov
 
 | Scope | Description |
 |-------|-------------|
-| `usergroup:read` | View user groups and their members. |
-| `usergroup:write` | Create, modify, or delete user groups. |
-| `team:read` | View team information. |
-| `team:write` | Create, modify, or delete teams. |
+| `usergroup:read` | Read user groups. |
+| `usergroup:write` | Create and manage user groups. |
+| `team:read` | Read team information. |
+| `team:write` | Create and manage teams. |
 
 </Accordion>
 
@@ -196,10 +178,10 @@ Scopes are organized by category for ease of selection. The following table prov
 
 | Scope | Description |
 |-------|-------------|
-| `kb:read` | View knowledge base content and records. |
-| `kb:write` | Create and modify knowledge base content. |
-| `kb:delete` | Delete knowledge base records. |
-| `kb:upload` | Upload files and documents to the knowledge base. |
+| `kb:read` | Read knowledge bases and records. |
+| `kb:write` | Create and update knowledge bases. |
+| `kb:delete` | Delete knowledge bases and records. |
+| `kb:upload` | Upload files to knowledge bases. |
 
 </Accordion>
 
@@ -207,22 +189,56 @@ Scopes are organized by category for ease of selection. The following table prov
 
 | Scope | Description |
 |-------|-------------|
-| `semantic:read` | Perform semantic search queries. |
-| `semantic:write` | Create and modify search indexes. |
-| `semantic:delete` | Delete search indexes or entries. |
-| `conversation:read` | View conversations and chat history. |
-| `conversation:write` | Create and modify conversations. |
-| `conversation:chat` | Send messages and interact in real-time conversations. |
+| `semantic:read` | Read semantic search results and history. |
+| `semantic:write` | Execute semantic search queries. |
+| `semantic:delete` | Delete semantic search history. |
+| `conversation:read` | Read conversations. |
+| `conversation:write` | Create and manage conversations. |
+| `conversation:chat` | Send messages in conversations. |
 
 </Accordion>
 
-<Accordion title="Agents Scopes">
+<Accordion title="Agents & Skills Scopes">
 
 | Scope | Description |
 |-------|-------------|
-| `agent:read` | View agent configurations and details. |
-| `agent:write` | Create and modify agent configurations. |
-| `agent:execute` | Execute agents and trigger agent workflows. |
+| `agent:read` | Read AI agents. |
+| `agent:write` | Create and manage AI agents. |
+| `agent:execute` | Execute AI agents. |
+| `skill:read` | Read custom agent skills. |
+| `skill:write` | Create and manage custom agent skills. |
+
+</Accordion>
+
+<Accordion title="MCP Servers Scopes">
+
+| Scope | Description |
+|-------|-------------|
+| `mcp:read` | Read MCP servers and their tools. |
+| `mcp:write` | Add, configure and authenticate MCP servers. |
+| `mcp:delete` | Remove MCP servers and their credentials. |
+
+</Accordion>
+
+<Accordion title="Actions Scopes">
+
+The API still calls actions toolsets, so these scopes are named `toolset:*`.
+
+| Scope | Description |
+|-------|-------------|
+| `toolset:read` | Read actions and their authentication status. |
+| `toolset:write` | Add, configure and authenticate actions. |
+| `toolset:delete` | Remove actions and their credentials. |
+
+</Accordion>
+
+<Accordion title="Projects Scopes">
+
+| Scope | Description |
+|-------|-------------|
+| `project:read` | Read projects and their conversations. |
+| `project:write` | Create, update and share projects. Adding files to a project also needs `kb:write`. |
+| `project:delete` | Delete projects. |
 
 </Accordion>
 
@@ -230,22 +246,27 @@ Scopes are organized by category for ease of selection. The following table prov
 
 | Scope | Description |
 |-------|-------------|
-| `connector:read` | View connector configurations and status. |
-| `connector:write` | Create and modify connector configurations. |
-| `connector:sync` | Trigger data synchronization for connectors. |
-| `connector:delete` | Remove connector instances. |
+| `connector:read` | Read connector configurations. |
+| `connector:write` | Create and update connectors. |
+| `connector:sync` | Trigger connector synchronization. |
+| `connector:delete` | Delete connectors. |
 
 </Accordion>
 
-<Accordion title="Configuration & Storage Scopes">
+<Accordion title="Code Scopes">
 
 | Scope | Description |
 |-------|-------------|
-| `config:read` | View system configuration settings. |
-| `config:write` | Modify system configuration settings. |
-| `document:read` | Read files and documents from storage. |
-| `document:write` | Upload and modify files in storage. |
-| `document:delete` | Delete files from storage. |
+| `code:read` | Read indexed code repositories and their code graph. |
+
+</Accordion>
+
+<Accordion title="Configuration Scopes">
+
+| Scope | Description |
+|-------|-------------|
+| `config:read` | Read system configuration. |
+| `config:write` | Update system configuration. |
 
 </Accordion>
 
@@ -253,26 +274,23 @@ Scopes are organized by category for ease of selection. The following table prov
 
 | Scope | Description |
 |-------|-------------|
-| `crawl:read` | View crawling jobs and their status. |
-| `crawl:write` | Create and modify crawling jobs. |
+| `crawl:read` | Read crawling jobs. |
+| `crawl:write` | Create and manage crawling jobs. |
 | `crawl:delete` | Delete crawling jobs. |
 
 </Accordion>
 
 </AccordionGroup>
 
+Only organization admins can register these scopes on an application: `org:write`, `org:admin`, `user:invite`, `user:delete`, `usergroup:write`, `team:write`, `config:write`, `crawl:write` and `crawl:delete`.
+
 ### Step 6: Save and Store Credentials
 
 After submitting the form, PipesHub generates a unique **Client ID** and **Client Secret** for your application.
 
-<div style={{ textAlign: "center", padding: "10px" }}>
-  <img
-    src="/images/developer/oauth2/oauth2_credentials.png"
-    alt="Newly created OAuth application credentials display"
-    style={{ display: 'block', margin: '0 auto' }}
-    width="90%"
-  />
-</div>
+<Frame>
+  <img src="/images/developer/oauth2/oauth2_credentials.png" alt="Newly created OAuth application credentials display" width="612" />
+</Frame>
 
 <Warning>
   The **Client Secret** is displayed only once at the time of creation. Copy and store it in a secure location immediately. If lost, you will need to regenerate the secret, which invalidates the previous one.
@@ -310,7 +328,7 @@ sequenceDiagram
 <Step title="Initiate Authorization">
 Your application redirects the user's browser to PipesHub's authorization endpoint with the required parameters:
 
-```
+```http
 GET /api/v1/oauth2/authorize?
   response_type=code&
   client_id=YOUR_CLIENT_ID&
@@ -321,7 +339,7 @@ GET /api/v1/oauth2/authorize?
 
 **For public clients (PKCE)**, include additional parameters:
 
-```
+```text
   &code_challenge=GENERATED_CHALLENGE
   &code_challenge_method=S256
 ```
@@ -335,21 +353,16 @@ If the user is not already signed in to PipesHub, they are redirected to the sig
 <Step title="User Consent">
 The consent screen displays your application's name, description, and the specific permissions being requested. The user can choose to **Allow** or **Deny** access.
 
-<div style={{ textAlign: "center", padding: "10px" }}>
-  <img
-    src="/images/developer/oauth2/oauth2_consent_screen.png"
-    alt="OAuth consent screen showing application details and requested permissions"
-    style={{ display: 'block', margin: '0 auto' }}
-    width="70%"
-  />
-</div>
+<Frame>
+  <img src="/images/developer/oauth2/oauth2_consent_screen.png" alt="OAuth consent screen listing the requested scopes with Deny and Allow" width="561" />
+</Frame>
 
 </Step>
 
 <Step title="Authorization Code">
 Upon approval, PipesHub redirects the user's browser back to your registered redirect URI with a temporary authorization code:
 
-```
+```text
 https://your-app.com/callback?code=AUTHORIZATION_CODE&state=RANDOM_STATE_VALUE
 ```
 
@@ -382,19 +395,23 @@ curl -X POST https://your-pipeshub-instance.com/api/v1/oauth2/token \
   "token_type": "Bearer",
   "expires_in": 3600,
   "refresh_token": "dGhpcyBpcyBhIHJlZnJl...",
-  "scope": "openid profile email"
+  "scope": "openid profile email offline_access"
 }
 ```
+
+The response has a `refresh_token` only when the granted scopes include `offline_access`. Add it to `scope` in the authorization request if your app needs to refresh tokens.
 
 </Step>
 
 <Step title="Access Protected Resources">
-Use the access token to make API requests on behalf of the user:
+Use the access token to make API requests on behalf of the user. For example, with the `openid` scope you can read the user's profile:
 
 ```bash
-curl -X GET https://your-pipeshub-instance.com/api/v1/resource \
+curl -X GET https://your-pipeshub-instance.com/api/v1/oauth2/userinfo \
   -H "Authorization: Bearer ACCESS_TOKEN"
 ```
+
+Any other API route works the same way, as long as the token carries the scope that route needs.
 
 </Step>
 
@@ -404,7 +421,7 @@ curl -X GET https://your-pipeshub-instance.com/api/v1/resource \
 
 ## Client Credentials Flow
 
-For server-to-server integrations that do not require user context:
+For server-to-server integrations with no interactive user. The application must have been created with a service account, and the token acts as that service account:
 
 ```bash
 curl -X POST https://your-pipeshub-instance.com/api/v1/oauth2/token \
@@ -453,17 +470,125 @@ Set `token_type_hint` to either `access_token` or `refresh_token` to help the se
 
 ---
 
-## OpenID Connect Discovery
+## Device Authorization Flow
 
-PipesHub supports OpenID Connect Discovery, enabling clients to automatically discover OAuth endpoints and configuration:
+Use the device flow (RFC 8628) for a CLI, a coding agent or any tool that cannot open a browser redirect. The tool shows a short code, the user approves it in a browser, and the tool polls for the token.
 
-| Endpoint | URL |
-|----------|-----|
-| **OpenID Configuration** | `/.well-known/openid-configuration` |
-| **OAuth Authorization Server Metadata** | `/.well-known/oauth-authorization-server` |
-| **JSON Web Key Set (JWKS)** | `/.well-known/jwks.json` |
+The device grant is on by default. An administrator turns it off by setting `PIPESHUB_ENABLE_DEVICE_GRANT=false` on the backend.
 
-These endpoints are publicly accessible and do not require authentication. They are particularly useful for MCP (Model Context Protocol) clients and other automated integrations that need to discover authorization server capabilities dynamically.
+**Which `client_id` to use.** Every instance has a built-in public client for this flow. Its `client_id` is `pipeshub-agent`, and discovery returns it as `pipeshub_device_client_id`. It allows only the device and refresh token grants and needs no client secret. It does not appear in **Developer Settings**. Applications you create in **Developer Settings** cannot select the device grant.
+
+<Steps>
+<Step title="Request a device code">
+
+```bash
+curl -X POST https://your-pipeshub-instance.com/api/v1/oauth2/device_authorization \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  -d "client_id=pipeshub-agent" \
+  -d "scope=kb:read semantic:write offline_access"
+```
+
+```json
+{
+  "device_code": "…",
+  "user_code": "ABCD-EFGH",
+  "verification_uri": "https://your-pipeshub-instance.com/oauth/device",
+  "verification_uri_complete": "https://your-pipeshub-instance.com/oauth/device?user_code=ABCD-EFGH",
+  "expires_in": 600,
+  "interval": 5
+}
+```
+
+If you leave out `scope`, the request gets every scope the client allows.
+
+</Step>
+<Step title="Ask the user to approve">
+
+Show the user `user_code` and `verification_uri`, or open `verification_uri_complete`. The user signs in to PipesHub, checks the code and the requested permissions, and approves or denies. The code expires after `expires_in` seconds (10 minutes).
+
+</Step>
+<Step title="Poll for the token">
+
+Poll the token endpoint every `interval` seconds:
+
+```bash
+curl -X POST https://your-pipeshub-instance.com/api/v1/oauth2/token \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  -d "grant_type=urn:ietf:params:oauth:grant-type:device_code" \
+  -d "client_id=pipeshub-agent" \
+  -d "device_code=DEVICE_CODE"
+```
+
+Until the user decides, the endpoint returns HTTP 400 with one of these `error` values:
+
+| `error` | Meaning |
+|---------|---------|
+| `authorization_pending` | The user has not approved yet. Keep polling. |
+| `slow_down` | You polled faster than `interval`. Wait longer. |
+| `access_denied` | The user denied the request. Stop. |
+| `expired_token` | The code expired. Start again. |
+
+After approval, the response is a normal token response. The token acts as the user who approved it. Each device code can be exchanged once.
+
+</Step>
+</Steps>
+
+<Tip>
+  The [`pipeshub` CLI](/mcp/cli) runs this flow for you with `pipeshub login`.
+</Tip>
+
+---
+
+## Dynamic Client Registration
+
+PipesHub supports dynamic client registration (RFC 7591) at `POST /api/v1/oauth2/register`. It lets a client such as an MCP client create its own OAuth application without an administrator.
+
+Registration is **off by default**, because anyone who can reach the instance could register an application. While it is off, the endpoint returns `403` with `"error": "access_denied"`. An administrator turns it on by setting `PIPESHUB_ENABLE_DCR=true` on the backend.
+
+```bash
+curl -X POST https://your-pipeshub-instance.com/api/v1/oauth2/register \
+  -H "Content-Type: application/json" \
+  -d '{
+    "client_name": "My MCP client",
+    "redirect_uris": ["http://localhost:8765/callback"],
+    "grant_types": ["authorization_code", "refresh_token"],
+    "token_endpoint_auth_method": "none",
+    "scope": "kb:read semantic:write conversation:chat"
+  }'
+```
+
+The response returns HTTP `201` with the new `client_id` and the registered metadata. It includes a `client_secret` only when `token_endpoint_auth_method` is `client_secret_basic` or `client_secret_post`.
+
+Rules for registered clients:
+
+- `grant_types` defaults to `authorization_code` and `refresh_token`. `client_credentials` is refused. Add `urn:ietf:params:oauth:grant-type:device_code` if the client will use the device flow.
+- `redirect_uris` is required with `authorization_code`, up to 10 URIs.
+- `token_endpoint_auth_method` defaults to `none` (a public client).
+- Each requested scope must be one a regular member may hold and, when `MCP_SCOPES` is set, one listed there. Otherwise the request fails with `invalid_client_metadata`.
+- The application belongs to the instance's organization. The consent screen tells users that the application registered itself.
+
+---
+
+## Discovery Endpoints
+
+These endpoints are public and need no authentication. They are served at the root of the instance, not under `/api/v1`.
+
+| Endpoint | Returns |
+|----------|---------|
+| `/.well-known/openid-configuration` | OpenID Connect discovery document |
+| `/.well-known/oauth-authorization-server` | The same document at the RFC 8414 path. Some MCP clients read this one. |
+| `/.well-known/oauth-protected-resource/mcp` | Protected resource metadata (RFC 9728) for the `/mcp` endpoint |
+| `/.well-known/jwks.json` | Public keys for verifying tokens. The set is empty when tokens are signed with HS256, as `id_token_signing_alg_values_supported` shows. |
+
+The discovery document lists the authorization, token, userinfo, revocation and introspection endpoints, `scopes_supported`, and `grant_types_supported`. Some fields appear only when the feature is on:
+
+| Field | Present when |
+|-------|--------------|
+| `device_authorization_endpoint` and the `device_code` grant type | The device grant is on (the default) |
+| `pipeshub_device_client_id` | The device grant is on and the instance has an organization |
+| `registration_endpoint` | `PIPESHUB_ENABLE_DCR=true` |
+
+The protected resource document for `/mcp` lists only the scopes the MCP tools use. See [MCP Server Overview](/mcp/overview).
 
 ---
 
@@ -473,14 +598,9 @@ These endpoints are publicly accessible and do not require authentication. They 
 
 Click on any application from the list to view its configuration, including the client ID, allowed scopes, grant types, redirect URIs, and token settings.
 
-<div style={{ textAlign: "center", padding: "10px" }}>
-  <img
-    src="/images/developer/oauth2/oauth2_app_detail.png"
-    alt="OAuth application detail view with configuration settings"
-    style={{ display: 'block', margin: '0 auto' }}
-    width="90%"
-  />
-</div>
+<Frame>
+  <img src="/images/developer/oauth2/oauth2_app_detail.png" alt="OAuth application detail view with configuration settings" width="612" />
+</Frame>
 
 ### Regenerating the Client Secret
 
@@ -498,9 +618,9 @@ If your client secret has been compromised or needs to be rotated:
 
 If you need to temporarily disable an application without deleting it:
 
-1. Open the application detail page
-2. Go to Advanced section in sidebar
-3. Click **Suspend Application**
+1. Select **Manage** on the application to open its panel
+2. Open the **Advanced** tab
+3. Click **Suspend application**
 
 A suspended application cannot authorize new users or issue tokens. Existing tokens remain valid until they expire. To restore access, click **Activate application** on the same page.
 
@@ -512,9 +632,9 @@ Deleting an OAuth application:
 2. Permanently marks the application as revoked
 
 Steps to delete an application:
-1. Open the application detail page
-2. Go to Advanced section in sidebar
-3. Click **Delete Application**
+1. Select **Manage** on the application to open its panel
+2. Open the **Advanced** tab
+3. Click **Delete application**
 4. Confirm by putting the application name in dialog box
 
 <Warning>
@@ -528,8 +648,8 @@ From the application detail page, administrators can:
 - **Revoke all tokens** at once, which is useful in the event of a security incident
 
 Steps to revoke all tokens:
-1. Open the application detail page
-2. Go to Advanced section in sidebar
+1. Select **Manage** on the application to open its panel
+2. Open the **Advanced** tab
 3. Click **Revoke all tokens**
 4. Confirm by putting the application name in dialog box
 
@@ -575,11 +695,15 @@ The following table provides a quick reference for all OAuth 2.0 endpoints:
 |----------|--------|-------------|
 | `/api/v1/oauth2/authorize` | `GET` | Initiate the authorization flow |
 | `/api/v1/oauth2/authorize` | `POST` | Submit user consent |
-| `/api/v1/oauth2/token` | `POST` | Exchange code for tokens, refresh tokens, or client credentials |
+| `/api/v1/oauth2/token` | `POST` | Exchange a code, refresh token, client credentials or device code for tokens |
 | `/api/v1/oauth2/revoke` | `POST` | Revoke an access or refresh token |
 | `/api/v1/oauth2/introspect` | `POST` | Inspect a token's validity and metadata |
 | `/api/v1/oauth2/userinfo` | `GET` | Retrieve user profile information (requires `openid` scope) |
+| `/api/v1/oauth2/device_authorization` | `POST` | Start the device flow |
+| `/api/v1/oauth2/register` | `POST` | Dynamic client registration (off by default) |
 | `/.well-known/openid-configuration` | `GET` | OpenID Connect Discovery document |
+| `/.well-known/oauth-authorization-server` | `GET` | Authorization server metadata (RFC 8414) |
+| `/.well-known/oauth-protected-resource/mcp` | `GET` | Protected resource metadata for `/mcp` |
 | `/.well-known/jwks.json` | `GET` | Public keys for token verification |
 
 ---
@@ -653,7 +777,7 @@ There is no fixed limit on the number of OAuth applications per organization. Ho
 </Accordion>
 
 <Accordion title="Does PipesHub support PKCE?">
-Yes. PKCE (Proof Key for Code Exchange) is fully supported and is required for public (non-confidential) clients. PipesHub supports both `S256` and `plain` challenge methods, though `S256` is strongly recommended.
+Yes. PKCE (Proof Key for Code Exchange) is fully supported and is required for public (non-confidential) clients. Only the `S256` challenge method is accepted.
 </Accordion>
 
 </AccordionGroup>

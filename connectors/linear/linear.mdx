@@ -84,16 +84,13 @@ The Linear connector supports two authentication methods:
 
 Before creating the OAuth application in Linear, copy the Redirect URL from PipesHub.
 
-1. In PipesHub, go to **Workspace Settings** → **Connectors**, find **Linear**, and click **Set up** for a new instance.
+1. In PipesHub, go to **Workspace settings** → **Connectors**, find **Linear**, and click **Set up** for a new instance.
 2. The connector panel opens as a right-side drawer. On the **Authenticate** tab, copy the **Redirect/Callback URL**.
 
-<div className="text-center">
-  <img
-    src="/images/connectors/linear/linear_config.png"
-    alt="PipesHub Linear Authenticate tab — copy the Redirect/Callback URL"
-    className="block mx-auto w-11/12"
-  />
-</div>
+<Frame>
+  <img className="block dark:hidden" src="/images/connectors/linear/linear_config.png" alt="Set up Linear drawer, Authenticate tab with the Redirect/Callback URL to copy" />
+  <img className="hidden dark:block" src="/images/connectors/linear/linear_config-dark.png" alt="Set up Linear drawer, Authenticate tab with the Redirect/Callback URL to copy" />
+</Frame>
 
 #### Step 3: Create a new OAuth 2.0 application
 
@@ -163,33 +160,27 @@ With OAuth 2.0, the connector drawer in PipesHub has three tabs: **Authenticate*
 1. Enter an **Instance name** (required) to identify this connector instance.
 2. Under **Authentication method**, choose **OAuth 2.0**.
 3. Confirm the **Redirect/Callback URL** matches the Callback URL you saved in Linear in Step 3.
-4. If your admin has pre-registered an OAuth app, pick it from the **OAuth app** dropdown. Otherwise leave it blank and enter credentials manually.
+4. Under **OAuth app**, pick a saved OAuth app if one exists. Otherwise enter an **OAuth app name** (required), such as `Linear`, and enter the credentials below.
 5. Enter:
    - **Client ID** — from Step 4
    - **Client Secret** — from Step 4
 6. Click **Next** to move to the **Authorize** tab.
 
-<div className="text-center">
-  <img
-    src="/images/connectors/linear/connector_add_creds.png"
-    alt="Authenticate tab — enter Client ID and Client Secret"
-    className="block mx-auto w-11/12"
-  />
-</div>
+<Frame>
+  <img className="block dark:hidden" src="/images/connectors/linear/connector_add_creds.png" alt="Authenticate tab with OAuth 2.0 Client ID and Client Secret filled in" />
+  <img className="hidden dark:block" src="/images/connectors/linear/connector_add_creds-dark.png" alt="Authenticate tab with OAuth 2.0 Client ID and Client Secret filled in" />
+</Frame>
 
 #### Step 6: Authorize tab — complete the OAuth flow
 
-On the **Authorize** tab, all the OAuth authorization work happens. The tab shows an **Authenticate** button to kick off the OAuth handshake.
+On the **Authorize** tab, all the OAuth authorization work happens. The tab shows an **Authenticate Linear to proceed** button that starts the OAuth handshake.
 
-<div className="text-center">
-  <img
-    src="/images/connectors/linear/connector_authenticated.png"
-    alt="PipesHub Authorize tab with the Authenticate button"
-    className="block mx-auto w-11/12"
-  />
-</div>
+<Frame>
+  <img className="block dark:hidden" src="/images/connectors/linear/connector_authenticated.png" alt="Authorize tab with the Authenticate Linear to proceed button" />
+  <img className="hidden dark:block" src="/images/connectors/linear/connector_authenticated-dark.png" alt="Authorize tab with the Authenticate Linear to proceed button" />
+</Frame>
 
-1. Click **Authenticate** to start the OAuth flow. A popup opens to Linear's authorization page showing your application name and the workspace it will authenticate with. Permissions requested: **Read access to your workspace**.
+1. Click **Authenticate Linear to proceed** to start the OAuth flow. A popup opens to Linear's authorization page showing your application name and the workspace it will authenticate with. Permissions requested: **Read access to your workspace**.
 
 <div className="text-center">
   <img
@@ -204,8 +195,8 @@ On the **Authorize** tab, all the OAuth authorization work happens. The tab show
 </Warning>
 
 2. Click **Authorize** to grant access.
-3. The popup closes and returns you to PipesHub. The connector tile shows an **Authenticated** badge with a **Reauthenticate** option.
-4. Click **Next** to move to the **Configure records** tab.
+3. The popup closes and returns you to PipesHub. The tab shows **Connected**, and you can continue to **Configure records**.
+4. Click **Continue to configuration →** to move to the **Configure records** tab.
 
 <Info>
   The connector requests only **read access** to your workspace. It does not create, modify, or delete any Linear data.
@@ -216,17 +207,14 @@ On the **Authorize** tab, all the OAuth authorization work happens. The tab show
 Instead of Steps 1–6, you can authenticate with a Linear personal API key.
 
 1. In Linear, go to **Settings → Account → Security & access** ([linear.app/settings/account/security](https://linear.app/settings/account/security)) and create a personal API key.
-2. In PipesHub, go to **Workspace Settings** → **Connectors**, find **Linear**, and click **Set up**.
+2. In PipesHub, go to **Workspace settings** → **Connectors**, find **Linear**, and click **Set up**.
 3. On the **Authenticate** tab, enter an **Instance name**, choose **API Token** under **Authentication method**, and paste the key into **API Token**.
 4. Continue to the **Configure records** tab (Step 7). There is no **Authorize** tab for this method.
 
-<div className="text-center">
-  <img
-    src="/images/connectors/linear/ph-linear-api-token.png"
-    alt="Linear Authenticate tab with API Token selected as the authentication method"
-    className="block mx-auto w-2/3"
-  />
-</div>
+<Frame>
+  <img className="block dark:hidden" src="/images/connectors/linear/ph-linear-api-token.png" alt="Authenticate tab with API Token selected as the authentication method" />
+  <img className="hidden dark:block" src="/images/connectors/linear/ph-linear-api-token-dark.png" alt="Authenticate tab with API Token selected as the authentication method" />
+</Frame>
 
 <Note>
   The connector syncs what the key's user can see in Linear, further limited by any team or permission restrictions set on the key. Private teams are synced only if that user is a member. A team the key can't read is not synced, even if you select it in the **Teams** filter.
@@ -238,16 +226,13 @@ On the **Configure records** tab, control how the connector syncs and what gets 
 
 **Sync settings** — configure your synchronization preferences first:
 
-1. **Sync Strategy** — `Scheduled` or `Manual`.
-2. **Sync Interval** — how often to sync (default: 60 minutes).
+1. **Sync strategy** — `Scheduled` or `Manual`.
+2. **Sync interval** — how often to sync (default: 1 hour).
 
-<div className="text-center">
-  <img
-    src="/images/connectors/linear/connector_configure_sync_strategy.png"
-    alt="Configure Sync Strategy"
-    className="block mx-auto w-11/12"
-  />
-</div>
+<Frame>
+  <img className="block dark:hidden" src="/images/connectors/linear/connector_configure_sync_strategy.png" alt="Configure records tab with Sync strategy, Sync interval and indexing filters" />
+  <img className="hidden dark:block" src="/images/connectors/linear/connector_configure_sync_strategy-dark.png" alt="Configure records tab with Sync strategy, Sync interval and indexing filters" />
+</Frame>
 
 <Note>
   **Scheduled sync** runs automatically at the specified intervals. **Manual sync** requires you to trigger synchronization on-demand.
@@ -255,13 +240,10 @@ On the **Configure records** tab, control how the connector syncs and what gets 
 
 **Sync filters** — determine which content is downloaded from Linear. Data excluded by sync filters is never downloaded. If you narrow a filter later, the records it now excludes are removed from search on the next sync.
 
-<div className="text-center">
-  <img
-    src="/images/connectors/linear/linear-filters.png"
-    alt="Linear Filters Configuration"
-    className="block mx-auto w-11/12"
-  />
-</div>
+<Frame>
+  <img className="block dark:hidden" src="/images/connectors/linear/linear-filters.png" alt="Configure records tab with the Add filter menu open: Teams, Modified Date and Created Date" />
+  <img className="hidden dark:block" src="/images/connectors/linear/linear-filters-dark.png" alt="Configure records tab with the Add filter menu open: Teams, Modified Date and Created Date" />
+</Frame>
 
 Available sync filters:
 
@@ -270,7 +252,7 @@ Available sync filters:
    - Disabled (default): records are indexed automatically after sync.
 
 2. **Teams** — filter issues and projects by team.
-   - Operator: `In` (include only) or `Not In` (exclude)
+   - Operator: `In` (include only) or `Not in` (exclude)
    - Selection: searchable dropdown of all your Linear teams (e.g., "Engineering", "Design", "Product")
    - Leave empty to sync all teams.
 
@@ -278,7 +260,7 @@ Available sync filters:
   The team list is dynamically fetched from your Linear workspace. Type to search and filter; select multiple teams as needed.
 </Info>
 
-3. **Modified Date** — filter by last modification date. Operators: `Is After`, `Is Before`, `Is Between`.
+3. **Modified Date** — filter by last modification date. Operators: `Is after`, `Is before`, `Is between`.
 
 4. **Created Date** — filter by creation date. Same operators.
 
@@ -293,22 +275,19 @@ Available sync filters:
 **Example configurations:**
 
 - *Sync only Engineering team:* Teams → Operator `In` → select "Engineering"
-- *Exclude archived teams:* Teams → Operator `Not In` → select archived teams
-- *Recent issues only:* Modified Date → Operator `Is After` → Date `2024-06-01`
+- *Exclude archived teams:* Teams → Operator `Not in` → select archived teams
+- *Recent issues only:* Modified Date → Operator `Is after` → Date `2024-06-01`
 - *Index issues but not attachments:* disable **Index Issue Attachments**
 - *Index everything except files:* disable **Index Issue and Comment Files**
 
-Click **Save** to save your configuration. PipesHub confirms the instance is ready with a final dialog — **"Instance is configured and ready to sync!"** — offering two choices: **I'll do it later** or **Start syncing now**.
+Click **Save configuration**. If you added no sync filters, or turned on **Enable Manual Indexing**, PipesHub first asks **Start sync process?**; click **Confirm** to save. PipesHub then shows **Instance is configured and ready to sync!** with two choices: **I'll do it later** or **Start syncing now**.
 
-<div className="text-center">
-  <img
-    src="/images/connectors/linear/enable_connector.png"
-    alt="Instance is configured and ready to sync — I'll do it later or Start syncing now"
-    className="block mx-auto w-11/12"
-  />
-</div>
+<Frame>
+  <img className="block dark:hidden" src="/images/connectors/linear/enable_connector.png" alt="Instance is configured and ready to sync dialog with I'll do it later and Start syncing now" />
+  <img className="hidden dark:block" src="/images/connectors/linear/enable_connector-dark.png" alt="Instance is configured and ready to sync dialog with I'll do it later and Start syncing now" />
+</Frame>
 
-Choose **Start syncing now** to kick off the initial sync immediately, or **I'll do it later** to enable the connector without an immediate sync. Monitor the **Indexing Progress** to track sync completion.
+Choose **Start syncing now** to start the first sync, or **I'll do it later** to leave the connector off until you turn on **Sync enabled** on the instance card. Click the arrow on the connector card and check **Records status** to track sync completion.
 
 ## Supported Features
 
@@ -504,7 +483,7 @@ There are three common causes:
    - **Fix:** Verify sync filters in the connector settings and ensure indexing has completed. Check that the data matches your search query criteria.
 
 3. **Data not yet indexed** - The connector is still syncing or hasn't completed the initial indexing process.
-   - **Fix:** Go to **Workspace Settings → Connectors**, check the sync status, and wait for indexing to complete.
+   - **Fix:** Go to **Workspace settings → Connectors**, check the sync status, and wait for indexing to complete.
 
 </Accordion>
 

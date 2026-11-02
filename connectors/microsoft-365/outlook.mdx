@@ -42,7 +42,7 @@ The Microsoft Outlook connector provides access to organizational email data thr
 
 ### Authentication
 
-The connector uses **OAuth 2.0** with Microsoft Graph **application permissions** (client credentials plus **admin consent**). It runs as a background integration—no per-user interactive sign-in inside PipesHub for this connector.
+The connector uses **OAuth 2.0** with Microsoft Graph **application permissions** (client credentials plus **admin consent**). It runs as a background integration, with no per-user interactive sign-in inside PipesHub for this connector.
 
 <Warning>
   Registering the app, granting admin consent, and entering secrets in PipesHub requires appropriate **Microsoft Entra ID** (Azure AD) and **Microsoft 365** admin privileges. Use the same administrator identity in Azure and PipesHub when configuring consent-related steps to avoid permission mismatches.
@@ -52,7 +52,7 @@ The connector uses **OAuth 2.0** with Microsoft Graph **application permissions*
 
 ## Configuration Guide
 
-Follow the steps below: first register an app in Azure and grant permissions, then add the Outlook connector under **Workspace Settings** in PipesHub.
+Follow the steps below: first register an app in Azure and grant permissions, then add the Outlook connector under **Workspace settings** in PipesHub.
 
 ### How to configure and enable the Outlook connector
 
@@ -71,21 +71,21 @@ Follow the steps below: first register an app in Azure and grant permissions, th
 <div className="text-center">
   <img
     src="/images/connectors/outlook/enterprise/new_app.png"
-    alt="Azure App registrations — New registration"
+    alt="Microsoft Entra tenant Overview with the Add menu open on App registration"
     className="block mx-auto w-11/12"
   />
 </div>
 
 4. Enter application details:
-   - **Name** — A meaningful name (e.g. `PipesHub Outlook Connector`)
-   - **Supported account types** — **Accounts in this organizational directory only (Single tenant)**
+   - **Name**: A meaningful name (e.g. `PipesHub Outlook Connector`)
+   - **Supported account types**: **Accounts in this organizational directory only (Single tenant)**
 5. You do **not** need a **Redirect URI** for this connector; it uses application credentials and admin consent, not an interactive redirect flow in PipesHub.
 6. Click **Register**
 
 <div className="text-center">
   <img
     src="/images/connectors/outlook/enterprise/register_app.png"
-    alt="Azure — completed app registration"
+    alt="Azure: completed app registration"
     className="block mx-auto w-11/12"
   />
 </div>
@@ -98,8 +98,8 @@ Follow the steps below: first register an app in Azure and grant permissions, th
 
 1. After registration, open the app **Overview** page.
 2. Copy (you will paste these into PipesHub later):
-   - **Application (client) ID** — in **Essentials**
-   - **Directory (tenant) ID** — in **Essentials**
+   - **Application (client) ID**: in **Essentials**
+   - **Directory (tenant) ID**: in **Essentials**
 
 <div className="text-center">
   <img
@@ -110,7 +110,7 @@ Follow the steps below: first register an app in Azure and grant permissions, th
 </div>
 
 <Warning>
-  Copy the **Application (client) ID**, not the **Object ID** — they are different values.
+  Copy the **Application (client) ID**, not the **Object ID**. They are different values.
 </Warning>
 
 #### Step 3: Create a client secret
@@ -123,7 +123,7 @@ Follow the steps below: first register an app in Azure and grant permissions, th
 <div className="text-center">
   <img
     src="/images/connectors/outlook/enterprise/client_secret.png"
-    alt="Azure — new client secret"
+    alt="Azure: new client secret"
     className="block mx-auto w-11/12"
   />
 </div>
@@ -145,13 +145,13 @@ Follow the steps below: first register an app in Azure and grant permissions, th
 <div className="text-center">
   <img
     src="/images/connectors/outlook/enterprise/api_permissions.png"
-    alt="Azure — Microsoft Graph application permissions"
+    alt="Azure: Microsoft Graph application permissions"
     className="block mx-auto w-11/12"
   />
 </div>
 
 <Info>
-  Application permissions let the connector access org mail data without each user signing in interactively. When you save the connector, PipesHub checks all three permissions and names any that is missing.
+  Application permissions let the connector access org mail data without each user signing in interactively. When you save the connector, PipesHub checks all three permissions and names the first one that is missing.
 </Info>
 
 #### Step 5: Grant admin consent
@@ -162,72 +162,60 @@ Follow the steps below: first register an app in Azure and grant permissions, th
 <div className="text-center">
   <img
     src="/images/connectors/outlook/enterprise/admin_consent.png"
-    alt="Azure — admin consent granted for API permissions"
+    alt="Azure: admin consent granted for API permissions"
     className="block mx-auto w-11/12"
   />
 </div>
 
 <Warning>
-  Admin consent is required for application permissions. Only **Global Administrators** or **Application Administrators** (per your tenant’s role assignments) can grant this consent.
+  Admin consent is required for application permissions. For Microsoft Graph application permissions, only a **Privileged Role Administrator** or a **Global Administrator** can grant this consent.
 </Warning>
 
 #### Step 6: Open Connectors and start Outlook setup
 
-1. In the main app, open your **user profile** menu at the bottom of the left sidebar → **Workspace Settings**.
+1. In the main app, open your **user profile** menu at the bottom of the left sidebar → **Workspace settings**.
 2. Under **Workspace**, select **Connectors**.
-3. Find **Outlook** and start setup (**+ Setup** on the card), or open an existing instance to edit.
+3. Find **Outlook** and start setup (**+ Set up** on the card), or open an existing instance to edit.
 
-<div className="text-center">
-  <img
-    src="/images/connectors/outlook/enterprise/outlook-connector-home-nav.png"
-    alt="User profile menu with Workspace Settings"
-    className="block mx-auto w-11/12"
-  />
-</div>
+<Frame>
+  <img className="block dark:hidden" src="/images/connectors/outlook/enterprise/outlook-connector-home-nav.png" alt="User profile menu with Workspace settings" />
+  <img className="hidden dark:block" src="/images/connectors/outlook/enterprise/outlook-connector-home-nav-dark.png" alt="User profile menu with Workspace settings" />
+</Frame>
 
-<div className="text-center">
-  <img
-    src="/images/connectors/outlook/enterprise/outlook-connector-connectors-page.png"
-    alt="Workspace Connectors page with Outlook"
-    className="block mx-auto w-11/12"
-  />
-</div>
+<Frame>
+  <img className="block dark:hidden" src="/images/connectors/outlook/enterprise/outlook-connector-connectors-page.png" alt="Workspace Connectors page with Outlook" />
+  <img className="hidden dark:block" src="/images/connectors/outlook/enterprise/outlook-connector-connectors-page-dark.png" alt="Workspace Connectors page with Outlook" />
+</Frame>
 
 #### Step 7: Authenticate the Outlook instance
 
-1. In **Outlook Configuration**, open the **Authenticate Instance** tab.
+1. In **Set up Outlook**, open the **Authenticate** tab.
 2. Set **Instance name** (e.g. `Outlook connector`).
-3. Under **OAuth (Admin Consent) Credentials**, enter:
-   - **Application (Client) ID** — from Step 2  
-   - **Client Secret** — from Step 3  
-   - **Directory (Tenant) ID** — from Step 2  
+3. Under **OAuth (Admin Consent) credentials**, enter:
+   - **Application (Client) ID**: from Step 2  
+   - **Client Secret**: from Step 3  
+   - **Directory (Tenant) ID**: from Step 2  
 4. Enable **Has Admin Consent** if consent was granted in Azure (Step 5).
-5. Click **Next →**. Use the in-product **Setup Documentation** links if you want Azure steps side-by-side.
+5. Click **Next**. Use the links under **Setup guides** if you want the Azure steps side by side.
 
-<div className="text-center">
-  <img
-    src="/images/connectors/outlook/enterprise/outlook-connector-config.png"
-    alt="Outlook Configuration — Authenticate Instance tab"
-    className="block mx-auto w-11/12"
-  />
-</div>
+<Frame>
+  <img className="block dark:hidden" src="/images/connectors/outlook/enterprise/outlook-connector-config.png" alt="Outlook Configuration: Authenticate tab" />
+  <img className="hidden dark:block" src="/images/connectors/outlook/enterprise/outlook-connector-config-dark.png" alt="Outlook Configuration: Authenticate tab" />
+</Frame>
 
 #### Step 8: Configure records (sync strategy and filters)
 
-On **Configure Records**, you control sync cadence and scope. **Indexing filters** always apply; **sync filters** are optional—add only the constraints you need (each filter uses an operator and value where applicable).
+On **Configure records**, you control sync cadence and scope. **Indexing filters** always apply; **sync filters** are optional, so add only the constraints you need (each filter uses an operator and value where applicable).
 
-<div className="text-center">
-  <img
-    src="/images/connectors/outlook/enterprise/outlook-connector-sync-str.png"
-    alt="Outlook Configuration — Configure Records, sync strategy"
-    className="block mx-auto w-11/12"
-  />
-</div>
+<Frame>
+  <img className="block dark:hidden" src="/images/connectors/outlook/enterprise/outlook-connector-sync-str.png" alt="Outlook Configure records tab with Sync strategy and Sync interval" />
+  <img className="hidden dark:block" src="/images/connectors/outlook/enterprise/outlook-connector-sync-str-dark.png" alt="Outlook Configure records tab with Sync strategy and Sync interval" />
+</Frame>
 
 **Sync settings**
 
-- **Sync Strategy** — e.g. **Scheduled** or **Manual** (exact options depend on your workspace).
-- **Sync Interval** — When scheduled, set the refresh interval (e.g. **1 Hour**).
+- **Sync strategy**: **Scheduled** or **Manual**.
+- **Sync interval**: when scheduled, how often it syncs. The default is **1 hour**.
 
 **Enable Manual Indexing**
 
@@ -241,27 +229,24 @@ Use **+ Add filter** to limit what is synced. Types include **Users**, **Standar
   **Deleted Items** is not synced by default. To sync it, select it in the **Standard Folders** filter.
 </Note>
 
-<div className="text-center">
-  <img
-    src="/images/connectors/outlook/enterprise/outlook-connector-filters.png"
-    alt="Outlook Configuration — indexing and sync filters"
-    className="block mx-auto w-11/12"
-  />
-</div>
+<Frame>
+  <img className="block dark:hidden" src="/images/connectors/outlook/enterprise/outlook-connector-filters.png" alt="Outlook sync filters with the Add filter menu open, the Received Date filter and the indexing filters" />
+  <img className="hidden dark:block" src="/images/connectors/outlook/enterprise/outlook-connector-filters-dark.png" alt="Outlook sync filters with the Add filter menu open, the Received Date filter and the indexing filters" />
+</Frame>
 
 **Indexing filters**
 
-- **Index Emails** — Message bodies and metadata for search.  
-- **Index Attachments** — Attachment content where supported.  
-- **Index Group Conversations** — Microsoft 365 group mail threads.
+- **Index Emails**: Message bodies and metadata for search.  
+- **Index Attachments**: Attachment content where supported.  
+- **Index Group Conversations**: Microsoft 365 group mail threads.
 
-Click **Save Configuration** when finished, or **← Back** to return to **Authenticate Instance**.
+Click **Save configuration** when finished, or **← Back** to return to **Authenticate**.
 
 **Examples**
 
-- **Recent mail only** — **Received Date** with an operator such as **Is After** and your cutoff date.  
-- **Specific mailboxes** — **Users** with operator **In** and selected users (leave empty for all).  
-- **Fewer attachments in search** — Turn off **Index Attachments**, keep **Index Emails** on.
+- **Recent mail only**: **Received Date** with an operator such as **Is after** and your cutoff date.  
+- **Specific mailboxes**: **Users** with operator **In** and selected users (leave empty for all).  
+- **Fewer attachments in search**: Turn off **Index Attachments**, keep **Index Emails** on.
 
 <div className="text-center">
   <img
@@ -281,39 +266,25 @@ Click **Save Configuration** when finished, or **← Back** to return to **Authe
   The administrator who grants consent in Azure should align with the **PipesHub account** used to configure this connector; mismatched identities often cause permission issues in PipesHub.
 </Warning>
 
-After saving, you may see **Instance is configured and ready to sync** — choose **Start Syncing Now** or **I'll do it later**.
+After saving, you may see **Instance is configured and ready to sync!**. Choose **Start syncing now** or **I'll do it later**.
 
-<div className="text-center">
-  <img
-    src="/images/connectors/outlook/enterprise/outlook-connector-sync-modal.png"
-    alt="Instance ready to sync confirmation dialog"
-    className="block mx-auto w-11/12"
-  />
-</div>
 
-On the **Outlook** connector page, turn **Sync Enabled** on when ready. Use **Sync**, **Full sync**, or **Retry failed** on the instance card as needed. Open the instance (**Overview**) for counts such as **Total**, **Completed**, **Failed**, and types like **MAIL** / **GROUP_MAIL**.
+On the **Outlook** connector page, turn **Sync enabled** on when ready. Use **Sync** or **Full sync** on the instance card as needed. Open the instance (**Overview**) for counts such as **Total**, **Completed**, **Failed**, and types like **MAIL** / **GROUP_MAIL**.
 
-<div className="text-center">
-  <img
-    src="/images/connectors/outlook/enterprise/outlook-connector-stats.png"
-    alt="Outlook connector instances and Overview stats"
-    className="block mx-auto w-11/12"
-  />
-</div>
 
 <Note>
-  There is no separate interactive “Sign in to Microsoft” step inside PipesHub for this connector after admin consent—access is via application permissions and client credentials.
+  There is no separate interactive “Sign in to Microsoft” step inside PipesHub for this connector after admin consent. Access is via application permissions and client credentials.
 </Note>
 
 ## Supported Features
 
 The Outlook connector syncs the following data:
 
-- **Users** — User profiles and mailbox context used for the integration  
-- **Emails** — Messages from organizational mailboxes (within sync filter scope)  
-- **Attachments** — Files attached to messages (when attachment indexing is enabled)  
-- **Mail folders** — Standard and custom folder hierarchy  
-- **Group conversations** — When **Index Group Conversations** is enabled  
+- **Users**: User profiles and mailbox context used for the integration  
+- **Emails**: Messages from organizational mailboxes (within sync filter scope)  
+- **Attachments**: Files attached to messages (when attachment indexing is enabled)  
+- **Mail folders**: Standard and custom folder hierarchy  
+- **Group conversations**: When **Index Group Conversations** is enabled  
 
 ### Whose mail is synced
 
@@ -354,7 +325,7 @@ The Outlook connector syncs the following data:
 
 **Secret expired**
 
-- Create a new client secret in Azure → **Certificates & secrets**, then update the **Authenticate Instance** tab in PipesHub.
+- Create a new client secret in Azure → **Certificates & secrets**, then update the **Authenticate** tab in PipesHub.
 
 <Info>
   Personal Microsoft accounts (e.g. outlook.com as a consumer identity without the right tenant model for this flow) are not a supported target for this enterprise connector pattern.
@@ -363,6 +334,20 @@ The Outlook connector syncs the following data:
 </Accordion>
 
 </AccordionGroup>
+
+## Permissions
+
+People are matched to PipesHub accounts by email (their `mail` or user principal name in Microsoft Entra ID).
+
+| Synced content | Who can find it in PipesHub |
+|---|---|
+| **A user's mailbox** (folders, messages, attachments) | Only that user. An admin who sets up the connector doesn't get access to other people's mail. |
+| **Microsoft 365 group conversations** | The group's members, as read from Microsoft Entra ID on each sync. Nested groups are expanded. |
+
+- A user whose account is disabled in Microsoft Entra ID (`accountEnabled` false) loses access to their mailbox and group conversations in PipesHub. Enabling the account again restores it.
+- If a group's members can't be read on a sync, the members from the previous sync are kept.
+
+---
 
 ## Data sync behavior
 
@@ -378,7 +363,7 @@ The Outlook connector syncs the following data:
 
 ### Incremental sync
 
-- **Polling-based** — Refreshes on your **Sync Interval** when using a scheduled strategy  
+- **Polling-based**: Refreshes on your **Sync interval** when using a scheduled strategy  
 - Uses Microsoft Graph change tracking / delta patterns where applicable so only new or changed items are fetched after the initial pass  
 
 </Accordion>
@@ -395,14 +380,14 @@ The Outlook connector syncs the following data:
 
 There are three common causes:
 
-1. **Email mismatch** — The email used during connector authentication does not match your PipesHub account email. That causes permission issues and can hide synced data.  
+1. **Email mismatch**: The email used during connector authentication does not match your PipesHub account email. That causes permission issues and can hide synced data.  
    - **Fix:** Reconfigure the connector and complete the flow using the **same email** as your PipesHub account (see the warning in Step 9).
 
-2. **Records show in "All Records" but not in search** — Documents appear in All Records but not in search results.  
-   - **Fix:** Verify sync filters and indexing toggles on **Configure Records**, and ensure indexing has finished for those items.
+2. **Records show in "All records" but not in search**: Documents appear in All records but not in search results.  
+   - **Fix:** Verify sync filters and indexing toggles on **Configure records**, and ensure indexing has finished for those items.
 
-3. **Data not yet indexed** — The connector is still syncing or has not finished initial indexing.  
-   - **Fix:** Open **Workspace Settings** → **Connectors**, select **Outlook**, check the instance **Overview** and sync status, and wait for indexing to complete.
+3. **Data not yet indexed**: The connector is still syncing or has not finished initial indexing.  
+   - **Fix:** Open **Workspace settings** → **Connectors**, select **Outlook**, check the instance **Overview** and sync status, and wait for indexing to complete.
 
 </Accordion>
 

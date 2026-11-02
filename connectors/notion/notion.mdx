@@ -32,8 +32,8 @@ PipesHub has two Notion connectors. Both sync **pages**, **databases**, **commen
 
 | Connector | Where you set it up | Who can search the synced records |
 |-----------|---------------------|-----------------------------------|
-| **Notion** (team) | **Workspace Settings → Connectors → Notion** | Every Notion workspace member PipesHub can map by email - **not** only the people a page is shared with in Notion |
-| **Notion Personal** | **Workspace Settings → Your Connectors → Notion Personal** | **Only you** (the person who created the connector) |
+| **Notion** (team) | **Workspace settings → Connectors → Notion** | Every Notion workspace member PipesHub can map by email - **not** only the people a page is shared with in Notion |
+| **Notion Personal** | **Workspace settings → Your connectors → Notion Personal** | **Only you** (the person who created the connector) |
 
 <Warning>
   **Team connector limitation:** Notion's API does not expose per-page sharing, so the team connector **does not follow Notion ACLs**. Anything it syncs becomes searchable by everyone in that Notion workspace (matched in PipesHub by email). Private or restricted pages you share with the integration are visible to those users in PipesHub, even if they could not open the page in Notion. Use **Notion Personal** if the content should be searchable only by you.
@@ -53,7 +53,7 @@ PipesHub has two Notion connectors. Both sync **pages**, **databases**, **commen
 | **Comments** | Comments on shared pages, when the connection can read comments |
 | **Users** | Team connector only - workspace people used to grant search access. Notion Personal does not sync a user directory |
 
-The connector only sees content Notion granted it. **Configure Records** in PipesHub can narrow indexing further; it cannot reach pages you never shared.
+The connector only sees content Notion granted it. **Configure records** in PipesHub can narrow indexing further; it cannot reach pages you never shared.
 
 ### Authentication
 
@@ -63,7 +63,7 @@ The connector only sees content Notion granted it. **Configure Records** in Pipe
 | **Access token** (`ntn_...`) | Yes - same **New connection** dialog, **Access token** method | No |
 | **Personal access tokens** (Developer tools tab) | Not supported | Not supported |
 
-In PipesHub the OAuth flow has three tabs: **Authenticate Instance** (Redirect URL + client credentials), **Authorize** (sign in to Notion and pick pages), then **Configure Records** (sync strategy and indexing).
+In PipesHub the OAuth flow has three tabs: **Authenticate** (Redirect URL + client credentials), **Authorize** (sign in to Notion and pick pages), then **Configure records** (sync strategy and indexing).
 
 ---
 
@@ -75,53 +75,41 @@ In Notion, open **Settings → Connections → Go to developer portal**, create 
 
 #### Step 1: Open the right catalog in PipesHub
 
-1. Open your **user profile** menu (bottom of the left sidebar) → **Workspace Settings**.
+1. Open your **user profile** menu (bottom of the left sidebar) → **Workspace settings**.
 2. Choose the catalog that matches the access model you want:
-   - **Team** - under **Workspace**, select **Connectors**. Find **Notion** and click **+ Setup**.
-   - **Personal** - under **Personal**, select **Your Connectors**. Find **Notion Personal** and click **+ Setup**.
+   - **Team** - under **Workspace**, select **Connectors**. Find **Notion** and click **+ Set up**.
+   - **Personal** - under **Personal**, select **Your connectors**. Find **Notion Personal** and click **+ Set up**.
 
-<div className="text-center">
-  <img
-    src="/images/connectors/common/go_to_workspace_settings.png"
-    alt="User profile menu with Workspace Settings"
-    className="block mx-auto w-11/12"
-  />
-</div>
+<Frame>
+  <img className="block dark:hidden" src="/images/connectors/common/go_to_workspace_settings.png" alt="User profile menu with Workspace settings" />
+  <img className="hidden dark:block" src="/images/connectors/common/go_to_workspace_settings-dark.png" alt="User profile menu with Workspace settings" />
+</Frame>
 
-<div className="text-center">
-  <img
-    src="/images/connectors/notion/notion-connector-page.png"
-    alt="Workspace Connectors page with Notion and + Setup"
-    className="block mx-auto w-11/12"
-  />
-</div>
+<Frame>
+  <img className="block dark:hidden" src="/images/connectors/notion/notion-connector-page.png" alt="Workspace Connectors page with Notion and + Set up" />
+  <img className="hidden dark:block" src="/images/connectors/notion/notion-connector-page-dark.png" alt="Workspace Connectors page with Notion and + Set up" />
+</Frame>
 
-<div className="text-center">
-  <img
-    src="/images/connectors/common/personal_connectors_list.png"
-    alt="Your Connectors page under Personal for Notion Personal"
-    className="block mx-auto w-11/12"
-  />
-</div>
+<Frame>
+  <img className="block dark:hidden" src="/images/connectors/common/personal_connectors_list-new.png" alt="Your Connectors page under Personal for Notion Personal" />
+  <img className="hidden dark:block" src="/images/connectors/common/personal_connectors_list-new-dark.png" alt="Your Connectors page under Personal for Notion Personal" />
+</Frame>
 
 The team instance shows a warning that synced content is searchable by everyone in the Notion workspace, and it links to **Notion Personal** if you want the private alternative.
 
 #### Step 2: Copy the Redirect URL (OAuth)
 
-On **Authenticate Instance**, set **Instance name**, then copy the **Redirect URL** exactly. You will paste it into Notion in Step 4.
+On **Authenticate**, set **Instance name**, then copy the **Redirect/Callback URL** exactly. You will paste it into Notion in Step 4.
 
 - Team: `https://{your-pipeshub-host}/connectors/oauth/callback/Notion`
 - Personal: `https://{your-pipeshub-host}/connectors/oauth/callback/Notion%20Personal`
 
 Use the value shown in PipesHub (scheme, host, and path). The two connectors need **different** redirect URIs. You can register both on one public connection, or create a separate public connection for each.
 
-<div className="text-center">
-  <img
-    src="/images/connectors/notion/notion-connector-redirect.png"
-    alt="PipesHub Authenticate Instance - Redirect URL to register in Notion"
-    className="block mx-auto w-11/12"
-  />
-</div>
+<Frame>
+  <img className="block dark:hidden" src="/images/connectors/notion/notion-connector-redirect.png" alt="PipesHub Authenticate - Redirect URL to register in Notion" />
+  <img className="hidden dark:block" src="/images/connectors/notion/notion-connector-redirect-dark.png" alt="PipesHub Authenticate - Redirect URL to register in Notion" />
+</Frame>
 
 <Info>
   Skipping OAuth? On the **team** connector you can paste an **Internal Integration Secret** instead. See [Team alternative: internal connection](#team-alternative-internal-connection). Notion Personal is OAuth only.
@@ -199,30 +187,24 @@ You land on **Developer tools**. You can create a connection from **Get started*
   />
 </div>
 
-#### Step 6: Finish Authenticate Instance in PipesHub
+#### Step 6: Finish Authenticate in PipesHub
 
-Return to **Notion Configuration → Authenticate Instance** if you navigated away. Paste **Client ID** and **Client Secret** from Step 5, confirm the Redirect URL, then click **Next →**.
+Return to **Set up Notion → Authenticate** if you navigated away. Paste **Client ID** and **Client Secret** from Step 5, confirm the Redirect URL, then click **Next**.
 
-<div className="text-center">
-  <img
-    src="/images/connectors/notion/notion-connector-new.png"
-    alt="PipesHub Notion Configuration - OAuth credentials on Authenticate Instance"
-    className="block mx-auto w-11/12"
-  />
-</div>
+<Frame>
+  <img className="block dark:hidden" src="/images/connectors/notion/notion-connector-new.png" alt="PipesHub Notion Configuration - OAuth credentials on Authenticate" />
+  <img className="hidden dark:block" src="/images/connectors/notion/notion-connector-new-dark.png" alt="PipesHub Notion Configuration - OAuth credentials on Authenticate" />
+</Frame>
 
 #### Step 7: Authorize with Notion
 
-1. On **Authorize**, click **Authenticate Notion to Proceed** and complete the browser flow.
+1. On **Authorize**, click **Authenticate Notion to proceed** and complete the browser flow.
 2. Under **Select workspace**, pick the Notion workspace to connect. Confirm you trust the connection, then continue to choose pages.
 
-<div className="text-center">
-  <img
-    src="/images/connectors/notion/notion-connector-authenticate.png"
-    alt="PipesHub Notion Configuration - Authorize tab before signing in"
-    className="block mx-auto w-11/12"
-  />
-</div>
+<Frame>
+  <img className="block dark:hidden" src="/images/connectors/notion/notion-connector-authenticate.png" alt="Authorize tab with the Authenticate Notion to proceed button" />
+  <img className="hidden dark:block" src="/images/connectors/notion/notion-connector-authenticate-dark.png" alt="Authorize tab with the Authenticate Notion to proceed button" />
+</Frame>
 
 <div className="text-center">
   <img
@@ -242,7 +224,7 @@ Return to **Notion Configuration → Authenticate Instance** if you navigated aw
   />
 </div>
 
-Whatever you include here is the scope Notion grants the integration. **Configure Records** in PipesHub refines sync and indexing further, but it cannot access pages you never selected.
+Whatever you include here is the scope Notion grants the integration. **Configure records** in PipesHub refines sync and indexing further, but it cannot access pages you never selected.
 
 When you see **Connected – you can continue to Configure records**, click **Continue to configuration →**.
 
@@ -262,7 +244,7 @@ When you see **Connected – you can continue to Configure records**, click **Co
   On the **team** connector, every page you select here becomes searchable by **all mapped Notion workspace members**, not only the people who can open that page in Notion. Prefer **Notion Personal**, or a smaller page set, for private notes.
 </Warning>
 
-#### Step 8: Configure Records and save
+#### Step 8: Configure records and save
 
 Set **Sync strategy** and **Sync interval** (scheduled default is **1 hour**), optional **Enable Manual Indexing**, and indexing toggles:
 
@@ -270,29 +252,23 @@ Set **Sync strategy** and **Sync interval** (scheduled default is **1 hour**), o
 - **Index Databases**
 - **Index Files** (attachments and comment attachments)
 
-Add sync filters only if you need to narrow scope. Click **Save Configuration**.
+Add sync filters only if you need to narrow scope. Click **Save configuration**.
 
-<div className="text-center">
-  <img
-    src="/images/connectors/notion/notion-connector-filters.png"
-    alt="PipesHub Notion Configuration - Configure Records with sync and indexing filters"
-    className="block mx-auto w-11/12"
-  />
-</div>
+<Frame>
+  <img className="block dark:hidden" src="/images/connectors/notion/notion-connector-filters.png" alt="Configure records tab with sync settings, Enable Manual Indexing and the Index Pages, Index Databases and Index Files options" />
+  <img className="hidden dark:block" src="/images/connectors/notion/notion-connector-filters-dark.png" alt="Configure records tab with sync settings, Enable Manual Indexing and the Index Pages, Index Databases and Index Files options" />
+</Frame>
 
 There is no realtime sync. Use **scheduled** or **manual** sync. After you change indexing toggles, use **reindex** on existing records so the new settings apply; reindex covers pages, databases, and file attachments.
 
 #### Step 9: Start sync
 
-When prompted, choose **Start Syncing Now** or **I'll do it later**. Use **Sync Enabled** and the sync actions on the instance card as needed.
+If you added no sync filters, PipesHub first asks **Start sync process?**; click **Confirm** to save. Then choose **Start syncing now** or **I'll do it later**. Use **Sync enabled** and the sync actions on the instance card as needed.
 
-<div className="text-center">
-  <img
-    src="/images/connectors/notion/notion-connector-start-sync.png"
-    alt="Notion instance ready to sync confirmation"
-    className="block mx-auto w-11/12"
-  />
-</div>
+<Frame>
+  <img className="block dark:hidden" src="/images/connectors/notion/notion-connector-start-sync.png" alt="Instance is configured and ready to sync dialog on the Notion page" />
+  <img className="hidden dark:block" src="/images/connectors/notion/notion-connector-start-sync-dark.png" alt="Instance is configured and ready to sync dialog on the Notion page" />
+</Frame>
 
 Open the instance **Overview** to watch totals, queues, and record types.
 
@@ -323,7 +299,7 @@ The **team** connector can use an **Access token** (Internal Integration Secret)
 </div>
 
 4. Grant page access: **Content access** on the connection, or in Notion **••• → Connections → + Add connection** on each page or parent you want synced. Child pages inherit access.
-5. In PipesHub, on **Authenticate Instance**, choose the internal-secret auth option, paste the token, and continue to **Configure Records** (there is no Notion OAuth page picker).
+5. In PipesHub, on **Authenticate**, choose the internal-secret auth option, paste the token, and continue to **Configure records** (there is no Notion OAuth page picker).
 
 ---
 
@@ -358,7 +334,7 @@ Other limits that come from the same Notion API:
 - **Not realtime.** There is no webhook-driven sync. Changes appear on the next scheduled run, a manual **Sync**, or a **Full sync**.
 - **Size limits.** Images added by URL are fetched up to **20 MB**, and files added by URL up to **100 MB**. Larger ones are not indexed.
 - **Only pages the connection can see.** Search never returns content you did not share with the integration.
-- **Rate limit.** Notion allows about **3 requests per second** per integration. Large pages need many block fetches, so the first sync of a big workspace can take a long time.
+- **Rate limit.** Notion allows an average of about **3 requests per second** per connection on most plans (some paid plans allow more). Large pages need many block fetches, so the first sync of a big workspace can take a long time.
 - **Images are not separate files.** Inline images stay on the page (and may be inlined for indexing). **Index Files** covers file, video, PDF, and audio attachments - not image blocks.
 - **Users without email.** The team connector maps workspace members by email. A member who hides their email in Notion is not granted access, but keeps any access they already had. If Notion returns no email for anyone, the sync stops and asks you to enable the email capability.
 - **Personal access tokens** from Developer tools are not a supported auth method.
@@ -371,8 +347,8 @@ Other limits that come from the same Notion API:
 - **Public connections (OAuth):** [https://developers.notion.com/guides/get-started/public-connections](https://developers.notion.com/guides/get-started/public-connections)
 - **Internal connections:** [https://developers.notion.com/guides/get-started/internal-connections](https://developers.notion.com/guides/get-started/internal-connections)
 - **Authorization:** [https://developers.notion.com/guides/get-started/authorization](https://developers.notion.com/guides/get-started/authorization)
-- **PipesHub team:** **Workspace Settings → Connectors → Notion**
-- **PipesHub personal:** **Workspace Settings → Your Connectors → Notion Personal**
+- **PipesHub team:** **Workspace settings → Connectors → Notion**
+- **PipesHub personal:** **Workspace settings → Your connectors → Notion Personal**
 
 ---
 
@@ -391,13 +367,13 @@ Other limits that come from the same Notion API:
 
 **Invalid client / secret**
 
-- Regenerate the secret in Notion if needed and paste the new value into **Authenticate Instance**.
+- Regenerate the secret in Notion if needed and paste the new value into **Authenticate**.
 
 **Sync failed with a token or capability message**
 
 | Message | What to do |
 |---------|------------|
-| *Notion rejected the API token: it is invalid or was revoked.* | Copy a current **Access token** from the connection and paste it on **Authenticate Instance**. |
+| *Notion rejected the API token: it is invalid or was revoked.* | Copy a current **Access token** from the connection and paste it on **Authenticate**. |
 | *The Notion integration is missing the … capability.* | Enable the named capability (**Read content**, **Read comments**, or **Read user information including email addresses**) on the connection, then sync again. |
 | *Notion token is missing the … capability* or *Notion OAuth token is no longer active* | Enable the capability on the connection, then use **Re-authenticate with provider** on **Authorize**. |
 | *Notion returned no email address for any workspace member.* | Enable **Read user information including email addresses** on the connection, then sync again. |
@@ -428,7 +404,7 @@ PipesHub also sends a notification when a sync fails, and a warning when some pa
 
 **Sync is slow or hits Notion limits**
 
-- Notion allows about **3 requests per second** per integration. Large pages (many blocks) need many API calls. The first sync of a big workspace can take a long time; later incremental runs only fetch changes.
+- Notion allows an average of about **3 requests per second** per connection on most plans. Large pages (many blocks) need many API calls. The first sync of a big workspace can take a long time; later incremental runs only fetch changes.
 
 </Accordion>
 

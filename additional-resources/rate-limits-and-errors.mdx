@@ -1,0 +1,90 @@
+---
+title: "Rate limits and API errors"
+description: "Request limits on the PipesHub API, the 429 response, and the error format every API route returns"
+icon: "gauge"
+---
+
+## Rate limits
+
+Every limit counts requests in a one-minute window.
+
+| Limit | Applies to, counted per, and default |
+|---|---|
+| General | Every API request. **Counted per:** client IP. The limit is checked before sign-in, so everyone behind one address (NAT, VPN, or a proxy without `TRUST_PROXY`) shares one count. **Default:** 2000 on Docker Compose, 1000 otherwise (`MAX_REQUESTS_PER_MINUTE`). |
+| Sign-in | Password, one-time code and password-reset requests. **Counted per:** signed-in user; else client IP plus the account named in the request. **Default:** 10 (`MAX_AUTH_REQUESTS_PER_MINUTE`). |
+| Sign-in, per IP | The same routes, across all accounts. **Counted per:** client IP. **Default:** 6 × the sign-in limit (60). Follows `MAX_AUTH_REQUESTS_PER_MINUTE`. |
+| Sign-in page load | Starting a sign-in. **Counted per:** client IP. **Default:** 6 × the sign-in limit (60). Follows `MAX_AUTH_REQUESTS_PER_MINUTE`. |
+| Apps and tokens | OAuth apps, personal access tokens, service accounts and service tokens, and the OAuth token endpoints. **Counted per:** signed-in user; else client IP. **Default:** 1000 (`MAX_OAUTH_CLIENT_REQUESTS_PER_MINUTE`). |
+| Skill import | Importing skill packages. **Counted per:** signed-in user; else client IP. **Default:** 10, with no setting to change it. |
+
+Calls between PipesHub's own services are not counted.
+
+Every limit is kept in each API process. If you run several API replicas, each one counts on its own, so the effective limit is that many times higher.
+
+Change a limit in `.env` and recreate the containers. See [Environment variables](/deployment/environment-variables#rate-limits-and-proxies).
+
+### Behind a reverse proxy
+
+Without `TRUST_PROXY`, PipesHub sees the proxy's address as the client IP for every request, so everyone who is not signed in shares one bucket.
+
+Behind one proxy (Nginx, Caddy, Traefik, a load balancer), set `TRUST_PROXY=1`, or list the proxy addresses or CIDRs. Never set it to `true`: clients could then choose their own IP and get around the limits. The Helm chart sets one trusted hop when its ingress is enabled.
+
+### The 429 response
+
+A request over a limit gets HTTP `429` with standard `RateLimit-*` headers and a `Retry-After` header in seconds:
+
+```json
+{
+  "error": {
+    "code": "HTTP_TOO_MANY_REQUESTS",
+    "message": "Too many requests. Please try again later.",
+    "retryAfter": 42
+  }
+}
+```
+
+The message names the limit, for example "Too many authentication requests. Please try again later." Wait for `Retry-After` seconds before you retry. Retrying sooner does not help.
+
+## Error format
+
+API errors return JSON in this shape:
+
+```json
+{
+  "error": {
+    "code": "HTTP_NOT_FOUND",
+    "message": "Not found",
+    "requestId": "..."
+  }
+}
+```
+
+- `code` is stable and safe to branch on. The `message` text may change.
+- `requestId` identifies the request in the server logs. Send your own with the `X-Request-ID` header to match a client log line to the server's. Include it when you report a problem.
+- Unexpected server failures return `500` with code `INTERNAL_ERROR` and a generic message. The detail is only in the server log, under the `requestId`.
+
+| Status | Code | Meaning |
+|---|---|---|
+| 400 | `HTTP_BAD_REQUEST` | The request is malformed, for example a body that is not valid JSON. |
+| 400 | `VALIDATION_ERROR` | A field is missing or has the wrong type or value. |
+| 401 | `HTTP_UNAUTHORIZED` | Missing, expired or invalid credentials. |
+| 403 | `HTTP_FORBIDDEN` | Signed in, but not allowed: missing role, permission or token scope. |
+| 404 | `HTTP_NOT_FOUND` | The resource does not exist. |
+| 409 | `HTTP_CONFLICT` | The request conflicts with the current state, such as a duplicate. |
+| 410 | `HTTP_GONE` | The resource existed but is no longer available. |
+| 413 | `HTTP_PAYLOAD_TOO_LARGE` | The body is too large. JSON bodies are limited to 10 MB. |
+| 415 | `HTTP_UNSUPPORTED_MEDIA_TYPE` | The body's content type or encoding is not supported. |
+| 422 | `HTTP_UNPROCESSABLE_ENTITY` | The request is well formed but cannot be processed. |
+| 429 | `HTTP_TOO_MANY_REQUESTS` | Over a rate limit. See above. |
+| 500 | `HTTP_INTERNAL_SERVER_ERROR` or `INTERNAL_ERROR` | Server error. Check the server logs with the `requestId`. |
+| 501 | `HTTP_NOT_IMPLEMENTED` | The operation is not available. |
+| 502 | `HTTP_BAD_GATEWAY` | An internal service returned an invalid response. |
+| 503 | `HTTP_SERVICE_UNAVAILABLE` | A service is starting or unavailable. Retry later. |
+| 504 | `HTTP_GATEWAY_TIMEOUT` | An internal service did not answer in time. |
+
+Not every route returns every code.
+
+## Related
+
+- [Personal Access Tokens](/developer/personal-access-tokens)
+- [Troubleshooting](/additional-resources/troubleshooting)

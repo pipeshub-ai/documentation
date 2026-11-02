@@ -48,7 +48,7 @@ curl -s "$PIPESHUB_URL/api/v1/retrieve" \
 | `filters` | object | all sources | Narrow to sources: `apps` (connector instance and collection ids), `recordGroups` (a drive, space or project), `records` (a folder or record and everything under it), `recordsExact` (records alone). Ids are UUIDs, at most 200 per request. |
 | `createdAfter`, `createdBefore` | string | none | When the source record was created: `YYYY-MM-DD` or an ISO 8601 datetime with an offset, inclusive. |
 | `modifiedAfter`, `modifiedBefore` | string | none | The same, on when the source record last changed. |
-| `rewriteQuery` | boolean | `false` | Also search rewritten and expanded versions of the query, made by your organization's model. Better recall for vague questions, slower. The original text is still searched, so exact identifiers keep matching. |
+| `rewriteQuery` | boolean | `false` | Also search rewritten and expanded versions of the query, made by your organization's model. Better recall for vague questions, slower. The original text is still searched, so exact identifiers keep matching. Needs an AI model: without one, the call returns `500`. |
 
 ---
 
@@ -194,6 +194,6 @@ Keep `citation.url` in your answer so readers can open the source passage.
 | **For** | Your own RAG pipeline or agent | The PipesHub search experience |
 | **Stores** | Nothing | Search history and citations |
 | **Returns** | A flat list of chunks with record and citation | Search results shaped for the search UI |
-| **Query rewrite** | Off unless `rewriteQuery: true` | On by default |
+| **Query rewrite** | Off unless `rewriteQuery: true` | On by default, so it needs an AI model unless you send `rewriteQuery: false` |
 
 The full schema is in the [API reference](/developer/api-reference).

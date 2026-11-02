@@ -196,4 +196,24 @@ Keep `citation.url` in your answer so readers can open the source passage.
 | **Returns** | A flat list of chunks with record and citation | Search results shaped for the search UI |
 | **Query rewrite** | Off unless `rewriteQuery: true` | On by default |
 
+### Records found by name
+
+`POST /api/v1/search` reads indexed text only. When records match the query by name but their content is not indexed yet, the response's `searchResponse` carries an additive `unindexedMatches` array (best match first, up to 10, only records the caller may read, never one already in `searchResults`). Each entry has `recordId`, `recordName`, `connector`, `connectorId`, `recordType`, `indexingStatus` (for example `QUEUED` or `AUTO_INDEX_OFF`) and a `note` to pass on. When nothing indexed matched but such records exist, the call returns `200` with empty `searchResults` instead of `404`. The field is omitted when there are none, or when the search has date bounds or entity filters.
+
+```json
+{
+  "searchResults": [],
+  "unindexedMatches": [
+    {
+      "recordId": "3f1c2a9e-7d4b-4c55-9a0e-2b6d8e1f4a73",
+      "recordName": "Quarterly planning",
+      "connector": "Confluence",
+      "recordType": "WEBPAGE",
+      "indexingStatus": "QUEUED",
+      "note": "Not indexed: this record exists, but its content is not indexed yet (status: QUEUED)..."
+    }
+  ]
+}
+```
+
 The full schema is in the [API reference](/developer/api-reference).

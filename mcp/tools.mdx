@@ -151,7 +151,7 @@ Returns `{ url, adminUrl, instructions }`. Give the user `url`: it opens their p
 
 ### `pipeshub_add_web_source`
 
-Indexes a website, such as a docs site or a public wiki. It sets up a [Web connector](/connectors/web/web) for the user: it creates the connector, saves the start page and page limit, and starts the crawl. The crawl follows links from the start page and runs again every day. Pages become searchable as they index. Follow them with `pipeshub_indexing_status`, passing the returned `connectorId` as `collectionId`. Calling it again adds a second source. From a terminal: `pipeshub add-web <url> [--max-pages <n>] [--name <name>]`, then `pipeshub status <connectorId>`.
+Indexes a website, such as a docs site or a public wiki. It sets up a [Web connector](/connectors/web/web) for the user: it creates the connector, saves the start page and page limit, and starts the crawl. The crawl follows links from the start page and runs again every day. Pages become searchable as they index. Follow them with `pipeshub_indexing_status`, passing the returned `connectorId` as `collectionId`. Connector names are unique and the default is the host name, so a second source on the same site needs its own `name`. From a terminal: `pipeshub add-web <url> [--max-pages <n>] [--name <name>]`, then `pipeshub status <connectorId>`.
 
 | Argument | Type | Required | Description |
 |---|---|---|---|

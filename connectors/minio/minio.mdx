@@ -79,11 +79,11 @@ Save it as `pipeshub-read.json`. With the MinIO Client (`mc`), where `myminio` i
 
 ```bash
 mc admin policy create myminio pipeshub-read pipeshub-read.json
-mc admin user add myminio pipeshub-reader <a-long-random-secret>
+mc admin user add myminio pipeshub-reader 'REPLACE-WITH-A-LONG-RANDOM-SECRET'
 mc admin policy attach myminio pipeshub-read --user pipeshub-reader
 ```
 
-The user name is the **Access Key** and the secret is the **Secret Key** in Step 2. You can also do this in the MinIO Console, or give PipesHub an access key that belongs to an existing user with this policy. See the [MinIO documentation](https://min.io/docs/minio/linux/index.html) for your version.
+Replace `REPLACE-WITH-A-LONG-RANDOM-SECRET` with a long random secret of your own, keeping the quotes. The user name is the **Access Key** and the secret is the **Secret Key** in Step 2. You can also do this in the MinIO Console, or give PipesHub an access key that belongs to an existing user with this policy. See the [MinIO documentation](https://min.io/docs/minio/linux/index.html) for your version.
 
 <Info>
   **When `s3:ListAllMyBuckets` is needed.** PipesHub uses it to show your buckets in the **Bucket Names** list, so keep it while you set up the connector or change that filter. It is also needed for every sync if **Bucket Names** is empty (PipesHub then finds all your buckets itself) or set to **Not in**. Once you have saved bucket names with **In**, syncs read those buckets directly.

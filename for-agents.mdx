@@ -112,7 +112,7 @@ Then connect MCP as below.
 
 The native shape is **remote MCP** over Streamable HTTP. No npm process is required.
 
-1. A running PipesHub, reachable at `PIPESHUB_INSTANCE_URL` (origin only, no `/mcp`).
+1. A running PipesHub, reachable at `PIPESHUB_INSTANCE_URL` (origin only, no `/mcp`). `PIPESHUB_INSTANCE_URL/auth.md` (also at `/.well-known/auth.md`) tells an agent, for that instance, how to get a credential and use it: the device-code sign-in with its client id, client registration where enabled, personal access tokens, and the scopes an agent sign-in gets.
 2. Auth as the **user**, not the app. Do **not** use `client_credentials` — that grant has no user identity, so permission filters collapse.
    - **Prefer a [personal access token](/developer/personal-access-tokens)** for a single user's own client. It is `Authorization: Bearer phpat_…`, minted by that user in **Workspace → Developer settings** (PipesHub 0.7.0+). Claude Code takes it directly: `claude mcp add --transport http pipeshub "$PIPESHUB_MCP_URL" --header 'Authorization: Bearer ${PIPESHUB_MCP_TOKEN}'` (single quotes, so the token is not written into its config), where `PIPESHUB_MCP_URL` is the URL from the token's paste block (it already ends in `/mcp`) — see [Claude Code](/mcp/claude-code). The [stdio bridge](/mcp/local-server) takes it as `--bearer-auth`.
    - **OAuth app** for shared or admin-managed setups: create an [OAuth app](/mcp/overview#step-1-create-an-oauth-app), then follow the client page. Cursor's `auth` object and Claude Code's `--client-id` are the OAuth paths, not PAT.
@@ -198,6 +198,8 @@ Do not curl `POST /api/v1/personal-access-tokens` from a chat — the response b
 ```bash
 claude mcp add --transport http pipeshub-docs https://docs.pipeshub.com/mcp
 ```
+
+The PipesHub plugins for Claude Code and [Cursor](/mcp/cursor#plugin) include it as `pipeshub-docs`.
 
 ## Rules that are easy to get wrong
 

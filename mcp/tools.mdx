@@ -106,7 +106,7 @@ List the PipesHub **agents** configured for this org. To converse with one, take
 
 ## Filling a workspace
 
-Four tools take an empty workspace to a searchable one. The two that write, `pipeshub_create_collection` and `pipeshub_upload`, need the `kb:write` and `kb:upload` scopes. On a new install, personal access tokens and agent logins get them by default; on an upgraded instance, see [Customizing Default Scopes](/mcp/overview#customizing-default-scopes). A token without them is not offered those two tools. The local stdio server leaves them out with `--scope read`.
+These tools take an empty workspace to a searchable one. `pipeshub_create_collection` and `pipeshub_upload` need the `kb:write` and `kb:upload` scopes. `pipeshub_add_web_source` also needs `connector:write` and `connector:sync`. On a new install, personal access tokens and agent logins get all four by default; on an upgraded instance, see [Customizing Default Scopes](/mcp/overview#customizing-default-scopes). A token without them is not offered the tools that need them. The local stdio server leaves out every tool that writes with `--scope read`.
 
 ### `pipeshub_create_collection`
 
@@ -149,6 +149,18 @@ Returns the page where the user connects Slack, Google Drive, Jira or another so
 
 Returns `{ url, adminUrl, instructions }`. Give the user `url`: it opens their personal connectors page. `adminUrl` opens the organization's connectors page and works only for an admin connecting the source for everyone; anyone else is redirected to their personal page without the connector selected.
 
+### `pipeshub_add_web_source`
+
+Indexes a website, such as a docs site or a public wiki. It sets up a [Web connector](/connectors/web/web) for the user: it creates the connector, saves the start page and page limit, and starts the crawl. The crawl follows links from the start page and runs again every day. Pages become searchable as they index. Follow them with `pipeshub_indexing_status`, passing the returned `connectorId` as `collectionId`. Calling it again adds a second source. From a terminal: `pipeshub add-web <url> [--max-pages <n>] [--name <name>]`, then `pipeshub status <connectorId>`.
+
+| Argument | Type | Required | Description |
+|---|---|---|---|
+| `url` | string | yes | The start page, an `http` or `https` URL. |
+| `maxPages` | integer | no | Most pages to keep, 1–10000. The default is 100. |
+| `name` | string | no | The source's name. The default is the site's host name. |
+
+Returns `{ connectorId, name, startUrl, maxPages, url }`. `url` opens the user's connectors page, where the source can be changed or removed. If a step after the connector is created fails, the error names the connector and links to that page, so the user can finish it there.
+
 ## Quick Decision Guide
 
 | User says... | Use this tool |
@@ -164,4 +176,5 @@ Returns `{ url, adminUrl, instructions }`. Give the user `url`: it opens their p
 | First call of a session | `pipeshub_sources` (cache the result) |
 | "Index these docs" / the workspace is empty | Reuse the collection the user means (`pipeshub_sources`, `kind: "knowledgeBase"`), or `pipeshub_create_collection` if there is none → `pipeshub_upload` → `pipeshub_indexing_status` → `pipeshub_search` |
 | "Connect our Jira / Slack / Drive" | `pipeshub_connect_source`, then give the user `url` (`adminUrl` only if they are an admin connecting it for the organization) |
+| "Index our docs site" / a website | `pipeshub_add_web_source` → `pipeshub_indexing_status` (`collectionId` = `connectorId`) → `pipeshub_search` |
 | "Create a Jira ticket" / talk to a configured agent | `pipeshub_agents` → `pipeshub_chat` with that `agentId` |

@@ -137,7 +137,7 @@ Reports how far a collection's or a web source's records are through indexing. P
 |---|---|---|---|
 | `collectionId` | string | yes | The collection to check, or the `connectorId` of a web source. |
 
-Returns `{ done, total, pendingCount, failedCount, pending, failed }`. `done` is true only once at least one record is stored and none is still waiting. A crawl stores its first page a little after it starts, so an early call says `done: false` with a note. `pending` and `failed` list up to 25 records each, and failed records carry the reason.
+Returns `{ done, total, pendingCount, failedCount, pending, failed }`. `done` is true only once at least one record is stored, none is still waiting, and the source has finished syncing. A crawl stores its first page a little after it starts and adds pages in batches while it runs, so an early call says `done: false`, with a note or `syncing: true`. `pending` and `failed` list up to 25 records each, and failed records carry the reason.
 
 ### `pipeshub_connect_source`
 

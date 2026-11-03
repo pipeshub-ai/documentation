@@ -32,6 +32,10 @@ Before creating an agent, make sure you have:
 
 Agent Builder opens with the **Create agent** dialog.
 
+<Frame caption="Chat sidebar: **+** next to **My agents** starts a new agent.">
+  <img src="/images/agents/my-agents-new.png" alt="Chat sidebar with the My agents section and its + button" style={{ width: 420, maxWidth: "100%" }} />
+</Frame>
+
 ---
 
 ## Step 2: Name the agent and choose its type
@@ -46,8 +50,14 @@ Agent Builder opens with the **Create agent** dialog.
 
 3. Click **Create agent** (or **Continue** for a service agent).
 
+<Frame caption="The **Create agent** dialog.">
+  <img src="/images/agents/create-agent-dialog.png" alt="Create agent dialog with a Name field and User agent or Service agent options" />
+</Frame>
+
+You can also turn a user agent into a service agent later with **Convert to service agent** at the top of the builder.
+
 <Warning>
-  Converting a user agent to a service agent later is permanent. A service agent is always shared with the whole organization, and everyone who uses it sees search results from what its search identity can read.
+  Converting a user agent to a service agent is permanent. A service agent is always shared with the whole organization, and everyone who uses it sees search results from what its search identity can read.
 </Warning>
 
 ---
@@ -56,7 +66,11 @@ Agent Builder opens with the **Create agent** dialog.
 
 The canvas shows the **Agent** node (the core), with **Chat input** and **Chat output** already connected.
 
-1. On the Agent node, click **Edit prompts**.
+<Frame caption="A new agent: palette on the left, the **Agent** node in the middle with a handle for each kind of block.">
+  <img src="/images/agents/builder-canvas.png" alt="Agent Builder canvas with the palette on the left and the Agent node connected to Chat input and Chat output" />
+</Frame>
+
+1. On the Agent node, click the pencil icon (**Edit prompts**).
 2. Fill in:
 
 | Field | What it does | Example |
@@ -64,10 +78,14 @@ The canvas shows the **Agent** node (the core), with **Chat input** and **Chat o
 | **System prompt** | Who the agent is and how it behaves | "You are a project status assistant for non-technical readers." |
 | **Instructions** | Rules for how it works and answers | "Answer in three sentences. Say where the feature is, what blocks it, and link the Jira tickets." |
 | **Starting message** | The greeting shown when someone opens a chat with the agent | "Ask me where any feature stands." |
-| **Default reasoning effort** | The effort used when the person chatting doesn't choose one | |
+| **Default reasoning effort** | The effort used when the person chatting doesn't choose one. Shown only once a model that supports reasoning is connected (Step 4) | |
 | **Send user & organization context** | When on, the agent receives the user's name, email and organization in its prompt | |
 
-3. Save the dialog.
+3. Click **Save**.
+
+<Frame caption="The **Configure agent prompts** dialog.">
+  <img src="/images/agents/agent-prompts-dialog.png" alt="Configure agent prompts dialog with System prompt, Instructions, Starting message and the user context switch" />
+</Frame>
 
 <Info>
   Organization-wide [Custom Instructions](/custom-instructions) don't apply to agents. Put everything this agent should follow in its own prompts.
@@ -78,6 +96,10 @@ The canvas shows the **Agent** node (the core), with **Chat input** and **Chat o
 ## Step 4: Add blocks from the palette
 
 The **Palette** on the left lists everything you can add. Drag a block onto the canvas, or tap **+** on a touch screen, then connect it to the matching handle on the Agent node. The builder refuses connections to the wrong handle and says why.
+
+<Frame caption="The palette. Under **Tools**, a check mark means the toolset is ready to use; a gear means it needs setting up or signing in to first.">
+  <img src="/images/agents/builder-palette.png" alt="Palette with AI models, Knowledge, Tools including Web search providers, MCP servers and Skills sections" style={{ width: 380, maxWidth: "100%" }} />
+</Frame>
 
 | Palette section | What it adds | Connect to |
 |-----------------|--------------|------------|
@@ -104,7 +126,7 @@ When you remove a block or a connection, the builder asks you to confirm.
 
 Click **Save changes** at the top of the builder.
 
-To share a user agent with your whole organization, use **Share → Share with everyone**. Service agents are always shared with the organization.
+To share a user agent with your whole organization, turn on **Share with everyone** at the top of the builder. Service agents are always shared with the organization.
 
 ---
 
@@ -133,14 +155,16 @@ To change the agent later, open it from **My agents** and choose **Edit agent** 
 - That toolset is already on the canvas (only one of each is allowed)
 
 **Solution:**
-1. Ask an admin to add the toolset, or sign in to it under **Your actions** or from the palette
-2. Return to Agent Builder and add it again
+1. If the toolset is already on the canvas, use **+** on its node to choose more of its tools instead of adding it again
+2. Otherwise, ask an admin to add the toolset, or sign in to it under **Your actions** or from the palette, then add it from the palette
 
 </Accordion>
 
-<Accordion title="A connector can't be added under Knowledge">
+<Accordion title="A connector is missing under Knowledge">
 
-The connector must be configured and enabled for agents. Check it under **Workspace → Connectors** (or **Your connectors**) and wait for it to finish syncing.
+**Knowledge → Apps** lists the connectors you can see. A connector is missing when it hasn't been set up, or isn't visible to you, under **Workspace → Connectors** or **Your connectors**. Each connector can be added once, so it also can't be added again when it's already on the canvas.
+
+If it's on the canvas but answers find nothing, see the next item.
 
 </Accordion>
 
@@ -172,7 +196,7 @@ The connector must be configured and enabled for agents. Check it under **Worksp
 
 <Accordion title="I can't edit an agent">
 
-Agents shared with you are view-only: you can look at the setup and sign in to their toolsets with your own account, but only the owner can change them. An organization service agent you don't own is locked entirely.
+Agents shared with you are view-only: you can look at the setup and sign in to their toolsets with your own account, but only the owner can change them. An organization service agent you don't own works the same way in chat, but its setup is locked: you can look at it, not change it.
 
 </Accordion>
 

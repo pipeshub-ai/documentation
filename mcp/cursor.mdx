@@ -6,12 +6,15 @@ icon: "/logo/cursor.svg"
 
 ## Plugin
 
-The PipesHub plugin for Cursor (in [`pipeshub-ai/mcp-server`](https://github.com/pipeshub-ai/mcp-server/tree/main/cursor-plugin)) adds the PipesHub MCP server with no token in Cursor's config, the PipesHub documentation search server, the PipesHub skill, and `setup` and `ask` commands. Add the repository as a plugin marketplace in Cursor (a team admin can import it as a team marketplace), then run the `setup` command, which signs you in:
+The PipesHub plugin for Cursor adds the PipesHub MCP server with no token in Cursor's config, the PipesHub documentation search server, the PipesHub skill, and `setup` and `ask` commands. It is not yet listed in Cursor's public marketplace.
 
-```bash
-npx -y -p @pipeshub-ai/mcp pipeshub login --no-wait   # add --url https://<your-instance> when self-hosted
-npx -y -p @pipeshub-ai/mcp pipeshub login --wait
-```
+1. A Cursor team admin imports the repository as a team marketplace: Dashboard → Plugins & MCPs → Team Marketplaces → Add Marketplace → Import from Repo, with `https://github.com/pipeshub-ai/mcp-server` (the repository root).
+2. Each developer installs **PipesHub** from Customize, unless the admin sets it Default On or Required.
+3. Sign in. Run the `setup` command, or these yourself:
+    1. `npx -y -p @pipeshub-ai/mcp pipeshub login --no-wait` (add `--url https://<your-instance>` when self-hosted; PipesHub Cloud is the default). It prints a link and a code.
+    2. Open the link and approve with the code.
+    3. `npx -y -p @pipeshub-ai/mcp pipeshub login --wait`.
+4. Reload the Cursor window, or turn the `pipeshub` server off and on, so it picks up the sign-in.
 
 To configure Cursor by hand instead, use one of the options below.
 

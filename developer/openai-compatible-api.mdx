@@ -12,6 +12,8 @@ PipesHub agents can be called through the OpenAI API format. Any tool that lets 
 | API key | A [personal access token](/developer/personal-access-tokens) or an [OAuth 2.0](/developer/oauth2) access token |
 | Model | The agent's key, from `GET /api/v1/openai/models` |
 
+The models list holds only agents the token's user can use, so it is empty until that user creates an agent or is given access to one.
+
 Every call runs as the token's user. You can list and use only the agents you can use in the PipesHub app, and each conversation is saved to your chat history like a chat in the app.
 
 <Note>
@@ -49,7 +51,10 @@ The configured LLMs themselves (not agents) are listed at `GET /api/v1/models`.
         api_key="phpat_...",
     )
 
-    agent = client.models.list().data[0].id
+    models = client.models.list().data
+    if not models:
+        raise SystemExit("No agents are available to this token. Create an agent in PipesHub, or ask for access to one.")
+    agent = models[0].id
 
     reply = client.chat.completions.create(
         model=agent,
@@ -67,7 +72,11 @@ The configured LLMs themselves (not agents) are listed at `GET /api/v1/models`.
       apiKey: "phpat_...",
     });
 
-    const agent = (await client.models.list()).data[0].id;
+    const models = (await client.models.list()).data;
+    if (models.length === 0) {
+      throw new Error("No agents are available to this token. Create an agent in PipesHub, or ask for access to one.");
+    }
+    const agent = models[0].id;
 
     const reply = await client.responses.create({
       model: agent,

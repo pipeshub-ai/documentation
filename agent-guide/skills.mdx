@@ -112,6 +112,10 @@ Only text files are imported. Images and other binary files are skipped, and the
 - An agent with **no skills attached** can use any available skill in your organization, built-in ones included.
 - An agent with **skills attached** can use only those. If it still needs a built-in skill such as `pdf`, attach that too.
 
+<Warning>
+  Some built-in skills rely on another one: `docx` and `pptx` need `office-utils`, and `data-visualization` needs `data-analysis`. Chat and agents with no skills attached load these automatically. An agent with skills attached does not, so attach the required skill as well. Otherwise, for example, editing an existing Word or PowerPoint file fails because the `office-utils` scripts are missing.
+</Warning>
+
 To attach a skill, open the agent in Agent Builder, find the **Skills** section in the left panel, and drag the skill onto the agent. The panel lists the active skills you created and the built-in ones. See [Setup guide](/agent-guide/setup-guide) for building an agent.
 
 If an attached skill is later disabled or deprecated, the agent's canvas shows a warning on it.
@@ -119,7 +123,8 @@ If an attached skill is later disabled or deprecated, the agent's canvas shows a
 ## Who can see a skill
 
 - **Your skills** lists the skills you created, plus the built-in ones. Other members don't see your skills there or in their Agent Builder, and only you can edit them.
-- When chat or an agent answers, it can use any available skill in the organization, including skills other members created. Don't put anything in a skill that your co-workers shouldn't read.
+- The Chat Assistant, and any agent with no skills attached, can use every available skill in the organization, including skills other members created. Don't put anything in a skill that your co-workers shouldn't read.
+- An agent with skills attached uses only those, whoever created them.
 - A skill attached to an agent keeps working for everyone who uses that agent.
 - Skill names are unique across the organization, so you can't reuse a name another member already took.
 

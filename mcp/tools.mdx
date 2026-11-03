@@ -131,13 +131,13 @@ Returns `{ uploaded, failed, summary }`. Indexing follows in the background.
 
 ### `pipeshub_indexing_status`
 
-Reports how far a collection's records are through indexing. Poll it every 15–30 seconds after an upload until `done` is true; search finds a document only once it is indexed. Counts are exact at any collection size.
+Reports how far a collection's or a web source's records are through indexing. Poll it every 15–30 seconds after an upload or `pipeshub_add_web_source` until `done` is true; search finds a document only once it is indexed. Counts are exact at any size.
 
 | Argument | Type | Required | Description |
 |---|---|---|---|
-| `collectionId` | string | yes | The collection to check. |
+| `collectionId` | string | yes | The collection to check, or the `connectorId` of a web source. |
 
-Returns `{ done, total, pendingCount, failedCount, pending, failed }`. `pending` and `failed` list up to 25 records each; failed records carry the reason.
+Returns `{ done, total, pendingCount, failedCount, pending, failed }`. `done` is true only once at least one record is stored and none is still waiting. A crawl stores its first page a little after it starts, so an early call says `done: false` with a note. `pending` and `failed` list up to 25 records each, and failed records carry the reason.
 
 ### `pipeshub_connect_source`
 
@@ -159,7 +159,14 @@ Indexes a website, such as a docs site or a public wiki. It sets up a [Web conne
 | `maxPages` | integer | no | Most pages to keep, 1–10000. The default is 100. |
 | `name` | string | no | The source's name. The default is the site's host name. |
 
-Returns `{ connectorId, name, startUrl, maxPages, url }`. `url` opens the user's connectors page, where the source can be changed or removed. If a step after the connector is created fails, the error names the connector and links to that page, so the user can finish it there.
+The other crawl settings keep the [Web connector](/connectors/web/web)'s defaults:
+- It follows links up to 3 clicks from the start page, staying on the same host.
+- It finds pages through sitemaps and links.
+- It respects `robots.txt`.
+
+So a site without a sitemap can stop short of `maxPages`, and a site whose `robots.txt` refuses crawlers stores nothing. The start URL cannot be changed after the source is created.
+
+Returns `{ connectorId, name, startUrl, maxPages, url }`. `url` opens the user's connectors page, where the other settings can be changed or the source removed. If a step after the connector is created fails, the error names the connector and links to that page, so the user can finish it there.
 
 ## Quick Decision Guide
 

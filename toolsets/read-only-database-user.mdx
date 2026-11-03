@@ -8,7 +8,7 @@ When you connect a SQL database that an agent can query, use a database user tha
 
 This applies to:
 
-- The [MariaDB toolset](/toolsets/mariadb/mariadb) and the [Redshift toolset](/toolsets/redshift/redshift)
+- The [MariaDB action](/toolsets/mariadb/mariadb) and the [Redshift action](/toolsets/redshift/redshift)
 - The [MariaDB connector](/connectors/mariadb/mariadb) and the [PostgreSQL connector](/connectors/postgres/postgres)
 
 ## Why
@@ -16,12 +16,12 @@ This applies to:
 The agent writes the SQL it runs. PipesHub checks each query before it runs:
 
 - A single plain read, such as `SELECT`, `SHOW`, `DESCRIBE` or `EXPLAIN`, runs.
-- In a toolset, any other statement waits for your approval in the chat. This includes `INSERT`, `UPDATE`, `DELETE`, `DROP`, more than one statement, and functions that act on the server. Where nobody can approve it, such as in Slack or through the API, it does not run.
+- In an action, any other statement waits for your approval in the chat. This includes `INSERT`, `UPDATE`, `DELETE`, `DROP`, more than one statement, and functions that act on the server. Where nobody can approve it, such as in Slack or through the API, it does not run.
 - In a connector, any other statement is blocked.
 
 These checks catch most mistakes, but they cannot know every function in every database. A user that can only read is the guarantee. If the account has no write privileges, the database itself refuses any write.
 
-Each user who authenticates a toolset uses their own database account. Make each of those accounts read-only too.
+Each user who authenticates an action uses their own database account. Make each of those accounts read-only too.
 
 ## Create a read-only user
 

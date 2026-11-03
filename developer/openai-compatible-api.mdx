@@ -99,13 +99,14 @@ The list is empty until an admin configures a chat model.
     export PIPESHUB_URL="https://your-pipeshub-instance.com"
     export PIPESHUB_TOKEN="phpat_..."
 
-    curl -s "$PIPESHUB_URL/api/v1/openai/models" \
-      -H "Authorization: Bearer $PIPESHUB_TOKEN"
+    # The first model in the list is the organization default.
+    MODEL=$(curl -s "$PIPESHUB_URL/api/v1/openai/models" \
+      -H "Authorization: Bearer $PIPESHUB_TOKEN" | jq -r '.data[0].id')
 
     curl -s "$PIPESHUB_URL/api/v1/openai/chat/completions" \
       -H "Authorization: Bearer $PIPESHUB_TOKEN" \
       -H "Content-Type: application/json" \
-      -d '{"model": "gpt-5", "messages": [{"role": "user", "content": "What is our parental leave policy?"}]}'
+      -d "{\"model\": \"$MODEL\", \"messages\": [{\"role\": \"user\", \"content\": \"What is our parental leave policy?\"}]}"
     ```
   </Tab>
 </Tabs>

@@ -175,11 +175,23 @@ This returns all OAuth endpoints automatically:
 
 Some MCP clients, such as Claude Code and VS Code, publish their OAuth client details at an `https://` URL and use that URL as their `client_id`. PipesHub supports this ([OAuth Client ID Metadata Documents](https://datatracker.ietf.org/doc/draft-ietf-oauth-client-id-metadata-document/)), and its discovery metadata includes `client_id_metadata_document_supported: true`. With a client like this you skip [Step 1](#step-1-create-an-oauth-app): add the `/mcp` URL to the client and sign in when it opens the browser.
 
-- PipesHub fetches the client's document when you open the sign-in page. It accepts only public clients that use PKCE, and only the redirect URIs that the document lists. A loopback redirect URI listed without a port, such as `http://localhost/callback`, matches any port.
+- PipesHub fetches the client's document when you open the sign-in page. It accepts only public clients that use PKCE, and only the redirect URIs that the document lists: `https://`, loopback `http://`, or the client's own app scheme. A loopback redirect URI listed without a port, such as `http://localhost/callback`, matches any port.
+- PipesHub stores the client only once you click **Allow**. It re-reads the document on every sign-in, so a client that asks for fewer scopes, or a narrower `MCP_SCOPES`, applies from the next sign-in.
 - The consent screen shows the name the client chose, a note that no administrator reviewed it, and **Identified by** with the host of the document URL. Check that host before you click **Allow**.
 - These clients get the scopes the MCP tools use, including `offline_access`, so they can refresh their tokens. `MCP_SCOPES` still caps them.
 - PipesHub never fetches documents from loopback or private addresses.
 - To turn this off, set `PIPESHUB_ENABLE_CIMD=false` on the server. Clients then need an OAuth app or a personal access token.
+
+### Tokens, scopes and limits
+
+- **Which tokens work.** `/mcp` accepts OAuth access tokens and personal access tokens. It refuses the web app's session token.
+- **Tokens for `/mcp` only.** A client that sends the `resource` parameter ([RFC 8707](https://www.rfc-editor.org/rfc/rfc8707)) with your instance's `/mcp` URL gets a token marked for `/mcp`, and `/mcp` refuses a token marked for anything else. Clients that send no `resource` keep working as before.
+- **Tools follow scopes.** A client sees only the tools its token's scopes cover. If it calls a tool anyway, PipesHub answers `403` with `WWW-Authenticate: Bearer error="insufficient_scope"` and the scopes to ask for, so a client that supports it can ask you for just those.
+- **Chat that acts.** `pipeshub_chat` can run your connected actions (create a Jira issue, send a message) only when the token has `agent:execute`. With `conversation:chat` alone it answers without acting.
+- **Rate limits.** Each account may make `MAX_REQUESTS_PER_MINUTE` requests a minute to `/mcp` (default 1000); the API calls a tool makes for it are not counted again. Many people behind one address, such as an office or a hosted AI client, do not share one limit. A limit hit is a JSON-RPC error with HTTP `429`.
+- **Browser pages.** `/mcp` refuses a request from a web page whose `Origin` is not your instance's (`403`). Desktop, CLI and hosted clients send no `Origin`. To allow a browser-based tool such as an MCP inspector, add its origin to `MCP_ALLOWED_ORIGINS`.
+- **Audit trail.** Every tool call is logged with the account, the OAuth app, the tool, how long it took and whether it failed (`audit: mcp_tool_call` in the Node API's logs). Argument values and results are never logged.
+- **Turning an app off.** Suspending or deleting an OAuth app revokes the tokens it issued, so its clients stop at once.
 
 ### Request size limit
 

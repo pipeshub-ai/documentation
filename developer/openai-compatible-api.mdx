@@ -1,43 +1,50 @@
 ---
 title: "OpenAI-compatible API"
-description: "Use your PipesHub agents from any OpenAI client (SDKs, IDE plugins, n8n, chat UIs) through Chat Completions or Responses"
+description: "Chat with PipesHub from any OpenAI client (SDKs, IDE plugins, n8n, chat UIs): pick one of your configured models, and PipesHub answers from your company's knowledge"
 icon: "robot"
 ---
 
-PipesHub agents can be called through the OpenAI API format. Any tool that lets you set an OpenAI **base URL**, **API key** and **model** can talk to a PipesHub agent, with the agent's knowledge, tools and permissions, and no custom integration.
+PipesHub can be called through the OpenAI API format. Any tool that lets you set an OpenAI **base URL**, **API key** and **model** can chat with PipesHub, with no custom integration.
+
+You pick one of the models your organization configured in PipesHub (OpenAI, Anthropic, Gemini, Azure OpenAI, an OpenAI-compatible endpoint, ...). PipesHub's assistant then answers with that model: it searches the knowledge you can access, uses its tools, and cites its sources. You get the model you chose plus PipesHub's knowledge, not the raw model.
 
 | Setting | Value |
 |---|---|
 | Base URL | `https://your-pipeshub-instance.com/api/v1/openai` |
-| API key | A [personal access token](/developer/personal-access-tokens) or an [OAuth 2.0](/developer/oauth2) access token |
-| Model | The agent's key, from `GET /api/v1/openai/models` |
+| API key | A [personal access token](/developer/personal-access-tokens) or an [OAuth 2.0](/developer/oauth2) access token with the `conversation:chat` scope |
+| Model | A model `id` from `GET /api/v1/openai/models`, such as `gpt-5` |
 
-The models list holds only agents the token's user can use, so it is empty until that user creates an agent or is given access to one.
-
-Every call runs as the token's user. You can list and use only the agents you can use in the PipesHub app, and each conversation is saved to your chat history like a chat in the app.
+Every call runs as the token's user. The assistant sees only the knowledge that user can see, and each conversation is saved to that user's chat history like a chat in the app.
 
 <Note>
   These endpoints need a PipesHub version that includes them. An older instance answers `404` for `/api/v1/openai/...`.
 </Note>
 
 <Tip>
-  To ground a coding agent in company documents from an IDE, [MCP](/mcp/overview) gives it search and record tools instead of one agent's answer. See [For coding agents](/for-agents).
+  To ground a coding agent in company documents from an IDE, [MCP](/mcp/overview) gives it search and record tools so its own model writes the answer. See [For coding agents](/for-agents). To run your own model over PipesHub search results, use the [Retrieval API](/developer/retrieval-api).
 </Tip>
 
 ---
 
 ## Endpoints
 
-Paths are relative to the base URL, `/api/v1/openai`.
+Paths are relative to the base URL, `/api/v1/openai`. All of them need the `conversation:chat` scope.
 
-| Endpoint | Scope | What it does |
-|---|---|---|
-| `GET /models` | `agent:read` | Lists your agents as models. `id` is the agent key; `name` and `description` come from the agent. |
-| `GET /models/{id}` | `agent:read` | One agent. |
-| `POST /chat/completions` | `agent:execute` | [Chat Completions](#chat-completions). |
-| `POST /responses` | `agent:execute` | [Responses](#responses), with `previous_response_id` to continue a conversation. |
+| Endpoint | What it does |
+|---|---|
+| `GET /models` | Lists the chat models your organization configured. |
+| `GET /models/{id}` | One model. |
+| `POST /chat/completions` | [Chat Completions](#chat-completions). |
+| `POST /responses` | [Responses](#responses), with `previous_response_id` to continue a conversation. |
 
-The configured LLMs themselves (not agents) are listed at `GET /api/v1/models`.
+## Models
+
+`GET /models` lists every chat model an admin set up under AI models. Embedding, OCR, speech and image models are left out. The organization's default model comes first.
+
+- **`id`** is what you pass as `model`. It is the model name (`gpt-5`). A name configured under two providers is listed as `provider/name` (`openAI/gpt-5`, `azureOpenAI/gpt-5`). `provider/name` is also accepted for a model listed by its plain name.
+- **`name`** is the friendly name set in PipesHub, else the model name. **`owned_by`** is the provider.
+
+The list is empty until an admin configures a chat model.
 
 ---
 
@@ -55,11 +62,11 @@ The configured LLMs themselves (not agents) are listed at `GET /api/v1/models`.
 
     models = client.models.list().data
     if not models:
-        raise SystemExit("No agents are available to this token. Create an agent in PipesHub, or ask for access to one.")
-    agent = models[0].id
+        raise SystemExit("No chat model is configured in PipesHub. Ask an admin to add one under AI models.")
+    model = models[0].id  # the organization default
 
     reply = client.chat.completions.create(
-        model=agent,
+        model=model,
         messages=[{"role": "user", "content": "What is our parental leave policy?"}],
     )
     print(reply.choices[0].message.content)
@@ -76,12 +83,12 @@ The configured LLMs themselves (not agents) are listed at `GET /api/v1/models`.
 
     const models = (await client.models.list()).data;
     if (models.length === 0) {
-      throw new Error("No agents are available to this token. Create an agent in PipesHub, or ask for access to one.");
+      throw new Error("No chat model is configured in PipesHub. Ask an admin to add one under AI models.");
     }
-    const agent = models[0].id;
+    const model = models[0].id; // the organization default
 
     const reply = await client.responses.create({
-      model: agent,
+      model,
       input: "What is our parental leave policy?",
     });
     console.log(reply.output_text);
@@ -98,12 +105,12 @@ The configured LLMs themselves (not agents) are listed at `GET /api/v1/models`.
     curl -s "$PIPESHUB_URL/api/v1/openai/chat/completions" \
       -H "Authorization: Bearer $PIPESHUB_TOKEN" \
       -H "Content-Type: application/json" \
-      -d '{"model": "<agent key>", "messages": [{"role": "user", "content": "What is our parental leave policy?"}]}'
+      -d '{"model": "gpt-5", "messages": [{"role": "user", "content": "What is our parental leave policy?"}]}'
     ```
   </Tab>
 </Tabs>
 
-In other tools, pick the "OpenAI" or "OpenAI-compatible" provider and enter the three settings above. In n8n, for example, create an OpenAI credential with the base URL and token, then choose the agent key as the model.
+In other tools, pick the "OpenAI" or "OpenAI-compatible" provider and enter the three settings above. Chat apps such as Chatbox fetch the model list for you. In n8n, create an OpenAI credential with the base URL and token, then choose a model.
 
 ---
 
@@ -111,7 +118,7 @@ In other tools, pick the "OpenAI" or "OpenAI-compatible" provider and enter the 
 
 `POST /api/v1/openai/chat/completions` takes `model` and `messages`, plus `stream` (default `false`).
 
-- **Each call starts a new agent conversation.** Chat Completions clients send the whole history every time, so earlier messages and `system`/`developer` messages are passed to the agent as text ahead of your last user message. Only text content is read.
+- **Each call starts a new conversation.** Chat Completions clients send the whole history every time, so earlier messages and `system`/`developer` messages are passed to the assistant as text ahead of your last user message. Only text content is read.
 - **The answer** is in `choices[0].message.content`. `conversation_id` names the saved PipesHub conversation.
 - **Citations** are in `choices[0].message.annotations` as `url_citation` entries (`url`, `title`), one per cited source. The answer text keeps its own citation markers.
 
@@ -119,14 +126,14 @@ In other tools, pick the "OpenAI" or "OpenAI-compatible" provider and enter the 
 
 `POST /api/v1/openai/responses` takes `model` and `input` (a string, or a list of message items), plus `instructions`, `previous_response_id` and `stream`.
 
-- **Without `previous_response_id`** a new agent conversation starts.
-- **With `previous_response_id`** (the `id` of an earlier response) the message is added to that conversation, and the agent sees its earlier turns. Send only the new message. An `id` this instance did not return is refused with `400`.
+- **Without `previous_response_id`** a new conversation starts.
+- **With `previous_response_id`** (the `id` of an earlier response) the message is added to that conversation, and the assistant sees its earlier turns. Send only the new message. An `id` this instance did not return is refused with `400`.
 - **The answer** is in `output_text`, and in `output[0].content[0].text`. Citations are `url_citation` annotations on that content part.
 
 ```python
-first = client.responses.create(model=agent, input="Summarize the Q3 security review.")
+first = client.responses.create(model=model, input="Summarize the Q3 security review.")
 follow_up = client.responses.create(
-    model=agent,
+    model=model,
     input="Which findings are still open?",
     previous_response_id=first.id,
 )
@@ -142,17 +149,17 @@ Both endpoints accept `stream: true` and send OpenAI's server-sent events, so cl
 - **Responses** sends `response.created`, `response.in_progress`, `response.output_item.added`, `response.content_part.added`, `response.output_text.delta`, `response.output_text.annotation.added` (one per citation), `response.output_text.done`, `response.content_part.done`, `response.output_item.done` and `response.completed`, each with a `sequence_number`.
 
 <Note>
-  The answer arrives as one text delta when the agent finishes, not word by word. While the agent searches and runs tools, the stream sends `: keepalive` comments so proxies keep the connection open.
+  The answer arrives as one text delta when the assistant finishes, not word by word. While the assistant searches and runs tools, the stream sends `: keepalive` comments so proxies keep the connection open.
 </Note>
 
 ---
 
 ## Limits and differences from OpenAI
 
-- **Fields PipesHub does not use** (`temperature`, `max_tokens`, `tools`, `response_format`, `store`, ...) are accepted and ignored. The agent's own model, tools and instructions apply.
+- **Not the raw model.** The assistant always searches your knowledge and follows PipesHub's instructions.
+- **Fields PipesHub does not use** (`temperature`, `max_tokens`, `tools`, `response_format`, `store`, ...) are accepted and ignored.
 - **`usage` is `null`.** Token counts are not reported.
 - **Text only.** Image and file parts in messages are ignored.
-- **`GET /models` lists up to 2,000 agents.**
 
 ## Errors
 
@@ -162,8 +169,8 @@ Errors use OpenAI's shape, `{"error": {"message", "type", "param", "code"}}`:
 |---|---|---|
 | `400` | `invalid_request`, `missing_required_parameter` | No `model`, no user message with text, or an unknown `previous_response_id`. |
 | `401` | | Missing or invalid token. |
-| `403` | | The token lacks the scope, or you cannot use this agent or conversation. |
-| `404` | `model_not_found` | No agent with this key that you can use. |
-| `502` | `server_error` | The agent run failed. |
+| `403` | | The token lacks `conversation:chat`, or the conversation of `previous_response_id` is not yours. |
+| `404` | `model_not_found` | No configured chat model has this `id`. |
+| `502` | `server_error` | The chat run failed. |
 
 A request that fails validation before reaching these endpoints answers in PipesHub's error format (`VALIDATION_ERROR`). An error after a stream has opened is sent in the stream: a `data: {"error": ...}` event for Chat Completions, `response.failed` for Responses.

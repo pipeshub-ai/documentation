@@ -28,12 +28,14 @@ Every call runs as the token's user. You can list and use only the agents you ca
 
 ## Endpoints
 
-| Method and path | Scope | What it does |
+Paths are relative to the base URL, `/api/v1/openai`.
+
+| Endpoint | Scope | What it does |
 |---|---|---|
-| `GET /api/v1/openai/models` | `agent:read` | Lists your agents as models. `id` is the agent key; `name` and `description` come from the agent. |
-| `GET /api/v1/openai/models/{id}` | `agent:read` | One agent. |
-| `POST /api/v1/openai/chat/completions` | `agent:execute` | [Chat Completions](#chat-completions). |
-| `POST /api/v1/openai/responses` | `agent:execute` | [Responses](#responses), with `previous_response_id` to continue a conversation. |
+| `GET /models` | `agent:read` | Lists your agents as models. `id` is the agent key; `name` and `description` come from the agent. |
+| `GET /models/{id}` | `agent:read` | One agent. |
+| `POST /chat/completions` | `agent:execute` | [Chat Completions](#chat-completions). |
+| `POST /responses` | `agent:execute` | [Responses](#responses), with `previous_response_id` to continue a conversation. |
 
 The configured LLMs themselves (not agents) are listed at `GET /api/v1/models`.
 

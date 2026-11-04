@@ -105,7 +105,10 @@ The list is empty until an admin configures a chat model.
 
     # The first model in the list is the organization default.
     MODEL=$(curl -s "$PIPESHUB_URL/api/v1/openai/models" \
-      -H "Authorization: Bearer $PIPESHUB_TOKEN" | jq -r '.data[0].id')
+      -H "Authorization: Bearer $PIPESHUB_TOKEN" | jq -re '.data[0].id') || {
+      echo "No model id from /models. Check the token, and that a chat model is configured under AI models." >&2
+      exit 1
+    }
 
     curl -s "$PIPESHUB_URL/api/v1/openai/chat/completions" \
       -H "Authorization: Bearer $PIPESHUB_TOKEN" \
@@ -204,7 +207,7 @@ Both endpoints accept `stream: true` and send OpenAI's server-sent events, so cl
 ## Limits and differences from OpenAI
 
 - **Not the raw model.** The assistant always searches your knowledge and follows PipesHub's instructions.
-- **Fields PipesHub does not use** (`temperature`, `max_tokens`, `tools`, `response_format`, `store`, ...) are accepted and ignored.
+- **Fields PipesHub does not use** (`temperature`, `max_tokens`, `response_format`, `store`, ...) are accepted and ignored. So are `tools`, except a `file_search` tool on `/responses`, which limits the search to its vector stores.
 - **`usage` is `null`.** Token counts are not reported.
 - **Text and file ids only.** Images and inline file data (`file_data`, `file_url`) in messages are ignored.
 

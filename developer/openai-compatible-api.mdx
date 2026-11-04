@@ -36,7 +36,7 @@ Paths are relative to the base URL, `/api/v1/openai`. Each one needs the scope o
 | `POST /chat/completions` | `conversation:chat` | [Chat Completions](#chat-completions). |
 | `POST /responses` | `conversation:chat` | [Responses](#responses), with `previous_response_id` to continue a conversation. |
 | `/files` | `kb:read`, `kb:upload`, `kb:write` | [Files](#files): upload, list, retrieve, download, delete. |
-| `/vector_stores` | `kb:read`, `kb:upload`, `kb:write`, `semantic:write` | [Vector stores](#vector-stores): your collections, their files, file batches and search. |
+| `/vector_stores` | `kb:read`, `kb:upload`, `kb:write` | [Vector stores](#vector-stores): your collections, their files and file batches. |
 | `GET /organization/projects` | `project:read` | [Projects](#projects) you can chat in. |
 
 Deleting a file, a vector store or a vector store file needs `kb:delete`. [Personal access tokens](/developer/personal-access-tokens) cannot carry that scope, so deletes need an [OAuth 2.0](/developer/oauth2) access token with it.
@@ -156,11 +156,10 @@ follow_up = client.responses.create(
 
 ## Vector stores
 
-Every collection you can read is a vector store, with the id `vs_<collection id>`, so existing collections can be searched and used in chat right away. Creating a vector store creates a collection.
+Every collection you can read is a vector store, with the id `vs_<collection id>`, so existing collections can be used in chat right away. Creating a vector store creates a collection.
 
 - **Adding a file** (`POST /vector_stores/{id}/files`, `file_batches`, or `file_ids` on create) copies it into the collection and indexes it there, because a PipesHub record belongs to one collection. Adding the same file again changes nothing. `GET /vector_stores/{id}/files/{file_id}` finds the copy by the id you added it with; the store's file listing shows the copy under its own id.
 - **File batches** are processed when they are created, so `cancel` has nothing to stop. A batch holds up to 100 files.
-- **Search** (`POST /vector_stores/{id}/search`) runs PipesHub retrieval limited to the collection, with your permissions. `filters` and `ranking_options` are ignored.
 - **Deleting** a vector store deletes the collection and its records. Files you uploaded with `POST /files` stay in the files collection.
 - `expires_after`, `chunking_strategy`, `attributes` and `metadata` are accepted and ignored.
 

@@ -1,0 +1,148 @@
+---
+title: "SDKs"
+description: "Official PipesHub SDKs for Python, TypeScript and Go: install one, sign in, and run your first search."
+icon: "cubes"
+---
+
+PipesHub has official SDKs for **Python**, **TypeScript** and **Go**. Each one wraps the whole [PipesHub HTTP API](/developer/api-reference) with typed requests and responses, retries, streaming and file uploads, so you can search your company's knowledge, get cited answers, run agents and manage knowledge bases and connectors from your own code.
+
+<CardGroup cols={3}>
+  <Card title="Python" icon="python" href="https://github.com/pipeshub-ai/pipeshub-sdk-python">
+    `pipeshub-sdk` on PyPI. Python 3.10+, sync and async clients.
+  </Card>
+  <Card title="TypeScript" icon="js" href="https://github.com/pipeshub-ai/pipeshub-sdk-typescript">
+    `@pipeshub-ai/sdk` on npm. Node.js, Bun, Deno and the browser.
+  </Card>
+  <Card title="Go" icon="golang" href="https://github.com/pipeshub-ai/pipeshub-sdk-go">
+    `github.com/pipeshub-ai/pipeshub-sdk-go/v2`. Go modules.
+  </Card>
+</CardGroup>
+
+<Tip>
+These pages are versioned. Pick your SDK release in the **version menu**; the language guides and the API reference beside this page change to match it.
+</Tip>
+
+## Quickstart
+
+<Steps>
+  <Step title="Install the SDK">
+    <CodeGroup>
+    ```bash Python
+    pip install pipeshub-sdk
+    ```
+
+    ```bash TypeScript
+    npm add @pipeshub-ai/sdk
+    ```
+
+    ```bash Go
+    go get github.com/pipeshub-ai/pipeshub-sdk-go/v2
+    ```
+    </CodeGroup>
+  </Step>
+  <Step title="Get a token">
+    Create a [personal access token](/developer/personal-access-tokens) in PipesHub, or get an access token through an [OAuth 2.0 app](/developer/oauth2). Export it so the examples can read it:
+
+    ```bash
+    export PIPESHUB_BEARER_AUTH="<your token>"
+    ```
+  </Step>
+  <Step title="Run your first search">
+    This retrieves permission-filtered passages with citations, the call most RAG and agent apps start with.
+
+    <CodeGroup>
+    ```python Python
+    import os
+    from pipeshub_sdk import Pipeshub, models
+
+    with Pipeshub(
+        security=models.Security(bearer_auth=os.getenv("PIPESHUB_BEARER_AUTH", "")),
+    ) as pipeshub:
+        res = pipeshub.semantic_search.retrieve(query="how do we roll back a canary?", limit=8)
+        print(res)
+    ```
+
+    ```typescript TypeScript
+    import { Pipeshub } from "@pipeshub-ai/sdk";
+
+    const pipeshub = new Pipeshub({
+      security: { bearerAuth: process.env["PIPESHUB_BEARER_AUTH"] ?? "" },
+    });
+
+    const result = await pipeshub.semanticSearch.retrieve({
+      query: "how do we roll back a canary?",
+    });
+    console.log(result);
+    ```
+
+    ```go Go
+    package main
+
+    import (
+    	"context"
+    	"log"
+    	"os"
+
+    	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go/v2"
+    	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/components"
+    )
+
+    func main() {
+    	s := pipeshub.New(pipeshub.WithSecurity(components.Security{
+    		BearerAuth: pipeshub.Pointer(os.Getenv("PIPESHUB_BEARER_AUTH")),
+    	}))
+    	res, err := s.SemanticSearch.Retrieve(context.Background(), components.RetrieveRequest{
+    		Query: "how do we roll back a canary?",
+    	})
+    	if err != nil {
+    		log.Fatal(err)
+    	}
+    	log.Println(res.RetrieveResponse)
+    }
+    ```
+    </CodeGroup>
+  </Step>
+</Steps>
+
+## Connect to your instance
+
+The SDKs connect to PipesHub Cloud (`https://app.pipeshub.com`) by default. For a self-hosted instance, pass your instance's API URL when you create the client:
+
+<CodeGroup>
+```python Python
+Pipeshub(server_url="https://<your-instance>/api/v1", security=...)
+```
+
+```typescript TypeScript
+new Pipeshub({ serverURL: "https://<your-instance>/api/v1", security: { ... } });
+```
+
+```go Go
+pipeshub.New(pipeshub.WithServerURL("https://<your-instance>/api/v1"), pipeshub.WithSecurity(...))
+```
+</CodeGroup>
+
+## What is in each version
+
+<AccordionGroup>
+  <Accordion title="Language guides" icon="book-open">
+    Installation, authentication, streaming, file uploads, retries, error handling and server selection for each SDK, taken from that SDK's README at the selected release.
+  </Accordion>
+  <Accordion title="API reference" icon="code">
+    Every endpoint of the release, with a Python, TypeScript and Go example on each one next to cURL. You can also send requests from the playground.
+  </Accordion>
+  <Accordion title="Older releases" icon="clock-rotate-left">
+    Every SDK release keeps its own pages, so code written against an older version still has matching docs. The newest release is marked **Latest**.
+  </Accordion>
+</AccordionGroup>
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Retrieval API" icon="magnifying-glass" href="/developer/retrieval-api">
+    How retrieval, filters and citations work.
+  </Card>
+  <Card title="Model Context Protocol" icon="plug" href="/mcp/overview">
+    Connect AI assistants to PipesHub without writing code.
+  </Card>
+</CardGroup>

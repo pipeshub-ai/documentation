@@ -69,18 +69,35 @@ Get credentials from Google Cloud console.
 
 </Tab>
 
-  <Tab title="SAML SSO">
-    ## Enterprise single sign-on using Security Assertion Markup Language (SAML) protocol.
-    <Warning>
-      SAML configuration requires technical coordination between your application admin and the Identity Provider admin.
-    </Warning>
-
-  </Tab>
 </Tabs>
+
+## Enterprise methods
+
+<Info>
+  These features are part of PipesHub Enterprise and aren't in the open-source edition. Version 1.0 of the open-source edition removed SAML SSO and OAuth / OIDC sign-in. To use any of these features, [upgrade to PipesHub Enterprise](/contact-us).
+</Info>
+
+<CardGroup cols={2}>
+  <Card title="SAML SSO" icon="user-lock" href="/auth/saml">
+    Let people sign in through your company's identity provider using SAML.
+  </Card>
+  <Card title="OAuth / OIDC" icon="key" href="/auth/oauth">
+    Let people sign in through any OAuth 2.0 or OpenID Connect provider.
+  </Card>
+  <Card title="GitHub" icon="github" href="/auth/github">
+    Let people sign in with their GitHub account.
+  </Card>
+  <Card title="Active Directory / LDAP" icon="server" href="/auth/ldap">
+    Let people sign in with their company Active Directory username and password.
+  </Card>
+  <Card title="SCIM User Provisioning" icon="users-gear" href="/auth/scim">
+    Add, update and remove users automatically from Okta or Microsoft Entra ID.
+  </Card>
+</CardGroup>
 
 ## How sign-in protects accounts
 
-These rules apply whichever methods you turn on.
+These rules describe the open-source edition. In PipesHub Enterprise, an account locks after ten wrong passwords or codes, and sign-in says the account is blocked. Active Directory has [its own limit](/auth/ldap#sign-in-protection).
 
 - **Only the methods you allow.** Sign-in accepts only a method your organization has turned on. In a sign-in with more than one step (for example, a password and then a code sent by email), each step accepts only the methods listed for that step, so the second step can't be skipped by entering the password again.
 - **The same person at every step.** Every step must be completed by the same account. A step completed with a different account (for example, a colleague's Google sign-in) is refused with *"This step was completed with a different account than the step before it. Start again from the sign-in page and use the same account for every step."*
@@ -88,7 +105,7 @@ These rules apply whichever methods you turn on.
 - **Locking after repeated failures.** After five wrong passwords or codes in a row, the account is locked for 24 hours and then unlocks by itself. The account owner is emailed when the lock is applied. While the lock lasts, sign-in shows the ordinary "incorrect" message, even for the right password or code, because a different message would tell a stranger that the account exists. The lock email is the only place the owner learns about it.
 
 <Note>
-  Sign-in steps are set up through the API (`POST /api/v1/orgAuthConfig/updateAuthMethod`); the settings page saves a single step. SAML SSO can't be one of several steps yet: a policy with more than one step that includes SAML is refused. Use SAML on its own, as a one-step sign-in. See [SAML SSO](/auth/saml).
+  Sign-in steps are set up through the API (`POST /api/v1/orgAuthConfig/updateAuthMethod`); the settings page saves a single step. In PipesHub Enterprise, sign-in has one step: a policy with more than one step is refused.
 </Note>
 
 ## Troubleshooting
@@ -100,6 +117,6 @@ If users encounter authentication issues:
 3. Confirm network connectivity to identity providers
 4. Validate certificate expiration dates
 5. Test authentication flow with a test account
-6. If someone is sure their password is right but is told it is incorrect, their account may be locked after five failed attempts. Ask them to look for the lock email; the account unlocks 24 hours after the lock was applied
+6. If someone is sure their password is right but is told it is incorrect, their account may be locked after five failed attempts (ten in PipesHub Enterprise). Ask them to look for the lock email; the account unlocks 24 hours after the lock was applied
 
 ## Next Steps

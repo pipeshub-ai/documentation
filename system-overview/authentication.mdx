@@ -1,6 +1,10 @@
 # Authentication Service
 
-The Authentication Service provides secure user authentication and authorization capabilities across your organization's ecosystem. It manages user identity verification, session handling, and supports multiple authentication methods including password, one-time passwords (OTP), OAuth providers (Google, Microsoft), Azure AD, OAuth, and SAML SSO.
+The Authentication Service provides secure user authentication and authorization capabilities across your organization's ecosystem. It manages user identity verification, session handling, and supports multiple authentication methods including password, one-time passwords (OTP), OAuth providers (Google, Microsoft). PipesHub Enterprise adds GitHub, Active Directory, generic OAuth, SAML SSO, and the older `azureAd` method. For Microsoft Entra ID, most people should use `microsoft`.
+
+<Info>
+  **Enterprise methods.** `samlSso`, `oauth`, `azureAd`, `github`, `ldap`, the `/saml/*` routes and `/userAccount/oauth/exchange` on this page are part of PipesHub Enterprise. The open-source edition removed SAML, generic OAuth and `azureAd` in [version 1.0](/changelog/platform/1.0.0), and Azure AD sign-in there is now `microsoft`. To use these features, [upgrade to PipesHub Enterprise](/contact-us).
+</Info>
 
 ## Base URL
 
@@ -303,7 +307,7 @@ Perform authentication with credentials for a specific method.
 }
 ```
 
-```json title="Azure AD Authentication"
+```json title="Azure AD Authentication (Enterprise)"
 {
   "method": "azureAd",
   "credentials": {
@@ -313,7 +317,7 @@ Perform authentication with credentials for a specific method.
 }
 ```
 
-```json title="OAuth Authentication"
+```json title="OAuth Authentication (Enterprise)"
 {
   "method": "oauth",
   "credentials": {
@@ -421,7 +425,7 @@ OAuth token exchange and provider integration.
 
 <AccordionGroup>
 
-<Accordion title="POST /userAccount/oauth/exchange - Exchange OAuth Token">
+<Accordion title="POST /userAccount/oauth/exchange - Exchange OAuth Token (Enterprise)">
 Exchange OAuth authorization code for tokens.
 
 <Tabs>
@@ -651,8 +655,8 @@ No body parameters required.
 </AccordionGroup>
 </Accordion>
 
-<Accordion title="SAML SSO Integration">
-SAML Single Sign-On authentication and configuration.
+<Accordion title="SAML SSO Integration (Enterprise)">
+SAML Single Sign-On authentication and configuration. Available in PipesHub Enterprise.
 
 <AccordionGroup>
 
@@ -843,9 +847,11 @@ Update organization authentication methods configuration.
 - `otp` - One-time password via email
 - `google` - Google OAuth authentication
 - `microsoft` - Microsoft OAuth authentication
-- `azureAd` - Azure Active Directory authentication
-- `oauth` - Generic OAuth authentication
-- `samlSso` - SAML Single Sign-On
+- `azureAd` - Azure Active Directory authentication (Enterprise)
+- `oauth` - Generic OAuth authentication (Enterprise)
+- `samlSso` - SAML Single Sign-On (Enterprise)
+- `github` - GitHub OAuth authentication (Enterprise)
+- `ldap` - Active Directory / LDAP authentication (Enterprise)
 </Tab>
 
 <Tab title="Response">
@@ -995,9 +1001,9 @@ The Authentication Service implements several security measures:
 - OAuth tokens are validated against provider endpoints
 - Email verification ensures token authenticity
 - Provider-specific validation for Google, Microsoft, and Azure AD
-- Generic OAuth support with configurable endpoints
+- Generic OAuth support with configurable endpoints (Enterprise)
 
-### SAML Security
+### SAML Security (Enterprise)
 - SAML responses are cryptographically verified
 - Certificate-based validation
 - Configurable email field mapping

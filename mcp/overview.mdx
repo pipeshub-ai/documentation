@@ -190,7 +190,7 @@ Some MCP clients, such as Claude Code and VS Code, publish their OAuth client de
 - **Chat that acts.** `pipeshub_chat` can run your connected actions (create a Jira issue, send a message) only when the token has `agent:execute`. With `conversation:chat` alone it answers without acting.
 - **Rate limits.** Each account may make `MAX_REQUESTS_PER_MINUTE` requests a minute to `/mcp` (default 1000); the API calls a tool makes for it are not counted again. Many people behind one address, such as an office or a hosted AI client, do not share one limit. A limit hit is a JSON-RPC error with HTTP `429`.
 - **Browser pages.** `/mcp` refuses a request from a web page whose `Origin` is not your instance's (`403`). Desktop, CLI and hosted clients send no `Origin`. To allow a browser-based tool such as an MCP inspector, add its origin to `MCP_ALLOWED_ORIGINS`.
-- **Audit trail.** Every tool call is logged with the account, the OAuth app, the tool, how long it took and whether it failed (`audit: mcp_tool_call` in the Node API's logs). Argument values and results are never logged.
+- **Audit trail.** Every tool call is logged with the account, the OAuth app's client ID (`pat-system:` followed by the org ID for a personal access token), the tool, how long it took and whether it failed (`audit: mcp_tool_call` in the Node API's logs). Argument values and results are never logged.
 - **Turning an app off.** Suspending or deleting an OAuth app revokes the tokens it issued, so its clients stop at once.
 
 ### Request size limit

@@ -1,6 +1,6 @@
 # AGENTS.md
 
-Public Mintlify source for docs.pipeshub.com, the documentation of the open-source PipesHub product. Pages are `.mdx`; site config and navigation live in `docs.json`. There is no `package.json` and no build step.
+Public Mintlify source for docs.pipeshub.com, the documentation of PipesHub. Pages are `.mdx`; site config and navigation live in `docs.json`. There is no `package.json` and no build step.
 
 ## Preview and check
 
@@ -45,4 +45,4 @@ User-facing release notes go in `additional-resources/changelog.mdx`.
 
 ## Public-repo wording
 
-This repo is public. Document only features that ship in the open-source PipesHub product. Do not mention internal tickets, customer names, unreleased plans or private repositories in pages, commit messages or branch names.
+This repo is public. Document features that ship in the open-source PipesHub product. A feature that is only in PipesHub Enterprise may be documented if its page sets `tag: "Enterprise"` in the frontmatter and opens with an `<Info>` notice that says so and links to [upgrade](/contact-us). Do not mention internal tickets, customer names, unreleased plans or private repositories in pages, commit messages or branch names.

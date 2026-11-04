@@ -3,7 +3,7 @@ title: "Authentication Service"
 description: "Endpoints for sign-in, sessions and passwords in the Authentication service"
 ---
 
-The Authentication Service provides secure user authentication and authorization capabilities across your organization's ecosystem. It manages user identity verification, session handling, and supports multiple authentication methods including password, one-time passwords (OTP), and sign-in with Google or Microsoft accounts. SAML SSO and generic OAuth sign-in were removed in PipesHub 1.0, and Azure AD sign-in is part of Microsoft sign-in; see [Authentication](/auth).
+The Authentication Service provides secure user authentication and authorization capabilities across your organization's ecosystem. It manages user identity verification, session handling, and supports multiple authentication methods including password, one-time passwords (OTP), and sign-in with Google or Microsoft accounts. SAML SSO and generic OAuth sign-in were removed from the open-source edition in 1.0 and need PipesHub Enterprise, which also adds GitHub and Active Directory sign-in. Azure AD sign-in is part of Microsoft sign-in; see [Authentication](/auth).
 
 ## Base URL
 
@@ -262,7 +262,7 @@ Perform authentication with credentials for a specific method.
   
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-| method | string | Yes | Authentication method (`password`, `otp`, `google` or `microsoft`). `samlSso` and `oauth` were removed in PipesHub 1.0, and `azureAd` is now `microsoft` |
+| method | string | Yes | Authentication method (`password`, `otp`, `google` or `microsoft`). `samlSso` and `oauth` were removed from the open-source edition in 1.0 and need PipesHub Enterprise, and `azureAd` is now `microsoft` |
 | credentials | object | Yes | Credentials object for the specified method |
 
 **Authentication Methods:**
@@ -691,7 +691,7 @@ Update organization authentication methods configuration.
 - `google` - Google OAuth authentication
 - `microsoft` - Microsoft OAuth authentication (includes Azure AD accounts)
 
-Saving a policy that names `samlSso`, `oauth` or `azureAd` is refused with `400`. `samlSso` and `oauth` sign-in were removed in PipesHub 1.0, and `azureAd` is now `microsoft`. Older saved policies are rewritten once when the server starts.
+In the open-source edition, saving a policy that names `samlSso`, `oauth` or `azureAd` is refused with `400`. `samlSso` and `oauth` sign-in were removed from the open-source edition in 1.0 and need PipesHub Enterprise, and `azureAd` is now `microsoft`. Older saved policies are rewritten once when the server starts.
 </Tab>
 
 <Tab title="Response">

@@ -2,6 +2,7 @@
 title: "Active Directory / LDAP"
 description: "Let people sign in to PipesHub with their company Active Directory username and password"
 icon: "server"
+sidebarTitle: "Active Directory"
 tag: "Enterprise"
 ---
 
@@ -40,9 +41,13 @@ Your PipesHub server must also be able to reach Active Directory over the networ
 
 ## Set up Active Directory sign-in
 
+The screenshots use sample details such as `example.com`. You'll see your own details instead.
+
 <Steps>
   <Step title="Open the settings">
     In PipesHub, go to **Workspace → Authentication**. Find the **Active Directory** row and select the gear icon. Only admins can see this page.
+
+    <img src="/images/auth/ldap/ldap_open_settings.png" alt="The gear icon on the Active Directory row" width="100%" />
   </Step>
   <Step title="Enter the connection details">
     Fill in the required fields:
@@ -58,21 +63,40 @@ Your PipesHub server must also be able to reach Active Directory over the networ
   </Step>
   <Step title="Test the connection">
     Select **Test connection**. You should see *Connected to Active Directory*. If you see an error, check [Troubleshooting](#troubleshooting).
+
+    <img src="/images/auth/ldap/ldap_panel.png" alt="The Active Directory panel after a successful connection test" width="70%" />
   </Step>
   <Step title="Save">
     Select **Save**.
   </Step>
   <Step title="Turn it on">
-    On the Authentication page, under **Authentication Methods**, select **Edit**, turn on **Active Directory**, leave **Password** on for now, and select **Save**. Then do the same under **User Sign-In Methods**. The sign-in page only offers methods that are turned on in that second section.
+    You can only turn a method on after its details are saved, so check that the row now says **Configured**.
+
+    Under **Authentication methods**, select **Edit**, turn on **Active Directory**, and leave **Password** on for now. Select **Save** at the bottom of the page.
+
+    <img src="/images/auth/ldap/ldap_turn_on.png" alt="The Active Directory switch turned on under Authentication methods" width="100%" />
+
+    Then do the same under **User sign-in methods**. Its **Save** button is at the top of that section. The sign-in page only offers methods that are turned on in this second section.
+
+    <img src="/images/auth/ldap/ldap_user_signin.png" alt="The Active Directory switch turned on under User sign-in methods" width="100%" />
   </Step>
   <Step title="Try signing in">
-    In a private browser window, open PipesHub and select **Sign in with Active Directory**. Enter your work username and password. It worked if you land in PipesHub, signed in as yourself. If not, see [Troubleshooting](#troubleshooting).
+    In a private browser window, open PipesHub and select **Sign in with Active Directory**.
+
+    <img src="/images/auth/ldap/ldap_signin_page.png" alt="The Sign in with Active Directory button on the sign-in page" width="60%" />
+
+    Enter your work username and password. It worked if you land in PipesHub, signed in as yourself. If not, see [Troubleshooting](#troubleshooting).
+
+    <img src="/images/auth/ldap/ldap_signin_form.png" alt="The Active Directory sign-in form" width="60%" />
   </Step>
 </Steps>
 
-## Optional settings
+## Advanced settings
 
-You only need these if the defaults don't fit your setup.
+You don't need these to get started. Open one only if you need it.
+
+<AccordionGroup>
+<Accordion title="Change the default settings" icon="sliders">
 
 | Setting | What it does | Default |
 |---|---|---|
@@ -85,10 +109,11 @@ You only need these if the defaults don't fit your setup.
 | **JIT provisioning** | Creates a PipesHub account automatically the first time someone signs in. Turn this off if you'd rather add people yourself. To make an admin approve people who join on their own, also turn off **Allow Auto-Join** under **Workspace Access**. | On |
 
 <Warning>
-  With **JIT provisioning** on, anyone your search filter can find gets a PipesHub account when they first sign in. If that's too many people, narrow the **Search base** or **Search filter**, or turn it off. If you narrow them while [account removal](#remove-people-who-leave) is on, existing accounts outside the new limits are suspended.
+  With **JIT provisioning** on, anyone your search filter can find gets a PipesHub account when they first sign in. If that's too many people, narrow the **Search base** or **Search filter**, or turn it off. If you narrow them while account removal is on, existing accounts outside the new limits are suspended.
 </Warning>
 
-## Keep groups in sync
+</Accordion>
+<Accordion title="Keep groups in sync" icon="users">
 
 You can link an Active Directory group to a PipesHub group. People in the Active Directory group who already have a PipesHub account are then added to the PipesHub group automatically. A sync never creates accounts.
 
@@ -110,7 +135,8 @@ After that, a person's groups update each time they sign in. To also update them
   Active Directory decides who belongs in a linked group. A sync removes anyone who isn't in the Active Directory group, including people you added to the PipesHub group by hand. Members outside your **Search base** or **Search filter** count as not in the group.
 </Warning>
 
-## Remove people who leave
+</Accordion>
+<Accordion title="Remove people who leave" icon="user-minus">
 
 PipesHub can check its accounts against Active Directory on a schedule. To use this, open the Active Directory panel, turn on **Remove accounts deleted from Active Directory, and suspend disabled or expired ones**, set the **Sync interval**, and save. The check only covers accounts that sign in with Active Directory, and it runs while Active Directory is on in either section.
 
@@ -123,6 +149,9 @@ PipesHub can check its accounts against Active Directory on a schedule. To use t
 | **Active Directory can't be reached** | Nothing changes. The check stops and tries again at the next scheduled time. |
 
 **To see what a check would do first**, open the panel again and select **Preview** in the **Account removal** section. Nothing changes. Select **Sync Users** to run the check right away. If you've just changed the **Directory URL**, **Search base**, **Search filter**, **Email attribute** or **Username attribute**, the first run only previews.
+
+</Accordion>
+</AccordionGroup>
 
 ## Sign-in protection
 

@@ -2,6 +2,7 @@
 title: "SCIM User Provisioning"
 description: "Add, update and remove PipesHub users automatically from Okta or Microsoft Entra ID"
 icon: "users-gear"
+sidebarTitle: "SCIM"
 tag: "Enterprise"
 ---
 
@@ -35,21 +36,21 @@ Without SCIM, an admin has to add every new employee to PipesHub by hand, and re
 
 ## Set up SCIM
 
+The screenshots use sample details such as `example.com`. You'll see your own details instead.
+
 <Steps>
   <Step title="Open the SCIM settings in PipesHub">
     Go to **Workspace → Authentication** and find the section called **User provisioning (SCIM)**.
+
+    <img src="/images/auth/scim/scim_section.png" alt="The User provisioning (SCIM) section with the Generate token button highlighted" width="100%" />
   </Step>
   <Step title="Copy the SCIM address">
-    Copy the **SCIM address**. It looks like this:
-
-    ```text
-    https://your-pipeshub-address/api/v1/scim/v2
-    ```
-
-    Your identity provider sends its updates to this address, so it must be able to reach your PipesHub server over the network.
+    Copy the **SCIM address**. Your identity provider sends its updates to this address, so it must be able to reach your PipesHub server over the network.
   </Step>
   <Step title="Generate a token">
     Select **Generate token**, then copy the token. A token works like a password: it proves to PipesHub that the updates really come from your identity provider.
+
+    <img src="/images/auth/scim/scim_token_dialog.png" alt="The window that shows your SCIM token and SCIM address" width="70%" />
 
     <Warning>
       The token is shown only once. Copy it before you close the window, and keep it private. If you lose it, generate a new one.
@@ -62,7 +63,9 @@ Without SCIM, an admin has to add every new employee to PipesHub by hand, and re
     Give one test person access in your identity provider. Then check two things in PipesHub:
 
     - The test person appears in your list of users.
-    - The **User provisioning (SCIM)** section shows **Connected**, with the time of the last request.
+    - The **User provisioning (SCIM)** section shows **Connected**, with the date of the last request.
+
+    <img src="/images/auth/scim/scim_connected.png" alt="The User provisioning (SCIM) section showing Connected and one active token" width="100%" />
 
     Once this works, give access to everyone else.
   </Step>
@@ -129,7 +132,12 @@ Without SCIM, an admin has to add every new employee to PipesHub by hand, and re
   The `userName` that your identity provider sends must be the person's email address. PipesHub refuses anything else.
 </Warning>
 
-## What happens to people
+## What happens after setup
+
+You don't need these details to get started. Open one when you want to know more.
+
+<AccordionGroup>
+<Accordion title="What happens to people" icon="user">
 
 | What you do in your identity provider | What happens in PipesHub |
 |---|---|
@@ -141,7 +149,8 @@ Without SCIM, an admin has to add every new employee to PipesHub by hand, and re
 | **Switch someone back on** | They can use their account again, and they're back in their identity provider groups. Add them again to any groups that were created in PipesHub. |
 | **Delete someone** | They can no longer sign in, and they're removed from all groups. Their work is kept. If you give them access again later, their old account and work come back. |
 
-### Admins
+</Accordion>
+<Accordion title="What happens to admins" icon="user-shield">
 
 SCIM never makes anyone an admin. To give someone admin rights, do it in PipesHub.
 
@@ -149,13 +158,17 @@ If an admin is switched off or deleted through SCIM, they first become a regular
 
 SCIM can't switch off or delete your last admin. Make someone else an admin first.
 
-## What happens to groups
+</Accordion>
+<Accordion title="What happens to groups" icon="users">
 
 If you send groups from your identity provider, PipesHub creates a matching group and keeps its members up to date. Give people access before you send their group, because a group's members must already exist in PipesHub. Groups named Admin, Everyone or Standard, or sharing a name with an existing PipesHub group, are refused.
 
 - **SCIM only changes the groups it created.** Built-in groups and groups you made in PipesHub are safe.
 - **Permissions are still set in PipesHub.** A new group can't do anything special until you decide what it can access.
 - **Deleting a group doesn't remove its people.** They stay in PipesHub.
+
+</Accordion>
+</AccordionGroup>
 
 ## Replace a token before it expires
 

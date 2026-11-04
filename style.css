@@ -15,3 +15,23 @@
 #sidebar li[id^="/changelog/platform/"]:nth-child(n + 6):not([data-shown]):not([data-active="true"]) {
   display: none;
 }
+
+/* Native controls (the API playground's server <select>) follow the site theme, not the OS:
+   the browser draws the open option list itself, so it needs color-scheme and option colors. */
+html.dark {
+  color-scheme: dark;
+}
+
+html.light {
+  color-scheme: light;
+}
+
+html.dark select option {
+  background-color: rgb(var(--gray-900));
+  color: rgb(var(--gray-100));
+}
+
+select option:checked {
+  background-color: rgb(var(--primary));
+  color: #fff;
+}

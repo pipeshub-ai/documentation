@@ -1,0 +1,515 @@
+---
+title: "Go SDK"
+description: "Install and use the PipesHub Go SDK, release v2.0.1."
+---
+
+<Note>
+This page is the [Go SDK README at v2.0.1](https://github.com/pipeshub-ai/pipeshub-sdk-go/blob/v2.0.1/README.md). Use the version menu to see another release.
+</Note>
+
+[![Go Reference](https://pkg.go.dev/badge/github.com/pipeshub-ai/pipeshub-sdk-go/v2.svg)](https://pkg.go.dev/github.com/pipeshub-ai/pipeshub-sdk-go/v2)
+[![License](https://img.shields.io/github/license/pipeshub-ai/pipeshub-sdk-go.svg)](https://github.com/pipeshub-ai/pipeshub-sdk-go/blob/main/LICENSE)
+
+This is the official Go SDK for [PipesHub](https://pipeshub.com). Search your company's knowledge and get answers with citations, run agents, and manage knowledge bases and connectors, all from your Go code.
+
+PipesHub connects workplace apps such as Google Drive, Slack, Confluence and Jira and indexes their content. The SDK has typed requests and responses for every operation, and every method takes a `context.Context`.
+
+## Documentation
+
+- [API reference](https://docs.pipeshub.com/developer/api-reference): the PipesHub HTTP API.
+- [Go package reference](https://pkg.go.dev/github.com/pipeshub-ai/pipeshub-sdk-go/v2)
+- [Available methods](#available-resources-and-operations): every SDK method, linked to its parameters, response and errors.
+- [Examples](https://github.com/pipeshub-ai/pipeshub-sdk-go/blob/v2.0.1/examples/): runnable programs for search, chat, agents, knowledge bases and connectors.
+
+The client signs in with either a [personal access token](https://docs.pipeshub.com/developer/personal-access-tokens) or an [OAuth 2.0](https://docs.pipeshub.com/developer/oauth2) access token (see [Authentication](#authentication)). It connects to PipesHub Cloud (`https://app.pipeshub.com`) by default. For a self-hosted instance, pass `pipeshub.WithServerURL("https://<your-instance>/api/v1")` (see [Server Selection](#server-selection)).
+
+## SDK Installation
+
+To add the SDK as a dependency to your project:
+```bash
+go get github.com/pipeshub-ai/pipeshub-sdk-go/v2
+```
+
+## SDK Example Usage
+
+### Retrieve passages with citations
+
+```go
+package main
+
+import (
+	"context"
+	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go/v2"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/components"
+	"log"
+	"os"
+)
+
+func main() {
+	ctx := context.Background()
+
+	s := pipeshub.New(
+		pipeshub.WithSecurity(components.Security{
+			BearerAuth: pipeshub.Pointer(os.Getenv("PIPESHUB_BEARER_AUTH")),
+		}),
+	)
+
+	res, err := s.SemanticSearch.Retrieve(ctx, components.RetrieveRequest{
+		Query: "how do we roll back a canary?",
+	})
+	if err != nil {
+		log.Fatal(err)
+	}
+	if res.RetrieveResponse != nil {
+		// handle response
+	}
+}
+
+```
+
+## Authentication
+
+### Per-Client Security Schemes
+
+This SDK supports the following security schemes globally:
+
+| Name         | Type   | Scheme       | Environment Variable   |
+| ------------ | ------ | ------------ | ---------------------- |
+| `BearerAuth` | http   | HTTP Bearer  | `PIPESHUB_BEARER_AUTH` |
+| `Oauth2`     | oauth2 | OAuth2 token | `PIPESHUB_OAUTH2`      |
+
+You can set the security parameters through the `WithSecurity` option when initializing the SDK client instance. The selected scheme will be used by default to authenticate with the API for all operations that support it. For example:
+```go
+package main
+
+import (
+	"context"
+	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go/v2"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/components"
+	"log"
+	"os"
+)
+
+func main() {
+	ctx := context.Background()
+
+	s := pipeshub.New(
+		pipeshub.WithSecurity(components.Security{
+			BearerAuth: pipeshub.Pointer(os.Getenv("PIPESHUB_BEARER_AUTH")),
+		}),
+	)
+
+	res, err := s.OAuthProvider.OauthToken(ctx, components.OAuthTokenRequest{
+		GrantType: components.GrantTypeClientCredentials,
+	})
+	if err != nil {
+		log.Fatal(err)
+	}
+	if res.OAuthTokenResponse != nil {
+		// handle response
+	}
+}
+
+```
+
+### Per-Operation Security Schemes
+
+Some operations in this SDK require the security scheme to be specified at the request level. For example:
+```go
+package main
+
+import (
+	"context"
+	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go/v2"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/operations"
+	"log"
+	"os"
+)
+
+func main() {
+	ctx := context.Background()
+
+	s := pipeshub.New()
+
+	res, err := s.UserAccount.RefreshToken(ctx, operations.RefreshTokenSecurity{
+		ScopedToken: os.Getenv("PIPESHUB_SCOPED_TOKEN"),
+	})
+	if err != nil {
+		log.Fatal(err)
+	}
+	if res.RefreshTokenResponse != nil {
+		// handle response
+	}
+}
+
+```
+
+## Server-sent event streaming
+
+[Server-sent events][mdn-sse] are used to stream content from certain
+operations. These operations will expose the stream as an iterable that
+can be consumed using a simple `for` loop. The loop will
+terminate when the server no longer has any events to send and closes the
+underlying connection.
+
+```go
+package main
+
+import (
+	"context"
+	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go/v2"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/components"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/operations"
+	"log"
+	"os"
+)
+
+func main() {
+	ctx := context.Background()
+
+	s := pipeshub.New(
+		pipeshub.WithSecurity(components.Security{
+			BearerAuth: pipeshub.Pointer(os.Getenv("PIPESHUB_BEARER_AUTH")),
+		}),
+	)
+
+	res, err := s.KnowledgeBase.UploadRecords(ctx, "<id>", operations.UploadRecordsRequestBody{
+		Files: []operations.UploadRecordsFile{},
+		FilesMetadata: []operations.FilesMetadatum{
+			operations.FilesMetadatum{
+				FilePath:     "/docs/report.pdf",
+				LastModified: 2024.0,
+			},
+		},
+	}, nil)
+	if err != nil {
+		log.Fatal(err)
+	}
+	if res.UploadStreamSSEEvent != nil {
+		defer res.UploadStreamSSEEvent.Close()
+
+		for res.UploadStreamSSEEvent.Next() {
+			event := res.UploadStreamSSEEvent.Value()
+			log.Print(event)
+			// Handle the event
+		}
+	}
+}
+
+```
+
+[mdn-sse]: https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events/Using_server-sent_events
+
+## Retries
+
+Some of the endpoints in this SDK support retries. If you use the SDK without any configuration, it will fall back to the default retry strategy provided by the API. However, the default retry strategy can be overridden on a per-operation basis, or across the entire SDK.
+
+To change the default retry strategy for a single API call, simply provide a `retry.Config` object to the call by using the `WithRetries` option:
+```go
+package main
+
+import (
+	"context"
+	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go/v2"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/components"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/retry"
+	"log"
+	"models/operations"
+)
+
+func main() {
+	ctx := context.Background()
+
+	s := pipeshub.New()
+
+	res, err := s.OAuthProvider.OauthToken(ctx, components.OAuthTokenRequest{
+		GrantType: components.GrantTypeClientCredentials,
+	}, operations.WithRetries(
+		retry.Config{
+			Strategy: "backoff",
+			Backoff: &retry.BackoffStrategy{
+				InitialInterval: 1,
+				MaxInterval:     50,
+				Exponent:        1.1,
+				MaxElapsedTime:  100,
+			},
+			RetryConnectionErrors: false,
+		}))
+	if err != nil {
+		log.Fatal(err)
+	}
+	if res.OAuthTokenResponse != nil {
+		// handle response
+	}
+}
+
+```
+
+If you'd like to override the default retry strategy for all operations that support retries, you can use the `WithRetryConfig` option at SDK initialization:
+```go
+package main
+
+import (
+	"context"
+	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go/v2"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/components"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/retry"
+	"log"
+)
+
+func main() {
+	ctx := context.Background()
+
+	s := pipeshub.New(
+		pipeshub.WithRetryConfig(
+			retry.Config{
+				Strategy: "backoff",
+				Backoff: &retry.BackoffStrategy{
+					InitialInterval: 1,
+					MaxInterval:     50,
+					Exponent:        1.1,
+					MaxElapsedTime:  100,
+				},
+				RetryConnectionErrors: false,
+			}),
+	)
+
+	res, err := s.OAuthProvider.OauthToken(ctx, components.OAuthTokenRequest{
+		GrantType: components.GrantTypeClientCredentials,
+	})
+	if err != nil {
+		log.Fatal(err)
+	}
+	if res.OAuthTokenResponse != nil {
+		// handle response
+	}
+}
+
+```
+
+## Error Handling
+
+Handling errors in this SDK should largely match your expectations. All operations return a response object or an error, they will never return both.
+
+By Default, an API error will return `apierrors.APIError`. When custom error responses are specified for an operation, the SDK may also return their associated error. You can refer to respective *Errors* tables in SDK docs for more details on possible error types for each operation.
+
+For example, the `OauthToken` function may return the following errors:
+
+| Error Type                                    | Status Code | Content Type     |
+| --------------------------------------------- | ----------- | ---------------- |
+| apierrors.BadRequest                          | 400         | application/json |
+| apierrors.OAuthErrorResponse                  | 401         | application/json |
+| apierrors.OAuthClientManagementRateLimitError | 429         | application/json |
+| apierrors.ErrorResponse                       | 500         | application/json |
+| apierrors.APIError                            | 4XX, 5XX    | \*/\*            |
+
+### Example
+
+```go
+package main
+
+import (
+	"context"
+	"errors"
+	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go/v2"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/apierrors"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/components"
+	"log"
+)
+
+func main() {
+	ctx := context.Background()
+
+	s := pipeshub.New()
+
+	res, err := s.OAuthProvider.OauthToken(ctx, components.OAuthTokenRequest{
+		GrantType: components.GrantTypeClientCredentials,
+	})
+	if err != nil {
+
+		var e *apierrors.BadRequest
+		if errors.As(err, &e) {
+			// handle error
+			log.Fatal(e.Error())
+		}
+
+		var e *apierrors.OAuthErrorResponse
+		if errors.As(err, &e) {
+			// handle error
+			log.Fatal(e.Error())
+		}
+
+		var e *apierrors.OAuthClientManagementRateLimitError
+		if errors.As(err, &e) {
+			// handle error
+			log.Fatal(e.Error())
+		}
+
+		var e *apierrors.ErrorResponse
+		if errors.As(err, &e) {
+			// handle error
+			log.Fatal(e.Error())
+		}
+
+		var e *apierrors.APIError
+		if errors.As(err, &e) {
+			// handle error
+			log.Fatal(e.Error())
+		}
+	}
+}
+
+```
+
+## Server Selection
+
+### Select Server by Index
+
+You can override the default server globally using the `WithServerIndex(serverIndex int)` option when initializing the SDK client instance. The selected server will then be used as the default on the operations that use it. This table lists the indexes associated with the available servers:
+
+| #   | Server                          | Variables      | Description                                       |
+| --- | ------------------------------- | -------------- | ------------------------------------------------- |
+| 0   | `https://{instance_url}/api/v1` | `instance_url` | Base API URL                                      |
+| 1   | `https://{instance_url}`        | `instance_url` | Root URL (used for MCP endpoints mounted at /mcp) |
+
+If the selected server has variables, you may override its default values using the associated option(s):
+
+| Variable       | Option                                | Default              | Description                                                                                                                                                  |
+| -------------- | ------------------------------------- | -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `instance_url` | `WithInstanceURL(instanceURL string)` | `"app.pipeshub.com"` | Host name, with an optional port, of a PipesHub instance served over HTTPS. For a plain-HTTP instance, such as a local one, set the full server URL instead. |
+
+#### Example
+
+```go
+package main
+
+import (
+	"context"
+	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go/v2"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/components"
+	"log"
+)
+
+func main() {
+	ctx := context.Background()
+
+	s := pipeshub.New(
+		pipeshub.WithServerIndex(0),
+		pipeshub.WithInstanceURL("app.pipeshub.com"),
+	)
+
+	res, err := s.OAuthProvider.OauthToken(ctx, components.OAuthTokenRequest{
+		GrantType: components.GrantTypeClientCredentials,
+	})
+	if err != nil {
+		log.Fatal(err)
+	}
+	if res.OAuthTokenResponse != nil {
+		// handle response
+	}
+}
+
+```
+
+### Override Server URL Per-Client
+
+The default server can also be overridden globally using the `WithServerURL(serverURL string)` option when initializing the SDK client instance. For example:
+```go
+package main
+
+import (
+	"context"
+	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go/v2"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/components"
+	"log"
+)
+
+func main() {
+	ctx := context.Background()
+
+	s := pipeshub.New(
+		pipeshub.WithServerURL("https://app.pipeshub.com"),
+	)
+
+	res, err := s.OAuthProvider.OauthToken(ctx, components.OAuthTokenRequest{
+		GrantType: components.GrantTypeClientCredentials,
+	})
+	if err != nil {
+		log.Fatal(err)
+	}
+	if res.OAuthTokenResponse != nil {
+		// handle response
+	}
+}
+
+```
+
+## Custom HTTP Client
+
+The Go SDK makes API calls that wrap an internal HTTP client. The requirements for the HTTP client are very simple. It must match this interface:
+
+```go
+type HTTPClient interface {
+	Do(req *http.Request) (*http.Response, error)
+}
+```
+
+The built-in `net/http` client satisfies this interface and a default client based on the built-in is provided by default. To replace this default with a client of your own, you can implement this interface yourself or provide your own client configured as desired. Here's a simple example, which adds a client with a 30 second timeout.
+
+```go
+import (
+	"net/http"
+	"time"
+
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2"
+)
+
+var (
+	httpClient = &http.Client{Timeout: 30 * time.Second}
+	sdkClient  = pipeshub.New(pipeshub.WithClient(httpClient))
+)
+```
+
+This can be a convenient way to configure timeouts, cookies, proxies, custom headers, and other low-level configuration.
+
+## Special Types
+
+This SDK defines the following custom types to assist with marshalling and unmarshalling data.
+
+### Date
+
+`types.Date` is a wrapper around time.Time that allows for JSON marshaling a date string formatted as "2006-01-02".
+
+#### Usage
+
+```go
+d1 := types.NewDate(time.Now()) // returns *types.Date
+
+d2 := types.DateFromTime(time.Now()) // returns types.Date
+
+d3, err := types.NewDateFromString("2019-01-01") // returns *types.Date, error
+
+d4, err := types.DateFromString("2019-01-01") // returns types.Date, error
+
+d5 := types.MustNewDateFromString("2019-01-01") // returns *types.Date and panics on error
+
+d6 := types.MustDateFromString("2019-01-01") // returns types.Date and panics on error
+```
+
+## Available Resources and Operations
+
+Every method, with its parameters and responses, is in the API reference of this version and in the [SDK repository](https://github.com/pipeshub-ai/pipeshub-sdk-go/blob/v2.0.1/README.md#available-resources-and-operations).
+
+## Support
+
+- Bugs and feature requests: [open an issue](https://github.com/pipeshub-ai/pipeshub-sdk-go/issues).
+- Questions: the [PipesHub Discord](https://discord.com/invite/K5RskzJBm2).
+- PipesHub itself: [pipeshub-ai/pipeshub-ai](https://github.com/pipeshub-ai/pipeshub-ai).
+
+## Contributing
+
+Most of this SDK is generated, so direct changes to generated files are overwritten by the next release. Please open an issue instead. See [CONTRIBUTING.md](https://github.com/pipeshub-ai/pipeshub-sdk-go/blob/v2.0.1/CONTRIBUTING.md).
+
+## License
+
+Licensed under the [Apache License 2.0](https://github.com/pipeshub-ai/pipeshub-sdk-go/blob/v2.0.1/LICENSE).

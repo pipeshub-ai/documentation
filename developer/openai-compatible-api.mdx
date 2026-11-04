@@ -1,0 +1,226 @@
+---
+title: "OpenAI-compatible API"
+description: "Chat with PipesHub from any OpenAI client (SDKs, IDE plugins, n8n, chat UIs): pick one of your configured models, and PipesHub answers from your company's knowledge"
+icon: "robot"
+---
+
+PipesHub can be called through the OpenAI API format. Any tool that lets you set an OpenAI **base URL**, **API key** and **model** can chat with PipesHub, with no custom integration.
+
+You pick one of the models your organization configured in PipesHub (OpenAI, Anthropic, Gemini, Azure OpenAI, an OpenAI-compatible endpoint, ...). PipesHub's assistant then answers with that model: it searches the knowledge you can access, uses its tools, and cites its sources. You get the model you chose plus PipesHub's knowledge, not the raw model.
+
+| Setting | Value |
+|---|---|
+| Base URL | `https://your-pipeshub-instance.com/api/v1/openai` |
+| API key | A [personal access token](/developer/personal-access-tokens) or an [OAuth 2.0](/developer/oauth2) access token with the `conversation:chat` scope |
+| Model | A model `id` from `GET /api/v1/openai/models`, such as `gpt-5` |
+
+Every call runs as the token's user. The assistant sees only the knowledge that user can see, and each conversation is saved to that user's chat history like a chat in the app.
+
+<Note>
+  These endpoints need a PipesHub version that includes them. An older instance answers `404` for `/api/v1/openai/...`.
+</Note>
+
+<Tip>
+  To ground a coding agent in company documents from an IDE, [MCP](/mcp/overview) gives it search and record tools so its own model writes the answer. See [For coding agents](/for-agents). To run your own model over PipesHub search results, use the [Retrieval API](/developer/retrieval-api).
+</Tip>
+
+---
+
+## Endpoints
+
+Paths are relative to the base URL, `/api/v1/openai`. Each one needs the scope of the PipesHub feature behind it.
+
+| Endpoint | Scope | What it does |
+|---|---|---|
+| `GET /models`, `GET /models/{id}` | `conversation:chat` | The chat models your organization configured. |
+| `POST /chat/completions` | `conversation:chat` | [Chat Completions](#chat-completions). |
+| `POST /responses` | `conversation:chat` | [Responses](#responses), with `previous_response_id` to continue a conversation. |
+| `/files` | `kb:read`, `kb:upload`, `kb:write` | [Files](#files): upload, list, retrieve, download, delete. |
+| `/vector_stores` | `kb:read`, `kb:upload`, `kb:write` | [Vector stores](#vector-stores): your collections, their files and file batches. |
+| `GET /organization/projects` | `project:read` | [Projects](#projects) you can chat in. |
+
+Deleting a file, a vector store or a vector store file needs `kb:delete`. [Personal access tokens](/developer/personal-access-tokens) cannot carry that scope, so deletes need an [OAuth 2.0](/developer/oauth2) access token with it.
+
+## Models
+
+`GET /models` lists every chat model an admin set up under AI models. Embedding, OCR, speech and image models are left out. The organization's default model comes first.
+
+- **`id`** is what you pass as `model`. It is the model name (`gpt-5`). A name configured under two providers is listed as `provider/name` (`openAI/gpt-5`, `azureOpenAI/gpt-5`). `provider/name` is also accepted for a model listed by its plain name.
+- **`name`** is the friendly name set in PipesHub, else the model name. **`owned_by`** is the provider.
+
+The list is empty until an admin configures a chat model.
+
+---
+
+## Quick start
+
+<Tabs>
+  <Tab title="Python">
+    ```python
+    from openai import OpenAI
+
+    client = OpenAI(
+        base_url="https://your-pipeshub-instance.com/api/v1/openai",
+        api_key="phpat_...",
+    )
+
+    models = client.models.list().data
+    if not models:
+        raise SystemExit("No chat model is configured in PipesHub. Ask an admin to add one under AI models.")
+    model = models[0].id  # the organization default
+
+    reply = client.chat.completions.create(
+        model=model,
+        messages=[{"role": "user", "content": "What is our parental leave policy?"}],
+    )
+    print(reply.choices[0].message.content)
+    ```
+  </Tab>
+  <Tab title="TypeScript">
+    ```typescript
+    import OpenAI from "openai";
+
+    const client = new OpenAI({
+      baseURL: "https://your-pipeshub-instance.com/api/v1/openai",
+      apiKey: "phpat_...",
+    });
+
+    const models = (await client.models.list()).data;
+    if (models.length === 0) {
+      throw new Error("No chat model is configured in PipesHub. Ask an admin to add one under AI models.");
+    }
+    const model = models[0].id; // the organization default
+
+    const reply = await client.responses.create({
+      model,
+      input: "What is our parental leave policy?",
+    });
+    console.log(reply.output_text);
+    ```
+  </Tab>
+  <Tab title="curl">
+    ```bash
+    export PIPESHUB_URL="https://your-pipeshub-instance.com"
+    export PIPESHUB_TOKEN="phpat_..."
+
+    # The first model in the list is the organization default.
+    MODEL=$(curl -s "$PIPESHUB_URL/api/v1/openai/models" \
+      -H "Authorization: Bearer $PIPESHUB_TOKEN" | jq -re '.data[0].id') || {
+      echo "No model id from /models. Check the token, and that a chat model is configured under AI models." >&2
+      exit 1
+    }
+
+    curl -s "$PIPESHUB_URL/api/v1/openai/chat/completions" \
+      -H "Authorization: Bearer $PIPESHUB_TOKEN" \
+      -H "Content-Type: application/json" \
+      -d "{\"model\": \"$MODEL\", \"messages\": [{\"role\": \"user\", \"content\": \"What is our parental leave policy?\"}]}"
+    ```
+  </Tab>
+</Tabs>
+
+In other tools, pick the "OpenAI" or "OpenAI-compatible" provider and enter the three settings above. Chat apps such as Chatbox fetch the model list for you. In n8n, create an OpenAI credential with the base URL and token, then choose a model.
+
+---
+
+## Chat Completions
+
+`POST /api/v1/openai/chat/completions` takes `model` and `messages`, plus `stream` (default `false`).
+
+- **Each call starts a new conversation.** Chat Completions clients send the whole history every time, so earlier messages and `system`/`developer` messages are passed to the assistant as text ahead of your last user message. Only text content is read.
+- **The answer** is in `choices[0].message.content`. `conversation_id` names the saved PipesHub conversation.
+- **Citations** are in `choices[0].message.annotations` as `url_citation` entries (`url`, `title`), one per cited source. The answer text keeps its own citation markers.
+
+## Responses
+
+`POST /api/v1/openai/responses` takes `model` and `input` (a string, or a list of message items), plus `instructions`, `previous_response_id` and `stream`.
+
+- **Without `previous_response_id`** a new conversation starts.
+- **With `previous_response_id`** (the `id` of an earlier response) the message is added to that conversation, and the assistant sees its earlier turns. Send only the new message. An `id` this instance did not return is refused with `400`.
+- **The answer** is in `output_text`, and in `output[0].content[0].text`. Citations are `url_citation` annotations on that content part.
+
+```python
+first = client.responses.create(model=model, input="Summarize the Q3 security review.")
+follow_up = client.responses.create(
+    model=model,
+    input="Which findings are still open?",
+    previous_response_id=first.id,
+)
+```
+
+---
+
+## Files
+
+`POST /files` (multipart, `file` and `purpose`) stores the file as a record in a collection of your own named **OpenAI API files**, created on your first upload, and indexes it like any upload. File ids are `file-<record id>`.
+
+- `GET /files` lists the files you uploaded this way. `purpose` is not stored: the upload response echoes it, and listings report `user_data`.
+- `GET /files/{id}` and `GET /files/{id}/content` work for any record you can read.
+- `status` is `uploaded` while indexing runs, `processed` once it is indexed, and `error` if indexing fails. The platform's upload size limit applies.
+
+## Vector stores
+
+Every collection you can read is a vector store, with the id `vs_<collection id>`, so existing collections can be used in chat right away. Creating a vector store creates a collection.
+
+- **Adding a file** (`POST /vector_stores/{id}/files`, `file_batches`, or `file_ids` on create) copies it into the collection and indexes it there, because a PipesHub record belongs to one collection. Adding the same file again changes nothing. `GET /vector_stores/{id}/files/{file_id}` finds the copy by the id you added it with; the store's file listing shows the copy under its own id.
+- **File batches** are processed when they are created, so `cancel` has nothing to stop. A batch holds up to 100 files.
+- **Deleting** a vector store deletes the collection and its records. Files you uploaded with `POST /files` stay in the files collection.
+- `expires_after`, `chunking_strategy`, `attributes` and `metadata` are accepted and ignored.
+
+```python
+f = client.files.create(file=open("returns-policy.md", "rb"), purpose="assistants")
+store = client.vector_stores.create(name="Returns", file_ids=[f.id])
+
+answer = client.responses.create(
+    model=model,
+    input="How long are returns accepted?",
+    tools=[{"type": "file_search", "vector_store_ids": [store.id]}],
+)
+```
+
+A `file_search` tool on `/responses` limits the knowledge the assistant searches to those vector stores. Files can also be attached to one message: a `{"type": "file", "file": {"file_id": ...}}` part in Chat Completions, or an `{"type": "input_file", "file_id": ...}` part in Responses.
+
+## Projects
+
+`GET /organization/projects` lists the PipesHub projects you can see, in OpenAI's `organization.project` shape. To chat inside one, send its id in the `OpenAI-Project` header. The OpenAI SDKs send it for you:
+
+```python
+client = OpenAI(base_url=..., api_key="phpat_...", project="<project id>")
+```
+
+A new conversation then follows the project's instructions and searches its knowledge. A follow-up through `previous_response_id` stays in the project its conversation started in.
+
+---
+
+## Streaming
+
+Both endpoints accept `stream: true` and send OpenAI's server-sent events, so client libraries' streaming helpers work unchanged:
+
+- **Chat Completions** sends `chat.completion.chunk` events and ends with `data: [DONE]`.
+- **Responses** sends `response.created`, `response.in_progress`, `response.output_item.added`, `response.content_part.added`, `response.output_text.delta`, `response.output_text.annotation.added` (one per citation), `response.output_text.done`, `response.content_part.done`, `response.output_item.done` and `response.completed`, each with a `sequence_number`.
+
+<Note>
+  The answer arrives as one text delta when the assistant finishes, not word by word. While the assistant searches and runs tools, the stream sends `: keepalive` comments so proxies keep the connection open.
+</Note>
+
+---
+
+## Limits and differences from OpenAI
+
+- **Not the raw model.** The assistant always searches your knowledge and follows PipesHub's instructions.
+- **Fields PipesHub does not use** (`temperature`, `max_tokens`, `response_format`, `store`, ...) are accepted and ignored. So are `tools`, except a `file_search` tool on `/responses`, which limits the search to its vector stores.
+- **`usage` is `null`.** Token counts are not reported.
+- **Text and file ids only.** Images and inline file data (`file_data`, `file_url`) in messages are ignored.
+
+## Errors
+
+Errors use OpenAI's shape, `{"error": {"message", "type", "param", "code"}}`:
+
+| Status | `code` | When |
+|---|---|---|
+| `400` | `invalid_request`, `missing_required_parameter` | No `model`, no user message with text, or an unknown `previous_response_id`. |
+| `401` | | Missing or invalid token. |
+| `403` | | The token lacks the endpoint's scope. |
+| `404` | `model_not_found`, `previous_response_not_found`, `not_found` | No configured chat model has this `id`, the conversation of `previous_response_id` is gone or not yours, or no such file, vector store or project. |
+| `502` | `server_error` | The chat run failed. |
+
+A request that fails validation before reaching these endpoints answers in PipesHub's error format (`VALIDATION_ERROR`). An error after a stream has opened is sent in the stream: a `data: {"error": ...}` event for Chat Completions, `response.failed` for Responses.

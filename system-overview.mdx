@@ -141,7 +141,7 @@ Connector and collection statistics count records by classification result and b
 
 #### Retrying classification or named-entity extraction
 
-The connector's **Overview** and the collection's **Analytics** panel have a **Data extraction with AI** section (collapsed by default; its header shows how many records failed). It has a **Classification** row and an **Entity extraction** row, and each shows **Retry** when the stage failed for some records. Retry re-runs only that stage for those records: nothing is parsed or embedded again, except that a record indexed before background stages existed gets a full reindex. Retry is available while the connector is enabled.
+The connector's **Overview** and the collection's **Analytics** panel have a **Data extraction with AI** section (collapsed by default; its header shows how many records failed). It has a **Classification** row and an **Entity extraction** row, and each shows **Retry** when the stage failed for some records. Retry re-runs only that stage for those records: nothing is parsed or embedded again. The one exception is classification: a record classified before background stages existed has no stage history, so its classification retry gets a full reindex. Entity extraction retry only picks records that have run the entities stage, so such a record is not retried there; reindex it instead. Retry is available while the connector is enabled.
 
 The same is available over the API, for classification and for named-entity extraction, with `POST /api/v1/connectors/:connectorId/reindex` and a `stages` field. See [Reindex a connector's records](/system-overview/connector-manager#api-endpoints).
 

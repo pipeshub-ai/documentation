@@ -32,13 +32,17 @@ PipesHub finds the right person by comparing email addresses. It reads the **pri
 
 ## Set up GitHub sign-in
 
+The screenshots use sample details such as `example.com`. You'll see your own details instead.
+
 <Steps>
   <Step title="Copy the callback address from PipesHub">
-    Go to **Workspace → Authentication**, find the **GitHub** row, and select the gear icon. Copy the **Authorization callback URL**. You'll need it in the next step. It looks like this:
+    Go to **Workspace → Authentication**, find the **GitHub** row, and select the gear icon.
 
-    ```text
-    https://your-pipeshub-address/auth/github/callback
-    ```
+    <img src="/images/auth/github/github_open_settings.png" alt="The gear icon on the GitHub row" width="100%" />
+
+    Copy the **Authorization callback URL** from the panel that opens. You'll need it in the next step.
+
+    <img src="/images/auth/github/github_panel.png" alt="The GitHub settings panel" width="80%" />
   </Step>
   <Step title="Create an OAuth app in GitHub">
     In GitHub, go to **Settings → Developer settings → OAuth Apps → New OAuth App**. For an organization app, start from your organization's settings instead. Fill in these fields:
@@ -62,10 +66,22 @@ PipesHub finds the right person by comparing email addresses. It reads the **pri
     Back in the PipesHub panel, paste the **Client ID** and **Client Secret**, then select **Save**.
   </Step>
   <Step title="Turn it on">
-    On the Authentication page, under **Authentication Methods**, select **Edit**, turn on **GitHub**, leave **Password** on for now, and select **Save**. Then do the same under **User Sign-In Methods**. The sign-in page only offers methods that are turned on in that second section.
+    You can only turn a method on after its details are saved, so check that the row now says **Configured**.
+
+    Under **Authentication methods**, select **Edit**, turn on **GitHub**, and leave **Password** on for now. Select **Save** at the bottom of the page.
+
+    <img src="/images/auth/github/github_turn_on.png" alt="The GitHub switch turned on under Authentication methods" width="100%" />
+
+    Then do the same under **User sign-in methods**. Its **Save** button is at the top of that section. The sign-in page only offers methods that are turned on in this second section.
+
+    <img src="/images/auth/github/github_user_signin.png" alt="The GitHub switch turned on under User sign-in methods" width="100%" />
   </Step>
   <Step title="Try signing in">
-    In a private browser window, open PipesHub and choose GitHub. Approve the request in the window that opens. It worked if you land in PipesHub, signed in as yourself. If not, see [Troubleshooting](#troubleshooting).
+    In a private browser window, open PipesHub and select **GitHub**.
+
+    <img src="/images/auth/github/github_signin_page.png" alt="The GitHub button on the sign-in page" width="60%" />
+
+    Approve the request in the window that opens. It worked if you land in PipesHub, signed in as yourself. If not, see [Troubleshooting](#troubleshooting).
   </Step>
 </Steps>
 
@@ -82,7 +98,7 @@ When someone signs in, GitHub asks them to approve two permissions: `read:user` 
 | *GitHub sign-in is not configured for this workspace* | The Client ID hasn't been saved. | Add the **Client ID** and **Client Secret** in PipesHub. |
 | *Failed to exchange GitHub authorization code* or *GitHub token exchange did not return an access token* | GitHub didn't accept the sign-in. | Check the **Client Secret**, and that the callback address in GitHub exactly matches the one in PipesHub. If needed, generate a new secret. |
 | GitHub says the redirect URI isn't associated with the application | The callback addresses don't match. | Copy the address from PipesHub into the OAuth app again. |
-| The GitHub option doesn't appear on the sign-in page | The method is turned off or isn't set up. | Check that it's saved under **Workspace → Authentication**, and turned on under both **Authentication Methods** and **User Sign-In Methods**. |
+| The GitHub option doesn't appear on the sign-in page | The method is turned off or isn't set up. | Check that it's saved under **Workspace → Authentication**, and turned on under both **Authentication methods** and **User sign-in methods**. |
 
 ## Common words
 

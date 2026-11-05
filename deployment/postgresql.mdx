@@ -1,14 +1,14 @@
 ---
 title: "Run on PostgreSQL"
-description: "Use PostgreSQL in place of MongoDB, Redis, Qdrant and Neo4j: what it can replace, the setting for each, and how to check it"
+description: "Run a standalone or new slim install on PostgreSQL alone: what it replaces, the setting for each, and how to check it"
 icon: "database"
 ---
 
-PostgreSQL can hold the data that PipesHub keeps in several other stores. **Every PostgreSQL option is off by default.** A standard install is unchanged until you set the variables below.
+PostgreSQL can hold all of PipesHub's data in one database. This setup is for **standalone installs and new slim deployments**. **Every PostgreSQL option is off by default**, so an install is unchanged until you set the variables below.
 
-<Warning>
-  These options are opt-in. The default stores stay MongoDB, Redis, Qdrant and Neo4j. Try PostgreSQL on a new, empty install first. Back up before you move existing data.
-</Warning>
+<Note>
+  An existing deployment keeps the stores it runs today. A full deployment uses Redis (message broker, configuration, job scheduling and cache), Qdrant for vectors and Neo4j for the graph. Use the settings on this page when you set up a new standalone or slim install.
+</Note>
 
 ## What PostgreSQL can replace
 
@@ -78,26 +78,6 @@ Set the variable in your `.env`, then restart. Do these one at a time and check 
 
 ### Configuration, messages and shared state
 
-<Warning>
-  On an existing install, `KV_STORE_TYPE=postgres` starts with an empty configuration store: connector credentials, AI model settings and other configuration stay in Redis. Copy them first, as below, before you switch.
-</Warning>
-
-To move an existing install's configuration from Redis:
-
-1. Stop the PipesHub services.
-2. From `backend/python`, with the same Redis and `PG_CORE_URL` settings the services use, run a dry run, then the copy:
-
-   ```bash
-   python -m app.scripts.kv_redis_to_postgres --dry-run
-   python -m app.scripts.kv_redis_to_postgres
-   ```
-
-   Values are copied as stored, still encrypted, and are never printed. Redis is only read. The command prints a JSON summary. If PostgreSQL already holds a different value for a key, or a configuration key that Redis does not have, it stops before writing anything and lists the key names. Re-run with `--overwrite` to replace or remove them.
-3. Check that the summary shows `"different_after": 0` and `"conflicts": []`.
-4. Set `KV_STORE_TYPE=postgres` (or `PIPESHUB_STORE=postgres`) and start the services.
-
-To roll back, set `KV_STORE_TYPE` back to `redis` before the services have written to PostgreSQL. Changes made while running on PostgreSQL are not copied back to Redis.
-
 ```bash
 PIPESHUB_STORE=postgres
 ```
@@ -116,8 +96,6 @@ With `MESSAGE_BROKER=postgres`:
 ```bash
 DOC_STORE=postgres
 ```
-
-`DOC_STORE=shadow` keeps MongoDB as the store and compares a sample of reads with PostgreSQL. It is for testing a copy before you switch.
 
 ### Vectors (pgvector)
 
@@ -146,29 +124,6 @@ The graph lives in the `graph` schema. Each process uses its `PG_CORE_URL` login
 - **Logs:** each service logs the store it chose at start. Look for `pgvector provider created and connected` for vectors and `Creating postgres provider (from DATA_STORE env)` for the graph. An unsupported value stops the service with an error that names the variable.
 - **Round trip:** sign in, add a record or run a search, and confirm it works end to end.
 
-## Move existing data
-
-The document store moves with `docstore-migrate`, from MongoDB to PostgreSQL. It runs from the Node API build:
-
-```bash
-node dist/scripts/docstore-migrate.js <command> [flags]
-```
-
-It reads `MONGO_URI`, `MONGO_DB_NAME`, `PG_MIGRATE_URL` and `PG_IMPORT_URL` (and optionally `PG_NODE_URL`). Run `node dist/scripts/docstore-migrate.js --help` for the command list.
-
-| Command | What it does |
-|---|---|
-| `preflight` | Read-only report. Exits `1` when anything is red. Run it first. |
-| `migrate --offline [--dry-run]` | Copy everything with the application stopped. |
-| `migrate --online [--dry-run]`, `cutover` | Copy while the application keeps writing, then switch. |
-| `verify [--only a,b]` | Compare every document. |
-| `status` | Job, phase and per-collection progress. |
-| `rollback` | Go back to MongoDB. |
-
-Stop the application for an offline move. Writes made while the copy runs can be lost otherwise. After a verified copy, set `DOC_STORE=postgres` and restart.
-
-Configuration moves with `kv_redis_to_postgres` (see [Configuration, messages and shared state](#configuration-messages-and-shared-state)). There is no tool yet to move vectors from Qdrant or the graph from Neo4j. Re-index or re-sync instead.
-
 <Note>
-  **Coming soon:** a Docker Compose option that starts PostgreSQL and sets these variables for you, a Helm chart option, and scripts to move more of your data. They are not released, so set the variables above yourself for now.
+  **Coming soon:** a Docker Compose option that starts PostgreSQL and sets these variables for you, and a Helm chart option. They are not released, so set the variables above yourself for now.
 </Note>

@@ -55,8 +55,17 @@ An administrator registers an app in Microsoft Entra and saves it in PipesHub as
 ### Step 1: Register an application
 
 1. Go to the [Azure Portal](https://portal.azure.com) → **Microsoft Entra ID** → **App registrations** → **New registration**.
+
+<div className="text-center">
+  <img
+    src="/images/connectors/outlook/personal/01-new-registration.png"
+    alt="App registrations page with New registration highlighted"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
 2. Give it a name (for example, `PipesHub Outlook Personal`).
-3. Under **Supported account types**, choose **Accounts in this organizational directory only**.
+3. Under **Supported account types**, choose **Single tenant only** (older portals call it **Accounts in this organizational directory only**).
 4. Under **Redirect URI**, choose **Web** and enter:
 
 ```text
@@ -65,6 +74,14 @@ https://{your_pipeshub_base_url}/connectors/oauth/callback/OutlookPersonal
 
 5. Click **Register**.
 
+<div className="text-center">
+  <img
+    src="/images/connectors/outlook/personal/02-register-app.png"
+    alt="Register an application form: name, supported account types, redirect URI and Register button"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
 <Note>
   The redirect URI must match your PipesHub address exactly, including the port if you use one. Microsoft accepts `https` addresses, and `http` only for `localhost` (local development).
 </Note>
@@ -72,12 +89,62 @@ https://{your_pipeshub_base_url}/connectors/oauth/callback/OutlookPersonal
 ### Step 2: Copy the IDs and create a client secret
 
 1. On the app's **Overview** page, copy the **Application (client) ID** and the **Directory (tenant) ID**.
+
+<div className="text-center">
+  <img
+    src="/images/connectors/outlook/personal/03-app-overview.png"
+    alt="App overview with the Application (client) ID and Directory (tenant) ID highlighted"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
 2. Go to **Certificates & secrets** → **New client secret**, add it, and copy its **Value** right away (it is shown only once).
+
+<div className="text-center">
+  <img
+    src="/images/connectors/outlook/personal/04-new-client-secret.png"
+    alt="Certificates & secrets: New client secret, description and expiry, then Add"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+<div className="text-center">
+  <img
+    src="/images/connectors/outlook/personal/05-client-secret-value.png"
+    alt="The new client secret with its Value column highlighted"
+    className="block mx-auto w-11/12"
+  />
+</div>
 
 ### Step 3: Add the delegated permissions
 
 1. Go to **API permissions** → **Add a permission** → **Microsoft Graph** → **Delegated permissions**.
-2. Add `Mail.Read`, `User.Read` and `offline_access`.
+
+<div className="text-center">
+  <img
+    src="/images/connectors/outlook/personal/06-microsoft-graph.png"
+    alt="Request API permissions: Add a permission, then Microsoft Graph"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+<div className="text-center">
+  <img
+    src="/images/connectors/outlook/personal/07-delegated-permissions.png"
+    alt="Microsoft Graph: Delegated permissions, the permission search box and offline_access"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+2. Add `Mail.Read`, `User.Read` and `offline_access`. Type each name in the search box and tick it, then click **Add permissions**.
+
+<div className="text-center">
+  <img
+    src="/images/connectors/outlook/personal/08-api-permissions.png"
+    alt="Configured permissions: Mail.Read, offline_access and User.Read, all Delegated"
+    className="block mx-auto w-11/12"
+  />
+</div>
 
 These are delegated permissions: each user consents for their own mailbox when they sign in. If your organization blocks user consent, an administrator can grant consent for these three permissions once.
 

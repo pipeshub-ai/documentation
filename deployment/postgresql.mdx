@@ -1,0 +1,150 @@
+---
+title: "Run on PostgreSQL"
+description: "Use PostgreSQL in place of MongoDB, Redis, Qdrant and Neo4j: what it can replace, the setting for each, and how to check it"
+icon: "database"
+---
+
+PostgreSQL can hold the data that PipesHub keeps in several other stores. **Every PostgreSQL option is off by default.** A standard install is unchanged until you set the variables below.
+
+<Warning>
+  These options are opt-in. The default stores stay MongoDB, Redis, Qdrant and Neo4j. Try PostgreSQL on a new, empty install first. Back up before you move existing data.
+</Warning>
+
+## What PostgreSQL can replace
+
+| Data | Variable | Default | PostgreSQL value |
+|---|---|---|---|
+| Documents (users, orgs, chats, files metadata, OAuth) | `DOC_STORE` | `mongo` | `postgres` |
+| Configuration and credentials | `KV_STORE_TYPE` | `redis` | `postgres` |
+| Message broker | `MESSAGE_BROKER` | `redis` | `postgres` |
+| Crawl and sync scheduler | `CRAWL_SCHEDULER` | BullMQ when Redis is configured | `postgres` |
+| State shared across processes (leader keys, leases, retry counters) | `REDIS_MODE` | `standalone` | `postgres` |
+| Vectors | `VECTOR_DB_TYPE` | `qdrant` | `pgvector` |
+| Knowledge graph | `DATA_STORE` | `neo4j` in `env.template` (`arangodb` if unset) | `postgres` |
+
+`PIPESHUB_STORE=postgres` is a shortcut for four of these. It sets `KV_STORE_TYPE`, `MESSAGE_BROKER`, `CRAWL_SCHEDULER` and `REDIS_MODE` to `postgres` for any of them you have not set. A value you set always wins, so remove or comment out the `KV_STORE_TYPE=redis` and `MESSAGE_BROKER=redis` lines in your `.env` first. It does not change `DOC_STORE`, `VECTOR_DB_TYPE` or `DATA_STORE`.
+
+You can switch each store on its own. For example, you can keep Kafka for messages and use PostgreSQL for configuration.
+
+## Before you start
+
+You need:
+
+- A PostgreSQL server you control. For vectors, pgvector 0.7.0 or later. The stock `postgres` image does not include pgvector.
+- An administrator login to create roles, and the database prepared with the steps below.
+
+<Steps>
+  <Step title="Create the roles">
+    Run from the `backend` directory of the repository. This creates the roles and, with `PG_BOOTSTRAP_EXTENSIONS`, installs the extensions:
+
+    ```bash
+    PG_ADMIN_URL=postgresql://admin:...@db-host:5432/pipeshub \
+    PG_BOOTSTRAP_EXTENSIONS=vector,pg_trgm \
+    python -m db.bootstrap_roles
+    ```
+
+    Set a `PG_<NAME>_PASSWORD` variable for each login role you need, for example `PG_NODE_PASSWORD`, `PG_MIGRATE_PASSWORD` and `PG_JOBS_PASSWORD`. A role that already exists is never changed. Skip `PG_BOOTSTRAP_EXTENSIONS` if you do not use pgvector.
+  </Step>
+  <Step title="Apply the schema">
+    ```bash
+    PG_MIGRATE_URL=postgresql+psycopg://pipeshub_migrate:...@db-host:5432/pipeshub \
+    python -m db.migrate
+    ```
+
+    Use a direct address to PostgreSQL, not a pooler. The same job ships as the `pipeshubai/pipeshub-migrate` image. Exit code `0` means done. Exit code `4` means the database failed a safety check and the run changed nothing.
+  </Step>
+  <Step title="Give each service its login">
+    Each process connects with its own service login:
+
+    | Variable | Meaning |
+    |---|---|
+    | `PG_NODE_URL` | Login of the Node API. |
+    | `PG_CORE_URL` | Login of the Python service. `PG_RUNTIME_SERVICE` names its role: `node`, `connectors`, `indexing`, `query` or `kv`. `connectors` is the default. |
+    | `PG_JOBS_URL` | Jobs login, a direct address. Needed by background jobs. |
+    | `PG_POOLER` | `pgbouncer_txn` (default) or `none`. |
+    | `PG_LISTEN_URL` | A direct address for `LISTEN`. Required behind a transaction pooler. With `PG_POOLER=none`, `PG_CORE_URL` is used. |
+
+    Pool sizes and timers have defaults you can leave alone: `PG_POOL_MAX` 10, `PG_JOBS_POOL_MAX` 3, `PG_POOL_IDLE_SECONDS` 300, `PG_POOL_MIN` 1, `PG_LISTEN_PING_S` 10, `CONFIG_CACHE_TTL_SECONDS` 60.
+  </Step>
+</Steps>
+
+## Switch a store on
+
+Set the variable in your `.env`, then restart. Do these one at a time and check each (see [Check that it works](#check-that-it-works)).
+
+### Configuration, messages and shared state
+
+```bash
+PIPESHUB_STORE=postgres
+```
+
+Or set `KV_STORE_TYPE=postgres`, `MESSAGE_BROKER=postgres` and `REDIS_MODE=postgres` yourself. With these on, PipesHub needs no Redis server. Caches stay in each process.
+
+With `MESSAGE_BROKER=postgres`:
+
+- Delivery is ordered by message key. There are no fair-scheduling lanes, and `FAIR_SCHEDULING_LANE_COUNT` is ignored.
+- Failed messages are retried with backoff and then moved to a dead-letter state.
+
+`REDIS_MODE=inprocess` also runs without Redis, but keeps state in one process. Use it for a single process only.
+
+### Documents
+
+```bash
+DOC_STORE=postgres
+```
+
+`DOC_STORE=shadow` keeps MongoDB as the store and compares a sample of reads with PostgreSQL. It is for testing a copy before you switch.
+
+### Vectors (pgvector)
+
+```bash
+VECTOR_DB_TYPE=pgvector
+PGVECTOR_DSN=postgresql://pipeshub_query_login:...@db-host:5432/pipeshub
+```
+
+Notes:
+
+- `PGVECTOR_DSN` is the vector login. If you leave it out, the DSN under the `/services/pgvector` configuration key is used.
+- Each organization gets its own partition before its first vector write. A worker creates it, so run one per database: `PG_MIGRATE_URL=... PG_JOBS_URL=... python -m db.maintain placement --watch`. Without it, the first write fails after 30 seconds.
+- **The embedding model cannot be changed** on a PostgreSQL vector store. Choose it before you index.
+
+### Knowledge graph
+
+```bash
+DATA_STORE=postgres
+```
+
+The graph lives in the `graph` schema. Each process uses its `PG_CORE_URL` login. The default graph store is not changed unless you set this.
+
+## Check that it works
+
+- **Schema:** `python -m db.migrate` exits `0`.
+- **Logs:** each service logs the store it chose at start. Look for `Creating pgvector provider` and `pgvector provider created and connected` for vectors, and `Creating postgres provider (from DATA_STORE env)` for the graph. An unsupported value stops the service with an error that names the variable.
+- **Round trip:** sign in, add a record or run a search, and confirm it works end to end.
+
+## Move existing data
+
+Only the document store has a move tool today: `docstore-migrate`, from MongoDB to PostgreSQL. It runs from the Node API build:
+
+```bash
+node dist/scripts/docstore-migrate.js <command> [flags]
+```
+
+It reads `MONGO_URI`, `MONGO_DB_NAME`, `PG_MIGRATE_URL` and `PG_IMPORT_URL` (and optionally `PG_NODE_URL`). Run `node dist/scripts/docstore-migrate.js --help` for the command list.
+
+| Command | What it does |
+|---|---|
+| `preflight` | Read-only report. Exits `1` when anything is red. Run it first. |
+| `migrate --offline [--dry-run]` | Copy everything with the application stopped. |
+| `migrate --online [--dry-run]`, `cutover` | Copy while the application keeps writing, then switch. |
+| `verify [--only a,b]` | Compare every document. |
+| `status` | Job, phase and per-collection progress. |
+| `rollback` | Go back to MongoDB. |
+
+Stop the application for an offline move. Writes made while the copy runs can be lost otherwise. After a verified copy, set `DOC_STORE=postgres` and restart.
+
+I found no tool on the main branch to move configuration from Redis, vectors from Qdrant or the graph from Neo4j. Re-index or re-sync instead.
+
+<Note>
+  **Coming soon:** a Docker Compose option that starts PostgreSQL and sets these variables for you, a Helm chart option, and scripts to move more of your data. They are not released, so set the variables above yourself for now.
+</Note>

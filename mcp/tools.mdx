@@ -23,9 +23,9 @@ Ask a question and get an answer grounded in the org's indexed sources, with cit
 
 **Three questions this tool gets wrong — check them first:**
 
-- **Structure** — "what's under this epic?", "which pages are in this space?", "what's in this folder?" → `pipeshub_get_record_content` `mode:"navigate"`.
-- **Exhaustive** — "how many X?", "list all the Y", "every Z" → `mode:"navigate"`. Chat undercounts and will not say so.
-- **One named document** — summarize it, extract from it, what does it say about X → `pipeshub_search` for the `recordId`, then `mode:"content"`.
+- **Structure** — "what's under this epic?", "which pages are in this space?", "what's in this folder?" → `pipeshub_browse`.
+- **Exhaustive** — "how many X?", "list all the Y", "every Z" → `pipeshub_browse`. Chat undercounts and will not say so.
+- **One named document** — summarize it, extract from it, what does it say about X → `pipeshub_search` for the `recordId`, then `pipeshub_read_record`.
 
 Everything else about the org's knowledge belongs here: policies, processes, "what do we know about X", questions spanning several documents.
 
@@ -33,7 +33,7 @@ Everything else about the org's knowledge belongs here: policies, processes, "wh
 
 ## `pipeshub_search`
 
-Vector / semantic search across the org's indexed documents. Use it to **locate a document** — by name, topic, or a phrase — and to resolve it to a `recordId`. It is also **step 1 of reading a specific document**: search, take the top hit's `recordId`, then call `pipeshub_get_record_content`.
+Vector / semantic search across the org's indexed documents. Use it to **locate a document** — by name, topic, or a phrase — and to resolve it to a `recordId`. It is also **step 1 of reading a specific document**: search, take the top hit's `recordId`, then call `pipeshub_read_record`.
 
 | Argument | Type | Required | Description |
 |---|---|---|---|
@@ -43,26 +43,59 @@ Vector / semantic search across the org's indexed documents. Use it to **locate 
 
 **Response:** `hits[]` (`recordId`, `recordName`, `score`, `snippet`, `mimeType`, `webUrl`) sorted by score, plus `uniqueRecords[]` for deduped record-level info.
 
-Hits are a ranked sample, never a complete list. Never count them to answer "how many" / "all" / "every"; use `mode:"navigate"` instead.
+Hits are a ranked sample, never a complete list. Never count them to answer "how many" / "all" / "every"; use `pipeshub_browse` instead.
 
-## `pipeshub_get_record_content`
+## Record tools
 
-Three operations on records, selected by `mode`.
+Four tools read and find records. Each takes only its own arguments.
+
+### `pipeshub_read_record`
+
+The only way to see a document's full text. Use it to summarize, extract, or quote a named document. Prefer it over `pipeshub_download_record` when you need what the record *says* rather than the file bytes. A long record comes back in parts; each part ends with a `Next:` line naming the call that reads on.
 
 | Argument | Type | Required | Description |
 |---|---|---|---|
-| `mode` | enum | no | `content` (default), `navigate`, or `lookup`. |
-| `recordId` | string | conditional | Required when `mode` is `content`. Get it from a chat citation, a search hit, or a `lookup`. |
-| `nodeId` | string | no | `navigate` only. Omit to list the top level: a flat listing of everything reachable. On a limited connection, see the note below. |
-| `page` / `limit` | number | no | `navigate` only. 1-based page, 50–200 children per page (default 50). |
-| `depth` | number (1–3) | no | `navigate` only. `2` or `3` flattens descendants into one call instead of one call per level. Default 1. |
-| `identifiers` | string or string[] | conditional | Required when `mode` is `lookup`. A URL, issue key, or external ID — or up to 10 of them. |
+| `recordId` | string | yes | From a chat citation, a search hit, or `pipeshub_resolve_reference`. |
+| `maxChars` | number (2000–140000) | no | Most characters to return. Default 40000 (about 10k tokens). |
+| `query` | string | no | What you are looking for: in a long record, the most relevant passages come back first. |
+| `extract` | boolean | no | With `query`: only the passages that answer it, copied out by PipesHub's reader model. |
+| `startBlock` | number | no | Read on from this block, as a previous `Next:` line gives it. |
 
-- **`mode: "content"`** — the only way to see a document's full text. Use it to summarize, extract, or quote a named document. Prefer it over `pipeshub_download_record` when you need what the record *says* rather than the file bytes.
-- **`mode: "navigate"`** — browse the hierarchy (project / space / folder → records → children). Use it for structure and for every "how many" / "all" / "every" question. Pass `depth: 2` or `3` to see several levels in one call. Returns no document text.
-- **`mode: "lookup"`** — resolve a Jira key, URL, or external ID to a `recordId` plus metadata.
+### `pipeshub_read_thread`
 
-**On a limited connection.** A personal access token or OAuth app set to **Only what I pick** browses only what was picked. With no `nodeId`, `mode: "navigate"` lists:
+Read the whole Slack thread a message belongs to. Slack keeps each reply as its own record, so a read of one message shows only part of a conversation ("Reply Count: N").
+
+| Argument | Type | Required | Description |
+|---|---|---|---|
+| `recordId` | string | yes | Any message in the thread. |
+| `maxChars` | number (2000–140000) | no | Most characters to return. Default 40000. |
+| `startRecord` / `startBlock` | number | no | Read on from where a previous `Next:` line says. |
+
+### `pipeshub_browse`
+
+Browse the hierarchy (project / space / folder → records → children). Use it for structure and for every "how many" / "all" / "every" question: it reports a group's real total. Returns no document text. Date filters narrow the children; they are not a complete list of everything changed in that span.
+
+| Argument | Type | Required | Description |
+|---|---|---|---|
+| `nodeId` | string | no | Omit to list the top level: a flat listing of everything reachable. On a limited connection, see the note below. |
+| `page` / `limit` | number | no | 1-based page, 50–200 children per page (default 50). |
+| `depth` | number (1–3) | no | `2` or `3` flattens descendants into one call instead of one call per level. Default 1. |
+| `createdAfter` / `createdBefore` / `modifiedAfter` / `modifiedBefore` | string | no | `YYYY-MM-DD`, or an ISO 8601 datetime with a timezone offset. |
+
+### `pipeshub_resolve_reference`
+
+Resolve a Jira key, URL, or external ID to a `recordId` plus metadata. A miss may mean no access rather than that the record does not exist.
+
+| Argument | Type | Required | Description |
+|---|---|---|---|
+| `identifiers` | string or string[] | yes | A URL, issue key, or external ID — or up to 10 of them. |
+| `connectorName` | string | no | A hint such as `JIRA` that sets the order connectors are tried in. |
+
+<Note>
+These four replace `pipeshub_get_record_content`, which did all four jobs behind a `mode` argument. A server that has the four tools still runs a call to the old name, so existing scripts and CLI installs keep working, but it no longer lists it.
+</Note>
+
+**On a limited connection.** A personal access token or OAuth app set to **Only what I pick** browses only what was picked. With no `nodeId`, `pipeshub_browse` lists:
 
 - **Whole sources only:** the flat listing above, kept to those sources: every record group (project, space, drive, channel) and every record (issue, page, message, file) in them. Its total mixes the two, so don't read it as a count of issues, pages, messages or files.
 - **Any space, folder or file picked:** one item for each source, space, folder and file picked, and nothing inside them. `pagination.total` counts these items, not what they hold, and `depth` does not open them. To see inside an item, pass its id as `nodeId`. Do that for each item before answering a "how many" or "list all" question.
@@ -172,11 +205,13 @@ Returns `{ connectorId, name, startUrl, maxPages, url }`. `url` opens the user's
 
 | User says... | Use this tool |
 |---|---|
-| "What does the Q4 report say about ARR?" | `pipeshub_search` → top hit → `pipeshub_get_record_content` |
-| "Summarize the onboarding doc" | `pipeshub_search` → top hit → `pipeshub_get_record_content` |
+| "What does the Q4 report say about ARR?" | `pipeshub_search` → top hit → `pipeshub_read_record` |
+| "Summarize the onboarding doc" | `pipeshub_search` → top hit → `pipeshub_read_record` |
 | "What do we know about X?" (spans many docs) | `pipeshub_chat` |
 | "What's our PTO policy?" (no single named file) | `pipeshub_chat` |
-| "How many / list all / every X" | `pipeshub_get_record_content` `mode:"navigate"` — not chat |
+| "How many / list all / every X" | `pipeshub_browse` — not chat |
+| "What's in PA-1787?" / a pasted link | `pipeshub_resolve_reference` → `pipeshub_read_record` |
+| "What did the thread decide?" (Slack) | `pipeshub_read_thread` |
 | "Find the file called *security-review.pdf*" | `pipeshub_search` |
 | "Download that file" | `pipeshub_download_record` |
 | "Who am I?" | `pipeshub_directory` (`whoami`) |

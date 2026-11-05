@@ -688,6 +688,18 @@ Quota and rate-limit errors are different: they are never given up on, so no fil
 
 </Accordion>
 
+<Accordion title="The connector says domain-wide delegation is not set up. What do I do?">
+
+PipesHub's service account acts as each person in your Workspace to read their Drive. Google refuses this when the service account's client ID isn't authorized for domain-wide delegation, or is authorized without every scope the connector asks for. Google refuses the whole request if even one scope is missing. The notice names the client ID and the exact scopes.
+
+1. In the Google Admin console, open **Security > Access and data control > API controls > Domain-wide delegation**.
+2. Find the client ID from the notice, or add it, and make sure its scopes include every scope the notice lists. The list in **Step 4: Delegate Domain-Wide Authority** above covers them.
+3. Save. The next sync picks it up, and nothing needs changing in PipesHub.
+
+Until then, the Drive files of the people Google refused aren't synced. The notice is sent once per sync, not once per person, and the sync logs one warning with how many people were refused.
+
+</Accordion>
+
 <Accordion title="Queries not returning results. What could be wrong?">
 
 There are three common causes:

@@ -690,13 +690,29 @@ Quota and rate-limit errors are different: they are never given up on, so no fil
 
 <Accordion title="The connector says domain-wide delegation is not set up. What do I do?">
 
-PipesHub's service account acts as each person in your Workspace to read their Drive. Google refuses this when the service account's client ID isn't authorized for domain-wide delegation, or is authorized without every scope the connector asks for. Google refuses the whole request if even one scope is missing. The notice names the client ID and the exact scopes.
+PipesHub's service account acts as each person in your Workspace to read their Drive. Google refuses this when the service account's client ID isn't authorized for domain-wide delegation, or is authorized without every scope the connector asks for. Google refuses the whole request if even one scope is missing. The notice names the service account's client ID and the scopes.
+
+Only a Google Workspace super administrator can change domain-wide delegation. If you aren't one, send them the notice.
 
 1. In the Google Admin console, open **Security > Access and data control > API controls > Domain-wide delegation**.
-2. Find the client ID from the notice, or add it, and make sure its scopes include every scope the notice lists. The list in **Step 4: Delegate Domain-Wide Authority** above covers them.
-3. Save. The next sync picks it up, and nothing needs changing in PipesHub.
+2. Find the client ID from the notice, or add it, and make sure its scopes include every one of these. They are what the connector requests:
+   - `https://www.googleapis.com/auth/drive.readonly`
+   - `https://www.googleapis.com/auth/drive.file`
+   - `https://www.googleapis.com/auth/drive.metadata.readonly`
+   - `https://www.googleapis.com/auth/documents.readonly`
+   - `https://www.googleapis.com/auth/spreadsheets.readonly`
+   - `https://www.googleapis.com/auth/presentations.readonly`
+   - `https://www.googleapis.com/auth/admin.directory.user.readonly`
+   - `https://www.googleapis.com/auth/admin.directory.group.readonly`
+   - `https://www.googleapis.com/auth/admin.directory.domain.readonly`
+   - `https://www.googleapis.com/auth/admin.reports.audit.readonly`
+3. Save. Nothing needs changing in PipesHub.
 
-Until then, the Drive files of the people Google refused aren't synced. The notice is sent once per sync, not once per person, and the sync logs one warning with how many people were refused.
+Google usually applies the change within minutes, but it can take up to 24 hours, so a sync in the meantime may still show the notice.
+
+Until then, the Drive files of the people Google refused aren't synced. Each sync logs one warning saying how many people were refused. The notice isn't repeated on every sync: once sent, it's sent again at most once an hour at first, then less often.
+
+Once delegation works, the next sync picks each of those people up from where their last successful sync stopped, or syncs them in full if they never synced, so no changes are missed.
 
 </Accordion>
 

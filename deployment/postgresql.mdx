@@ -74,6 +74,10 @@ Set the variable in your `.env`, then restart. Do these one at a time and check 
 
 ### Configuration, messages and shared state
 
+<Warning>
+  On an existing install, `KV_STORE_TYPE=postgres` starts with an empty configuration store. Connector credentials, AI model settings and other configuration stay in Redis and are not read. Switch it on only for a new install for now.
+</Warning>
+
 ```bash
 PIPESHUB_STORE=postgres
 ```
@@ -99,13 +103,13 @@ DOC_STORE=postgres
 
 ```bash
 VECTOR_DB_TYPE=pgvector
-PGVECTOR_DSN=postgresql://pipeshub_query_login:...@db-host:5432/pipeshub
+PGVECTOR_DSN=postgresql://pipeshub_indexing_login:...@db-host:5432/pipeshub
 ```
 
 Notes:
 
-- `PGVECTOR_DSN` is the vector login. If you leave it out, the DSN under the `/services/pgvector` configuration key is used.
-- Each organization gets its own partition before its first vector write. A worker creates it, so run one per database: `PG_MIGRATE_URL=... PG_JOBS_URL=... python -m db.maintain placement --watch`. Without it, the first write fails after 30 seconds.
+- `PGVECTOR_DSN` is the login of the process that reads it (`pipeshub_<service>_login`). Set it per process: indexing writes vectors, so it needs the indexing login, while the query login can only read. If you leave it out, the DSN under the `/services/pgvector` configuration key is used.
+- The vector table needs a partition before the first vector write. A worker creates it, so run one per database: `PG_MIGRATE_URL=... PG_JOBS_URL=... python -m db.maintain placement --watch`. Without it, the first write fails after 30 seconds.
 - **The embedding model cannot be changed** on a PostgreSQL vector store. Choose it before you index.
 
 ### Knowledge graph
@@ -119,7 +123,7 @@ The graph lives in the `graph` schema. Each process uses its `PG_CORE_URL` login
 ## Check that it works
 
 - **Schema:** `python -m db.migrate` exits `0`.
-- **Logs:** each service logs the store it chose at start. Look for `Creating pgvector provider` and `pgvector provider created and connected` for vectors, and `Creating postgres provider (from DATA_STORE env)` for the graph. An unsupported value stops the service with an error that names the variable.
+- **Logs:** each service logs the store it chose at start. Look for `pgvector provider created and connected` for vectors and `Creating postgres provider (from DATA_STORE env)` for the graph. An unsupported value stops the service with an error that names the variable.
 - **Round trip:** sign in, add a record or run a search, and confirm it works end to end.
 
 ## Move existing data
@@ -143,7 +147,7 @@ It reads `MONGO_URI`, `MONGO_DB_NAME`, `PG_MIGRATE_URL` and `PG_IMPORT_URL` (and
 
 Stop the application for an offline move. Writes made while the copy runs can be lost otherwise. After a verified copy, set `DOC_STORE=postgres` and restart.
 
-I found no tool on the main branch to move configuration from Redis, vectors from Qdrant or the graph from Neo4j. Re-index or re-sync instead.
+There is no tool yet to move vectors from Qdrant or the graph from Neo4j. Re-index or re-sync instead.
 
 <Note>
   **Coming soon:** a Docker Compose option that starts PostgreSQL and sets these variables for you, a Helm chart option, and scripts to move more of your data. They are not released, so set the variables above yourself for now.

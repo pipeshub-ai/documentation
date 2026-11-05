@@ -79,8 +79,24 @@ Set the variable in your `.env`, then restart. Do these one at a time and check 
 ### Configuration, messages and shared state
 
 <Warning>
-  On an existing install, `KV_STORE_TYPE=postgres` starts with an empty configuration store. Connector credentials, AI model settings and other configuration stay in Redis and are not read. Switch it on only for a new install for now.
+  On an existing install, `KV_STORE_TYPE=postgres` starts with an empty configuration store: connector credentials, AI model settings and other configuration stay in Redis. Copy them first, as below, before you switch.
 </Warning>
+
+To move an existing install's configuration from Redis:
+
+1. Stop the PipesHub services.
+2. From `backend/python`, with the same Redis and `PG_CORE_URL` settings the services use, run a dry run, then the copy:
+
+   ```bash
+   python -m app.scripts.kv_redis_to_postgres --dry-run
+   python -m app.scripts.kv_redis_to_postgres
+   ```
+
+   Values are copied as stored, still encrypted, and are never printed. Redis is only read. The command prints a JSON summary. If PostgreSQL already holds a different value for a key, or a configuration key that Redis does not have, it stops before writing anything and lists the key names. Re-run with `--overwrite` to replace or remove them.
+3. Check that the summary shows `"different_after": 0` and `"conflicts": []`.
+4. Set `KV_STORE_TYPE=postgres` (or `PIPESHUB_STORE=postgres`) and start the services.
+
+To roll back, set `KV_STORE_TYPE` back to `redis` before the services have written to PostgreSQL. Changes made while running on PostgreSQL are not copied back to Redis.
 
 ```bash
 PIPESHUB_STORE=postgres
@@ -132,7 +148,7 @@ The graph lives in the `graph` schema. Each process uses its `PG_CORE_URL` login
 
 ## Move existing data
 
-Only the document store has a move tool today: `docstore-migrate`, from MongoDB to PostgreSQL. It runs from the Node API build:
+The document store moves with `docstore-migrate`, from MongoDB to PostgreSQL. It runs from the Node API build:
 
 ```bash
 node dist/scripts/docstore-migrate.js <command> [flags]
@@ -151,7 +167,7 @@ It reads `MONGO_URI`, `MONGO_DB_NAME`, `PG_MIGRATE_URL` and `PG_IMPORT_URL` (and
 
 Stop the application for an offline move. Writes made while the copy runs can be lost otherwise. After a verified copy, set `DOC_STORE=postgres` and restart.
 
-There is no tool yet to move vectors from Qdrant or the graph from Neo4j. Re-index or re-sync instead.
+Configuration moves with `kv_redis_to_postgres` (see [Configuration, messages and shared state](#configuration-messages-and-shared-state)). There is no tool yet to move vectors from Qdrant or the graph from Neo4j. Re-index or re-sync instead.
 
 <Note>
   **Coming soon:** a Docker Compose option that starts PostgreSQL and sets these variables for you, a Helm chart option, and scripts to move more of your data. They are not released, so set the variables above yourself for now.

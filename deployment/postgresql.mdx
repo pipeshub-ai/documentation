@@ -64,6 +64,10 @@ You need:
     | `PG_POOLER` | `pgbouncer_txn` (default) or `none`. |
     | `PG_LISTEN_URL` | A direct address for `LISTEN`. Required behind a transaction pooler. With `PG_POOLER=none`, `PG_CORE_URL` is used. |
 
+    <Warning>
+      These connections carry credentials and other configuration. When PostgreSQL is not on the same host, require TLS: add `?sslmode=verify-full` (or at least `sslmode=require`) to every `PG_*_URL` and to `PGVECTOR_DSN`, and give each login a strong password.
+    </Warning>
+
     Pool sizes and timers have defaults you can leave alone: `PG_POOL_MAX` 10, `PG_JOBS_POOL_MAX` 3, `PG_POOL_IDLE_SECONDS` 300, `PG_POOL_MIN` 1, `PG_LISTEN_PING_S` 10, `CONFIG_CACHE_TTL_SECONDS` 60.
   </Step>
 </Steps>

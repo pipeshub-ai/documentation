@@ -1,118 +1,131 @@
 ---
 title: "Run PipesHub locally for your coding agent"
-description: "Start PipesHub on your laptop, connect Claude Code, Codex, Cursor and other coding agents, and index the repository you are working in."
+description: "Start PipesHub on your computer, connect Claude Code, Cursor, Codex and other coding agents, and index the repository you are working in."
 icon: "laptop-code"
 ---
 
 <Warning>
-  **Not released yet.** The `@pipeshub-ai/standalone` package, the `@pipeshub-ai/mcp` release that proxies the full tool set, and the local images this page uses are not published. Do not publish this page until they are.
+  **Not released yet.** The local setup and the images it uses are not published. Do not publish this page until they are.
 </Warning>
 
-One command, run in your repository, puts a PipesHub on your computer, connect your coding agents to it, and let them answer questions about the code in the repository you are in: who calls a function, what breaks if you change it, where something is defined.
+One command puts PipesHub on your computer, connects your coding agents to it, and lets them answer questions about the code in your repository: who calls a function, what breaks if you change it, where something is defined.
 
-```bash
-cd path/to/your/repo
-npx @pipeshub-ai/standalone init     # start PipesHub (Docker), sign in, set up your agents, index this repository
-# restart your coding agent
-```
+<Tabs>
+  <Tab title="npx (Node)">
+    ```bash
+    cd path/to/your/repo
+    npx @pipeshub-ai/standalone init --local
+    ```
+  </Tab>
+  <Tab title="uvx (no Node)">
+    ```bash
+    cd path/to/your/repo
+    uvx pipeshub init --local
+    ```
+  </Tab>
+  <Tab title="pipx or pip (no Node)">
+    ```bash
+    pipx install pipeshub      # or: pip install pipeshub
+    cd path/to/your/repo
+    pipeshub init --local
+    ```
+  </Tab>
+</Tabs>
 
-Then ask your agent, for example: *"What calls `create_session`, and what breaks if I change its arguments?"*
+Restart your coding agent, then ask it, for example: *"What calls `create_session`, and what breaks if I change its arguments?"*
 
-Everything runs on your computer. Your files go to the PipesHub container on your laptop and nowhere else. No account on a hosted PipesHub and no model API key are needed to search or to use the code tools.
+Everything runs on your computer. Your files go to the PipesHub container on your machine and nowhere else. You need no hosted account and no model API key to search or to use the code tools.
 
-## Prerequisites
+<Note>
+  Plain `pipeshub init` (without `--local`) creates a hosted trial workspace instead. For the local setup, always add `--local`.
+</Note>
+
+The rest of this page writes `pipeshub <command>`. With `uvx`, type `uvx pipeshub <command>`. With `npx`, type `npx @pipeshub-ai/standalone <command>`. Or install once with `npm i -g @pipeshub-ai/standalone`, `pipx install pipeshub` or `pip install pipeshub` to type `pipeshub`.
+
+## Requirements
 
 | You need | Why |
 |---|---|
-| **Node.js 20 or later** | `npx` runs the setup command and the small bridge process your agent starts |
-| **Docker** with the Compose plugin ([Docker Desktop](https://docs.docker.com/get-docker/) or Docker Engine) | PipesHub and its PostgreSQL database run as two containers |
-| **About 5 GB of free memory** | The application container is limited to 4 GB and the database to 1 GB |
-| **A coding agent** | Claude Code, Codex, Claude Desktop, Cursor, Windsurf, VS Code, Gemini CLI, Zed or Cline |
+| **Docker** with the Compose plugin ([Docker Desktop](https://docs.docker.com/get-docker/) or Docker Engine) | PipesHub, its PostgreSQL database and a Neo4j graph database run as containers |
+| **Node.js 20 or later**, only for the `npx` route | `npx` runs the setup command and the small bridge process your agent starts. The `uvx`, `pipx` and `pip` routes need no Node |
+| **A coding agent** | Claude Code, Cursor, Codex, Gemini CLI, Claude Desktop, Windsurf, VS Code, Zed or Cline |
 | **A git repository** (to index code) | Only files that git lists are indexed |
 
-## The steps
+The stack listens on `127.0.0.1` only, so other computers cannot reach it.
 
-<Steps>
-  <Step title="Set up: init">
-    ```bash
-    cd path/to/your/repo
-    npx @pipeshub-ai/standalone init
-    ```
+## What `init --local` does
 
-    Run it inside the git repository you want to ask about: at the end `init` indexes that repository (the same as `index`, below) and prints one `Code:` line. Pass `--no-index` to skip that. Outside a git repository it indexes nothing and tells you how to index one later.
+1. Finds PipesHub on your computer (port 3000) or starts one with Docker. The first start downloads the images.
+2. Creates the first account on a new stack and signs in.
+3. Adds a `pipeshub` entry to each coding agent it finds.
+4. Indexes the current git repository. Pass `--no-index` to skip this.
 
-    `init` looks for a PipesHub on your computer (port 3000) and, if there is none, offers to start one with Docker. The first start downloads the images; later starts take about 30 seconds. On a new stack it creates the first account and signs in. Then it finds the coding agents you have installed and sets up each one. It prints every file it created or changed.
+Preview first with `pipeshub init --local --dry-run`: it prints every change and writes nothing. Useful flags: `--client cursor,codex` (only these agents), `--port 3100`, `--no-start` (do not start Docker), `--yes` (no questions), `--project` (also write rules into your repository).
 
-    Preview first with `npx @pipeshub-ai/standalone init --dry-run`: it prints every change and writes nothing.
-  </Step>
-  <Step title="Restart your coding agent">
-    Quit and reopen it, or start a new session, so it reads the new configuration. Ask a question about your team's documents to check the connection. Each client page below shows how to confirm the tools are listed.
-  </Step>
-  <Step title="Index another repository or refresh: index (optional)">
-    ```bash
-    cd path/to/another/repo
-    npx @pipeshub-ai/standalone index
-    ```
+Running it again changes nothing.
 
-    This sends the repository's text files to your local PipesHub, waits until they are indexed, and tells you when the code tools are available. Your agent can also do this itself with the `index_workspace` tool or a slash command, and the instructions `init` installs tell it to when the open folder is not indexed yet. See [Index a repository](#index-a-repository).
-  </Step>
-</Steps>
+## What gets written, and where
 
-Install the command once with `npm i -g @pipeshub-ai/standalone` if you want to type `pipeshub` instead of `npx @pipeshub-ai/standalone`. The examples on this page use the `npx` form.
+`init --local` never puts a password or token in an agent's configuration file. Before it edits a file, it saves a backup.
 
-## What `init` changes
+| What | Where |
+|---|---|
+| Stack files and generated secrets | `~/.pipeshub/standalone/` (the `.env` file is mode 0600) |
+| Your sign-in | `~/.config/pipeshub/credentials.json` (mode 0600) |
+| The local account, so you can open `http://127.0.0.1:3000` | `~/.config/pipeshub/local-account.json` (mode 0600) |
+| Backups of every file it edits | `~/.config/pipeshub/backups/` |
+| An MCP entry named `pipeshub` | One config file per agent, listed below |
 
-`init` never puts a password or token in an agent's configuration file.
+The entry starts the MCP bridge: `npx -y @pipeshub-ai/mcp start --server-url http://127.0.0.1:3000` on the `npx` route, and `uvx --from pipeshub pipeshub start ...` or `pipeshub start ...` on the Python routes.
 
-| What | Where | Notes |
-|---|---|---|
-| PipesHub stack files | `~/.pipeshub/standalone/` | The Compose file and `.env` with generated secrets (mode 0600), and a `workspace/` folder the stack can read |
-| Your sign-in | `~/.config/pipeshub/credentials.json` | Mode 0600. The agents' bridge process reads it when it connects |
-| The local account | `~/.config/pipeshub/local-account.json` | Mode 0600. Email `developer@pipeshub.local` and a generated password, so you can open the web app at `http://127.0.0.1:3000` |
-| An MCP entry named `pipeshub` | One config file per agent | Runs `npx -y @pipeshub-ai/mcp@>=4.8.0 start --server-url http://127.0.0.1:3000` with `PIPESHUB_MCP_CHAT=off` |
-| A short instruction text | Claude Code skill, Codex and Gemini CLI user instruction files | Tells the agent when to use search, the code tools and `index_workspace`. Under 2,000 characters |
-| Slash commands | Claude Code and Gemini CLI | `/pipeshub-index`, `/pipeshub-code` (Claude Code); `/pipeshub:index`, `/pipeshub:code` (Gemini CLI) |
-| A backup of every file it edits | `~/.config/pipeshub/backups/<time>/` | Made before the edit |
+| Agent | Config file that gets the entry |
+|---|---|
+| Claude Code | `~/.claude.json` (also a skill and the `/pipeshub-index` and `/pipeshub-code` commands under `~/.claude/`) |
+| Cursor | `~/.cursor/mcp.json` |
+| Codex | `~/.codex/config.toml` (and a section in `~/.codex/AGENTS.md`) |
+| Gemini CLI | `~/.gemini/settings.json` (and `~/.gemini/GEMINI.md`, `/pipeshub:index`, `/pipeshub:code`) |
+| Claude Desktop | macOS `~/Library/Application Support/Claude/claude_desktop_config.json`, Windows `%APPDATA%\Claude\claude_desktop_config.json`. Skipped on Linux |
+| Windsurf | `~/.config/devin/mcp_config.json` (and `~/.codeium/windsurf/mcp_config.json` if it exists) |
+| VS Code | `mcp.json` in the VS Code user folder (Linux `~/.config/Code/User/`, macOS `~/Library/Application Support/Code/User/`, Windows `%APPDATA%\Code\User\`) |
+| Zed | `~/.config/zed/settings.json` (Windows `%APPDATA%\Zed\settings.json`) |
+| Cline | `cline_mcp_settings.json` in the Cline extension folder under the VS Code user folder. Open Cline once first |
 
-Rules and an `AGENTS.md` or `CLAUDE.md` block inside **your repository** are written only if you add `--project` (or answer yes when `init` asks):
+With `--project`, it also writes a PipesHub block in your repository: `AGENTS.md` or `CLAUDE.md`, plus per-agent rule files such as `.cursor/rules/pipeshub.mdc`, `.windsurf/rules/pipeshub.md` and `.clinerules/pipeshub.md`.
 
-```bash
-npx @pipeshub-ai/standalone init --project
-```
+If a file it wants to edit is not valid JSON or TOML, `init` leaves it alone and warns. If a `pipeshub` entry exists that `init` did not write, it is left alone too; replace it with `--force`.
 
-Running `init` again changes nothing. To set up only some agents, name them: `--client cursor,codex`. The exact files for each agent are on its page:
-
-<CardGroup cols={3}>
-  <Card title="Claude Code" href="/mcp/standalone/claude-code" />
-  <Card title="Codex" href="/mcp/standalone/codex" />
-  <Card title="Claude Desktop" href="/mcp/standalone/claude-desktop" />
-  <Card title="Cursor" href="/mcp/standalone/cursor" />
-  <Card title="Windsurf" href="/mcp/standalone/windsurf" />
-  <Card title="VS Code" href="/mcp/standalone/vscode" />
-  <Card title="Gemini CLI" href="/mcp/standalone/gemini-cli" />
-  <Card title="Zed" href="/mcp/standalone/zed" />
-  <Card title="Cline" href="/mcp/standalone/cline" />
-</CardGroup>
-
-## Undo everything
+## Uninstall
 
 ```bash
-npx @pipeshub-ai/standalone uninstall
+pipeshub uninstall
 ```
 
-This removes the entries, instruction files and slash commands `init` added (a file `init` did not write is left alone), signs out, and stops the stack if `init` started it. Your documents and indexed repositories are kept in Docker volumes. To delete them as well:
+This gives every file back exactly as it was, even if the agent rewrote it since, then deletes the backups it used. It also signs out and stops the stack if `init` started it. Your documents and indexed repositories stay in Docker volumes. To delete them as well:
 
 ```bash
-npx @pipeshub-ai/standalone dev down --volumes
+pipeshub dev down --volumes
 ```
 
-Use `uninstall --dry-run` to preview, or `--client <name>` to undo one agent. The copies in `~/.config/pipeshub/backups/` let you check or restore any file by hand.
+Use `pipeshub uninstall --dry-run` to preview. `pipeshub init --local --uninstall` does the same thing.
+
+## Manage the stack
+
+```bash
+pipeshub dev up        # start PipesHub
+pipeshub dev status    # Docker check and whether the stack answers
+pipeshub dev down      # stop it (add --volumes to delete the data)
+pipeshub packs list    # optional packs: web browser, document converter, embedding models
+```
 
 ## Index a repository
 
+```bash
+pipeshub index [path] [--watch]
+```
+
 `index` works on the git repository that contains the folder you run it in (or the path you give it: `index path/to/repo`).
 
-- **What is sent:** the files `git ls-files --cached --others --exclude-standard` lists, so everything git tracks plus new files that `.gitignore` does not exclude. Binary files, symbolic links, files that are not UTF-8 text, and files over 1 MiB are skipped, as are dependency folders and tool caches (`node_modules`, `.venv`, `__pycache__`, `.git`, ...) and artifact folders at the top of the repository (`dist`, `build`, `target`, `out`, `coverage`, `vendor`). A folder that only shares such a name deeper in the tree (`internal/build`, `lib/env`) is indexed. Images, SVG and CSV files are stored but not indexed. Files whose first lines say a generator wrote them (such as `@generated` or `DO NOT EDIT`) are left out as well; when anything is left out, `index` prints how many files and why. A repository can have up to 20,000 files.
+- **What is sent:** the files `git ls-files --cached --others --exclude-standard` lists, so everything git tracks plus new files that `.gitignore` does not exclude. Likely secret files (`.env*`, keys, certificates, `credentials*`) are skipped, and `index` reports how many. Binary files, symbolic links, files that are not UTF-8 text, and files over 1 MiB are skipped, as are dependency folders and tool caches (`node_modules`, `.venv`, `__pycache__`, `.git`, ...) and artifact folders at the top of the repository (`dist`, `build`, `target`, `out`, `coverage`, `vendor`). A folder that only shares such a name deeper in the tree (`internal/build`, `lib/env`) is indexed. Images, SVG and CSV files are stored but not indexed. Files whose first lines say a generator wrote them (such as `@generated` or `DO NOT EDIT`) are left out as well; when anything is left out, `index` prints how many files and why. A repository can have up to 20,000 files.
 - **Incremental:** only files whose content changed since the last run are sent. Run it again after a large change.
 - **Identity:** a random id is saved once in `.git/pipeshub-repo-id`. Two clones of one repository are two separate repositories in PipesHub.
 - **Result:** a JSON summary with the number of files, the state (`ready`, `partial` when some file could not be indexed, `failed`) and whether the code tools are listed.
@@ -120,7 +133,7 @@ Use `uninstall --dry-run` to preview, or `--client <name>` to undo one agent. Th
 ### Keep it current with `--watch`
 
 ```bash
-npx @pipeshub-ai/standalone index --watch
+pipeshub index --watch
 ```
 
 After the first full pass it keeps running and re-sends what changed half a second after you stop saving (Ctrl-C to stop). `.git` itself is ignored.
@@ -139,12 +152,12 @@ The `index_workspace` tool is added by the bridge process, next to the server's 
 
 ## Set up one agent by hand
 
-If you do not want `init` to edit your configuration, start the stack and sign in yourself, then add the entry from your agent's page.
+If you do not want `init` to edit your configuration, start the stack and sign in yourself, then add an entry that runs `npx -y @pipeshub-ai/mcp start --server-url http://127.0.0.1:3000` to your agent's MCP config.
 
 ```bash
-npx @pipeshub-ai/standalone dev up                              # start PipesHub on port 3000
+pipeshub dev up                              # start PipesHub on port 3000
 # Open http://127.0.0.1:3000 once and create the first account.
-npx @pipeshub-ai/standalone login --url http://127.0.0.1:3000   # opens a browser sign-in; no token to copy
+pipeshub login --url http://127.0.0.1:3000   # opens a browser sign-in; no token to copy
 ```
 
 The entry holds no password or token. It starts the bridge, which uses the sign-in `login` stored. Only the PipesHub that issued that sign-in receives it.
@@ -159,13 +172,13 @@ The entry holds no password or token. It starts the bridge, which uses the sign-
     - *'docker compose' is not available*: install the [Compose plugin](https://docs.docker.com/compose/install/).
     - *not running, or this user cannot reach it*: start Docker Desktop, or on Linux `sudo systemctl start docker` and make sure your user can run `docker info`.
 
-    `npx @pipeshub-ai/standalone dev status` prints the Docker check and whether the stack answers.
+    `pipeshub dev status` prints the Docker check and whether the stack answers.
   </Accordion>
   <Accordion title="The port is busy">
     `docker compose up` fails if port 3000 is taken by something else. Choose another port:
 
     ```bash
-    npx @pipeshub-ai/standalone init --port 3100
+    pipeshub init --local --port 3100
     ```
 
     The agents' entries then point at `http://127.0.0.1:3100`. If a PipesHub is already running on port 3000, `init` uses it instead of starting another.
@@ -190,14 +203,11 @@ The entry holds no password or token. It starts the bridge, which uses the sign-
     PipesHub lists the `pipeshub_code_*` tools a few seconds after the first repository is indexed, and only for a sign-in that can read code. `index` says when they are available. If your agent still does not show them, restart it. Check that the repository is indexed with `pipeshub_code_repos`.
   </Accordion>
   <Accordion title="Sign-in problems">
-    - *not signed in* (exit code 3): run `npx @pipeshub-ai/standalone init` again, or `npx @pipeshub-ai/standalone login --url http://127.0.0.1:3000`.
+    - *not signed in* (exit code 3): run `pipeshub init --local` again, or `pipeshub login --url http://127.0.0.1:3000`.
     - *needs the code:write scope* (exit code 4): the stack is older than the CLI. Update the stack (`dev down`, then `dev up`) and sign in again.
     - If `init` could not create the first account, it asks you to create it in the browser at `http://127.0.0.1:3000` and then run `login`.
     - If you created the account yourself, `init` cannot approve the sign-in for you: it prints a link and a code to confirm in the browser.
-    - `npx @pipeshub-ai/standalone logout` signs out and deletes the stored sign-in.
-  </Accordion>
-  <Accordion title="Can't edit a configuration file">
-    If a file `init` wants to edit is not valid JSON or TOML, `init` leaves it as it is and reports it as a warning, and the other agents are still set up. Fix the file and run `init` again. If an entry named `pipeshub` already exists that `init` did not write, it is also left alone; replace it with `--force`.
+    - `pipeshub logout` signs out and deletes the stored sign-in.
   </Accordion>
 </AccordionGroup>
 

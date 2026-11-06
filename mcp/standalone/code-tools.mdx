@@ -10,7 +10,7 @@ icon: "code"
 
 PipesHub builds a graph of the code in an indexed repository (files, symbols, and the calls, imports and inheritance between them). Nine `pipeshub_code_*` tools query it, and the bridge adds one more tool, `index_workspace`, that puts your repository in. The code tools are marked **experimental**.
 
-The tools are listed only for a sign-in that can read code (`code:read`) and only once at least one repository is indexed. A repository you have not indexed has no code tools, so index first: run `npx @pipeshub-ai/standalone index`, or let the agent call `index_workspace`.
+The tools are listed only for a sign-in that can read code (`code:read`) and only once at least one repository is indexed. A repository you have not indexed has no code tools, so index first: run `pipeshub index`, or let the agent call `index_workspace`.
 
 ## When to use which
 
@@ -51,7 +51,7 @@ Calls and imports across files are resolved through imports for Python, JavaScri
 
 ## `index_workspace`
 
-Added by the local bridge, not by the server, so it exists for every agent set up with `init`.
+Added by the local bridge, not by the server, so it exists for every agent set up with `init --local`.
 
 | Argument | Description |
 |---|---|
@@ -62,7 +62,7 @@ It sends the text files git lists that changed since last time, and returns per 
 
 ## What the agent is told
 
-`init` installs a short instruction text for each client (under 2,000 characters) that teaches the agent to:
+`init --local` installs a short instruction text for each client (under 2,000 characters) that teaches the agent to:
 
 - use the code tools for questions about the repository's structure, and `pipeshub_search` for what the team knows;
 - call `index_workspace` first when the repository is not indexed or has changed a lot;

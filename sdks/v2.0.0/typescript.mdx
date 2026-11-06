@@ -1,0 +1,682 @@
+---
+title: "TypeScript SDK"
+description: "Install and use the PipesHub TypeScript SDK, release v2.0.0."
+---
+
+<Note>
+This page is the [TypeScript SDK README at v2.0.0](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/README.md). Use the version menu to see another release.
+</Note>
+
+**Compatibility:** SDK version 1.7.0 is compatible with PipesHub [v0.9.1](https://github.com/pipeshub-ai/pipeshub-ai/releases/tag/v0.9.1).
+
+## Authentication
+Most endpoints require JWT Bearer token authentication. Some internal endpoints use scoped tokens for service-to-service communication.
+
+**OAuth 2.0 Bearer tokens** from `POST /oauth2/token` use the same `Authorization: Bearer` header. For **`client_credentials`**, machine tokens may encode `userId === client_id` in the JWT; the **Node API gateway** resolves the application's **token identity** — the service account it is pointed at (`tokenIdentityUserId`), or its creator for an application registered before that was required and never bound, and sets the authenticated user accordingly. It reads the application record on every request, and a token minted for a different identity than the app's current one is refused with `401`. See the **OAuth Provider** tag for full behavior.
+
+## Behaviour common to every route
+App-level middleware runs before any router, so the following applies to every operation below, before authentication, unless an exception is named.
+
+**Markup filter.** A query value, or any string in a JSON or form-encoded body, that looks like markup is refused with `400 HTTP_BAD_REQUEST`. The message names where the value was, for example `HTML tags, scripts, and XSS content are not allowed in the field "name".` or `... in the query parameter "search".` (a field name that is not a plain identifier path reads `the request`), and says what counted: text in angle brackets such as `<id>` counts as an HTML tag, an encoded script tag counts, or script content such as `onclick=`, `javascript:` or `data:text/html` counts. A string over 100,000 characters is refused as too long to check instead: `The value of the field "name" is longer than 100,000 characters, which is too long to check for HTML tags and scripts. Please shorten it and try again.` It looks for an HTML tag, a script tag, `<iframe`, `<object`, `<embed` or `<svg` tag, a word starting with `on` followed by `=` (meant for inline event handlers such as `onerror=`, it also catches plain text such as `one=1`), a `javascript:` or `data:text/html` URL, an encoded script tag (`&lt;script`, `%3cscript`), and any string longer than 100,000 characters. A string the filter lets through is rewritten before the route sees it: the filter trims surrounding whitespace, drops a lone `<` together with everything after it (`a < b` arrives as `a`), and escapes `>` as `&gt;`. POST and PUT under `/agents/`, `/conversations/`, `/connectors` and `/api-toolsets`, and POST, PUT and PATCH under `/skills`, skip the filter. So does the question of a search: the `query` string of a JSON body sent to `POST /search` or `POST /retrieve` is neither checked nor rewritten, unless it is longer than 100,000 characters.
+
+**Body parsers.** `application/json` bodies (up to 10 MB, 5 MB on `/mcp`) and `application/x-www-form-urlencoded` bodies (up to 100 KB and 1000 fields) are parsed for every method. A JSON body that does not parse, or a body shorter or longer than its `Content-Length`, is answered `400 HTTP_BAD_REQUEST` (`The request body is not valid JSON.`, `The request body does not match its Content-Length.`), a body past these limits `413 HTTP_PAYLOAD_TOO_LARGE`, and an unsupported content encoding or character set `415 HTTP_UNSUPPORTED_MEDIA_TYPE`; a JSON body over 5 MB on `/mcp` gets its `413` as a JSON-RPC error (see `POST /mcp`). Form values arrive as text and the request validators do not convert them, so a number, a boolean or a free-form object sent form-encoded is refused (`400 VALIDATION_ERROR`) or read as a string. A list sent form-encoded is read as a list only when its key repeats, so a single value or an empty list cannot be sent. The form media type is therefore listed only on operations whose body is a flat object of text fields: every value a string (string enums included), with no lists or nested objects.
+
+**Request size.** On every route with a request validator, the body, query and path values are measured before the schema runs. An array over 10,000 items (`<path> can have at most 10000 items.`), an object over 10,000 keys (`<path> can have at most 10000 fields.`), more than 100,000 array items and object keys in the whole request (`The request holds too many items in total (the limit is 100000); the limit is reached at <path>.`) or nesting deeper than 64 levels (`<path> is nested more than 64 levels deep.`) is refused with `400 VALIDATION_ERROR` (detail code `TOO_BIG`, or `TOO_DEEP` for nesting; the path reads like `body.items`). The deployment can change the first three limits with `VALIDATION_MAX_ARRAY_LENGTH`, `VALIDATION_MAX_OBJECT_KEYS` and `VALIDATION_MAX_TOTAL_ITEMS`.
+
+**OAuth scopes.** On an operation whose `security` names `oauth2` scopes, an OAuth access token holding none of them gets `403 HTTP_FORBIDDEN` ("Insufficient scope. Required: ...") right after authentication. Session tokens are never scope-checked.
+
+**No such route.** A method and path that no route handles get Express's own `404` page, `text/html`, reading `Cannot <METHOD> <path>`. Such pairs are not listed as operations.
+
+## Base URLs
+All endpoints use the `/api/v1` prefix unless otherwise noted.
+
+## Query parameter names
+On every `/api/v1` and `/mcp` endpoint, a query parameter whose name starts with `$` or contains `.` (including a nested name such as `filter[$ne]` or `a.b`) is refused with `400` and error code `VALIDATION_ERROR`. Only names are checked: values may contain dots, such as file names.
+
+## SDK Installation
+
+The SDK can be installed with either [npm](https://www.npmjs.com/), [pnpm](https://pnpm.io/), [bun](https://bun.sh/) or [yarn](https://classic.yarnpkg.com/en/) package managers.
+
+### NPM
+
+```bash
+npm add @pipeshub-ai/sdk
+```
+
+### PNPM
+
+```bash
+pnpm add @pipeshub-ai/sdk
+```
+
+### Bun
+
+```bash
+bun add @pipeshub-ai/sdk
+```
+
+### Yarn
+
+```bash
+yarn add @pipeshub-ai/sdk
+```
+
+<Note>
+This package is published with CommonJS and ES Modules (ESM) support.
+</Note>
+
+## Requirements
+
+For supported JavaScript runtimes, please consult [RUNTIMES.md](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/RUNTIMES.md).
+
+## SDK Example Usage
+
+### Example
+
+```typescript
+import { Pipeshub } from "@pipeshub-ai/sdk";
+
+const pipeshub = new Pipeshub();
+
+async function run() {
+  const result = await pipeshub.oAuthProvider.oauthToken({
+    grantType: "client_credentials",
+  });
+
+  console.log(result);
+}
+
+run();
+
+```
+
+## Retrieval for RAG and the Vercel AI SDK
+
+`semanticSearch.retrieve` returns permission-filtered passages ("chunks"), each with its record and a citation link. It stores no search history, so you can call it on every request your application serves. See the [Retrieval API](https://docs.pipeshub.com/developer/retrieval-api) docs.
+
+```typescript
+const { chunks } = await pipeshub.semanticSearch.retrieve({ query: "How do we roll back a canary deploy?", limit: 5 });
+for (const chunk of chunks) console.log(chunk.score, chunk.record.name, chunk.citation.url);
+```
+
+`pipeshubRetrieveTool` turns it into a [Vercel AI SDK](https://ai-sdk.dev) tool. It works with AI SDK 5 and later, and the SDK itself does not depend on `ai`:
+
+```typescript
+import { generateText, stepCountIs } from "ai";
+import { pipeshubRetrieveTool } from "@pipeshub-ai/sdk/integrations/ai-sdk";
+
+const { text } = await generateText({
+  model,
+  tools: { searchCompanyKnowledge: pipeshubRetrieveTool(pipeshub, { limit: 5 }) },
+  stopWhen: stepCountIs(3),
+  prompt: "How do we roll back a canary deploy?",
+});
+```
+
+The tool takes one input, `query`. Its options (`limit`, `filters`, `maxChunksPerRecord`, `rewriteQuery`, `description`) apply to every call. The model gets back the chunks with their citation `url`s.
+
+## Authentication
+
+### Per-Client Security Schemes
+
+This SDK supports the following security schemes globally:
+
+| Name         | Type   | Scheme       |
+| ------------ | ------ | ------------ |
+| `bearerAuth` | http   | HTTP Bearer  |
+| `oauth2`     | oauth2 | OAuth2 token |
+
+You can set the security parameters through the `security` optional parameter when initializing the SDK client instance. The selected scheme will be used by default to authenticate with the API for all operations that support it. For example:
+```typescript
+import { Pipeshub } from "@pipeshub-ai/sdk";
+
+const pipeshub = new Pipeshub({
+  security: {
+    bearerAuth: "<YOUR_BEARER_TOKEN_HERE>",
+  },
+});
+
+async function run() {
+  const result = await pipeshub.oAuthProvider.oauthToken({
+    grantType: "client_credentials",
+  });
+
+  console.log(result);
+}
+
+run();
+
+```
+
+### Per-Operation Security Schemes
+
+Some operations in this SDK require the security scheme to be specified at the request level. For example:
+```typescript
+import { Pipeshub } from "@pipeshub-ai/sdk";
+
+const pipeshub = new Pipeshub();
+
+async function run() {
+  const result = await pipeshub.userAccount.refreshToken({
+    scopedToken: "<YOUR_BEARER_TOKEN_HERE>",
+  });
+
+  console.log(result);
+}
+
+run();
+
+```
+
+## Available Resources and Operations
+
+Every method, with its parameters and responses, is in the API reference of this version and in the [SDK repository](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/README.md#available-resources-and-operations).
+
+## Standalone functions
+
+All the methods listed above are available as standalone functions. These
+functions are ideal for use in applications running in the browser, serverless
+runtimes or other environments where application bundle size is a primary
+concern. When using a bundler to build your application, all unused
+functionality will be either excluded from the final bundle or tree-shaken away.
+
+To read more about standalone functions, check [FUNCTIONS.md](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/FUNCTIONS.md).
+
+<Accordion title="Available standalone functions">
+
+- [`agentsAddAgentConversationMessage`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/docs/sdks/agents/README.md#addagentconversationmessage) - Add message to agent conversation (non-streaming)
+- [`agentsArchiveAgentConversation`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/docs/sdks/agents/README.md#archiveagentconversation) - Archive an agent conversation
+- [`agentsCancelAgentConversationStream`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/docs/sdks/agents/README.md#cancelagentconversationstream) - Cancel an in-flight agent chat stream
+- [`agentsCreateAgent`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/docs/sdks/agents/README.md#createagent) - Create agent
+- [`agentsCreateAgentConversation`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/docs/sdks/agents/README.md#createagentconversation) - Create agent conversation (non-streaming)
+- [`agentsDeleteAgent`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/docs/sdks/agents/README.md#deleteagent) - Delete agent
+- [`agentsDeleteAgentConversationById`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/docs/sdks/agents/README.md#deleteagentconversationbyid) - Delete an agent conversation
+- [`agentsDeleteAgentConversationChatAttachment`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/docs/sdks/agents/README.md#deleteagentconversationchatattachment) - Delete an agent chat attachment
+- [`agentsForkAgentConversation`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/docs/sdks/agents/README.md#forkagentconversation) - Fork agent conversation from a message
+- [`agentsGetAgent`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/docs/sdks/agents/README.md#getagent) - Get agent
+- [`agentsGetAgentConversationById`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/docs/sdks/agents/README.md#getagentconversationbyid) - Get agent conversation by ID
+- [`agentsListAgentArchivedConversationsGrouped`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/docs/sdks/agents/README.md#listagentarchivedconversationsgrouped) - List archived agent conversations grouped by agent
+- [`agentsListAgentConversationArchives`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/docs/sdks/agents/README.md#listagentconversationarchives) - List archived conversations for an agent
+- [`agentsListAgentConversations`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/docs/sdks/agents/README.md#listagentconversations) - List agent conversations
+- [`agentsListAgents`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/docs/sdks/agents/README.md#listagents) - List agents
+- [`agentsRegenerateAgentConversationMessage`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/docs/sdks/agents/README.md#regenerateagentconversationmessage) - Regenerate agent conversation message
+- [`agentsStreamAgentConversation`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/docs/sdks/agents/README.md#streamagentconversation) - Create agent conversation with streaming response
+- [`agentsStreamAgentConversationMessage`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/docs/sdks/agents/README.md#streamagentconversationmessage) - Add message to agent conversation with streaming response
+- [`agentsUnarchiveAgentConversation`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/docs/sdks/agents/README.md#unarchiveagentconversation) - Unarchive an agent conversation
+- [`agentsUpdateAgent`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/docs/sdks/agents/README.md#updateagent) - Update agent
+- [`agentsUpdateAgentConversationMessageFeedback`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/docs/sdks/agents/README.md#updateagentconversationmessagefeedback) - Submit feedback for an agent message
+- [`agentsUpdateAgentConversationTitle`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/docs/sdks/agents/README.md#updateagentconversationtitle) - Update agent conversation title
+- [`agentsUploadAgentConversationChatAttachments`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/docs/sdks/agents/README.md#uploadagentconversationchatattachments) - Upload agent chat attachments
+- [`aiModelsProvidersGetAvailableModelsByType`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/docs/sdks/aimodelsproviders/README.md#getavailablemodelsbytype) - Get available models by type
+- [`connectorConfigurationGetConnectorConfig`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/docs/sdks/connectorconfiguration/README.md#getconnectorconfig) - Get connector configuration
+- [`connectorConfigurationUpdateConnectorAuthConfig`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/docs/sdks/connectorconfiguration/README.md#updateconnectorauthconfig) - Update authentication configuration
+- [`connectorConfigurationUpdateConnectorConfig`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/docs/sdks/connectorconfiguration/README.md#updateconnectorconfig) - Update connector configuration
+- [`connectorConfigurationUpdateConnectorFiltersSyncConfig`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/docs/sdks/connectorconfiguration/README.md#updateconnectorfilterssyncconfig) - Update filters and sync configuration
+- [`connectorControlToggleConnector`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/docs/sdks/connectorcontrol/README.md#toggleconnector) - Toggle connector sync or agent
+- [`connectorFiltersGetConnectorFilters`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/docs/sdks/connectorfilters/README.md#getconnectorfilters) - Get filter options
+- [`connectorFiltersGetFilterFieldOptions`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/docs/sdks/connectorfilters/README.md#getfilterfieldoptions) - Get dynamic filter options
+- [`connectorGetRecordContent`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/docs/sdks/connector/README.md#getrecordcontent) - Get a record's full parsed content and metadata
+- [`connectorInstancesCreateConnectorInstance`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/docs/sdks/connectorinstances/README.md#createconnectorinstance) - Create connector instance
+- [`connectorInstancesDeleteConnectorInstance`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/docs/sdks/connectorinstances/README.md#deleteconnectorinstance) - Delete connector instance
+- [`connectorInstancesGetConnectorInstance`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/docs/sdks/connectorinstances/README.md#getconnectorinstance) - Get connector instance
+- [`connectorInstancesGetConnectorStats`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/docs/sdks/connectorinstances/README.md#getconnectorstats) - Get connector statistics
+- [`connectorInstancesListConnectorInstances`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/docs/sdks/connectorinstances/README.md#listconnectorinstances) - List connector instances
+- [`connectorInstancesResyncConnector`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/docs/sdks/connectorinstances/README.md#resyncconnector) - Resync connector
+- [`connectorInstancesStopConnectorSync`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/docs/sdks/connectorinstances/README.md#stopconnectorsync) - Stop the running sync for a connector
+- [`connectorLookupRecordByIdentifier`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/docs/sdks/connector/README.md#lookuprecordbyidentifier) - Resolve a URL, issue key or external ID to a Record ID
+- [`connectorNavigateKnowledgeGraph`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/docs/sdks/connector/README.md#navigateknowledgegraph) - Browse the knowledge graph from a node
+- [`connectorOAuthGetOAuthAuthorizationUrl`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/docs/sdks/connectoroauth/README.md#getoauthauthorizationurl) - Get OAuth authorization URL
+- [`connectorOAuthHandleOAuthCallback`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/docs/sdks/connectoroauth/README.md#handleoauthcallback) - OAuth callback handler
+- [`connectorRegistryGetConnectorEgressIps`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/docs/sdks/connectorregistry/README.md#getconnectoregressips) - Get the IP addresses connectors connect from
+- [`connectorRegistryGetConnectorRegistry`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/docs/sdks/connectorregistry/README.md#getconnectorregistry) - List available connector types
+- [`connectorRegistryGetConnectorSchema`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/docs/sdks/connectorregistry/README.md#getconnectorschema) - Get connector configuration schema
+- [`connectorRegistryTestConnectorConnection`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/docs/sdks/connectorregistry/README.md#testconnectorconnection) - Test connector credentials before saving
+- [`conversationsAddMessage`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/docs/sdks/conversations/README.md#addmessage) - Add message (non-streaming)
+- [`conversationsAddMessageStream`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/docs/sdks/conversations/README.md#addmessagestream) - Add message to a conversation with streaming response
+- [`conversationsArchiveConversation`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/docs/sdks/conversations/README.md#archiveconversation) - Archive conversation
+- [`conversationsCancelConversationStream`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/docs/sdks/conversations/README.md#cancelconversationstream) - Cancel an in-flight chat stream
+- [`conversationsCreateConversation`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/docs/sdks/conversations/README.md#createconversation) - Create conversation (non-streaming)
+- [`conversationsDeleteConversationById`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/docs/sdks/conversations/README.md#deleteconversationbyid) - Delete conversation
+- [`conversationsForkConversation`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/docs/sdks/conversations/README.md#forkconversation) - Fork conversation from a message
+- [`conversationsGetAllConversations`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/docs/sdks/conversations/README.md#getallconversations) - List all conversations
+- [`conversationsGetArchivedConversations`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/docs/sdks/conversations/README.md#getarchivedconversations) - List archived conversations
+- [`conversationsGetConversationById`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/docs/sdks/conversations/README.md#getconversationbyid) - Get conversation by ID
+- [`conversationsPinConversation`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/docs/sdks/conversations/README.md#pinconversation) - Pin conversation
+- [`conversationsRegenerateAnswer`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/docs/sdks/conversations/README.md#regenerateanswer) - Regenerate AI response
+- [`conversationsSearchArchivedConversations`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/docs/sdks/conversations/README.md#searcharchivedconversations) - Search archived conversations
+- [`conversationsStreamChat`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/docs/sdks/conversations/README.md#streamchat) - Create conversation with streaming response
+- [`conversationsUnarchiveConversation`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/docs/sdks/conversations/README.md#unarchiveconversation) - Unarchive conversation
+- [`conversationsUnpinConversation`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/docs/sdks/conversations/README.md#unpinconversation) - Unpin conversation
+- [`conversationsUpdateConversationTitle`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/docs/sdks/conversations/README.md#updateconversationtitle) - Update conversation title
+- [`conversationsUpdateMessageFeedback`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/docs/sdks/conversations/README.md#updatemessagefeedback) - Submit feedback on AI response
+- [`knowledgeBaseCreateFolder`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/docs/sdks/knowledgebase/README.md#createfolder) - Create folder
+- [`knowledgeBaseCreateKnowledgeBase`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/docs/sdks/knowledgebase/README.md#createknowledgebase) - Create a new knowledge base
+- [`knowledgeBaseCreateSubfolder`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/docs/sdks/knowledgebase/README.md#createsubfolder) - Create subfolder
+- [`knowledgeBaseDeleteFolder`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/docs/sdks/knowledgebase/README.md#deletefolder) - Delete folder
+- [`knowledgeBaseDeleteKnowledgeBase`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/docs/sdks/knowledgebase/README.md#deleteknowledgebase) - Delete knowledge base
+- [`knowledgeBaseDeleteRecord`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/docs/sdks/knowledgebase/README.md#deleterecord) - Delete record
+- [`knowledgeBaseGetKnowledgeBase`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/docs/sdks/knowledgebase/README.md#getknowledgebase) - Get knowledge base by ID
+- [`knowledgeBaseGetRecordById`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/docs/sdks/knowledgebase/README.md#getrecordbyid) - Get record by ID
+- [`knowledgeBaseGetUploadLimits`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/docs/sdks/knowledgebase/README.md#getuploadlimits) - Get knowledge base upload limits
+- [`knowledgeBaseListKnowledgeBases`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/docs/sdks/knowledgebase/README.md#listknowledgebases) - List all knowledge bases
+- [`knowledgeBaseListTrash`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/docs/sdks/knowledgebase/README.md#listtrash) - List a collection's recently deleted items
+- [`knowledgeBaseMoveRecord`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/docs/sdks/knowledgebase/README.md#moverecord) - Move record to another location
+- [`knowledgeBaseReindexRecord`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/docs/sdks/knowledgebase/README.md#reindexrecord) - Reindex single record
+- [`knowledgeBaseReindexRecordGroup`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/docs/sdks/knowledgebase/README.md#reindexrecordgroup) - Reindex record group
+- [`knowledgeBaseRestoreRecord`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/docs/sdks/knowledgebase/README.md#restorerecord) - Restore a deleted record
+- [`knowledgeBaseRestoreRecords`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/docs/sdks/knowledgebase/README.md#restorerecords) - Restore several deleted records
+- [`knowledgeBaseStreamRecordBuffer`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/docs/sdks/knowledgebase/README.md#streamrecordbuffer) - Stream record content
+- [`knowledgeBaseUpdateFolder`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/docs/sdks/knowledgebase/README.md#updatefolder) - Update folder
+- [`knowledgeBaseUpdateKnowledgeBase`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/docs/sdks/knowledgebase/README.md#updateknowledgebase) - Update knowledge base
+- [`knowledgeBaseUpdateRecord`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/docs/sdks/knowledgebase/README.md#updaterecord) - Update record
+- [`knowledgeBaseUpdateRecordForm`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/docs/sdks/knowledgebase/README.md#updaterecordform) - Update record
+- [`knowledgeBaseUpdateRecordMultipart`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/docs/sdks/knowledgebase/README.md#updaterecordmultipart) - Update record
+- [`knowledgeBaseUploadRecords`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/docs/sdks/knowledgebase/README.md#uploadrecords) - Upload files to knowledge base or folder
+- [`oAuthAppsActivateOAuthApp`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/docs/sdks/oauthapps/README.md#activateoauthapp) - Activate suspended OAuth app
+- [`oAuthAppsCreateOAuthApp`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/docs/sdks/oauthapps/README.md#createoauthapp) - Create OAuth app
+- [`oAuthAppsDeleteOAuthApp`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/docs/sdks/oauthapps/README.md#deleteoauthapp) - Delete OAuth app
+- [`oAuthAppsGetOAuthApp`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/docs/sdks/oauthapps/README.md#getoauthapp) - Get OAuth app details
+- [`oAuthAppsListOAuthApps`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/docs/sdks/oauthapps/README.md#listoauthapps) - List OAuth apps
+- [`oAuthAppsListOAuthAppTokens`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/docs/sdks/oauthapps/README.md#listoauthapptokens) - List app tokens
+- [`oAuthAppsListOAuthScopes`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/docs/sdks/oauthapps/README.md#listoauthscopes) - List available scopes
+- [`oAuthAppsRegenerateOAuthAppSecret`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/docs/sdks/oauthapps/README.md#regenerateoauthappsecret) - Regenerate client secret
+- [`oAuthAppsRevokeAllOAuthAppTokens`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/docs/sdks/oauthapps/README.md#revokealloauthapptokens) - Revoke all app tokens
+- [`oAuthAppsSuspendOAuthApp`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/docs/sdks/oauthapps/README.md#suspendoauthapp) - Suspend OAuth app
+- [`oAuthAppsUpdateOAuthApp`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/docs/sdks/oauthapps/README.md#updateoauthapp) - Update OAuth app
+- [`oAuthConfigurationCreateOAuthConfig`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/docs/sdks/oauthconfiguration/README.md#createoauthconfig) - Create OAuth configuration
+- [`oAuthConfigurationDeleteOAuthConfig`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/docs/sdks/oauthconfiguration/README.md#deleteoauthconfig) - Delete OAuth configuration
+- [`oAuthConfigurationGetOAuthConfig`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/docs/sdks/oauthconfiguration/README.md#getoauthconfig) - Get OAuth configuration
+- [`oAuthConfigurationGetOAuthConnectorType`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/docs/sdks/oauthconfiguration/README.md#getoauthconnectortype) - Get OAuth connector type details
+- [`oAuthConfigurationGetOAuthRegistry`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/docs/sdks/oauthconfiguration/README.md#getoauthregistry) - List OAuth-capable connector types
+- [`oAuthConfigurationListOAuthConfigs`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/docs/sdks/oauthconfiguration/README.md#listoauthconfigs) - List OAuth configurations
+- [`oAuthConfigurationListOAuthConfigsByType`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/docs/sdks/oauthconfiguration/README.md#listoauthconfigsbytype) - List OAuth configs for connector type
+- [`oAuthConfigurationUpdateOAuthConfig`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/docs/sdks/oauthconfiguration/README.md#updateoauthconfig) - Update OAuth configuration
+- [`oAuthProviderOauthIntrospect`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/docs/sdks/oauthprovider/README.md#oauthintrospect) - Introspect a token
+- [`oAuthProviderOauthRevoke`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/docs/sdks/oauthprovider/README.md#oauthrevoke) - Revoke an access or refresh token
+- [`oAuthProviderOauthToken`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/docs/sdks/oauthprovider/README.md#oauthtoken) - Exchange authorization code for tokens
+- [`openIDConnectOauthUserInfo`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/docs/sdks/openidconnect/README.md#oauthuserinfo) - Get authenticated user information
+- [`organizationAuthConfigGetAuthMethods`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/docs/sdks/organizationauthconfig/README.md#getauthmethods) - Get organization authentication methods
+- [`organizationAuthConfigSetUpAuthConfig`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/docs/sdks/organizationauthconfig/README.md#setupauthconfig) - Set up auth configuration
+- [`organizationAuthConfigUpdateAuthMethod`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/docs/sdks/organizationauthconfig/README.md#updateauthmethod) - Update organization authentication methods
+- [`organizationsGetCurrentOrganization`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/docs/sdks/organizations/README.md#getcurrentorganization) - Get current organization
+- [`personalAccessTokensAdminListPersonalAccessTokens`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/docs/sdks/personalaccesstokens/README.md#adminlistpersonalaccesstokens) - Admin: list every active personal access token in the org
+- [`personalAccessTokensAdminRevokePersonalAccessToken`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/docs/sdks/personalaccesstokens/README.md#adminrevokepersonalaccesstoken) - Admin: revoke any user's personal access token by id
+- [`personalAccessTokensCreatePersonalAccessToken`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/docs/sdks/personalaccesstokens/README.md#createpersonalaccesstoken) - Create a personal access token
+- [`personalAccessTokensListPersonalAccessTokens`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/docs/sdks/personalaccesstokens/README.md#listpersonalaccesstokens) - List your own personal access tokens
+- [`personalAccessTokensListPersonalAccessTokenScopes`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/docs/sdks/personalaccesstokens/README.md#listpersonalaccesstokenscopes) - List scopes available for a new personal access token
+- [`personalAccessTokensRevokePersonalAccessToken`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/docs/sdks/personalaccesstokens/README.md#revokepersonalaccesstoken) - Revoke one of your own personal access tokens
+- [`semanticSearchArchiveSearch`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/docs/sdks/semanticsearch/README.md#archivesearch) - Archive a search
+- [`semanticSearchDeleteSearchById`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/docs/sdks/semanticsearch/README.md#deletesearchbyid) - Delete search by ID
+- [`semanticSearchDeleteSearchHistory`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/docs/sdks/semanticsearch/README.md#deletesearchhistory) - Clear all search history
+- [`semanticSearchGetSearchById`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/docs/sdks/semanticsearch/README.md#getsearchbyid) - Get search by ID
+- [`semanticSearchRetrieve`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/docs/sdks/semanticsearch/README.md#retrieve) - Retrieve chunks with citations
+- [`semanticSearchSearch`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/docs/sdks/semanticsearch/README.md#search) - Perform semantic search
+- [`semanticSearchSearchHistory`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/docs/sdks/semanticsearch/README.md#searchhistory) - Get search history
+- [`semanticSearchUnarchiveSearch`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/docs/sdks/semanticsearch/README.md#unarchivesearch) - Unarchive a search
+- [`userAccountAuthenticate`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/docs/sdks/useraccount/README.md#authenticate) - Authenticate user with credentials
+- [`userAccountGetPasswordStatus`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/docs/sdks/useraccount/README.md#getpasswordstatus) - Get password status
+- [`userAccountInitAuth`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/docs/sdks/useraccount/README.md#initauth) - Initialize authentication session
+- [`userAccountRefreshToken`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/docs/sdks/useraccount/README.md#refreshtoken) - Refresh access token
+- [`userAccountResetPassword`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/docs/sdks/useraccount/README.md#resetpassword) - Reset password
+- [`userAccountSendPasswordSetupEmail`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/docs/sdks/useraccount/README.md#sendpasswordsetupemail) - Email a link to set a first password
+- [`webSearchGetWebSearchProviders`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/docs/sdks/websearch/README.md#getwebsearchproviders) - Get all web search providers
+- ~~[`connectorFiltersSaveConnectorFilters`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/docs/sdks/connectorfilters/README.md#saveconnectorfilters)~~ - Save filter selections (deprecated) :warning: **Deprecated**
+- ~~[`knowledgeBaseGetKnowledgeHubChildNodes`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/docs/sdks/knowledgebase/README.md#getknowledgehubchildnodes)~~ - Get knowledge hub child nodes :warning: **Deprecated**
+- ~~[`knowledgeBaseGetKnowledgeHubChildNodes`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/docs/sdks/knowledgehub/README.md#getknowledgehubchildnodes)~~ - Get knowledge hub child nodes :warning: **Deprecated**
+- ~~[`knowledgeBaseGetKnowledgeHubRootNodes`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/docs/sdks/knowledgebase/README.md#getknowledgehubrootnodes)~~ - Get knowledge hub root nodes :warning: **Deprecated**
+- ~~[`knowledgeBaseGetKnowledgeHubRootNodes`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/docs/sdks/knowledgehub/README.md#getknowledgehubrootnodes)~~ - Get knowledge hub root nodes :warning: **Deprecated**
+
+</Accordion>
+
+## Server-sent event streaming
+
+[Server-sent events][mdn-sse] are used to stream content from certain
+operations. These operations will expose the stream as an async iterable that
+can be consumed using a [`for await...of`][mdn-for-await-of] loop. The loop will
+terminate when the server no longer has any events to send and closes the
+underlying connection.
+
+```typescript
+import { Pipeshub } from "@pipeshub-ai/sdk";
+
+const pipeshub = new Pipeshub({
+  security: {
+    bearerAuth: "<YOUR_BEARER_TOKEN_HERE>",
+  },
+});
+
+async function run() {
+  const result = await pipeshub.knowledgeBase.uploadRecords({
+    kbId: "<id>",
+    body: {
+      files: [],
+      filesMetadata: [
+        {
+          filePath: "/docs/report.pdf",
+          lastModified: 2024,
+        },
+      ],
+    },
+  });
+
+  for await (const event of result) {
+    console.log(event);
+  }
+}
+
+run();
+
+```
+
+[mdn-sse]: https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events/Using_server-sent_events
+[mdn-for-await-of]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/for-await...of
+
+## File uploads
+
+Certain SDK methods accept files as part of a multi-part request. It is possible and typically recommended to upload files as a stream rather than reading the entire contents into memory. This avoids excessive memory consumption and potentially crashing with out-of-memory errors when working with very large files. The following example demonstrates how to attach a file stream to a request.
+
+<Tip>
+Depending on your JavaScript runtime, there are convenient utilities that return a handle to a file without reading the entire contents into memory:
+
+- **Node.js v20+:** Since v20, Node.js comes with a native `openAsBlob` function in [`node:fs`](https://nodejs.org/docs/latest-v20.x/api/fs.html#fsopenasblobpath-options).
+- **Bun:** The native [`Bun.file`](https://bun.sh/docs/api/file-io#reading-files-bun-file) function produces a file handle that can be used for streaming file uploads.
+- **Browsers:** All supported browsers return an instance to a [`File`](https://developer.mozilla.org/en-US/docs/Web/API/File) when reading the value from an `<input type="file">` element.
+- **Node.js v18:** A file stream can be created using the `fileFrom` helper from [`fetch-blob/from.js`](https://www.npmjs.com/package/fetch-blob).
+</Tip>
+
+```typescript
+import { Pipeshub } from "@pipeshub-ai/sdk";
+
+const pipeshub = new Pipeshub({
+  security: {
+    bearerAuth: "<YOUR_BEARER_TOKEN_HERE>",
+  },
+});
+
+async function run() {
+  const result = await pipeshub.knowledgeBase.updateRecordMultipart({
+    recordId: "<id>",
+  });
+
+  console.log(result);
+}
+
+run();
+
+```
+
+## Retries
+
+Some of the endpoints in this SDK support retries.  If you use the SDK without any configuration, it will fall back to the default retry strategy provided by the API.  However, the default retry strategy can be overridden on a per-operation basis, or across the entire SDK.
+
+To change the default retry strategy for a single API call, simply provide a retryConfig object to the call:
+```typescript
+import { Pipeshub } from "@pipeshub-ai/sdk";
+
+const pipeshub = new Pipeshub();
+
+async function run() {
+  const result = await pipeshub.oAuthProvider.oauthToken({
+    grantType: "client_credentials",
+  }, {
+    retries: {
+      strategy: "backoff",
+      backoff: {
+        initialInterval: 1,
+        maxInterval: 50,
+        exponent: 1.1,
+        maxElapsedTime: 100,
+      },
+      retryConnectionErrors: false,
+    },
+  });
+
+  console.log(result);
+}
+
+run();
+
+```
+
+If you'd like to override the default retry strategy for all operations that support retries, you can provide a retryConfig at SDK initialization:
+```typescript
+import { Pipeshub } from "@pipeshub-ai/sdk";
+
+const pipeshub = new Pipeshub({
+  retryConfig: {
+    strategy: "backoff",
+    backoff: {
+      initialInterval: 1,
+      maxInterval: 50,
+      exponent: 1.1,
+      maxElapsedTime: 100,
+    },
+    retryConnectionErrors: false,
+  },
+});
+
+async function run() {
+  const result = await pipeshub.oAuthProvider.oauthToken({
+    grantType: "client_credentials",
+  });
+
+  console.log(result);
+}
+
+run();
+
+```
+
+## Error Handling
+
+[`PipeshubError`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/src/models/errors/pipeshub-error.ts) is the base class for all HTTP error responses. It has the following properties:
+
+| Property            | Type       | Description                                                                             |
+| ------------------- | ---------- | --------------------------------------------------------------------------------------- |
+| `error.message`     | `string`   | Error message                                                                           |
+| `error.statusCode`  | `number`   | HTTP response status code eg `404`                                                      |
+| `error.headers`     | `Headers`  | HTTP response headers                                                                   |
+| `error.body`        | `string`   | HTTP body. Can be empty string if no body is returned.                                  |
+| `error.rawResponse` | `Response` | Raw HTTP response                                                                       |
+| `error.data$`       |            | Optional. Some errors may contain structured data. [See Error Classes](#error-classes). |
+
+### Example
+```typescript
+import { Pipeshub } from "@pipeshub-ai/sdk";
+import * as errors from "@pipeshub-ai/sdk/models/errors";
+
+const pipeshub = new Pipeshub();
+
+async function run() {
+  try {
+    const result = await pipeshub.oAuthProvider.oauthToken({
+      grantType: "client_credentials",
+    });
+
+    console.log(result);
+  } catch (error) {
+    // The base class for HTTP error responses
+    if (error instanceof errors.PipeshubError) {
+      console.log(error.message);
+      console.log(error.statusCode);
+      console.log(error.body);
+      console.log(error.headers);
+
+      // Depending on the method different errors may be thrown
+      if (error instanceof errors.ErrorResponse) {
+        console.log(error.data$.error); // models.ErrorResponseError
+      }
+    }
+  }
+}
+
+run();
+
+```
+
+### Error Classes
+**Primary errors:**
+* [`PipeshubError`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/src/models/errors/pipeshub-error.ts): The base class for HTTP error responses.
+  * [`ErrorResponse`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/src/models/errors/error-response.ts): Standard error envelope returned by all errors routed through `ErrorMiddleware`. Applies to all `BaseError` subclasses including `HttpError`, `ValidationError`, and others. The `code` field is a machine-readable string identifying the error type (e.g. `HTTP_UNAUTHORIZED`, `HTTP_NOT_FOUND`, `VALIDATION_ERROR`, `INTERNAL_ERROR`). *
+
+<Accordion title="Less common errors (22)">
+
+<br />
+
+**Network errors:**
+* [`ConnectionError`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/src/models/errors/http-client-errors.ts): HTTP client was unable to make a request to a server.
+* [`RequestTimeoutError`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/src/models/errors/http-client-errors.ts): HTTP request timed out due to an AbortSignal signal.
+* [`RequestAbortedError`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/src/models/errors/http-client-errors.ts): HTTP request was aborted by the client.
+* [`InvalidRequestError`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/src/models/errors/http-client-errors.ts): Any input used to create a request is invalid.
+* [`UnexpectedClientError`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/src/models/errors/http-client-errors.ts): Unrecognised or unexpected error.
+
+**Inherit from [`PipeshubError`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/src/models/errors/pipeshub-error.ts)**:
+* [`OAuthClientManagementRateLimitError`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/src/models/errors/o-auth-client-management-rate-limit-error.ts): JSON body when OAuth client management routes exceed the per-minute rate limit (same limiter as other `/oauth-clients/*` routes). Status code `429`. Applicable to 20 of 141 methods.*
+* [`ApplicationJsonErrorResponse`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/src/models/errors/application-json-error-response.ts): Standard JSON error envelope from `ErrorMiddleware` for `BaseError` subclasses (`error.middleware.ts`). Returned for most API 4xx errors (unauthorized, forbidden, not found, validation failures, etc.). Applicable to 17 of 141 methods.*
+* [`OAuthErrorResponse`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/src/models/errors/o-auth-error-response.ts): OAuth 2.0 Error Response (RFC 6749 Section 5.2). Standard error format for OAuth endpoints. Applicable to 3 of 141 methods.*
+* [`RateLimitErrorResponse`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/src/models/errors/rate-limit-error-response.ts): Rate-limit error payload (shape differs from standard error responses). Status code `429`. Applicable to 3 of 141 methods.*
+* [`LocalFsDesktopRefusalError`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/src/models/errors/local-fs-desktop-refusal-error.ts): 409 body returned when a Local FS connector cannot sync because of its owner device. Status code `409`. Applicable to 2 of 141 methods.*
+* [`BadRequestError`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/src/models/errors/bad-request-error.ts): Error envelope for a failed request. Status code `400`. Applicable to 1 of 141 methods.*
+* [`UnauthorizedError`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/src/models/errors/unauthorized-error.ts): Error envelope for a failed request. Status code `401`. Applicable to 1 of 141 methods.*
+* [`OAuthBearerTokenError`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/src/models/errors/o-auth-bearer-token-error.ts): Error body written by the OAuth bearer-token middleware (RFC 6750 Section 3.1) on routes that accept only an OAuth access token, such as `GET /oauth2/userinfo`. The same `error`, `error_description` and `scope` values are repeated in the `WWW-Authenticate` response header. This is not the standard `ErrorResponse` envelope: `error` is a string. Applicable to 1 of 141 methods.*
+* [`ForbiddenError`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/src/models/errors/forbidden-error.ts): Error envelope for a failed request. Status code `403`. Applicable to 1 of 141 methods.*
+* [`StreamRecordErrorResponse`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/src/models/errors/stream-record-error-response.ts): Error payload returned by the legacy record-stream proxy when the downstream streaming request fails after route middleware has passed. Applicable to 1 of 141 methods.*
+* [`GetKnowledgeHubRootNodesUnprocessableEntityError`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/src/models/errors/get-knowledge-hub-root-nodes-unprocessable-entity-error.ts): Either of: - A typed query parameter could not be read: `page` or `limit` is not an   integer or is out of range (`page` below 1, `limit` outside 1-200),   `onlyContainers` or `flattened` is not a boolean, or `page`/`limit` was   sent more than once. `error.message` is the connector service's own   validation text. - A listing that spans a whole connector (a flattened listing, a search or a filter) was too large for the   database to hold in memory, so it was refused instead of cut short. No page is returned. Open a folder   (`GET /knowledgeBase/knowledge-hub/nodes/{parentType}/{parentId}`) to see its records, or add a search (`q`),   which keeps only matching records in memory. Choosing a connector, or a filter that keeps most records (such as   `nodeTypes`), does not help. Sorting by name with no filters is served from stored visibility where the   connector allows it and is not affected. Status code `422`. Applicable to 1 of 141 methods.*
+* [`GetKnowledgeHubChildNodesUnprocessableEntityError`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/src/models/errors/get-knowledge-hub-child-nodes-unprocessable-entity-error.ts): Either of: - A typed query parameter could not be read: `page` or `limit` is not an   integer or is out of range (`page` below 1, `limit` outside 1-200), or   `onlyContainers` or `flattened` is not a boolean. `error.message` is the   connector service's own validation text. - A listing that spans a whole connector (a flattened listing, a search or a filter) was too large for the   database to hold in memory, so it was refused instead of cut short. No page is returned. Open a folder   (`GET /knowledgeBase/knowledge-hub/nodes/{parentType}/{parentId}`) to see its records, or add a search (`q`),   which keeps only matching records in memory. Choosing a connector, or a filter that keeps most records (such as   `nodeTypes`), does not help. Sorting by name with no filters is served from stored visibility where the   connector allows it and is not affected. Status code `422`. Applicable to 1 of 141 methods.*
+* [`UploadAgentConversationChatAttachmentsUnprocessableEntityError`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/src/models/errors/upload-agent-conversation-chat-attachments-unprocessable-entity-error.ts): A PDF that could not be read within the upload's 50-second budget, or whose parse ran out of memory, is not attached (`<name> is too large or complex to read right now, so it wasn't attached. ...`). Only that upload fails. Status code `422`. Applicable to 1 of 141 methods.*
+* [`SearchHistoryInternalServerError`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/src/models/errors/search-history-internal-server-error.ts): Error envelope for a failed request. Status code `500`. Applicable to 1 of 141 methods.*
+* [`GetKnowledgeHubRootNodesServiceUnavailableError`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/src/models/errors/get-knowledge-hub-root-nodes-service-unavailable-error.ts): The database could not give this listing the memory it needs right now, because other requests were using it (nothing is wrong with the request). Retry after `Retry-After` seconds; the web app retries by itself. The body is the gateway's own busy message, not the service's wording. Status code `503`. Applicable to 1 of 141 methods.*
+* [`GetKnowledgeHubChildNodesServiceUnavailableError`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/src/models/errors/get-knowledge-hub-child-nodes-service-unavailable-error.ts): The database could not give this listing the memory it needs right now, because other requests were using it (nothing is wrong with the request). Retry after `Retry-After` seconds; the web app retries by itself. The body is the gateway's own busy message, not the service's wording. Status code `503`. Applicable to 1 of 141 methods.*
+* [`ResponseValidationError`](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/blob/v2.0.0/src/models/errors/response-validation-error.ts): Type mismatch between the data returned from the server and the structure expected by the SDK. See `error.rawValue` for the raw value and `error.pretty()` for a nicely formatted multi-line string.
+
+</Accordion>
+
+\* Check [the method documentation](#available-resources-and-operations) to see if the error is applicable.
+
+## Server Selection
+
+### Select Server by Index
+
+You can override the default server globally by passing a server index to the `serverIdx: number` optional parameter when initializing the SDK client instance. The selected server will then be used as the default on the operations that use it. This table lists the indexes associated with the available servers:
+
+| #   | Server                          | Variables      | Description                                       |
+| --- | ------------------------------- | -------------- | ------------------------------------------------- |
+| 0   | `https://{instance_url}/api/v1` | `instance_url` | Base API URL                                      |
+| 1   | `https://{instance_url}`        | `instance_url` | Root URL (used for MCP endpoints mounted at /mcp) |
+
+If the selected server has variables, you may override its default values through the additional parameters made available in the SDK constructor:
+
+| Variable       | Parameter             | Default                      | Description     |
+| -------------- | --------------------- | ---------------------------- | --------------- |
+| `instance_url` | `instanceUrl: string` | `"https://app.pipeshub.com"` | Base server URL |
+
+#### Example
+
+```typescript
+import { Pipeshub } from "@pipeshub-ai/sdk";
+
+const pipeshub = new Pipeshub({
+  serverIdx: 0,
+  instanceUrl: "https://app.pipeshub.com",
+});
+
+async function run() {
+  const result = await pipeshub.oAuthProvider.oauthToken({
+    grantType: "client_credentials",
+  });
+
+  console.log(result);
+}
+
+run();
+
+```
+
+### Override Server URL Per-Client
+
+The default server can also be overridden globally by passing a URL to the `serverURL: string` optional parameter when initializing the SDK client instance. For example:
+```typescript
+import { Pipeshub } from "@pipeshub-ai/sdk";
+
+const pipeshub = new Pipeshub({
+  serverURL: "https://https://app.pipeshub.com",
+});
+
+async function run() {
+  const result = await pipeshub.oAuthProvider.oauthToken({
+    grantType: "client_credentials",
+  });
+
+  console.log(result);
+}
+
+run();
+
+```
+
+## Custom HTTP Client
+
+The TypeScript SDK makes API calls using an `HTTPClient` that wraps the native
+[Fetch API](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API). This
+client is a thin wrapper around `fetch` and provides the ability to attach hooks
+around the request lifecycle that can be used to modify the request or handle
+errors and response.
+
+The `HTTPClient` constructor takes an optional `fetcher` argument that can be
+used to integrate a third-party HTTP client or when writing tests to mock out
+the HTTP client and feed in fixtures.
+
+The following example shows how to:
+- route requests through a proxy server using [undici](https://www.npmjs.com/package/undici)'s ProxyAgent
+- use the `"beforeRequest"` hook to add a custom header and a timeout to requests
+- use the `"requestError"` hook to log errors
+
+```typescript
+import { Pipeshub } from "@pipeshub-ai/sdk";
+import { ProxyAgent } from "undici";
+import { HTTPClient } from "@pipeshub-ai/sdk/lib/http";
+
+const dispatcher = new ProxyAgent("http://proxy.example.com:8080");
+
+const httpClient = new HTTPClient({
+  // 'fetcher' takes a function that has the same signature as native 'fetch'.
+  fetcher: (input, init) =>
+    // 'dispatcher' is specific to undici and not part of the standard Fetch API.
+    fetch(input, { ...init, dispatcher } as RequestInit),
+});
+
+httpClient.addHook("beforeRequest", (request) => {
+  const nextRequest = new Request(request, {
+    signal: request.signal || AbortSignal.timeout(5000)
+  });
+
+  nextRequest.headers.set("x-custom-header", "custom value");
+
+  return nextRequest;
+});
+
+httpClient.addHook("requestError", (error, request) => {
+  console.group("Request Error");
+  console.log("Reason:", `${error}`);
+  console.log("Endpoint:", `${request.method} ${request.url}`);
+  console.groupEnd();
+});
+
+const sdk = new Pipeshub({ httpClient: httpClient });
+```
+
+## Debugging
+
+You can setup your SDK to emit debug logs for SDK requests and responses.
+
+You can pass a logger that matches `console`'s interface as an SDK option.
+
+<Warning>
+Beware that debug logging will reveal secrets, like API tokens in headers, in log messages printed to a console or files. It's recommended to use this feature only during local development and not in production.
+</Warning>
+
+```typescript
+import { Pipeshub } from "@pipeshub-ai/sdk";
+
+const sdk = new Pipeshub({ debugLogger: console });
+```

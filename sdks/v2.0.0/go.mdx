@@ -1,0 +1,508 @@
+---
+title: "Go SDK"
+description: "Install and use the PipesHub Go SDK, release v2.0.0."
+---
+
+<Note>
+This page is the [Go SDK README at v2.0.0](https://github.com/pipeshub-ai/pipeshub-sdk-go/blob/v2.0.0/README.md). Use the version menu to see another release.
+</Note>
+
+pipeshub-sdk is the official Go client library for integrating Pipeshub into your product and internal tools
+
+**Compatibility:** SDK version 1.7.0 is compatible with PipesHub [v0.9.1](https://github.com/pipeshub-ai/pipeshub-ai/releases/tag/v0.9.1).
+
+## Authentication
+Most endpoints require JWT Bearer token authentication. Some internal endpoints use scoped tokens for service-to-service communication.
+
+**OAuth 2.0 Bearer tokens** from `POST /oauth2/token` use the same `Authorization: Bearer` header. For **`client_credentials`**, machine tokens may encode `userId === client_id` in the JWT; the **Node API gateway** resolves the application's **token identity** — the service account it is pointed at (`tokenIdentityUserId`), or its creator for an application registered before that was required and never bound, and sets the authenticated user accordingly. It reads the application record on every request, and a token minted for a different identity than the app's current one is refused with `401`. See the **OAuth Provider** tag for full behavior.
+
+## Behaviour common to every route
+App-level middleware runs before any router, so the following applies to every operation below, before authentication, unless an exception is named.
+
+**Markup filter.** A query value, or any string in a JSON or form-encoded body, that looks like markup is refused with `400 HTTP_BAD_REQUEST`. The message names where the value was, for example `HTML tags, scripts, and XSS content are not allowed in the field "name".` or `... in the query parameter "search".` (a field name that is not a plain identifier path reads `the request`), and says what counted: text in angle brackets such as `<id>` counts as an HTML tag, an encoded script tag counts, or script content such as `onclick=`, `javascript:` or `data:text/html` counts. A string over 100,000 characters is refused as too long to check instead: `The value of the field "name" is longer than 100,000 characters, which is too long to check for HTML tags and scripts. Please shorten it and try again.` It looks for an HTML tag, a script tag, `<iframe`, `<object`, `<embed` or `<svg` tag, a word starting with `on` followed by `=` (meant for inline event handlers such as `onerror=`, it also catches plain text such as `one=1`), a `javascript:` or `data:text/html` URL, an encoded script tag (`&lt;script`, `%3cscript`), and any string longer than 100,000 characters. A string the filter lets through is rewritten before the route sees it: the filter trims surrounding whitespace, drops a lone `<` together with everything after it (`a < b` arrives as `a`), and escapes `>` as `&gt;`. POST and PUT under `/agents/`, `/conversations/`, `/connectors` and `/api-toolsets`, and POST, PUT and PATCH under `/skills`, skip the filter. So does the question of a search: the `query` string of a JSON body sent to `POST /search` or `POST /retrieve` is neither checked nor rewritten, unless it is longer than 100,000 characters.
+
+**Body parsers.** `application/json` bodies (up to 10 MB, 5 MB on `/mcp`) and `application/x-www-form-urlencoded` bodies (up to 100 KB and 1000 fields) are parsed for every method. A JSON body that does not parse, or a body shorter or longer than its `Content-Length`, is answered `400 HTTP_BAD_REQUEST` (`The request body is not valid JSON.`, `The request body does not match its Content-Length.`), a body past these limits `413 HTTP_PAYLOAD_TOO_LARGE`, and an unsupported content encoding or character set `415 HTTP_UNSUPPORTED_MEDIA_TYPE`; a JSON body over 5 MB on `/mcp` gets its `413` as a JSON-RPC error (see `POST /mcp`). Form values arrive as text and the request validators do not convert them, so a number, a boolean or a free-form object sent form-encoded is refused (`400 VALIDATION_ERROR`) or read as a string. A list sent form-encoded is read as a list only when its key repeats, so a single value or an empty list cannot be sent. The form media type is therefore listed only on operations whose body is a flat object of text fields: every value a string (string enums included), with no lists or nested objects.
+
+**Request size.** On every route with a request validator, the body, query and path values are measured before the schema runs. An array over 10,000 items (`<path> can have at most 10000 items.`), an object over 10,000 keys (`<path> can have at most 10000 fields.`), more than 100,000 array items and object keys in the whole request (`The request holds too many items in total (the limit is 100000); the limit is reached at <path>.`) or nesting deeper than 64 levels (`<path> is nested more than 64 levels deep.`) is refused with `400 VALIDATION_ERROR` (detail code `TOO_BIG`, or `TOO_DEEP` for nesting; the path reads like `body.items`). The deployment can change the first three limits with `VALIDATION_MAX_ARRAY_LENGTH`, `VALIDATION_MAX_OBJECT_KEYS` and `VALIDATION_MAX_TOTAL_ITEMS`.
+
+**OAuth scopes.** On an operation whose `security` names `oauth2` scopes, an OAuth access token holding none of them gets `403 HTTP_FORBIDDEN` ("Insufficient scope. Required: ...") right after authentication. Session tokens are never scope-checked.
+
+**No such route.** A method and path that no route handles get Express's own `404` page, `text/html`, reading `Cannot <METHOD> <path>`. Such pairs are not listed as operations.
+
+## Base URLs
+All endpoints use the `/api/v1` prefix unless otherwise noted.
+
+## Query parameter names
+On every `/api/v1` and `/mcp` endpoint, a query parameter whose name starts with `$` or contains `.` (including a nested name such as `filter[$ne]` or `a.b`) is refused with `400` and error code `VALIDATION_ERROR`. Only names are checked: values may contain dots, such as file names.
+
+## SDK Installation
+
+To add the SDK as a dependency to your project:
+```bash
+go get github.com/pipeshub-ai/pipeshub-sdk-go/v2
+```
+
+## SDK Example Usage
+
+### Example
+
+```go
+package main
+
+import (
+	"context"
+	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go/v2"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/components"
+	"log"
+)
+
+func main() {
+	ctx := context.Background()
+
+	s := pipeshub.New()
+
+	res, err := s.OAuthProvider.OauthToken(ctx, components.OAuthTokenRequest{
+		GrantType: components.GrantTypeClientCredentials,
+	})
+	if err != nil {
+		log.Fatal(err)
+	}
+	if res.OAuthTokenResponse != nil {
+		// handle response
+	}
+}
+
+```
+
+## Authentication
+
+### Per-Client Security Schemes
+
+This SDK supports the following security schemes globally:
+
+| Name         | Type   | Scheme       | Environment Variable   |
+| ------------ | ------ | ------------ | ---------------------- |
+| `BearerAuth` | http   | HTTP Bearer  | `PIPESHUB_BEARER_AUTH` |
+| `Oauth2`     | oauth2 | OAuth2 token | `PIPESHUB_OAUTH2`      |
+
+You can set the security parameters through the `WithSecurity` option when initializing the SDK client instance. The selected scheme will be used by default to authenticate with the API for all operations that support it. For example:
+```go
+package main
+
+import (
+	"context"
+	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go/v2"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/components"
+	"log"
+	"os"
+)
+
+func main() {
+	ctx := context.Background()
+
+	s := pipeshub.New(
+		pipeshub.WithSecurity(components.Security{
+			BearerAuth: pipeshub.Pointer(os.Getenv("PIPESHUB_BEARER_AUTH")),
+		}),
+	)
+
+	res, err := s.OAuthProvider.OauthToken(ctx, components.OAuthTokenRequest{
+		GrantType: components.GrantTypeClientCredentials,
+	})
+	if err != nil {
+		log.Fatal(err)
+	}
+	if res.OAuthTokenResponse != nil {
+		// handle response
+	}
+}
+
+```
+
+### Per-Operation Security Schemes
+
+Some operations in this SDK require the security scheme to be specified at the request level. For example:
+```go
+package main
+
+import (
+	"context"
+	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go/v2"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/operations"
+	"log"
+	"os"
+)
+
+func main() {
+	ctx := context.Background()
+
+	s := pipeshub.New()
+
+	res, err := s.UserAccount.RefreshToken(ctx, operations.RefreshTokenSecurity{
+		ScopedToken: os.Getenv("PIPESHUB_SCOPED_TOKEN"),
+	})
+	if err != nil {
+		log.Fatal(err)
+	}
+	if res.RefreshTokenResponse != nil {
+		// handle response
+	}
+}
+
+```
+
+## Available Resources and Operations
+
+Every method, with its parameters and responses, is in the API reference of this version and in the [SDK repository](https://github.com/pipeshub-ai/pipeshub-sdk-go/blob/v2.0.0/README.md#available-resources-and-operations).
+
+## Server-sent event streaming
+
+[Server-sent events][mdn-sse] are used to stream content from certain
+operations. These operations will expose the stream as an iterable that
+can be consumed using a simple `for` loop. The loop will
+terminate when the server no longer has any events to send and closes the
+underlying connection.
+
+```go
+package main
+
+import (
+	"context"
+	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go/v2"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/components"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/operations"
+	"log"
+	"os"
+)
+
+func main() {
+	ctx := context.Background()
+
+	s := pipeshub.New(
+		pipeshub.WithSecurity(components.Security{
+			BearerAuth: pipeshub.Pointer(os.Getenv("PIPESHUB_BEARER_AUTH")),
+		}),
+	)
+
+	res, err := s.KnowledgeBase.UploadRecords(ctx, "<id>", operations.UploadRecordsRequestBody{
+		Files: []operations.UploadRecordsFile{},
+		FilesMetadata: []operations.FilesMetadatum{
+			operations.FilesMetadatum{
+				FilePath:     "/docs/report.pdf",
+				LastModified: 2024.0,
+			},
+		},
+	}, nil)
+	if err != nil {
+		log.Fatal(err)
+	}
+	if res.UploadStreamSSEEvent != nil {
+		defer res.UploadStreamSSEEvent.Close()
+
+		for res.UploadStreamSSEEvent.Next() {
+			event := res.UploadStreamSSEEvent.Value()
+			log.Print(event)
+			// Handle the event
+		}
+	}
+}
+
+```
+
+[mdn-sse]: https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events/Using_server-sent_events
+
+## Retries
+
+Some of the endpoints in this SDK support retries. If you use the SDK without any configuration, it will fall back to the default retry strategy provided by the API. However, the default retry strategy can be overridden on a per-operation basis, or across the entire SDK.
+
+To change the default retry strategy for a single API call, simply provide a `retry.Config` object to the call by using the `WithRetries` option:
+```go
+package main
+
+import (
+	"context"
+	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go/v2"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/components"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/retry"
+	"log"
+	"models/operations"
+)
+
+func main() {
+	ctx := context.Background()
+
+	s := pipeshub.New()
+
+	res, err := s.OAuthProvider.OauthToken(ctx, components.OAuthTokenRequest{
+		GrantType: components.GrantTypeClientCredentials,
+	}, operations.WithRetries(
+		retry.Config{
+			Strategy: "backoff",
+			Backoff: &retry.BackoffStrategy{
+				InitialInterval: 1,
+				MaxInterval:     50,
+				Exponent:        1.1,
+				MaxElapsedTime:  100,
+			},
+			RetryConnectionErrors: false,
+		}))
+	if err != nil {
+		log.Fatal(err)
+	}
+	if res.OAuthTokenResponse != nil {
+		// handle response
+	}
+}
+
+```
+
+If you'd like to override the default retry strategy for all operations that support retries, you can use the `WithRetryConfig` option at SDK initialization:
+```go
+package main
+
+import (
+	"context"
+	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go/v2"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/components"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/retry"
+	"log"
+)
+
+func main() {
+	ctx := context.Background()
+
+	s := pipeshub.New(
+		pipeshub.WithRetryConfig(
+			retry.Config{
+				Strategy: "backoff",
+				Backoff: &retry.BackoffStrategy{
+					InitialInterval: 1,
+					MaxInterval:     50,
+					Exponent:        1.1,
+					MaxElapsedTime:  100,
+				},
+				RetryConnectionErrors: false,
+			}),
+	)
+
+	res, err := s.OAuthProvider.OauthToken(ctx, components.OAuthTokenRequest{
+		GrantType: components.GrantTypeClientCredentials,
+	})
+	if err != nil {
+		log.Fatal(err)
+	}
+	if res.OAuthTokenResponse != nil {
+		// handle response
+	}
+}
+
+```
+
+## Error Handling
+
+Handling errors in this SDK should largely match your expectations. All operations return a response object or an error, they will never return both.
+
+By Default, an API error will return `apierrors.APIError`. When custom error responses are specified for an operation, the SDK may also return their associated error. You can refer to respective *Errors* tables in SDK docs for more details on possible error types for each operation.
+
+For example, the `OauthToken` function may return the following errors:
+
+| Error Type                                    | Status Code | Content Type     |
+| --------------------------------------------- | ----------- | ---------------- |
+| apierrors.BadRequest                          | 400         | application/json |
+| apierrors.OAuthErrorResponse                  | 401         | application/json |
+| apierrors.OAuthClientManagementRateLimitError | 429         | application/json |
+| apierrors.ErrorResponse                       | 500         | application/json |
+| apierrors.APIError                            | 4XX, 5XX    | \*/\*            |
+
+### Example
+
+```go
+package main
+
+import (
+	"context"
+	"errors"
+	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go/v2"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/apierrors"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/components"
+	"log"
+)
+
+func main() {
+	ctx := context.Background()
+
+	s := pipeshub.New()
+
+	res, err := s.OAuthProvider.OauthToken(ctx, components.OAuthTokenRequest{
+		GrantType: components.GrantTypeClientCredentials,
+	})
+	if err != nil {
+
+		var e *apierrors.BadRequest
+		if errors.As(err, &e) {
+			// handle error
+			log.Fatal(e.Error())
+		}
+
+		var e *apierrors.OAuthErrorResponse
+		if errors.As(err, &e) {
+			// handle error
+			log.Fatal(e.Error())
+		}
+
+		var e *apierrors.OAuthClientManagementRateLimitError
+		if errors.As(err, &e) {
+			// handle error
+			log.Fatal(e.Error())
+		}
+
+		var e *apierrors.ErrorResponse
+		if errors.As(err, &e) {
+			// handle error
+			log.Fatal(e.Error())
+		}
+
+		var e *apierrors.APIError
+		if errors.As(err, &e) {
+			// handle error
+			log.Fatal(e.Error())
+		}
+	}
+}
+
+```
+
+## Server Selection
+
+### Select Server by Index
+
+You can override the default server globally using the `WithServerIndex(serverIndex int)` option when initializing the SDK client instance. The selected server will then be used as the default on the operations that use it. This table lists the indexes associated with the available servers:
+
+| #   | Server                          | Variables      | Description                                       |
+| --- | ------------------------------- | -------------- | ------------------------------------------------- |
+| 0   | `https://{instance_url}/api/v1` | `instance_url` | Base API URL                                      |
+| 1   | `https://{instance_url}`        | `instance_url` | Root URL (used for MCP endpoints mounted at /mcp) |
+
+If the selected server has variables, you may override its default values using the associated option(s):
+
+| Variable       | Option                                | Default                      | Description     |
+| -------------- | ------------------------------------- | ---------------------------- | --------------- |
+| `instance_url` | `WithInstanceURL(instanceURL string)` | `"https://app.pipeshub.com"` | Base server URL |
+
+#### Example
+
+```go
+package main
+
+import (
+	"context"
+	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go/v2"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/components"
+	"log"
+)
+
+func main() {
+	ctx := context.Background()
+
+	s := pipeshub.New(
+		pipeshub.WithServerIndex(0),
+		pipeshub.WithInstanceURL("https://app.pipeshub.com"),
+	)
+
+	res, err := s.OAuthProvider.OauthToken(ctx, components.OAuthTokenRequest{
+		GrantType: components.GrantTypeClientCredentials,
+	})
+	if err != nil {
+		log.Fatal(err)
+	}
+	if res.OAuthTokenResponse != nil {
+		// handle response
+	}
+}
+
+```
+
+### Override Server URL Per-Client
+
+The default server can also be overridden globally using the `WithServerURL(serverURL string)` option when initializing the SDK client instance. For example:
+```go
+package main
+
+import (
+	"context"
+	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go/v2"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/components"
+	"log"
+)
+
+func main() {
+	ctx := context.Background()
+
+	s := pipeshub.New(
+		pipeshub.WithServerURL("https://https://app.pipeshub.com"),
+	)
+
+	res, err := s.OAuthProvider.OauthToken(ctx, components.OAuthTokenRequest{
+		GrantType: components.GrantTypeClientCredentials,
+	})
+	if err != nil {
+		log.Fatal(err)
+	}
+	if res.OAuthTokenResponse != nil {
+		// handle response
+	}
+}
+
+```
+
+## Custom HTTP Client
+
+The Go SDK makes API calls that wrap an internal HTTP client. The requirements for the HTTP client are very simple. It must match this interface:
+
+```go
+type HTTPClient interface {
+	Do(req *http.Request) (*http.Response, error)
+}
+```
+
+The built-in `net/http` client satisfies this interface and a default client based on the built-in is provided by default. To replace this default with a client of your own, you can implement this interface yourself or provide your own client configured as desired. Here's a simple example, which adds a client with a 30 second timeout.
+
+```go
+import (
+	"net/http"
+	"time"
+
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2"
+)
+
+var (
+	httpClient = &http.Client{Timeout: 30 * time.Second}
+	sdkClient  = pipeshub.New(pipeshub.WithClient(httpClient))
+)
+```
+
+This can be a convenient way to configure timeouts, cookies, proxies, custom headers, and other low-level configuration.
+
+## Special Types
+
+This SDK defines the following custom types to assist with marshalling and unmarshalling data.
+
+### Date
+
+`types.Date` is a wrapper around time.Time that allows for JSON marshaling a date string formatted as "2006-01-02".
+
+#### Usage
+
+```go
+d1 := types.NewDate(time.Now()) // returns *types.Date
+
+d2 := types.DateFromTime(time.Now()) // returns types.Date
+
+d3, err := types.NewDateFromString("2019-01-01") // returns *types.Date, error
+
+d4, err := types.DateFromString("2019-01-01") // returns types.Date, error
+
+d5 := types.MustNewDateFromString("2019-01-01") // returns *types.Date and panics on error
+
+d6 := types.MustDateFromString("2019-01-01") // returns types.Date and panics on error
+```

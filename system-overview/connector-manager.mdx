@@ -1117,6 +1117,34 @@ The body is optional. Send `statusFilters` to reindex only the records with thos
 }
 ```
 
+Without `statusFilters` and `stages`, a knowledge base reindexes all its records; other connectors reindex only `FAILED` ones. With `stages` and no `statusFilters`, every connector, knowledge bases included, re-runs the stage only for the records where it `FAILED`.
+
+**Body fields:**
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `statusFilters` | string[] | Statuses to reindex: `NOT_STARTED`, `QUEUED`, `IN_PROGRESS`, `COMPLETED`, `FAILED`, `FILE_TYPE_NOT_SUPPORTED`, `AUTO_INDEX_OFF`, `EMPTY` or `SKIPPED`. Without `stages`, they match `indexingStatus`. With `stages`, they match the stage's own status and default to `FAILED` for every connector, knowledge bases included. `SKIPPED` only matches a stage's status. Records the indexer is working on (`indexingStatus` `IN_PROGRESS`) are never reindexed, so without `stages` `IN_PROGRESS` matches nothing. |
+| `stages` | string[] | Re-run only these background stages instead of the full pipeline: `classify` (classification) or `entities` (named-entity extraction). Omit it to reindex the full pipeline. |
+
+**Re-running only classification or named-entity extraction.** With `stages`, the selected records are not parsed or embedded again; only the stage runs. `classify` selects records by `extractionStatus`. `entities` has no status field on the record, so it selects them by their `entities` entry in `stageStates` for the record's current content. A record selected for `classify` that has no stored stage state for its current content, such as one indexed before background stages existed, gets a full reindex instead. `classify` and `entities` select records differently, so they cannot be combined in one request (`400`); send two requests.
+
+```json
+{
+  "stages": ["classify"]
+}
+```
+
+This is what **Retry** on the **Classification** row does in the app. To re-run named-entity extraction for the records where it failed:
+
+```json
+{
+  "stages": ["entities"],
+  "statusFilters": ["FAILED"]
+}
+```
+
+This is what **Retry** on the **Entity extraction** row does.
+
 For a knowledge base, the caller needs a role on it (owner, writer or reader).
 </Tab>
 
@@ -1131,13 +1159,13 @@ For a knowledge base, the caller needs a role on it (owner, writer or reader).
 }
 ```
 
-**Errors:** `403` without a role on the knowledge base; `404` when the connector doesn't exist; `409` when sync is off for the connector ("Enable it and try again") or it is locked.
+**Errors:** `400` when `stages` is empty, names an unknown stage, or combines `classify` and `entities`, or when `statusFilters` is not an array of strings; `403` without a role on the knowledge base; `404` when the connector doesn't exist; `409` when sync is off for the connector ("Enable it and try again") or it is locked.
 </Tab>
 </Tabs>
 </Accordion>
 
 <Accordion title="GET /:connectorId/stats - Get indexing stats">
-Get record counts by indexing status for a connector.
+Get record counts by indexing status, by classification status, and by named-entity extraction status, for a connector.
 
 <Tabs>
 <Tab title="Request">
@@ -1154,9 +1182,30 @@ Get record counts by indexing status for a connector.
 ```json
 {
   "success": true,
-  "data": { "...": "counts by indexing status" }
+  "data": {
+    "orgId": "6650f1c2a9b4e3d2c1b0a001",
+    "connectorId": "3f1c9a52-7d0e-4b8a-9c1e-2a6b5d4e7f80",
+    "origin": "CONNECTOR",
+    "stats": {
+      "total": 1200,
+      "indexingStatus": { "COMPLETED": 1180, "FAILED": 12, "QUEUED": 8 },
+      "extractionStatus": { "COMPLETED": 1150, "SKIPPED": 10, "FAILED": 5, "QUEUED": 15 },
+      "entitiesStatus": { "COMPLETED": 1140, "SKIPPED": 20, "FAILED": 3, "QUEUED": 7 }
+    },
+    "byRecordType": [
+      {
+        "recordType": "FILE",
+        "total": 1200,
+        "indexingStatus": { "COMPLETED": 1180, "FAILED": 12, "QUEUED": 8 },
+        "extractionStatus": { "COMPLETED": 1150, "SKIPPED": 10, "FAILED": 5, "QUEUED": 15 },
+        "entitiesStatus": { "COMPLETED": 1140, "SKIPPED": 20, "FAILED": 3, "QUEUED": 7 }
+      }
+    ]
+  }
 }
 ```
+
+The example shows only some statuses. `indexingStatus` counts records by indexing status. `extractionStatus` counts them by classification status (see [Statuses](/system-overview#statuses)). `entitiesStatus` counts them by the status of named-entity extraction for their current content; records with no named-entity stage state, such as ones indexed before background stages existed, are not counted. `byRecordType` has the same counts per record type, and is empty before the first sync.
 
 **Errors:**
 - `404` "This connector was removed, or you no longer have access. Refresh the page and try again." when the connector doesn't exist or you can't open it: a personal connector you didn't create (admins included), a team connector you didn't create when you aren't an admin, or a knowledge base you have no role on. A missing connector and a hidden one get the same answer, so the API doesn't confirm that the connector exists.

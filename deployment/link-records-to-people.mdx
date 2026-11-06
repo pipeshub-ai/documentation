@@ -1,0 +1,69 @@
+---
+title: "Link Existing Records to People"
+description: "Post-upgrade step that links records synced before record authorship to the members they name"
+icon: "users"
+---
+
+# Link existing records to people
+
+Newer versions of PipesHub link each record to the organisation members it names: a mail's sender and recipients, a ticket's assignee, a pull request's reviewers, and similar. New and updated records get these links as they sync.
+
+Records that were synced **before** you upgraded do not have them yet. The `kg_record_people` backfill adds them without re-syncing any connector.
+
+## When to run it
+
+Run it once per organisation after upgrading to a version that has record authorship. Until then, older records are not reachable from the people they involve.
+
+## What it does
+
+- Reads the organisation's tickets, projects, mails, comments, pull requests and deals in pages of 200.
+- Links each record to the existing members it names, using the people already stored on the record. An address or source user id that matches no member gets no link, and no new user is created. Bcc recipients are never linked.
+- Is safe to re-run. Each record's links are replaced, not added to, so running it again does not create duplicates.
+- Is a **dry run** by default: it counts the links it would create and writes nothing. Add `--apply` to write them.
+
+## Run it with Docker Compose
+
+From the directory that holds your Compose files, run the dry run first:
+
+```bash
+docker compose exec pipeshub-ai python -m app.scripts.kg_record_people backfill --org <ORG_ID>
+```
+
+Replace `<ORG_ID>` with your organisation's id. If the counts look right, write the links:
+
+```bash
+docker compose exec pipeshub-ai python -m app.scripts.kg_record_people backfill --org <ORG_ID> --apply
+```
+
+<Note>
+With `--apply`, the script first applies the current graph schema, because older schemas reject the new link types.
+</Note>
+
+## Read the output
+
+The script prints one JSON object per line: one per page, then a total.
+
+```json
+{"after": "<last record id>", "records": 200, "skipped": 0, "edges": 341, "applied": false}
+{"org": "<ORG_ID>", "total": {"records": 200, "edges": 341, "skipped": 0, "failed_pages": 0}, "applied": false}
+```
+
+| Field | Meaning |
+|---|---|
+| `records` | Records processed on the page |
+| `edges` | Links created (or, in a dry run, that would be created) |
+| `skipped` | Records that could not be read back and were passed over |
+| `failed_pages` | Pages that failed |
+| `applied` | `true` if links were written, `false` for a dry run |
+
+A page that fails is printed as `{"after": ..., "error": "<ErrorName>"}` and the run carries on with the next page. If the next page of record ids cannot be read, the run stops there.
+
+### Exit codes
+
+| Code | Meaning |
+|---|---|
+| `0` | Every record was processed |
+| `1` | Partial result: at least one page failed or one record was skipped |
+| `2` | Invalid input, reported as `{"error": ...}` on stderr |
+
+After a partial result, check the service logs for the cause, fix it, and run the same command again. Because re-runs are safe, it finishes what was missed.

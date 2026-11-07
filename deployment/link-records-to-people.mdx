@@ -1,0 +1,78 @@
+---
+title: "Link Existing Records to People"
+description: "Post-upgrade step that links records synced before record authorship to the members and CRM accounts they name"
+icon: "users"
+---
+
+# Link existing records to people
+
+Newer versions of PipesHub link each record to the organisation members it names (a mail's sender and recipients, a ticket's assignee, a pull request's reviewers, and similar) and to the CRM account it belongs to. New and updated records get these links as they sync.
+
+Records that were synced **before** you upgraded do not have them yet. The `kg_record_people` backfill adds them without re-syncing any connector.
+
+## When to run it
+
+Run it once per organisation after upgrading to a version that has record authorship. Until then, older records are not reachable from the people they involve.
+
+## What it does
+
+- Reads the organisation's tickets, projects, mails, comments, pull requests and deals in pages of 200.
+- Links each record to the members it names, using the people already stored on the record. No new user is created.
+- Someone who is not a member gets a person entry and a link when a connector names them as an author, editor or owner, or in a ticket role. Unmatched mail recipients get neither, and Bcc recipients are never linked.
+- Links each record to the CRM account its record group belongs to.
+- With `--apply`, before linking it records the organisation on CRM accounts synced before accounts carried one, and gives each external organisation a normalized-name key, so names that documents mention find accounts synced earlier. At the end it schedules the entity index to run again, so the new links are searchable.
+- Is safe to re-run. Each record's links are replaced, not added to, so running it again does not create duplicates.
+- Is a **dry run** by default: it counts the links it would create and writes nothing. Add `--apply` to write them.
+
+## Run it with Docker Compose
+
+From the directory that holds your Compose files, run the dry run first:
+
+```bash
+docker compose exec pipeshub-ai python -m app.scripts.kg_record_people backfill --org <ORG_ID>
+```
+
+Replace `<ORG_ID>` with your organisation's id. If the counts look right, write the links:
+
+```bash
+docker compose exec pipeshub-ai python -m app.scripts.kg_record_people backfill --org <ORG_ID> --apply
+```
+
+<Note>
+With `--apply`, the script first applies the current graph schema, because older schemas reject the new link types. A failed schema update on ArangoDB is logged and the script carries on, so its pages can then fail. If you see `failed_pages`, check the service logs for schema errors, resolve them and run the command again.
+</Note>
+
+## Read the output
+
+The script prints one JSON object per line: one per page, then a total.
+
+```json
+{"stamp_accounts": "skipped in a dry run; their records count no account edge"}
+{"after": "<last record id>", "records": 200, "skipped": 0, "edges": 341, "applied": false}
+{"org": "<ORG_ID>", "total": {"records": 200, "edges": 341, "skipped": 0, "failed_pages": 0}, "applied": false, "accounts_stamped": null, "accounts_keyed": null, "entity_index_rerun": null}
+```
+
+A dry run cannot stamp accounts, since that is a write, so it counts no account links for accounts it would have stamped.
+
+| Field | Meaning |
+|---|---|
+| `records` | Records processed on the page |
+| `edges` | Links created (or, in a dry run, that would be created) |
+| `skipped` | Records that could not be read back and were passed over |
+| `failed_pages` | Pages that failed |
+| `applied` | `true` if links were written, `false` for a dry run |
+| `accounts_stamped` | With `--apply`: CRM accounts given their organisation. `null` in a dry run or if the step failed |
+| `accounts_keyed` | With `--apply`: external organisations given a name key. `null` in a dry run or if the step failed |
+| `entity_index_rerun` | With `--apply`: `true` once the entity index is scheduled to run again, `false` if that failed |
+
+A page that fails is printed as `{"after": ..., "error": "<ErrorName>"}` and the run carries on with the next page. If the next page of record ids cannot be read, the run stops there.
+
+### Exit codes
+
+| Code | Meaning |
+|---|---|
+| `0` | Every record was processed |
+| `1` | Partial result: a page failed, a record was skipped, or (with `--apply`) an account step or the entity index re-run failed |
+| `2` | Invalid input, reported as `{"error": ...}` on stderr |
+
+After a partial result, check the service logs for the cause, fix it, and run the same command again. Because re-runs are safe, it finishes what was missed.

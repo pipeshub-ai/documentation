@@ -17,7 +17,8 @@ Run it once per organisation after upgrading to a version that has record author
 ## What it does
 
 - Reads the organisation's tickets, projects, mails, comments, pull requests and deals in pages of 200.
-- Links each record to the existing members it names, using the people already stored on the record. An address or source user id that matches no member gets no link, and no new user is created. Bcc recipients are never linked.
+- Links each record to the members it names, using the people already stored on the record. No new user is created.
+- Someone who is not a member gets a person entry and a link when a connector names them as an author, editor or owner, or in a ticket role. Unmatched mail recipients get neither, and Bcc recipients are never linked.
 - Links each record to the CRM account its record group belongs to.
 - With `--apply`, before linking it records the organisation on CRM accounts synced before accounts carried one, and gives each external organisation a normalized-name key, so names that documents mention find accounts synced earlier. At the end it schedules the entity index to run again, so the new links are searchable.
 - Is safe to re-run. Each record's links are replaced, not added to, so running it again does not create duplicates.
@@ -38,7 +39,7 @@ docker compose exec pipeshub-ai python -m app.scripts.kg_record_people backfill 
 ```
 
 <Note>
-With `--apply`, the script first applies the current graph schema, because older schemas reject the new link types.
+With `--apply`, the script first applies the current graph schema, because older schemas reject the new link types. A failed schema update on ArangoDB is logged and the script carries on, so its pages can then fail. If you see `failed_pages`, check the service logs for schema errors, resolve them and run the command again.
 </Note>
 
 ## Read the output

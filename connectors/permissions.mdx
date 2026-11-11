@@ -1,0 +1,46 @@
+---
+title: "Who can see what in search"
+description: "How PipesHub applies the permissions of your connected sources, how fast changes arrive, and what you see when something is incomplete"
+icon: "lock"
+---
+
+PipesHub shows a person only what the source shows them, and it hides a result when it cannot be sure. Search, chat answers and citations all follow the same rule.
+
+## How changes reach PipesHub
+
+Each connector reads permissions when it syncs, so a change made at the source (someone added to a space, a file unshared, an account deactivated) reaches PipesHub on the connector's next sync. The time is the connector's sync schedule, which an admin sets on the connector.
+
+<Note>
+  Just got access at the source? New access appears after the next sync. Until then the item can be missing from search.
+</Note>
+
+## What you see when results may be incomplete
+
+PipesHub tells you that something may be incomplete and what to do. It never says which items are hidden.
+
+| You see | What it means |
+| --- | --- |
+| "Some sources are updating permissions, so a few results may be missing for a few minutes." | A connector you can search is applying a permission change. Results come back when it finishes, usually within minutes. |
+| "{Source} is still syncing, so results from it may be incomplete." | The connector has not finished a sync, so some of its content may not be searchable yet. |
+| "Nothing to search yet. {Source} is still syncing." | Your only sources are still syncing. Try again when the sync has finished. |
+| "We couldn't check which documents you have access to just now, so no results are shown." | PipesHub could not confirm what you may read, so it shows nothing rather than guess. Try again in a minute. |
+
+A notice names only a source you can already see, and never an item, a folder or a person.
+
+## When you open an item you cannot read
+
+You get one page that says "You don't have access to this item". It is the same whether the item was moved, deleted, restricted or never shared with you, so it does not confirm that the item exists. Ask the owner, or open it where it came from if you have the link. **Copy details for an admin** copies the item's id and the time, and no names, so an admin can look into it.
+
+## Known differences from the source
+
+In a few cases PipesHub deliberately shows less than the source does. It never shows more.
+
+| Connector | Source permission | What PipesHub does differently |
+| --- | --- | --- |
+| Confluence | A page nested very deep in a space | A page more than 50 levels below its space is hidden from everyone. Move it closer to the top of the space. |
+| Gmail | A delegate added to a mailbox | Delegates cannot search the mailbox in PipesHub. Only the mailbox owner can. |
+| Google Drive | A file shared with your whole domain, or with anyone who has the link | It does not give everyone in the organisation access in PipesHub. People it is shared with directly or through a group still see it. |
+
+## For admins
+
+A connector's **Overview** tab shows how fresh its permissions are: the last sync, changes waiting to be applied, and anything that needs attention. A source that cannot be read stays hidden for everyone until it is fixed.

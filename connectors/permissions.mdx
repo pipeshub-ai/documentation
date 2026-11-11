@@ -8,7 +8,7 @@ PipesHub shows a person only what the source shows them, and it hides a result w
 
 ## How changes reach PipesHub
 
-Permissions are read when a connector syncs, so a change made at the source reaches PipesHub within the connector's sync interval, not instantly. An admin sets the interval on the connector.
+Permissions are read when a connector syncs, so a change made at the source is not instant. For a **Scheduled** connector, it reaches PipesHub within the connector's sync interval. For a **Manual** connector, or one with no schedule, it reaches PipesHub on the next sync. Whoever manages the connector sets its schedule: an admin for a team connector, and the person who created it for a personal connector.
 
 <Note>
   Just got access at the source? New access appears after the next sync. Until then the item can be missing from search.
@@ -21,9 +21,9 @@ PipesHub tells you that something may be incomplete and what to do. It never say
 | You see | What it means |
 | --- | --- |
 | "Some sources are updating permissions, so a few results may be missing for a few minutes." | A connector you can search is applying a permission change. Some results may be missing until it finishes. |
-| "{Source} is still syncing, so results from it may be incomplete." | The connector has not finished its first sync, so some of its content may not be searchable yet. A routine re-sync of a connector that has synced before shows nothing here. |
-| "Nothing to search yet. {Source} is still syncing." | The search found nothing and a source you can search is still syncing. Try again when the sync has finished. |
-| "We couldn't check which documents you have access to just now, so no results are shown." | PipesHub could not confirm what you may read, so it shows nothing rather than guess. Try again in a minute. |
+| "{Source} is still syncing, so results from it may be incomplete." | The search found results, but the connector has not finished its first sync, so some of its content may not be searchable yet. A routine re-sync of a connector that has synced before does not show this when the search found results. |
+| "Nothing to search yet. {Source} is still syncing." | The search found nothing and a source you can search is syncing, whether for the first time or a later sync. This replaces the "no results" message. Try again when the sync has finished. |
+| "We couldn't check which documents you have access to just now, so no results are shown. Please try again in a minute." | PipesHub could not confirm what you may read, so it shows nothing rather than guess. Try again in a minute. |
 
 A notice names only a source you can already see, and never an item, a folder or a person.
 

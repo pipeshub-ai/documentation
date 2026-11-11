@@ -8,7 +8,7 @@ PipesHub shows a person only what the source shows them, and it hides a result w
 
 ## How changes reach PipesHub
 
-Each connector reads permissions when it syncs, so a change made at the source (someone added to a space, a file unshared, an account deactivated) reaches PipesHub on the connector's next sync. The time is the connector's sync schedule, which an admin sets on the connector.
+Permissions are read when a connector syncs, so a change made at the source reaches PipesHub within the connector's sync interval, not instantly. An admin sets the interval on the connector.
 
 <Note>
   Just got access at the source? New access appears after the next sync. Until then the item can be missing from search.
@@ -20,9 +20,9 @@ PipesHub tells you that something may be incomplete and what to do. It never say
 
 | You see | What it means |
 | --- | --- |
-| "Some sources are updating permissions, so a few results may be missing for a few minutes." | A connector you can search is applying a permission change. Results come back when it finishes, usually within minutes. |
-| "{Source} is still syncing, so results from it may be incomplete." | The connector has not finished a sync, so some of its content may not be searchable yet. |
-| "Nothing to search yet. {Source} is still syncing." | Your only sources are still syncing. Try again when the sync has finished. |
+| "Some sources are updating permissions, so a few results may be missing for a few minutes." | A connector you can search is applying a permission change. Some results may be missing until it finishes. |
+| "{Source} is still syncing, so results from it may be incomplete." | The connector has not finished its first sync, so some of its content may not be searchable yet. A routine re-sync of a connector that has synced before shows nothing here. |
+| "Nothing to search yet. {Source} is still syncing." | The search found nothing and a source you can search is still syncing. Try again when the sync has finished. |
 | "We couldn't check which documents you have access to just now, so no results are shown." | PipesHub could not confirm what you may read, so it shows nothing rather than guess. Try again in a minute. |
 
 A notice names only a source you can already see, and never an item, a folder or a person.
@@ -33,7 +33,7 @@ You get one page that says "You don't have access to this item". It is the same 
 
 ## Known differences from the source
 
-In a few cases PipesHub deliberately shows less than the source does. It never shows more.
+These are known cases where PipesHub shows less than the source does:
 
 | Connector | Source permission | What PipesHub does differently |
 | --- | --- | --- |
@@ -43,4 +43,4 @@ In a few cases PipesHub deliberately shows less than the source does. It never s
 
 ## For admins
 
-A connector's **Overview** tab shows how fresh its permissions are: the last sync, changes waiting to be applied, and anything that needs attention. A source that cannot be read stays hidden for everyone until it is fixed.
+A connector's **Overview** tab shows how fresh its permissions are: the last sync, changes waiting to be applied, and anything that needs attention.

@@ -21,6 +21,7 @@ This page describes a self-hosted PipesHub started with the Docker Compose files
 
 - **Settings in the key-value store**, including AI model API keys, connector credentials and the token signing secrets, are encrypted with AES-256-GCM. The key is the SHA-256 hash of the `SECRET_KEY` environment variable. A few non-secret settings, such as service endpoints, are stored as plain text. Storage credentials, such as S3 keys, are encrypted on their own before they are saved.
 - **`SECRET_KEY`** is required: the services don't start without it. Set it to a long random value, keep it safe, and keep it the same across upgrades. Without it, PipesHub can't decrypt its stored settings.
+- **The `.env` file.** Values you set for Docker Compose, such as database passwords, are kept in the `.env` file on the host as plain text, outside the encrypted key-value store. Restrict access to that file and to any backup that contains it.
 - **Passwords** are stored as bcrypt hashes. One-time sign-in codes are hashed the same way.
 - **OAuth and personal access tokens** are stored as hashes, not as the tokens themselves.
 
@@ -42,6 +43,7 @@ For a connected app, PipesHub syncs each item's permissions from the source and 
 PipesHub makes outbound calls for the services you set up, for telemetry, and for the few other requests listed here:
 
 - **AI models.** Chat sends your question and the content it retrieved to the chat model you configured. Indexing sends file content to your embedding model, and to your chat model to add summaries, topics and categories and to read images and scanned pages. If those models are hosted by a provider, that provider receives the content. Self-hosted models keep it on your network. See [AI models](/ai-models/overview).
+- **File storage.** If you set up S3 or Azure Blob storage, uploaded files go to that bucket or container. You own and control it, so its location sets where those files are held.
 - **Connectors.** Each connector calls the API of the app it syncs, with the credentials you gave it.
 - **Web search.** When chat or an agent searches the web, the query goes to the search provider in use, and page reads go to the sites in the results. See [Web search](/web-search).
 - **Telemetry.** See below.

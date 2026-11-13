@@ -87,17 +87,17 @@ The [`MCP_SCOPES`](https://github.com/pipeshub-ai/pipeshub-ai/blob/main/backend/
 curl -s PIPESHUB_INSTANCE_URL/.well-known/oauth-protected-resource/mcp
 ```
 
-The scopes the MCP tools use are `offline_access`, `semantic:write`, `conversation:chat`, `agent:read`, `agent:execute`, `kb:read`, `kb:write`, `kb:upload`, `connector:read`, `config:read`, `user:read`, `team:read`, `usergroup:read` and `code:read`. A scope you remove from `MCP_SCOPES` also drops out of discovery.
+The scopes the MCP tools use are `offline_access`, `semantic:write`, `conversation:chat`, `agent:read`, `agent:execute`, `kb:read`, `kb:write`, `kb:upload`, `connector:read`, `config:read`, `connector:write`, `connector:sync`, `user:read`, `team:read`, `usergroup:read` and `code:read`. A scope you remove from `MCP_SCOPES` also drops out of discovery.
 
-This is the `MCP_SCOPES` value PipesHub ships (`backend/env.template`). It covers chat, search, the directory, agents, code and projects, and lets an agent create collections and upload into them (`kb:write`, `kb:upload`):
+This is the `MCP_SCOPES` value PipesHub ships (`backend/env.template`). It covers chat, search, the directory, agents and code. It also lets an agent create collections and upload into them (`kb:write`, `kb:upload`), and add a website as a source (`connector:write`, `connector:sync`):
 
 ```bash
-MCP_SCOPES=openid,profile,email,offline_access,semantic:write,conversation:write,conversation:chat,kb:read,kb:write,kb:upload,team:read,user:read,usergroup:read,config:read,agent:read,agent:execute,connector:read,code:read,project:read,project:write,project:delete
+MCP_SCOPES=openid,profile,email,offline_access,semantic:write,conversation:write,conversation:chat,kb:read,kb:write,kb:upload,team:read,user:read,usergroup:read,config:read,agent:read,agent:execute,connector:read,connector:write,connector:sync,code:read,project:read,project:write,project:delete
 ```
 
-Leave `kb:write` and `kb:upload` out to stop agents creating collections and uploading: tokens without them are not offered those tools. Other tools that can act, such as `pipeshub_chat` with an agent whose actions can change data in other apps, are governed by their own scopes.
+Leave `kb:write` and `kb:upload` out to stop agents creating collections and uploading, and `connector:write` and `connector:sync` out to stop them adding web sources: tokens without them are not offered those tools. With the connector scopes, a token can also create and configure the user's other connectors and start or stop their syncs, as the user could in the connectors page. Other tools that can act, such as `pipeshub_chat` with an agent whose toolsets take actions, are governed by their own scopes.
 
-An instance that sets `MCP_SCOPES` in its `.env` keeps that list after an upgrade until you edit it. After you add the two scopes and restart, new personal access tokens get them, and the built-in PipesHub agent app (device login) adds them to its allowed scopes on the next discovery request. Tokens already issued keep their scopes: mint a new token, or sign the agent in again.
+An instance that sets `MCP_SCOPES` in its `.env` keeps that list after an upgrade until you edit it. After you add the two scopes and restart, new personal access tokens get them, and the built-in PipesHub agent app (device login) adds them to its allowed scopes on the next discovery request. Tokens already issued keep their scopes: mint a new token, or sign the agent in again. An MCP client that registered itself (Dynamic Client Registration) keeps the scopes it registered with, so remove and re-add the server in that client to give it new ones.
 
 ## Placeholders
 

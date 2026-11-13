@@ -1,5 +1,5 @@
 ---
-title: "Agent setup guide"
+title: "Agent Setup Guide"
 description: "Step-by-step guide to creating and configuring AI agents"
 icon: "wrench"
 ---
@@ -7,215 +7,141 @@ icon: "wrench"
 <div className="not-prose mt-10">
   <div className="p-6 border border-gray-200 dark:border-gray-700 rounded-xl bg-blue-50 dark:bg-gray-800">
     <div className="flex items-center gap-3 mb-4">
-      <Icon icon="wrench" size={32} />
-      <div className="text-xl font-semibold text-gray-900 dark:text-white">Agent setup guide</div>
+      <span className="text-4xl">🛠️</span>
+      <div className="text-xl font-semibold text-gray-900 dark:text-white">Agent Setup Guide</div>
     </div>
-    <p className="text-base text-gray-700 dark:text-gray-300 my-0">Create your first AI agent with the visual flow builder</p>
+    <p className="text-base text-gray-700 dark:text-gray-300 my-0">Create your first AI agent in Agent Builder</p>
   </div>
 </div>
 
 ## Prerequisites
 
-Before creating an agent, ensure you have:
+Before creating an agent, make sure you have:
 
-1. **AI models configured** - At least one LLM provider set up in your organization. Agent mode in chat needs a reasoning-capable model; configure it under **Workspace > AI models**
-2. **Actions Configured** (optional) - Any external actions you want the agent to use
-3. **Knowledge Sources** (optional) - Connectors or collections for document search
+1. **An AI model** - At least one LLM configured under **Workspace → AI models**. An agent without its own model uses the organization's default.
+2. **Actions set up** (optional) - Any toolsets you want the agent to use, authorized under **Workspace → Actions** (organization-wide) or **Your actions** (your own sign-in). See [Toolsets Overview](/toolsets/overview).
+3. **Knowledge sources** (optional) - Connectors or collections with indexed content.
+4. **MCP servers or skills** (optional) - Added under **MCP servers** / **Your MCP servers** and **Your skills** in Workspace settings.
+
+---
+
+## Step 1: Start a new agent
+
+1. Open **Chat**.
+2. In the left sidebar, find **My agents** and click **+** (**New agent**).
+
+Agent Builder opens with the **Create agent** dialog.
+
+<Frame caption="Chat sidebar: **+** next to **My agents** starts a new agent.">
+  <img src="/images/agents/my-agents-new.png" alt="Chat sidebar with the My agents section and its + button" style={{ width: 420, maxWidth: "100%" }} />
+</Frame>
+
+---
+
+## Step 2: Name the agent and choose its type
+
+1. Enter a **Name**, for example "Project status".
+2. Choose an **Agent type**:
+
+| Type | Who it's for | Toolset credentials | Knowledge it can search |
+|------|--------------|---------------------|-------------------------|
+| **User agent** | A personal agent you can later share | Each person who chats uses their own sign-in for each toolset | What the person chatting can read |
+| **Service agent** | An organization-wide agent, for example one that runs unattended from a script or CI | Stored on the agent and used for everyone | What its creator can read, or a service account an admin grants |
+
+3. Click **Create agent** (or **Continue** for a service agent).
+
+<Frame caption="The **Create agent** dialog.">
+  <img src="/images/agents/create-agent-dialog.png" alt="Create agent dialog with a Name field and User agent or Service agent options" />
+</Frame>
+
+You can also turn a user agent into a service agent later with **Convert to service agent** at the top of the builder.
 
 <Warning>
-  Actions must be authenticated before they can be added to an agent. If you plan to use Jira, Slack, or other external actions, configure them first in **Workspace > Actions** (or **Your actions** for your own sign-in).
+  Converting a user agent to a service agent is permanent. A service agent is always shared with the whole organization, and everyone who uses it sees search results from what its search identity can read.
 </Warning>
 
 ---
 
-## Step 1: Find your agents
+## Step 3: Set the agent's prompts
 
-Agents live in the chat sidebar. Open **Chat** and look under **My agents**: it lists the agents you can use.
+The canvas shows the **Agent** node (the core), with **Chat input** and **Chat output** already connected.
 
-<Frame>
-  <img className="block dark:hidden" src="/images/product/agents/my-agents-sidebar.png" alt="Chat sidebar with agents under My agents, the More agents link and the plus button to create one" />
-  <img className="hidden dark:block" src="/images/product/agents/my-agents-sidebar-dark.png" alt="Chat sidebar with agents under My agents, the More agents link and the plus button to create one" />
+<Frame caption="A new agent: palette on the left, the **Agent** node in the middle with a handle for each kind of block.">
+  <img src="/images/agents/builder-canvas.png" alt="Agent Builder canvas with the palette on the left and the Agent node connected to Chat input and Chat output" />
 </Frame>
 
----
+1. On the Agent node, click the pencil icon (**Edit prompts**).
+2. Fill in:
 
-## Step 2: Create New Agent
+| Field | What it does | Example |
+|-------|--------------|---------|
+| **System prompt** | Who the agent is and how it behaves | "You are a project status assistant for non-technical readers." |
+| **Instructions** | Rules for how it works and answers | "Answer in three sentences. Say where the feature is, what blocks it, and link the Jira tickets." |
+| **Starting message** | The greeting shown when someone opens a chat with the agent | "Ask me where any feature stands." |
+| **Default reasoning effort** | The effort used when the person chatting doesn't choose one. Shown only once a model that supports reasoning is connected (Step 4) | |
+| **Send user & organization context** | When on, the agent receives the user's name, email and organization in its prompt | |
 
-1. In the chat sidebar, click **+** next to **My agents**. The **Agent Builder** opens with the **Create agent** dialog.
-2. Enter a **Name** and choose the **Agent type**:
-   - **User agent**: a personal agent. Each user signs in to the actions with their own account.
-   - **Service agent**: an org-wide agent that uses action credentials stored on the agent. It searches knowledge with its creator's access.
-3. Click **Create agent**.
+3. Click **Save**.
 
-<Frame>
-  <img className="block dark:hidden" src="/images/product/agents/agent-create-dialog.png" alt="Create agent dialog with a name entered and the User agent and Service agent types" />
-  <img className="hidden dark:block" src="/images/product/agents/agent-create-dialog-dark.png" alt="Create agent dialog with a name entered and the User agent and Service agent types" />
+<Frame caption="The **Configure agent prompts** dialog.">
+  <img src="/images/agents/agent-prompts-dialog.png" alt="Configure agent prompts dialog with System prompt, Instructions, Starting message and the user context switch" />
 </Frame>
-
----
-
-## Step 3: Configure the Agent node
-
-The **Agent Builder** opens with a visual flow canvas. You'll see the **Agent** node (labeled **Core** and **Orchestrator**) already placed on the canvas.
-
-<Frame>
-  <img className="block dark:hidden" src="/images/agents/agent-builder-canvas-new.png" alt="Agent builder canvas with the Agent node connected to chat input and output, a model, knowledge and web search" />
-  <img className="hidden dark:block" src="/images/agents/agent-builder-canvas-new-dark.png" alt="Agent builder canvas with the Agent node connected to chat input and output, a model, knowledge and web search" />
-</Frame>
-
-### Configure the Agent node
-
-1. Click **Edit prompts** (the pencil icon) on the Agent node to open the **Configure agent prompts** dialog
-2. Fill in the following fields:
-
-| Field | Description | Example |
-|-------|-------------|---------|
-| **System prompt** | Instructions that define the agent's behavior | "You are a helpful project management assistant..." |
-| **Starting message** | Initial greeting when users start a conversation | "Hi! I can help you manage your projects. What would you like to do?" |
-| **Instructions** | Detailed instructions for the agent's behavior and capabilities | "You can create Jira tickets, search documentation, and answer questions about projects." |
-
-<Frame>
-  <img className="block dark:hidden" src="/images/agents/agent-core-config.png" alt="Configure agent prompts dialog with system prompt, instructions, starting message and default reasoning effort" />
-  <img className="hidden dark:block" src="/images/agents/agent-core-config-dark.png" alt="Configure agent prompts dialog with system prompt, instructions, starting message and default reasoning effort" />
-</Frame>
-
-3. If a connected model supports reasoning, set **Default reasoning effort**. It is the fallback used when the user does not choose one in chat.
-4. Optionally turn **Send user & organization context** off if the agent should not receive the user's name, email or organization.
-5. Click **Save** in the dialog. The builder's **Save changes** button then saves the agent
 
 <Info>
-  The **System prompt** defines your agent's behavior. Be specific about what the agent should and shouldn't do, its tone, and any constraints.
+  Organization-wide [Custom Instructions](/custom-instructions) don't apply to agents. Put everything this agent should follow in its own prompts.
 </Info>
 
 ---
 
-## Step 4: Add a Model (Optional)
+## Step 4: Add blocks from the palette
 
-The agent's model powers its intelligence. If you do not connect one, the Agent node shows **Using organization default model** and uses your organization's default.
+The **Palette** on the left lists everything you can add. Drag a block onto the canvas, or tap **+** on a touch screen, then connect it to the matching handle on the Agent node. The builder refuses connections to the wrong handle and says why.
 
-1. In the left palette, expand the **"AI models"** section
-2. Drag a model node onto the canvas
-
-<Frame>
-  <img className="block dark:hidden" src="/images/agents/drag-llm-model.png" alt="Agent builder palette with the AI models section open and a configured model to drag" />
-  <img className="hidden dark:block" src="/images/agents/drag-llm-model-dark.png" alt="Agent builder palette with the AI models section open and a configured model to drag" />
+<Frame caption="The palette. Under **Tools**, a check mark means ready to use, and an amber open-in-new icon means it's set up but you still need to sign in. An amber gear on a web search provider means it isn't configured yet (click it to configure); a red gear on a toolset means an admin still has to add it under **Workspace → Actions**.">
+  <img src="/images/agents/builder-palette.png" alt="Palette with AI models, Knowledge, Tools including Web search providers, MCP servers and Skills sections" style={{ width: 380, maxWidth: "100%" }} />
 </Frame>
 
-3. **Connect** the model node to the **Model** section of the Agent node by dragging a link to its model handle
+| Palette section | What it adds | Connect to |
+|-----------------|--------------|------------|
+| **AI models** | One or more models the agent can use. With none, the organization's default model is used | **Model** |
+| **Knowledge** | **Apps** (connectors) and **Collections** the agent searches | **Knowledge** |
+| **Tools** | Toolsets that let the agent take actions, such as creating a Jira issue or updating a Confluence page. On a toolset's node, use **+** to choose which of its tools the agent gets. Web search is also here | **Toolsets** |
+| **MCP servers** | Tools from external MCP servers you or your admin added | **MCP servers** |
+| **Skills** | Custom skills from **Your skills** | **Skills** |
 
-<Frame>
-  <img className="block dark:hidden" src="/images/agents/connect-llm-model.png" alt="Model node on the canvas with the model shown in the Model section of the Agent node" />
-  <img className="hidden dark:block" src="/images/agents/connect-llm-model-dark.png" alt="Model node on the canvas with the model shown in the Model section of the Agent node" />
-</Frame>
+When you remove a block or a connection, the builder asks you to confirm.
 
-<Info>
-  **Reasoning models** are models with reasoning capabilities enabled, allowing the agent to think through complex problems step-by-step before responding. Agent mode in chat and the **Default reasoning effort** setting need one.
-</Info>
----
+For adding MCP servers and API actions, see [MCP servers](/agent-guide/mcp-servers) and [API actions](/agent-guide/api-actions). For skills, see [Skills](/agent-guide/skills).
 
-## Step 5: Add Actions (Optional)
+<Note>
+  **Search and act in one agent:** add nodes from **Knowledge** for finding information and nodes from **Tools** for taking actions. The agent can then search and act in the same conversation.
+</Note>
 
-Actions give your agent the ability to interact with external applications.
+### Toolset credentials
 
-### Viewing Available Actions
-
-1. In the left palette, expand the **"Tools"** section
-2. Web search providers and actions are listed with the number of tools each provides. A check mark means it is ready to use, and a settings icon means it still needs to be set up:
-
-
-<Frame>
-  <img className="block dark:hidden" src="/images/agents/sidebar-toolsets.png" alt="Tools section of the palette with the web search providers and the Drive action, each with its setup status" />
-  <img className="hidden dark:block" src="/images/agents/sidebar-toolsets-dark.png" alt="Tools section of the palette with the web search providers and the Drive action, each with its setup status" />
-</Frame>
-
-### Adding Actions to Your Agent
-
-You have two options for adding tools:
-
-**Option 1: Drag Entire Action**
-- **Drag** the entire action onto the canvas to add all its tools
-- **Connect** the action node to the **Toolsets** section of the Agent node (the builder still uses that label)
-
-**Option 2: Drag Individual Tools**
-- Expand an action to see its individual tools
-- **Drag** specific tools you need onto the canvas
-- This gives you more control over which tools the agent can use
-
-<Frame>
-  <img className="block dark:hidden" src="/images/agents/add-toolset-to-flow.png" alt="Collection and web search nodes connected to the Knowledge and Toolsets sections of the Agent node" />
-  <img className="hidden dark:block" src="/images/agents/add-toolset-to-flow-dark.png" alt="Collection and web search nodes connected to the Knowledge and Toolsets sections of the Agent node" />
-</Frame>
-
-### Managing Tools
-
-- **Remove individual tool**: Click the remove button on the right side of any tool in the action node
-- **Remove entire action**: Click the delete button in the top-right corner of the action node
-
-### Adding MCP servers, skills and API actions (Optional)
-
-The palette also has **MCP servers** and **Skills** sections, and API actions appear under **Tools** next to the app actions. Drag them onto the canvas and connect them to the matching **MCP servers**, **Skills** or **Toolsets** section of the Agent node. Skills come from **Your skills**; if a section is empty, create or set up the item first.
-
-### Service agents
-
-In the create dialog you can choose **Service agent** instead of **User agent**. A service agent is shared with your whole organization and uses agent-level action credentials, so set each action's credentials with the key icon in the palette. An existing agent can be converted with **Convert to service agent** (this cannot be undone).
-
-<Info>
-  See the individual [Action Documentation](/toolsets/overview) for complete details on each action's tools and capabilities.
-</Info>
+- **User agent:** each person signs in to each toolset with their own account. If a toolset isn't authorized for you yet, use **Configure toolset** from the palette.
+- **Service agent:** set the agent's own credentials with the key icon next to each toolset in the palette. They're stored for this agent only and used for everyone.
 
 ---
 
-## Step 6: Add Knowledge Sources (Optional)
+## Step 5: Save
 
-Give your agent access to your indexed documents and collections.
+Click **Save changes** at the top of the builder.
 
-1. In the left palette, expand the **"Knowledge"** section
-2. You'll see:
-   - **Apps** - Indexed content from connected applications
-   - **Collections** - Your custom document collections
-
-
-<Frame>
-  <img className="block dark:hidden" src="/images/agents/sidebar-knowledge.png" alt="Knowledge section of the palette with Apps and Collections" />
-  <img className="hidden dark:block" src="/images/agents/sidebar-knowledge-dark.png" alt="Knowledge section of the palette with Apps and Collections" />
-</Frame>
-
-3. **Drag** the knowledge source onto the canvas
-4. **Connect** it to your agent flow
-
-Once a knowledge source is connected, the agent gets the built-in **Knowledge Graph** tools to search it. They need no setup. An agent with no knowledge has no search tools.
-
-## Step 7: Save Your Agent
-
-1. Enter a name for your agent in the **header input field** (top of the page)
-2. Click **"Create agent"** (or **"Save changes"** for an existing agent)
-
-<Frame>
-  <img className="block dark:hidden" src="/images/agents/save-agent.png" alt="Agent builder with unsaved changes and the Save changes button enabled in the header" />
-  <img className="hidden dark:block" src="/images/agents/save-agent-dark.png" alt="Agent builder with unsaved changes and the Save changes button enabled in the header" />
-</Frame>
-
-3. Your agent is now saved and ready to use!
-
-A finished agent with a model, a collection and an API action looks like this on the canvas:
-
-<Frame>
-  <img className="block dark:hidden" src="/images/agents/agent-builder-canvas-full.png" alt="Agent builder canvas with model, collection and API action nodes connected to the Agent node" />
-  <img className="hidden dark:block" src="/images/agents/agent-builder-canvas-full-dark.png" alt="Agent builder canvas with model, collection and API action nodes connected to the Agent node" />
-</Frame>
+To share a user agent with your whole organization, turn on **Share with everyone** at the top of the builder. Service agents are always shared with the organization.
 
 ---
 
-## Step 8: Test Your Agent
+## Step 6: Chat with the agent
 
-1. After saving, click **Open in chat** at the bottom of the builder, or click your agent under **My agents** in the chat sidebar
-2. The agent's name shows in the chat header
-3. Start a conversation to test its capabilities
+Click **Open in chat**, or pick the agent under **My agents** in the chat sidebar.
 
-<Frame>
-  <img className="block dark:hidden" src="/images/agents/agent-chat-new.png" alt="Chat page with Support Assistant selected in the header and its knowledge sources in the composer" />
-  <img className="hidden dark:block" src="/images/agents/agent-chat-new-dark.png" alt="Chat page with Support Assistant selected in the header and its knowledge sources in the composer" />
-</Frame>
+While chatting you can choose:
+
+- **Strategy** - **Auto** (balanced), **Quick** (fast answers with fewer refinement steps), **Plan & Execute** (plans every step, then runs them), or **Deep** (longer reasoning when accuracy matters most).
+- **Model** - any of the models connected to the agent.
+
+To change the agent later, open it from **My agents** and choose **Edit agent** from its menu.
 
 ---
 
@@ -223,58 +149,56 @@ A finished agent with a model, a collection and an API action looks like this on
 
 <AccordionGroup>
 
-<Accordion title="Action not appearing in sidebar">
+<Accordion title="A toolset can't be added to the canvas">
 
 **Possible causes:**
-- The action is not configured in Workspace > Actions
-- The action is not authenticated (OAuth flow not completed)
+- The toolset hasn't been set up by an admin under **Workspace → Actions**
+- You haven't signed in to it yet
+- That toolset is already on the canvas (only one of each is allowed)
 
 **Solution:**
-1. Go to **Workspace > Actions** (or **Your actions**)
-2. Find the action and configure it
-3. Complete the authentication flow
-4. Return to the Agent Builder - the action should now appear
+1. If the toolset is already on the canvas, use **+** on its node to choose more of its tools instead of adding it again
+2. Otherwise, ask an admin to add the toolset, or sign in to it under **Your actions** or from the palette, then add it from the palette
+
+</Accordion>
+
+<Accordion title="A connector is missing under Knowledge">
+
+**Knowledge → Apps** lists the connectors you can see. A connector is missing when it hasn't been set up, or isn't visible to you, under **Workspace → Connectors** or **Your connectors**. Each connector can be added once, so it also can't be added again when it's already on the canvas.
+
+If it's on the canvas but answers find nothing, see the next item.
 
 </Accordion>
 
 <Accordion title="Agent not responding or timing out">
 
 **Possible causes:**
-- Reasoning model not properly configured or reasoning not enabled
-- Action authentication expired
-- System prompt causing issues
+- The model isn't configured correctly
+- A toolset sign-in expired
+- The prompts are very long or contradictory
 
 **Solution:**
-1. Check that your LLM provider is properly configured with reasoning enabled in **Workspace > AI models**
-2. Re-authenticate any actions that may have expired tokens
-3. Simplify the system prompt and test again
+1. Check the model under **Workspace → AI models**
+2. Sign in to the toolset again
+3. Simplify the prompts and test again
 
 </Accordion>
 
-<Accordion title="Knowledge retrieval returning no results">
+<Accordion title="Knowledge search returns no results">
 
 **Possible causes:**
-- No content indexed for the connected sources
-- Filters too restrictive
-- Indexing still in progress
+- No content indexed yet for the connected sources
+- The person chatting (or, for a service agent, its search identity) can't read that content
 
 **Solution:**
-1. Check **Connector Settings** to verify connectors are synced
-2. Verify collections have content
-3. Wait for indexing to complete if recently added
+1. Check that connectors have synced and collections have content
+2. For a service agent, check which identity it searches as
 
 </Accordion>
 
-<Accordion title="Cannot save agent">
+<Accordion title="I can't edit an agent">
 
-**Possible causes:**
-- Missing required fields (name)
-- Invalid node connections
-
-**Solution:**
-1. Ensure the agent has a name
-2. Verify the Agent node is connected to the chat input and chat output
-3. Check all node connections are valid
+Agents shared with you are view-only: you can look at the setup and sign in to their toolsets with your own account, but only the owner can change them. An organization service agent you don't own works the same way in chat, but its setup is locked: you can look at it, not change it.
 
 </Accordion>
 
@@ -286,7 +210,7 @@ A finished agent with a model, a collection and an API action looks like this on
 
 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
   <a href="/toolsets/overview" className="block p-4 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
-    <h3 className="text-lg font-semibold mb-2">Configure Actions</h3>
+    <h3 className="text-lg font-semibold mb-2">Configure Toolsets</h3>
     <p className="text-gray-600 dark:text-gray-400">Set up external service integrations</p>
   </a>
   <a href="/agent-guide/overview" className="block p-4 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">

@@ -4,6 +4,22 @@ description: "Connect Cursor to the PipesHub MCP server"
 icon: "/logo/cursor.svg"
 ---
 
+## Plugin
+
+The PipesHub plugin for Cursor adds the PipesHub MCP server with no token in Cursor's config, the PipesHub documentation search server, the PipesHub skill, and `setup` and `ask` commands. It is not yet listed in Cursor's public marketplace.
+
+1. A Cursor team admin imports the repository as a team marketplace: Dashboard → Plugins & MCPs → Team Marketplaces → Add Marketplace → Import from Repo, with `https://github.com/pipeshub-ai/mcp-server` (the repository root).
+2. Each developer installs **PipesHub** from Customize, unless the admin sets it Default On or Required.
+3. Sign in. Run the `setup` command, or these yourself:
+    1. `npx -y -p @pipeshub-ai/mcp pipeshub login --no-wait` (add `--url https://<your-instance>` when self-hosted; PipesHub Cloud is the default). It prints a link and a code.
+    2. Open the link and approve with the code.
+    3. `npx -y -p @pipeshub-ai/mcp pipeshub login --wait`.
+4. Reload the Cursor window, or turn the `pipeshub` server off and on, so it picks up the sign-in.
+
+To configure Cursor by hand instead, use one of the options below.
+
+## OAuth app
+
 Cursor supports static OAuth for remote MCP servers via the `auth` object in `mcp.json`.
 
 <Note>

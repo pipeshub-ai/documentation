@@ -316,7 +316,11 @@ Files on tiered or archive storage that would have to be recalled from the cloud
 
 - **Set up Active Directory first.** Under **Workspace** > **Authentication** > **Active Directory**. If it isn't set up, the connector shows an error that tells you to set it up or use a personal connector.
 - **Each item is judged on its own permissions.** A file or folder is readable by the users and groups its Windows permissions grant read access to. People in those groups, including members of nested groups, are resolved through your directory.
-- **A denial blocks access.** If a user or group is denied read on an item, it can't search that item, wherever the denial sits in the list. Access can therefore be narrower than on the file server.
+- **A denial can remove more than the denied person.** Access can be narrower than on the file server in these cases:
+  - A denial counts even when an earlier allow would win on Windows. The order of entries is ignored.
+  - If a group is allowed and any member of that group is denied, the allow to that group is dropped for **every** member of the group, not only the denied one. The usual "allow the group, deny one person" setup therefore also hides the item from the rest of the group.
+  - A denial that PipesHub can't apply, such as one on Everyone or on a group whose members can't be listed, hides the item from everyone, including people who have their own allow. The sync reports these items as hidden from everyone.
+  - A domain-wide allow, such as Domain Users, keeps everyone else and removes only the denied accounts.
 - **Items without permissions are open.** An item that has no permission list at all is readable by everyone, as on Windows.
 - **Directory accounts only.** Only enabled directory accounts that have an email address get access. Someone who joins PipesHub later already has their access, without waiting for the next sync.
 - **A personal connector is unchanged.** It stays visible only to its creator.

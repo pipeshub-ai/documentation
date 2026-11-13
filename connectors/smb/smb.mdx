@@ -9,7 +9,7 @@ icon: "/logo/smb.svg"
     <div className="flex items-center gap-3 mb-4">
       <img 
         src="/logo/smb.svg" 
-        alt="SMB Logo" 
+        alt="SMB connector logo" 
         className="w-8 h-8 object-contain flex-shrink-0"
       />
       <div className="text-xl font-semibold text-gray-900 dark:text-white">SMB</div>
@@ -54,7 +54,7 @@ PipesHub only **reads** the share. It never creates, changes, moves or deletes a
 5. **SMB 2 or newer** on the server. Any Windows Server, Samba or NAS from the last decade has it. Servers that only speak SMB1 aren't supported.
 
 <Info>
-  **Team or personal?** An admin can add SMB as a **team** connector (in the open-source edition everyone in the organization can search the files; in the Enterprise edition the share's Windows permissions apply) under **Workspace Settings → Connectors**. Any user can add it as a **personal** connector (only they can search the files) under **Workspace Settings → Your connectors**. The setup steps are the same. Read **Who can see the synced files?** under **How syncing works** below before you choose.
+  **Team or personal?** An admin can add SMB as a **team** connector (in the open-source edition everyone in the organization can search the files; in the Enterprise edition the share's Windows permissions apply) under **Workspace settings → Connectors**. Any user can add it as a **personal** connector (only they can search the files) under **Workspace settings → Your connectors**. The setup steps are the same, but a personal connector can only reach a file server on a public address, so for a server on your own network ask an admin for a team connector. Read **Who can see the synced files?** under **How syncing works** below before you choose.
 </Info>
 
 ---
@@ -65,22 +65,18 @@ PipesHub only **reads** the share. It never creates, changes, moves or deletes a
 
 <Accordion title="Setup" defaultOpen>
 
-<div className="mt-4">
 
 ### Step 1 — Open SMB in PipesHub
 
-1. Open your profile menu at the bottom of the left sidebar and choose **Workspace Settings**.
+1. Open your profile menu at the bottom of the left sidebar and choose **Workspace settings**.
 2. Under **Workspace**, click **Connectors** (team connector). For a personal connector, click **Your connectors** under **Personal** instead.
 3. Type `SMB` in the search box.
 4. Click **+ Set up** on the **SMB** card.
 
-<div className="text-center">
-  <img
-    src="/images/connectors/smb/connectors_catalog.png"
-    alt="Connectors page filtered to the SMB card with its Set up button"
-    className="block mx-auto w-11/12"
-  />
-</div>
+<Frame>
+  <img className="block dark:hidden" src="/images/connectors/smb/connectors_catalog.png" alt="Connectors page filtered to the SMB card with its Set up button" />
+  <img className="hidden dark:block" src="/images/connectors/smb/connectors_catalog-dark.png" alt="Connectors page filtered to the SMB card with its Set up button" />
+</Frame>
 
 A panel opens on the right with two tabs, **Authenticate** and **Configure records**.
 
@@ -90,13 +86,10 @@ A panel opens on the right with two tabs, **Authenticate** and **Configure recor
 
 On the **Authenticate** tab, type a name you'll recognise in **Instance name**, for example `Acme shared drive` or `Finance share`. If you later add more shares, this is how you'll tell them apart.
 
-<div className="text-center">
-  <img
-    src="/images/connectors/smb/authenticate_tab.png"
-    alt="Authenticate tab with the instance name and the firewall box"
-    className="block mx-auto w-3/5"
-  />
-</div>
+<Frame>
+  <img className="block dark:hidden" src="/images/connectors/smb/authenticate_tab.png" alt="Authenticate tab with the instance name and the firewall box" />
+  <img className="hidden dark:block" src="/images/connectors/smb/authenticate_tab-dark.png" alt="Authenticate tab with the instance name and the firewall box" />
+</Frame>
 
 The green **Allow PipesHub through your firewall** box lists the IP addresses PipesHub connects to your file server from. If the server or your network only accepts known addresses, allow these on **TCP port 445**. The copy icon copies an address.
 
@@ -110,13 +103,10 @@ The green **Allow PipesHub through your firewall** box lists the IP addresses Pi
 
 Scroll down to the fields under **Basic authentication credentials**.
 
-<div className="text-center">
-  <img
-    src="/images/connectors/smb/authenticate_credentials.png"
-    alt="Server, Port, Domain, Username, Password and Share fields filled in"
-    className="block mx-auto w-3/5"
-  />
-</div>
+<Frame>
+  <img className="block dark:hidden" src="/images/connectors/smb/authenticate_credentials.png" alt="Server, Port, Username, Password and Share fields filled in, Domain left empty" />
+  <img className="hidden dark:block" src="/images/connectors/smb/authenticate_credentials-dark.png" alt="Server, Port, Username, Password and Share fields filled in, Domain left empty" />
+</Frame>
 
 | Field | What to enter | Example |
 |-------|---------------|---------|
@@ -133,13 +123,10 @@ Scroll down to the fields under **Basic authentication credentials**.
 
 Click **Next**. PipesHub now connects to the server and opens the share to check your details. If it can't, a red **Couldn't connect to SMB** box tells you why, and you stay on this tab:
 
-<div className="text-center">
-  <img
-    src="/images/connectors/smb/connection_error.png"
-    alt="Couldn't connect to SMB error showing STATUS_LOGON_FAILURE"
-    className="block mx-auto w-3/5"
-  />
-</div>
+<Frame>
+  <img className="block dark:hidden" src="/images/connectors/smb/connection_error.png" alt="Couldn't connect to SMB error showing STATUS_LOGON_FAILURE" />
+  <img className="hidden dark:block" src="/images/connectors/smb/connection_error-dark.png" alt="Couldn't connect to SMB error showing STATUS_LOGON_FAILURE" />
+</Frame>
 
 See [Troubleshooting](#troubleshooting) for what each message means. Fix the field and click **Next** again.
 
@@ -153,13 +140,10 @@ See [Troubleshooting](#troubleshooting) for what each message means. Fix the fie
 
 The panel moves to **Configure records**.
 
-<div className="text-center">
-  <img
-    src="/images/connectors/smb/configure_records_tab.png"
-    alt="Configure records tab with Sync strategy and Sync interval"
-    className="block mx-auto w-3/5"
-  />
-</div>
+<Frame>
+  <img className="block dark:hidden" src="/images/connectors/smb/configure_records_tab.png" alt="Configure records tab with Sync strategy, Sync interval and the Folders filter" />
+  <img className="hidden dark:block" src="/images/connectors/smb/configure_records_tab-dark.png" alt="Configure records tab with Sync strategy, Sync interval and the Folders filter" />
+</Frame>
 
 Under **Sync settings**:
 
@@ -174,13 +158,10 @@ Without filters, PipesHub syncs every file in the share that the account can rea
 
 **Folders.** The **Folders** filter is already open. Type a folder path inside the share, such as `HR` or `Engineering/Runbooks`, and press **Enter** after each one. Folder names may contain spaces.
 
-<div className="text-center">
-  <img
-    src="/images/connectors/smb/folder_filter.png"
-    alt="Folders filter with HR and Engineering/Runbooks added"
-    className="block mx-auto w-3/5"
-  />
-</div>
+<Frame>
+  <img className="block dark:hidden" src="/images/connectors/smb/folder_filter.png" alt="Folders filter with HR and Engineering/Runbooks added" />
+  <img className="hidden dark:block" src="/images/connectors/smb/folder_filter-dark.png" alt="Folders filter with HR and Engineering/Runbooks added" />
+</Frame>
 
 - Operator **In** syncs **only** these folders (and everything below them).
 - Operator **Not in** syncs everything **except** these folders.
@@ -188,13 +169,10 @@ Without filters, PipesHub syncs every file in the share that the account can rea
 
 **Other filters.** Click **+ Add filter** for more:
 
-<div className="text-center">
-  <img
-    src="/images/connectors/smb/add_filter_menu.png"
-    alt="Add filter menu showing File Extensions, Modified Date and Created Date"
-    className="block mx-auto w-3/5"
-  />
-</div>
+<Frame>
+  <img className="block dark:hidden" src="/images/connectors/smb/add_filter_menu.png" alt="Add filter menu showing File Extensions, Modified Date and Created Date" />
+  <img className="hidden dark:block" src="/images/connectors/smb/add_filter_menu-dark.png" alt="Add filter menu showing File Extensions, Modified Date and Created Date" />
+</Frame>
 
 - **File Extensions** — sync only some file types, or skip some. For example *In* `pdf, docx`, or *Not in* `mp4, iso`.
 - **Modified Date** — only files changed after, before or between dates.
@@ -212,23 +190,17 @@ When you're done, click **Save configuration**.
 
 PipesHub opens the SMB page with your new instance and asks if you want to start now.
 
-<div className="text-center">
-  <img
-    src="/images/connectors/smb/ready_to_sync.png"
-    alt="Instance is configured and ready to sync dialog"
-    className="block mx-auto w-11/12"
-  />
-</div>
+<Frame>
+  <img className="block dark:hidden" src="/images/connectors/smb/ready_to_sync.png" alt="Instance is configured and ready to sync dialog" />
+  <img className="hidden dark:block" src="/images/connectors/smb/ready_to_sync-dark.png" alt="Instance is configured and ready to sync dialog" />
+</Frame>
 
 Click **Start syncing now**. If you click **I'll do it later**, turn on the **Sync enabled** switch on the instance card when you're ready:
 
-<div className="text-center">
-  <img
-    src="/images/connectors/smb/instance_card.png"
-    alt="SMB instance card with the Sync enabled switch off"
-    className="block mx-auto w-11/12"
-  />
-</div>
+<Frame>
+  <img className="block dark:hidden" src="/images/connectors/smb/instance_card.png" alt="SMB instance card with the Sync enabled switch off" />
+  <img className="hidden dark:block" src="/images/connectors/smb/instance_card-dark.png" alt="SMB instance card with the Sync enabled switch off" />
+</Frame>
 
 Once sync is on, the card shows **Sync** and **Full sync** buttons.
 
@@ -238,13 +210,10 @@ Once sync is on, the card shows **Sync** and **Full sync** buttons.
 
 Click the **>** arrow on the instance card to open the instance panel.
 
-<div className="text-center">
-  <img
-    src="/images/connectors/smb/instance_overview.png"
-    alt="Instance overview with Records status tiles: 8 total, 8 completed"
-    className="block mx-auto w-11/12"
-  />
-</div>
+<Frame>
+  <img className="block dark:hidden" src="/images/connectors/smb/instance_overview.png" alt="Instance overview with Records status tiles: 8 total, 8 completed" />
+  <img className="hidden dark:block" src="/images/connectors/smb/instance_overview-dark.png" alt="Instance overview with Records status tiles: 8 total, 8 completed" />
+</Frame>
 
 The **Overview** tab shows:
 
@@ -258,7 +227,6 @@ The **Overview** tab shows:
 
 That's it. Once **Processing** and **Queued** reach zero, the share is searchable in PipesHub.
 
-</div>
 
 </Accordion>
 
@@ -339,16 +307,18 @@ This doesn't change anything on the file server.
 
 Supported file types can be content-indexed so you can search inside them:
 
-- Documents — **PDF**, **DOCX**, **PPTX**, **XLSX**, **ODT**, **RTF**
+- Documents — **PDF**, **DOCX**, **DOC**, **PPTX**, **PPT**, **XLSX**, **XLS**
 - E-books — **EPUB**, unless copy-protected (DRM). Their text is searchable, but they can't be previewed in PipesHub; download the book to read it
-- Plain text — **TXT**, **MD**, **CSV**, **JSON**, **XML**, **HTML**
+- Plain text — **TXT**, **MD**, **CSV**, **TSV**, **JSON**, **YAML**, **HTML**
 - Code — **.py**, **.js**, **.ts**, **.java**, and more
-- Images — **JPG**, **PNG**, **GIF**, **WebP**
+- Images — **JPG**, **PNG**, **WebP**, **SVG**
 
 ### Synced but not searched inside
 
 These are stored as records but their contents aren't indexed for search:
 
+- Other document formats, such as **ODT**, **RTF** and **XML**
+- **GIF** images
 - Video and audio
 - Archives (ZIP, RAR, …)
 - Other unsupported binary files
@@ -424,6 +394,8 @@ Use port 445 (or 139). Most servers listen on 445; if yours doesn't, ask your ad
 </Accordion>
 
 <Accordion title="Self-hosted: the server is refused because its address is private">
+
+A personal connector only connects to servers on public addresses, whatever the deployment settings, and says **"…" is not a public server address**. Use a team connector for a file server on your network.
 
 If your PipesHub deployment sets `PIPESHUB_BLOCK_PRIVATE_ADDRESSES=true`, connectors may not reach private network addresses (such as `10.x.x.x` or `192.168.x.x`), which is where most file servers live. Leave the setting empty unless several organizations that don't trust each other share your deployment. Loopback (`localhost`, `127.0.0.1`) and link-local addresses are always refused.
 

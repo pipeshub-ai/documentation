@@ -26,7 +26,7 @@ const PRODUCTS = {
   platform: {
     name: 'PipesHub',
     title: 'Platform Changelog',
-    description: 'Release notes for the PipesHub Workplace AI platform',
+    description: 'Release notes for PipesHub',
     icon: 'bolt',
     intro:
       'What changed in each PipesHub release, newest first. Every entry below sums up a release in a few lines; ' +

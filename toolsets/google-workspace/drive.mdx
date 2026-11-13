@@ -1,5 +1,5 @@
 ---
-title: "Google Drive Toolset"
+title: "Google Drive actions"
 description: "Cloud file storage integration for AI agents"
 icon: "/logo/gdrive.png"
 ---
@@ -12,7 +12,7 @@ icon: "/logo/gdrive.png"
         alt="Google Drive Logo" 
         className="w-8 h-8 object-contain flex-shrink-0"
       />
-      <div className="text-xl font-semibold text-gray-900 dark:text-white">Google Drive Toolset</div>
+      <div className="text-xl font-semibold text-gray-900 dark:text-white">Google Drive actions</div>
     </div>
     <p className="text-base text-gray-700 dark:text-gray-300 mt-0 mb-5">Cloud file storage and management</p>
     <div className="flex flex-wrap items-center gap-2">
@@ -28,7 +28,7 @@ icon: "/logo/gdrive.png"
 
 ## Overview
 
-The Google Drive toolset enables AI agents to manage files and folders in Google Drive.
+The Google Drive action enables AI agents to manage files and folders in Google Drive.
 
 ### Key Capabilities
 
@@ -42,15 +42,18 @@ The Google Drive toolset enables AI agents to manage files and folders in Google
 
 ## Available Tools
 
-| Tool | What it does |
-|------|-------------|
-| `get_files_list` | Get list of files in Google Drive |
-| `get_file_details` | Get detailed information about a file |
-| `create_folder` | Create a new folder in Google Drive |
-| `search_files` | Search for files using query syntax |
-| `get_drive_info` | Get information about the user's Drive |
-| `get_shared_drives` | Get list of shared drives |
-| `get_file_permissions` | Get permissions for a specific file |
+Parameters marked `?` are optional.
+
+| Tool | What it does | Parameters |
+|------|-------------|------------|
+| `get_files_list` | Get list of files in Google Drive | `corpora?`, `drive_id?`, `order_by?`, `page_size?`, `page_token?`, `query?`, `spaces?`, `parent_folder_id?` |
+| `get_file_details` | Get detailed information about a file | `fileId?`, `acknowledge_abuse?`, `supports_all_drives?` |
+| `get_file_content` | Read text content of a Drive file | `file_id` |
+| `create_folder` | Create a new folder in Google Drive | `folderName?`, `parent_folder_id?` |
+| `search_files` | Search for files using query syntax | `query`, `page_size?`, `order_by?`, `page_token?` |
+| `get_drive_info` | Get information about the user's Drive | None |
+| `get_shared_drives` | Get list of shared drives | `page_size?`, `query?`, `page_token?` |
+| `get_file_permissions` | Get permissions for a specific file | `file_id`, `page_size?`, `page_token?` |
 
 ---
 
@@ -88,17 +91,14 @@ The Google Drive toolset enables AI agents to manage files and folders in Google
 
 ### Step 4: Get Redirect URI from PipesHub
 
-1. In PipesHub, go to **Settings > Toolsets**
-2. Find **Drive** and click **"Configure"**
+1. In PipesHub, go to **Workspace settings** → **Actions**
+2. Find **Drive** and click **Set up**
 3. Copy the **Redirect URI** shown in the dialog
 
-<div className="text-center">
-  <img
-    src="/images/toolsets/drive/pipeshub-config.png"
-    alt="Copy Redirect URI from PipesHub"
-    className="block mx-auto w-11/12"
-  />
-</div>
+<Frame>
+  <img className="block dark:hidden" src="/images/toolsets/drive/pipeshub-config.png" alt="Drive action setup drawer with the Redirect URI to copy" />
+  <img className="hidden dark:block" src="/images/toolsets/drive/pipeshub-config-dark.png" alt="Drive action setup drawer with the Redirect URI to copy" />
+</Frame>
 
 ### Step 5: Create OAuth Client ID
 
@@ -124,34 +124,22 @@ Add these OAuth scopes in the **OAuth consent screen > Scopes** section:
 
 ### Step 7: Configure in PipesHub
 
-1. Return to the PipesHub Drive configuration dialog
-2. Enter your **Client ID** and **Client Secret**
-3. Click **"Authenticate"**
+1. Return to the PipesHub Drive setup dialog
+2. Enter an **OAuth app name** (or pick a saved app), then your **Client ID** and **Client Secret**
+3. Click **Create**
 
-<div className="text-center">
-  <img
-    src="/images/toolsets/drive/enter-credentials.png"
-    alt="Enter Credentials in PipesHub"
-    className="block mx-auto w-11/12"
-  />
-</div>
+<Frame>
+  <img className="block dark:hidden" src="/images/toolsets/drive/enter-credentials.png" alt="Drive action setup drawer with the Client ID and Client Secret entered" />
+  <img className="hidden dark:block" src="/images/toolsets/drive/enter-credentials-dark.png" alt="Drive action setup drawer with the Client ID and Client Secret entered" />
+</Frame>
 
 ### Step 8: Authorize Access
 
-1. A popup will open to Google's consent screen
+1. Open the Drive instance (in **Actions** or **Your actions**), click **Authenticate**, then **Authenticate with OAuth**. A popup opens to Google's consent screen
 2. Sign in and grant permission for Drive access
 3. Click **"Allow"**
-
-<div className="text-center">
-  <img
-    src="/images/connectors/googleWorkspace/individual/gmail_consent_screen.png"
-    alt="Google Consent Screen"
-    className="block mx-auto w-11/12"
-  />
-</div>
-
 4. You'll be redirected back to PipesHub
-5. The toolset will show **"Authenticated"** status
+5. The action will show **"Authenticated"** status
 
 </Accordion>
 
@@ -163,15 +151,15 @@ Add these OAuth scopes in the **OAuth consent screen > Scopes** section:
 
 <AccordionGroup>
 
-<Accordion title="What's the difference between Drive Connector and Drive Toolset?">
+<Accordion title="What's the difference between Drive Connector and Drive Action?">
 
-| Aspect | Drive Connector | Drive Toolset |
+| Aspect | Drive Connector | Drive Action |
 |--------|----------------|---------------|
 | **Purpose** | Sync and index files for search | Enable agents to perform file actions |
 | **Data Flow** | One-way (import data into PipesHub) | Two-way (read and write via API) |
 | **When to Use** | Query/search files and folders | Create files, manage folders |
 
-**Example:** Use **Drive Connector** to search and retrieve document content. Use **Drive Toolset** to let agents create new documents or manage folders.
+**Example:** Use **Drive Connector** to search and retrieve document content. Use **Drive action** to let agents create new documents or manage folders.
 
 </Accordion>
 

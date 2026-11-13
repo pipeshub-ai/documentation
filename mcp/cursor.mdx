@@ -4,6 +4,22 @@ description: "Connect Cursor to the PipesHub MCP server"
 icon: "/logo/cursor.svg"
 ---
 
+## Plugin
+
+The PipesHub plugin for Cursor adds the PipesHub MCP server with no token in Cursor's config, the PipesHub documentation search server, the PipesHub skill, and `setup` and `ask` commands. It is not yet listed in Cursor's public marketplace.
+
+1. A Cursor team admin imports the repository as a team marketplace: Dashboard → Plugins & MCPs → Team Marketplaces → Add Marketplace → Import from Repo, with `https://github.com/pipeshub-ai/mcp-server` (the repository root).
+2. Each developer installs **PipesHub** from Customize, unless the admin sets it Default On or Required.
+3. Sign in. Run the `setup` command, or these yourself:
+    1. `npx -y -p @pipeshub-ai/mcp pipeshub login --no-wait` (add `--url https://<your-instance>` when self-hosted; PipesHub Cloud is the default). It prints a link and a code.
+    2. Open the link and approve with the code.
+    3. `npx -y -p @pipeshub-ai/mcp pipeshub login --wait`.
+4. Reload the Cursor window, or turn the `pipeshub` server off and on, so it picks up the sign-in.
+
+To configure Cursor by hand instead, use one of the options below.
+
+## OAuth app
+
 Cursor supports static OAuth for remote MCP servers via the `auth` object in `mcp.json`.
 
 <Note>
@@ -28,9 +44,12 @@ Open **Cursor Settings > Tools and Integrations > New MCP Server**, or edit your
         "CLIENT_SECRET": "YOUR_CLIENT_SECRET",
         "scopes": [
           "openid", "profile", "email", "offline_access",
-          "semantic:write",
-          "conversation:write", "conversation:chat",
-          "kb:read", "team:read", "user:read", "config:read"
+          "semantic:write", "conversation:chat",
+          "agent:read", "agent:execute",
+          "kb:read", "kb:write", "kb:upload",
+          "connector:read", "config:read",
+          "user:read", "team:read", "usergroup:read",
+          "code:read"
         ]
       }
     }
@@ -38,10 +57,10 @@ Open **Cursor Settings > Tools and Integrations > New MCP Server**, or edit your
 }
 ```
 
-Cursor will auto-discover the authorization and token endpoints via PipesHub's `/.well-known/oauth-protected-resource/mcp` metadata.
+Cursor discovers the authorization and token endpoints from PipesHub's OAuth metadata.
 
 <Note>
-  If the `scopes` field is omitted, Cursor fetches `/.well-known/oauth-protected-resource/mcp` and requests **all** `scopes_supported` listed there. To limit access, explicitly list only the scopes you need. You can also control which scopes are exposed server-side — see [Customizing Default Scopes](/mcp/overview#customizing-default-scopes).
+  If the `scopes` field is omitted, Cursor requests the `scopes_supported` it discovers from the server's OAuth metadata. To limit access, explicitly list only the scopes you need. You can also control which scopes are exposed server-side. See [Customizing Default Scopes](/mcp/overview#customizing-default-scopes).
 </Note>
 
 ## Using Environment Variables
@@ -58,9 +77,12 @@ Use Cursor's `${env:VAR}` interpolation to keep secrets out of config files:
         "CLIENT_SECRET": "${env:PIPESHUB_CLIENT_SECRET}",
         "scopes": [
           "openid", "profile", "email", "offline_access",
-          "semantic:write",
-          "conversation:write", "conversation:chat",
-          "kb:read", "team:read", "user:read", "config:read"
+          "semantic:write", "conversation:chat",
+          "agent:read", "agent:execute",
+          "kb:read", "kb:write", "kb:upload",
+          "connector:read", "config:read",
+          "user:read", "team:read", "usergroup:read",
+          "code:read"
         ]
       }
     }
@@ -68,15 +90,16 @@ Use Cursor's `${env:VAR}` interpolation to keep secrets out of config files:
 }
 ```
 
-## Redirect URI
+## Redirect URIs
 
-Cursor uses a fixed redirect URI for all MCP servers:
+Cursor's static OAuth uses fixed redirect URIs. Register the one for the way you sign in, or both:
 
-```
-cursor://anysphere.cursor-mcp/oauth/callback
-```
+| Where you sign in | Redirect URI |
+|---|---|
+| Cursor web and Cursor Agents | `https://www.cursor.com/agents/mcp/oauth/callback` |
+| Cursor desktop app | `http://localhost:8787/callback` |
 
-Register this as the allowed redirect URI when creating the OAuth app in PipesHub.
+Add them as allowed redirect URIs when creating the OAuth app in PipesHub.
 
 ## OAuth Login Troubleshooting
 

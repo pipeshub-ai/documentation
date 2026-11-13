@@ -1,16 +1,15 @@
 ---
-title: LiteLLM Proxy
+title: "LiteLLM Proxy LLM"
+sidebarTitle: "LiteLLM Proxy"
 description: "Configure PipesHub to reach any LLM through a self-hosted LiteLLM Proxy gateway"
 ---
-
-# LiteLLM Proxy Configuration
 
 LiteLLM Proxy is a self-hosted gateway that speaks the OpenAI API and forwards requests to more than 100 upstream providers. You run it yourself, define your models in its configuration, and point PipesHub at it.
 
 Use LiteLLM Proxy when you want one place to manage keys, spending limits, and fallbacks for every model your organisation uses, instead of configuring each provider separately in PipesHub.
 
 <Info>
-LiteLLM Proxy is the only provider in PipesHub that supports all five model types: text generation, embeddings, image generation, text to speech, and speech to text. You configure each one separately, and they can point at the same proxy.
+LiteLLM Proxy supports all five model types: text generation, embeddings, image generation, text to speech, and speech to text. You configure each one separately, and they can point at the same proxy.
 </Info>
 
 ## Before you start
@@ -72,13 +71,17 @@ A label shown in the PipesHub interface so you can tell several configurations a
 
 The size of the model's context window, in tokens. PipesHub uses this number to decide how much retrieved content it can safely include in a prompt. Set it to the value published for your model. If you leave it blank, PipesHub uses a conservative default.
 
-### Is Multimodal
+### Multimodal
 
 Turn this on if the model accepts images as well as text. It is on by default.
 
-### Is Reasoning
+### Reasoning
 
 Turn this on if the model performs extended reasoning before answering. It is on by default.
+
+## Forward user identity
+
+LiteLLM Proxy can receive who is asking with each request, so the gateway can apply per-user budgets, rate limits and model access. See [Identity forwarding](/ai-models/identity-forwarding).
 
 ## Troubleshooting
 

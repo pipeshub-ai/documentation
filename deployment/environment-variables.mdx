@@ -19,7 +19,7 @@ The default given for each variable is the value Docker Compose uses when the va
 
    Use the value of `COMPOSE_PROJECT_NAME` in `.env` if you changed the project name.
 
-`./install.sh --reconfigure` runs the wizard again and rewrites `.env` from scratch. It keeps the existing secrets and saves the old file as `.env.bak.<timestamp>`, but check that any variable you added by hand is still there afterwards.
+`./install.sh --reconfigure` runs the wizard again and rewrites `.env` from scratch. It keeps the existing secrets and saves the old file as `.env.bak.<timestamp>`, but check that any variable you added by hand, such as `TELEMETRY_COLLECTION_FLAG=false`, is still there afterwards. The installer starts the containers once it has written the file, so to add your settings first, run `./install.sh --reconfigure --print-env-only`, edit `.env`, then start PipesHub with the command it prints.
 
 <Warning>
 Do not change `SECRET_KEY` or a database password on an existing install. The databases were created with them, and stored settings are encrypted with `SECRET_KEY`.
@@ -168,7 +168,7 @@ Leave these unset unless you are tuning a known bottleneck. Empty values let the
 
 | Variable | What it does |
 |---|---|
-| `PIPESHUB_BLOCK_PRIVATE_ADDRESSES` | `true` refuses AI model endpoints and connector servers on private or internal addresses. Use it when organizations that do not trust each other share one deployment. Default: empty. |
+| `PIPESHUB_BLOCK_PRIVATE_ADDRESSES` | `true` refuses AI model endpoints and connector servers on private or internal addresses. Use it when organizations that do not trust each other share one deployment. It does not check model traffic sent through an HTTP(S) proxy, so filter destinations at the proxy as well. Default: empty. |
 | `WEB_CONNECTOR_ALLOWED_HOSTS` | Internal host names the Web and RSS connectors may crawl, comma-separated. Default: empty. |
 | `CONNECTOR_EGRESS_IPS` | Public IPs shown in connector forms for firewall allow-lists. Empty looks them up once; `none` hides them. Default: empty. |
 | `PIPESHUB_NEXTCLOUD_ALLOW_INSECURE_HTTP` | `true` lets the Nextcloud connector use an `http://` URL. Default: empty. |

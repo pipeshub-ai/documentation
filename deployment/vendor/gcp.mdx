@@ -601,11 +601,15 @@ sudo docker run --rm \
   -v "$BACKUP_DIR":/backup \
   ubuntu tar czf /backup/pipeshub-backup-${BACKUP_DATE}.tar.gz /data
 
+# Back up .env (SECRET_KEY and database passwords); the volumes are unusable without it
+cp "$HOME/pipeshub/.env" "$BACKUP_DIR/pipeshub-env-${BACKUP_DATE}.backup"
+chmod 600 "$BACKUP_DIR/pipeshub-env-${BACKUP_DATE}.backup"
+
 # Restart services (--yes: cron has no terminal to answer the launch prompt)
 "$HOME/pipeshub/install.sh" --yes --no-pull
 
 # Delete old backups
-find "$BACKUP_DIR" -name "pipeshub-backup-*.tar.gz" -mtime +$RETENTION_DAYS -delete
+find "$BACKUP_DIR" \( -name "pipeshub-backup-*.tar.gz" -o -name "pipeshub-env-*.backup" \) -mtime +$RETENTION_DAYS -delete
 
 # Upload to GCS (optional)
 # gsutil cp "$BACKUP_DIR/pipeshub-backup-${BACKUP_DATE}.tar.gz" gs://your-bucket/backups/
@@ -618,6 +622,8 @@ chmod +x ~/backup-pipeshub.sh
 # Schedule with cron (daily at 2 AM)
 (crontab -l 2>/dev/null; echo "0 2 * * * ~/backup-pipeshub.sh >> ~/pipeshub-backup.log 2>&1") | crontab -
 ```
+
+Each backup includes a copy of `.env`, which holds secrets, so keep the backup directory private. When you restore, put that file back at `~/pipeshub/.env` before you start the services.
 
 The script runs `sudo docker`, which needs a password unless cron's user may run it without one. Add that user to the `docker` group and drop `sudo` from the script.
 

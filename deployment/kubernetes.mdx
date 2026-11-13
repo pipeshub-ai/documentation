@@ -80,8 +80,11 @@ helm upgrade --install pipeshub-ai ./deployment/helm/pipeshub-ai \
   --set config.frontendPublicUrl=https://pipeshub.example.com \
   --set config.allowedOrigins=https://pipeshub.example.com \
   --set secretKey="$(openssl rand -hex 32)" \
-  --set qdrant.apiKey="$(openssl rand -hex 32)"
+  --set qdrant.apiKey="$(openssl rand -hex 32)" \
+  --set sandbox.dind.enabled=true
 ```
+
+The chart refuses to install with the default coding sandbox (`docker`) unless it has a Docker daemon. `sandbox.dind.enabled=true` adds one as a sidecar, which needs a privileged container. Instead, set `config.dockerHost` to a daemon you run, or set `config.sandboxMode=e2b`. See [Other settings](#other-settings).
 
 Also add the database password flags from the local install (`mongodb.auth.*`, `redis.auth.password`, `neo4j.auth.password`) with your own values.
 
@@ -118,7 +121,7 @@ Before upgrading to 1.0, read [Upgrading to 1.0](/deployment/upgrade-to-1-0). A 
 
 - **Telemetry:** `telemetry.collection.enabled: false` turns collection off.
 - **Behind an ingress:** the client IP is read from one proxy hop when the ingress is enabled. Set `trustProxy` to change that.
-- **Coding sandbox:** `config.sandboxMode` is `docker` by default and needs a Docker daemon (`sandbox.dind.enabled=true` adds one as a sidecar), or set it to `e2b`.
+- **Coding sandbox:** `config.sandboxMode` is `docker` by default and needs a Docker daemon (`sandbox.dind.enabled=true` adds one as a sidecar), or set it to `e2b`. The `values-local.yaml` preset sets it to `local`, which runs generated code in the app pod with no container isolation. Use that preset for single-tenant development clusters only.
 - **External Redis:** set `redis.enabled=false` and `redis.external.*`. See the chart README for standalone and cluster modes.
 - **Any other environment variable:** pass it with `extraEnv`. See [Environment variables](/deployment/environment-variables).
 
@@ -126,7 +129,7 @@ Before upgrading to 1.0, read [Upgrading to 1.0](/deployment/upgrade-to-1-0). A 
 
 - Set every password, `secretKey` and `qdrant.apiKey` to strong values.
 - Configure ingress and TLS.
-- Keep `podDisruptionBudget` on (the default; `values-local.yaml` turns it off) and enable `networkPolicy`.
+- Keep `podDisruptionBudget` on (the default; `values-local.yaml` turns it off) and enable `networkPolicy` only after you have set its rules for your cluster. The defaults allow ingress from a namespace labelled `name: ingress-nginx` and from pods in the same namespace, and allow TCP egress only to pods in the same namespace, so enabling it as is blocks external model APIs and connectors. Add what you need with `networkPolicy.extraEgress`, and test traffic in and out before you rely on it.
 - Test the upgrade in a non-production namespace first.
 
 ## Related

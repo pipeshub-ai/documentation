@@ -19,9 +19,9 @@ Every limit counts requests in a one-minute window.
 
 Calls between PipesHub's own services are not counted.
 
-Every limit is kept in each API process. If you run several API replicas, each one counts on its own, so the effective limit is that many times higher.
+Every limit is kept in each API process. If you run several API replicas, each one counts on its own, so the effective limit can be up to that many times higher. If your load balancer sends a client's requests to the same replica (session affinity), that replica can return `429` after its own limit even when the others have capacity left.
 
-Change a limit in `.env` and recreate the containers. See [Environment variables](/deployment/environment-variables#rate-limits-and-proxies).
+Change a limit in `.env` and recreate the containers (Docker Compose), or set it in `extraEnv` in your Helm values and run `helm upgrade` (see [Kubernetes](/deployment/kubernetes#other-settings)). See [Environment variables](/deployment/environment-variables#rate-limits-and-proxies).
 
 ### Behind a reverse proxy
 

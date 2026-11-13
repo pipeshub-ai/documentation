@@ -338,7 +338,7 @@ Refusals are worded the same way whether or not the email has an account, and ta
 | No `x-session-token` header | `401` | "Invalid session token" |
 | Sign-in session expired or unknown (a sign-in session expires an hour after it starts or after its last completed step) | `401` | "Invalid session" |
 
-After ten wrong passwords or codes in a row, the account is locked for 24 hours and the owner is emailed. During the lock, even correct credentials get the same answer as a wrong password or code. An expired code now gets the `401` wrong-code answer above, not `410`.
+After five wrong passwords or codes in a row, the account is locked for 24 hours and the owner is emailed. During the lock, even correct credentials get the same answer as a wrong password or code. An expired code now gets the `401` wrong-code answer above, not `410`.
 </Tab>
 </Tabs>
 </Accordion>
@@ -821,7 +821,7 @@ The Authentication Service implements several security measures:
 
 ### Brute Force Protection
 - Failed login attempts are tracked per user account
-- Accounts are automatically blocked after 10 wrong passwords or codes in a row
+- Accounts are automatically blocked after 5 wrong passwords or codes in a row
 - The account owner is emailed when the block is applied
 - A block lifts by itself after 24 hours, or an admin can unblock the account sooner
 
@@ -870,7 +870,7 @@ There is no separate code for a locked account. A locked account gets the same a
 
 1. **Session Token Management:** The `x-session-token` header is critical for multi-step authentication flows
 2. **Password Complexity:** At least 8 characters with an uppercase letter, a lowercase letter, a number and a special character, and at most 72 bytes
-3. **Account Blocking:** Users are automatically blocked for 24 hours after 10 failed login attempts, and the owner is emailed. Sign-in answers a blocked account the same way as a wrong password or code
+3. **Account Blocking:** Users are automatically blocked for 24 hours after 5 failed login attempts, and the owner is emailed. Sign-in answers a blocked account the same way as a wrong password or code
 4. **Token Scopes:** Different endpoints require different token scopes for access
 5. **Multi-Factor Authentication:** Organizations can configure multiple authentication steps
 6. **Provider Configuration:** Google and Microsoft sign-in require provider credentials in the Authentication settings

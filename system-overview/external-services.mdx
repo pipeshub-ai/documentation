@@ -34,7 +34,7 @@ The contents of files are not stored in MongoDB. They live on local disk, S3, or
 
 Connectors publish records, and Indexing consumes them. That path is the **event bus** in the architecture diagram.
 
-- On a **local machine**, the event bus is Redis Streams (`MESSAGE_BROKER=redis`). Kafka is not started.
+- By default, the event bus is Redis Streams (`MESSAGE_BROKER=redis`). Kafka is not started.
 - In a **larger deployment**, the event bus is [Apache Kafka](https://kafka.apache.org/) (`MESSAGE_BROKER=kafka`).
 
 The Python services stay the same. Only the transport between them changes.
@@ -47,7 +47,7 @@ Redis always runs. It can do three jobs, depending on how you deploy:
 2. **Encrypted configuration** — the default key-value store for settings (`KV_STORE_TYPE=redis`).
 3. **Event bus** — Redis Streams, when `MESSAGE_BROKER=redis`.
 
-In a larger deployment, Kafka takes over the event bus. Redis continues to provide the cache, and it remains the configuration store unless you switch that store to etcd.
+With Kafka selected, it takes over the event bus. Redis continues to provide the cache, and it remains the configuration store unless you switch that store to etcd.
 
 ## Optional: [etcd](https://etcd.io/)
 

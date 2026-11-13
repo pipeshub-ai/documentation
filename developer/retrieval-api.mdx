@@ -150,38 +150,60 @@ for (const chunk of await retrieve("How do we roll back a canary deploy?", 5)) {
 
 </CodeGroup>
 
-### As a LangChain retriever
+### With framework retrievers
 
-```python
+The SDKs ship ready-made retrievers for LangChain, LlamaIndex and the Vercel AI SDK. Each takes `limit`, `filters`, `max_chunks_per_record` (`maxChunksPerRecord` in TypeScript) and `rewrite_query` (`rewriteQuery`).
+
+<CodeGroup>
+
+```python LangChain
+# pip install "pipeshub-sdk[langchain]"
 import os
-import requests
-from langchain_core.documents import Document
-from langchain_core.retrievers import BaseRetriever
+from pipeshub_sdk import Pipeshub, models
+from pipeshub_sdk.integrations.langchain import PipesHubRetriever
 
-
-class PipesHubRetriever(BaseRetriever):
-    limit: int = 8
-
-    def _get_relevant_documents(self, query: str, *, run_manager) -> list[Document]:
-        response = requests.post(
-            f"{os.environ['PIPESHUB_URL']}/api/v1/retrieve",
-            headers={"Authorization": f"Bearer {os.environ['PIPESHUB_TOKEN']}"},
-            json={"query": query, "limit": self.limit},
-            timeout=60,
-        )
-        response.raise_for_status()
-        return [
-            Document(
-                id=chunk["id"],
-                page_content=chunk["text"],
-                metadata={**chunk["record"], **chunk["citation"], "score": chunk.get("score")},
-            )
-            for chunk in response.json()["chunks"]
-        ]
-
-
-docs = PipesHubRetriever(limit=5).invoke("How do we roll back a canary deploy?")
+with Pipeshub(
+    server_url=f"{os.environ['PIPESHUB_URL']}/api/v1",
+    security=models.Security(bearer_auth=os.environ["PIPESHUB_TOKEN"]),
+) as client:
+    docs = PipesHubRetriever(client=client, limit=5).invoke("How do we roll back a canary deploy?")
 ```
+
+```python LlamaIndex
+# pip install "pipeshub-sdk[llamaindex]"
+import os
+from pipeshub_sdk import Pipeshub, models
+from pipeshub_sdk.integrations.llamaindex import PipesHubRetriever
+
+with Pipeshub(
+    server_url=f"{os.environ['PIPESHUB_URL']}/api/v1",
+    security=models.Security(bearer_auth=os.environ["PIPESHUB_TOKEN"]),
+) as client:
+    nodes = PipesHubRetriever(client=client, limit=5).retrieve("How do we roll back a canary deploy?")
+```
+
+```ts Vercel AI SDK
+// npm install @pipeshub-ai/sdk ai
+import { generateText, stepCountIs } from "ai";
+import { Pipeshub } from "@pipeshub-ai/sdk";
+import { pipeshubRetrieveTool } from "@pipeshub-ai/sdk/integrations/ai-sdk";
+
+const pipeshub = new Pipeshub({
+  serverURL: `${process.env.PIPESHUB_URL}/api/v1`,
+  security: { bearerAuth: process.env.PIPESHUB_TOKEN },
+});
+
+const { text } = await generateText({
+  model, // any AI SDK model
+  tools: { searchCompanyKnowledge: pipeshubRetrieveTool(pipeshub) },
+  stopWhen: stepCountIs(3),
+  prompt: "How do we roll back a canary deploy?",
+});
+```
+
+</CodeGroup>
+
+LangChain documents and LlamaIndex nodes hold one chunk each. Their metadata has the record (`recordId`, `name`, `connector`, `mimeType`, `updatedAt`) and the citation (`url`, `recordUrl`, `pageNum`, `blockIndex`). The relevance score is `metadata["score"]` on a LangChain document and `score` on a LlamaIndex `NodeWithScore`. The AI SDK tool returns the response shown above, and its description tells the model to cite each passage's `url`.
 
 Keep `citation.url` in your answer so readers can open the source passage.
 
@@ -192,7 +214,7 @@ Keep `citation.url` in your answer so readers can open the source passage.
 | | `POST /api/v1/retrieve` | `POST /api/v1/search` |
 |---|---|---|
 | **For** | Your own RAG pipeline or agent | The PipesHub search experience |
-| **Stores** | Nothing | Search history and citations |
+| **Stores** | Nothing | Search history and citations, unless the request sends `saveHistory: false` |
 | **Returns** | A flat list of chunks with record and citation | Search results shaped for the search UI |
 | **Query rewrite** | Off unless `rewriteQuery: true` | On by default, so it needs an AI model unless you send `rewriteQuery: false` |
 

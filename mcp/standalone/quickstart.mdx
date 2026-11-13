@@ -90,7 +90,7 @@ The entry starts the MCP bridge with `PIPESHUB_MCP_CHAT=off` in its environment,
 | `uvx` | `uvx` | `--from`, `pipeshub>=0.1.0`, `pipeshub`, `start`, `--server-url`, `http://127.0.0.1:3000` |
 | `pipx` or `pip` | `pipeshub` when that is the `pipeshub` your `PATH` finds, otherwise the full path of the installed `pipeshub` script | `start`, `--server-url`, `http://127.0.0.1:3000` |
 
-The version floors matter: `npx` reuses any cached version that matches, and `@pipeshub-ai/mcp` releases before 4.10.0 have neither the bridge nor `index_workspace`. Claude Code and VS Code entries also carry `"type": "stdio"`, Zed's `"source": "custom"`, and Cline's `"disabled": false` and `"autoApprove": []`. Codex gets the same command, arguments and environment as a `[mcp_servers.pipeshub]` table between `# >>> pipeshub` and `# <<< pipeshub` marker lines.
+The version floors matter: `npx` reuses any cached version that matches, and `@pipeshub-ai/mcp` releases before 4.10.0 have neither the bridge nor `index_workspace`. The entry sits under a different key per agent: `mcpServers` for Claude Code, Cursor, Windsurf, Gemini CLI, Claude Desktop and Cline, `servers` in VS Code's `mcp.json`, and `context_servers` in Zed's `settings.json`. Claude Code and VS Code entries also carry `"type": "stdio"`, Zed's `"source": "custom"`, and Cline's `"disabled": false` and `"autoApprove": []`. Codex gets the same command, arguments and environment as a `[mcp_servers.pipeshub]` table between `# >>> pipeshub` and `# <<< pipeshub` marker lines.
 
 | Agent | Config file that gets the entry |
 |---|---|
@@ -179,19 +179,57 @@ pipeshub dev up                              # start PipesHub on port 3000
 pipeshub login --url http://127.0.0.1:3000   # opens a browser sign-in; no token to copy
 ```
 
-For the `npx` route, in a config that keeps servers under `mcpServers` (such as `~/.cursor/mcp.json`):
+For the `npx` route, use the shape for your agent. An entry under the wrong key is ignored.
 
-```json
-{
-  "mcpServers": {
-    "pipeshub": {
-      "command": "npx",
-      "args": ["-y", "@pipeshub-ai/mcp@>=4.10.0", "start", "--server-url", "http://127.0.0.1:3000"],
-      "env": { "PIPESHUB_MCP_CHAT": "off" }
+<Tabs>
+  <Tab title="mcpServers (Cursor and others)">
+    Cursor (`~/.cursor/mcp.json`), Windsurf, Gemini CLI, Claude Desktop, Claude Code (`~/.claude.json`) and Cline. Claude Code's entry also takes `"type": "stdio"`; Cline's takes `"disabled": false` and `"autoApprove": []`.
+
+    ```json
+    {
+      "mcpServers": {
+        "pipeshub": {
+          "command": "npx",
+          "args": ["-y", "@pipeshub-ai/mcp@>=4.10.0", "start", "--server-url", "http://127.0.0.1:3000"],
+          "env": { "PIPESHUB_MCP_CHAT": "off" }
+        }
+      }
     }
-  }
-}
-```
+    ```
+  </Tab>
+  <Tab title="VS Code">
+    `mcp.json` in the VS Code user folder:
+
+    ```json
+    {
+      "servers": {
+        "pipeshub": {
+          "type": "stdio",
+          "command": "npx",
+          "args": ["-y", "@pipeshub-ai/mcp@>=4.10.0", "start", "--server-url", "http://127.0.0.1:3000"],
+          "env": { "PIPESHUB_MCP_CHAT": "off" }
+        }
+      }
+    }
+    ```
+  </Tab>
+  <Tab title="Zed">
+    Zed's `settings.json`:
+
+    ```json
+    {
+      "context_servers": {
+        "pipeshub": {
+          "source": "custom",
+          "command": "npx",
+          "args": ["-y", "@pipeshub-ai/mcp@>=4.10.0", "start", "--server-url", "http://127.0.0.1:3000"],
+          "env": { "PIPESHUB_MCP_CHAT": "off" }
+        }
+      }
+    }
+    ```
+  </Tab>
+</Tabs>
 
 Keep the `@>=4.10.0` floor: without it, `npx` can start an older cached release that has no bridge.
 

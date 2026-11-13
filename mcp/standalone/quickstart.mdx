@@ -82,7 +82,15 @@ Running it again changes nothing.
 | Backups of every file it edits | `~/.config/pipeshub/backups/` |
 | An MCP entry named `pipeshub` | One config file per agent, listed below |
 
-The entry starts the MCP bridge: `npx -y @pipeshub-ai/mcp start --server-url http://127.0.0.1:3000` on the `npx` route, and `uvx --from pipeshub pipeshub start ...` or `pipeshub start ...` on the Python routes.
+The entry starts the MCP bridge with `PIPESHUB_MCP_CHAT=off` in its environment, which leaves `pipeshub_chat` and `pipeshub_agents` out of the agent's tool list. Its command depends on how you ran `init` (the URL uses your `--port`):
+
+| Route | `command` | `args` |
+|---|---|---|
+| `npx` | `npx` | `-y`, `@pipeshub-ai/mcp@>=4.10.0`, `start`, `--server-url`, `http://127.0.0.1:3000` |
+| `uvx` | `uvx` | `--from`, `pipeshub>=0.1.0`, `pipeshub`, `start`, `--server-url`, `http://127.0.0.1:3000` |
+| `pipx` or `pip` | `pipeshub` when that is the `pipeshub` your `PATH` finds, otherwise the full path of the installed `pipeshub` script | `start`, `--server-url`, `http://127.0.0.1:3000` |
+
+The version floors matter: `npx` reuses any cached version that matches, and `@pipeshub-ai/mcp` releases before 4.10.0 have neither the bridge nor `index_workspace`. Claude Code and VS Code entries also carry `"type": "stdio"`, Zed's `"source": "custom"`, and Cline's `"disabled": false` and `"autoApprove": []`. Codex gets the same command, arguments and environment as a `[mcp_servers.pipeshub]` table between `# >>> pipeshub` and `# <<< pipeshub` marker lines.
 
 | Agent | Config file that gets the entry |
 |---|---|
@@ -106,7 +114,12 @@ If a file it wants to edit is not valid JSON or TOML, `init` leaves it alone and
 pipeshub uninstall
 ```
 
-This gives every file back exactly as it was, even if the agent rewrote it since, then deletes the backups it used. It also signs out and stops the stack if `init` started it. Your documents and indexed repositories stay in Docker volumes. To delete them as well:
+For each file `init` edited, `uninstall` first checks whether the file is still exactly what `init` wrote:
+
+- **Unchanged since `init`:** the file goes back to what it was before `init`, byte for byte, from the backup (a file `init` created is deleted). That backup is then deleted.
+- **Changed since `init`** (by your agent, an editor or you): `uninstall` removes only what PipesHub added from the current file and keeps every other change. The file does not go back to its pre-`init` bytes, and that backup is deleted too. A copy of the file as it was just before this edit is saved in `~/.config/pipeshub/backups/`.
+
+It also signs out and stops the stack if `init` started it. Your documents and indexed repositories stay in Docker volumes. To delete them as well:
 
 ```bash
 pipeshub dev down --volumes
@@ -158,13 +171,29 @@ The `index_workspace` tool is added by the bridge process, next to the server's 
 
 ## Set up one agent by hand
 
-If you do not want `init` to edit your configuration, start the stack and sign in yourself, then add an entry that runs `npx -y @pipeshub-ai/mcp start --server-url http://127.0.0.1:3000` to your agent's MCP config.
+If you do not want `init` to edit your configuration, start the stack and sign in yourself, then add the same entry `init` would write (see [What gets written, and where](#what-gets-written-and-where)) to your agent's MCP config.
 
 ```bash
 pipeshub dev up                              # start PipesHub on port 3000
 # Open http://127.0.0.1:3000 once and create the first account.
 pipeshub login --url http://127.0.0.1:3000   # opens a browser sign-in; no token to copy
 ```
+
+For the `npx` route, in a config that keeps servers under `mcpServers` (such as `~/.cursor/mcp.json`):
+
+```json
+{
+  "mcpServers": {
+    "pipeshub": {
+      "command": "npx",
+      "args": ["-y", "@pipeshub-ai/mcp@>=4.10.0", "start", "--server-url", "http://127.0.0.1:3000"],
+      "env": { "PIPESHUB_MCP_CHAT": "off" }
+    }
+  }
+}
+```
+
+Keep the `@>=4.10.0` floor: without it, `npx` can start an older cached release that has no bridge.
 
 The entry holds no password or token. It starts the bridge, which uses the sign-in `login` stored. Only the PipesHub that issued that sign-in receives it.
 
@@ -193,7 +222,7 @@ The entry holds no password or token. It starts the bridge, which uses the sign-
     The first start downloads the images, which can take several minutes on a slow connection. If it reports that PipesHub did not become healthy, read the container log:
 
     ```bash
-    docker compose -p pipeshub-slim logs pipeshub-slim
+    docker compose -p pipeshub-standalone logs pipeshub-slim
     ```
   </Accordion>
   <Accordion title="Indexing is stuck or never starts">
@@ -203,7 +232,7 @@ The entry holds no password or token. It starts the bridge, which uses the sign-
     - Still `syncing` after 90 seconds: PipesHub stored the files but has not started on them. Run the command again.
     - Still indexing after the wait (10 minutes): the files are stored and PipesHub keeps going. Run `index` later to see it finish.
 
-    In each case look at the log with `docker compose -p pipeshub-slim logs pipeshub-slim`. Tune the waits with the variables above.
+    In each case look at the log with `docker compose -p pipeshub-standalone logs pipeshub-slim`. Tune the waits with the variables above.
   </Accordion>
   <Accordion title="The code tools are not listed">
     PipesHub lists the `pipeshub_code_*` tools a few seconds after the first repository is indexed, and only for a sign-in that can read code. `index` says when they are available. If your agent still does not show them, restart it. Check that the repository is indexed with `pipeshub_code_repos`.

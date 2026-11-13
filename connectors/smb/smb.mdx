@@ -297,13 +297,17 @@ Files on tiered or archive storage that would have to be recalled from the cloud
 ### Who can see the synced files?
 
 <Warning>
-  PipesHub does **not** copy the share's Windows permissions (ACLs). Who can search the files depends only on how the connector was added:
+  In the open-source edition, PipesHub does **not** copy the share's Windows permissions (ACLs). Who can search the files depends only on how the connector was added:
 
   - **Team** connector — **everyone in your PipesHub organization** can search every file the connector account can read.
   - **Personal** connector — **only you** can search the files.
 
   If parts of the share are restricted on the file server, either sync them with a personal connector, leave them out with a folder filter, or use an account that can't read them.
 </Warning>
+
+<Note>
+  **Enterprise edition:** a team SMB connector reads each file's and folder's Windows permissions and limits search to the people those permissions name. It resolves them against the Active Directory you set up under **Workspace** > **Authentication** > **Active Directory**. A personal connector stays visible only to you. If Active Directory isn't set up, the connector reports an error that tells you to set it up or use a personal connector.
+</Note>
 
 This doesn't change anything on the file server.
 
@@ -459,7 +463,7 @@ Usually the account's password changed or expired.
 </Accordion>
 
 <Accordion title="Does PipesHub respect the share's Windows permissions?">
-  No. The connector doesn't read file or folder ACLs. A team connector makes every synced file searchable by everyone in your PipesHub organization; a personal connector makes them searchable only by you. Use folder filters, separate instances, or a narrower service account to keep restricted folders out.
+  In the open-source edition, no: the connector doesn't read file or folder ACLs. In the Enterprise edition, a team connector does read them and resolves them against your Active Directory (see the note under [Who can see the synced files?](#who-can-see-the-synced-files)). In the open-source edition, a team connector makes every synced file searchable by everyone in your PipesHub organization; a personal connector makes them searchable only by you. Use folder filters, separate instances, or a narrower service account to keep restricted folders out.
 </Accordion>
 
 <Accordion title="Does PipesHub change anything on the file server?">

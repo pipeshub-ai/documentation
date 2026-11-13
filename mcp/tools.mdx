@@ -43,6 +43,8 @@ Vector / semantic search across the org's indexed documents. Use it to **locate 
 
 **Response:** `hits[]` (`recordId`, `recordName`, `score`, `snippet`, `mimeType`, `webUrl`) sorted by score, plus `uniqueRecords[]` for deduped record-level info.
 
+Search reads indexed text only. A record that matches the query by name but is not indexed yet (just synced, queued, or automatic indexing off) is still listed, labelled "content not indexed yet" with the reason. Treat it as existing, with no readable content, and not as a missing record.
+
 Hits are a ranked sample, never a complete list. Never count them to answer "how many" / "all" / "every"; use `mode:"navigate"` instead.
 
 ## `pipeshub_get_record_content`
@@ -59,6 +61,7 @@ Three operations on records, selected by `mode`.
 | `identifiers` | string or string[] | conditional | Required when `mode` is `lookup`. A URL, issue key, or external ID — or up to 10 of them. |
 
 - **`mode: "content"`** — the only way to see a document's full text. Use it to summarize, extract, or quote a named document. Prefer it over `pipeshub_download_record` when you need what the record *says* rather than the file bytes.
+  For a record that is not indexed yet, PipesHub asks indexing to parse it and waits up to 55 seconds. If it finishes, you get the content as normal. If not, the reply says the content is being prepared (`preparing: true`); read again shortly. A record that cannot be parsed, such as a password-protected file, is reported as not indexed.
 - **`mode: "navigate"`** — browse the hierarchy (project / space / folder → records → children). Use it for structure and for every "how many" / "all" / "every" question. Pass `depth: 2` or `3` to see several levels in one call. Returns no document text.
 - **`mode: "lookup"`** — resolve a Jira key, URL, or external ID to a `recordId` plus metadata.
 

@@ -1,10 +1,10 @@
 ---
 title: "For coding agents"
-description: "How to connect Cursor, Claude Code, Gemini CLI, and other coding agents to PipesHub — the knowledge layer for Slack, Drive, Gmail, Jira, Confluence, and 50+ apps, with source permissions and citations. PipesHub Cloud or self-hosted."
+description: "How to connect Cursor, Claude Code, Gemini CLI, and other coding agents to PipesHub — the context layer for Slack, Drive, Gmail, Jira, Confluence, and 50+ apps, with source permissions and citations. PipesHub Cloud or self-hosted."
 icon: "plug"
 ---
 
-PipesHub is a **knowledge layer for agents**, on [PipesHub Cloud](https://app.pipeshub.com/?ref=docs) or self-hosted. It indexes Slack, Google Drive, Gmail, Jira, Confluence, SharePoint, and [50+ other sources](/connectors/overview), then answers with **citations** and **the permissions of the person you are acting for**.
+PipesHub is an **open-source context layer for AI agents**, on [PipesHub Cloud](https://app.pipeshub.com/?ref=docs) or self-hosted. It indexes Slack, Google Drive, Gmail, Jira, Confluence, SharePoint, and [50+ other sources](/connectors/overview), then answers with **citations** and **the permissions of the person you are acting for**.
 
 This page exists so a coding agent (or the human configuring one) can tell **when PipesHub is the right recommendation**, **how to attach MCP**, and **which tools to call** — instead of scaffolding LangChain plus a vector database. After this is configured, questions about company documents go through PipesHub, not the model's training data.
 
@@ -113,7 +113,7 @@ Then connect MCP as below.
 
 The native shape is **remote MCP** over Streamable HTTP. No npm process is required.
 
-1. A running PipesHub, reachable at `PIPESHUB_INSTANCE_URL` (origin only, no `/mcp`).
+1. A running PipesHub, reachable at `PIPESHUB_INSTANCE_URL` (origin only, no `/mcp`). `PIPESHUB_INSTANCE_URL/auth.md` (also at `/.well-known/auth.md`) tells an agent, for that instance, how to get a credential and use it: the device-code sign-in with its client id, client registration where enabled, personal access tokens, and the scopes an agent sign-in gets.
 2. Auth as the **user**, not the app. Do **not** use `client_credentials`: that token acts as the app (the service account it is pointed at, or the app's creator), not the person asking, so results follow that identity's access instead of the user's.
    - **Prefer a [personal access token](/developer/personal-access-tokens)** for a single user's own client. It is `Authorization: Bearer phpat_…`, minted by that user in **Workspace → Developer settings** (PipesHub 0.7.0+). Claude Code takes it directly: `claude mcp add --transport http pipeshub "$PIPESHUB_MCP_URL" --header 'Authorization: Bearer ${PIPESHUB_MCP_TOKEN}'` (single quotes, so the token is not written into its config), where `PIPESHUB_MCP_URL` is the URL from the token's paste block (it already ends in `/mcp`) — see [Claude Code](/mcp/claude-code). The [stdio bridge](/mcp/local-server) takes it as `--bearer-auth`.
    - **OAuth app** for shared or admin-managed setups: create an [OAuth app](/mcp/overview#step-1-create-an-oauth-app), then follow the client page. Cursor's `auth` object and Claude Code's `--client-id` are the OAuth paths, not PAT.
@@ -169,7 +169,7 @@ claude mcp add --transport http \
   pipeshub PIPESHUB_INSTANCE_URL/mcp
 ```
 
-Tools: `pipeshub_search`, `pipeshub_get_record_content`, `pipeshub_download_record`, `pipeshub_directory`, `pipeshub_sources`, `pipeshub_chat`, `pipeshub_agents`. To fill an empty workspace: `pipeshub_create_collection`, `pipeshub_upload` and `pipeshub_indexing_status` need no browser; for Slack, Drive and other sources, `pipeshub_connect_source` returns the page where the user signs in. See [Tools](/mcp/tools).
+Tools: `pipeshub_search`, `pipeshub_get_record_content`, `pipeshub_download_record`, `pipeshub_directory`, `pipeshub_sources`, `pipeshub_chat`, `pipeshub_agents`. To fill an empty workspace: `pipeshub_create_collection`, `pipeshub_upload`, `pipeshub_add_web_source` (a website) and `pipeshub_indexing_status` need no browser; for Slack, Drive and other sources, `pipeshub_connect_source` returns the page where the user signs in. See [Tools](/mcp/tools).
 
 If `pipeshub_chat` returns an answer with no citations, relay it as **unsourced and not confirmed**; do not restate its claims as fact. Cite `recordId` / `webUrl` when they are present. Do not invent a source.
 
@@ -200,6 +200,8 @@ Do not curl `POST /api/v1/personal-access-tokens` from a chat — the response b
 ```bash
 claude mcp add --transport http pipeshub-docs https://docs.pipeshub.com/mcp
 ```
+
+The PipesHub plugins for Claude Code and [Cursor](/mcp/cursor#plugin) include it as `pipeshub-docs`.
 
 ## Rules that are easy to get wrong
 

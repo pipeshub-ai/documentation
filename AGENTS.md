@@ -28,24 +28,6 @@ The Mintlify CLI is not preinstalled. Install it with `npm i -g mint` (older doc
 - Product and vendor logos go flat in `logo/` (e.g. `logo/confluence.png`).
 - Reference both with root-absolute paths: `![Alt](/images/...)` or `src="/logo/..."`.
 
-### Screenshot rules (apply to every page, no exceptions)
-
-- **Real browser view.** Capture the real viewport (1440 wide, app sidebar and header visible, dimmed backdrop behind a dialog or drawer, drawer docked as in the product), at 2x scale, then downscale to a 1440-wide PNG. Do not cut a dialog or drawer out of the page, and do not leave dead space in a drawer taller than its content. Trim only empty outer margins.
-- **Complete.** The shot shows every field, tab and button the step refers to. Never crop away content.
-- **Both themes.** Every product screenshot exists in light and dark: `name.png` (light) and `name-dark.png` (dark), same crop and data. Show both inside the page's `<Frame>` and let the site theme pick one:
-
-  ```mdx
-  <Frame>
-    <img className="block dark:hidden" src="/images/<path>/name.png" alt="Describe the screen in 10+ characters" />
-    <img className="hidden dark:block" src="/images/<path>/name-dark.png" alt="Describe the screen in 10+ characters" />
-  </Frame>
-  ```
-
-  Third-party vendor console screenshots, logos and diagrams are single images.
-- **Healthy state only.** No error banners, failure toasts, red validation states or "could not load" text, unless the page documents that exact error.
-- **Real data.** Neutral demo values (no real people, emails, tokens or internal names). Lists show at least 5-6 items. No secrets, even masked-looking ones you are unsure about.
-- **Current product.** Capture from a stack built from current upstream `main`, and check the page text against the labels you see.
-
 ## Links
 
 - Internal links are root-absolute without the extension: `[MCP overview](/mcp/overview)`, `/connectors/confluence/confluence#section`. Do not use `./` or `../` relative links.
@@ -59,7 +41,7 @@ When you add or rename an MCP tool, update `mcp/tools.mdx` and the tool count in
 
 ## Changelog
 
-User-facing release notes go in `changelog/platform/<version>.mdx`, listed under the changelog group in `docs.json` (and in `llms.txt`).
+User-facing release notes go in `additional-resources/changelog.mdx`.
 
 ## Public-repo wording
 

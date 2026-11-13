@@ -1,0 +1,195 @@
+---
+title: "MinIO"
+description: "Self-hosted S3-compatible object storage connector"
+icon: "/logo/minio.svg"
+---
+
+<div className="not-prose mt-10">
+  <div className="p-6 border border-gray-200 dark:border-gray-700 rounded-xl bg-blue-50 dark:bg-gray-800">
+    <div className="flex items-center gap-3 mb-4">
+      <img 
+        src="/logo/minio.svg" 
+        alt="MinIO Logo" 
+        className="w-8 h-8 object-contain flex-shrink-0"
+      />
+      <div className="text-xl font-semibold text-gray-900 dark:text-white">MinIO</div>
+    </div>
+    <p className="text-base text-gray-700 dark:text-gray-300 mt-0 mb-5">Self-hosted S3-compatible object storage</p>
+    <div className="flex flex-wrap items-center gap-2">
+      <span className="px-3 py-1.5 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 rounded-full text-sm font-medium">
+        ✅ Ready
+      </span>
+      <span className="px-3 py-1.5 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-full text-sm font-medium">
+        📖 Documentation Available
+      </span>
+    </div>
+  </div>
+</div>
+
+The MinIO connector brings the files and folders in your MinIO buckets into PipesHub, so you can search them and ask questions about them. It works like the [S3 connector](/connectors/s3/s3), but talks to your own MinIO server instead of Amazon.
+
+<Warning>
+  PipesHub does not copy MinIO permissions. With a **team** connector, everyone in your organization can search every file it syncs. If you leave **Bucket Names** empty, that is every bucket the key can list. To keep the files to yourself, set it up as a **personal** connector instead.
+</Warning>
+
+## Before you start
+
+- A MinIO server that the PipesHub server can reach over the network.
+- Permission in MinIO to create a policy and a user or access key.
+- PipesHub admin rights for a team connector. Anyone can add a personal connector.
+
+## Step 1: Create a read-only access key in MinIO
+
+PipesHub only lists and reads your files. It never changes or deletes anything in MinIO, so give it a key that can only read.
+
+The key needs these permissions:
+
+- `s3:ListBucket` and `s3:GetObject` on the buckets you want to sync.
+- `s3:ListAllMyBuckets`, so PipesHub can find your buckets and show them in the **Bucket Names** list.
+
+This policy allows exactly that. Replace `your-bucket-1` and `your-bucket-2` with your bucket names:
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "ListBuckets",
+      "Effect": "Allow",
+      "Action": ["s3:ListBucket"],
+      "Resource": ["arn:aws:s3:::your-bucket-1", "arn:aws:s3:::your-bucket-2"]
+    },
+    {
+      "Sid": "ReadFiles",
+      "Effect": "Allow",
+      "Action": ["s3:GetObject"],
+      "Resource": ["arn:aws:s3:::your-bucket-1/*", "arn:aws:s3:::your-bucket-2/*"]
+    },
+    {
+      "Sid": "ShowBucketList",
+      "Effect": "Allow",
+      "Action": ["s3:ListAllMyBuckets"],
+      "Resource": ["arn:aws:s3:::*"]
+    }
+  ]
+}
+```
+
+Save it as `pipeshub-read.json`. With the MinIO Client (`mc`), where `myminio` is the alias of your server, create the policy, a user for PipesHub, and attach the policy to that user:
+
+```bash
+mc admin policy create myminio pipeshub-read pipeshub-read.json
+mc admin user add myminio pipeshub-reader 'REPLACE-WITH-A-LONG-RANDOM-SECRET'
+mc admin policy attach myminio pipeshub-read --user pipeshub-reader
+```
+
+Replace `REPLACE-WITH-A-LONG-RANDOM-SECRET` with a long random secret of your own, keeping the quotes. The user name is the **Access Key** and the secret is the **Secret Key** in Step 2. You can also do this in the MinIO Console, or give PipesHub an access key that belongs to an existing user with this policy. See the [MinIO documentation](https://min.io/docs/minio/linux/index.html) for your version.
+
+<Info>
+  **When `s3:ListAllMyBuckets` is needed.** PipesHub uses it to show your buckets in the **Bucket Names** list, so keep it while you set up the connector or change that filter. It is also needed for every sync if **Bucket Names** is empty (PipesHub then finds all your buckets itself) or set to **Not in**. Once you have saved bucket names with **In**, syncs read those buckets directly.
+</Info>
+
+## Step 2: Connect MinIO in PipesHub
+
+<Steps>
+  <Step title="Find MinIO">
+    In PipesHub, go to **Workspace** → **Connectors**, search for **MinIO** and click **Set up** on the MinIO card. For a personal connector, use **Your connectors** at the top right instead.
+  </Step>
+  <Step title="Confirm a team connector">
+    PipesHub warns that everyone in your organization will see the synced data. Click **Continue with team connector**, or **Set up personal connector** to keep the files to yourself.
+  </Step>
+  <Step title="Fill in the Authenticate tab">
+    - **Instance name**: any label, for example `MinIO` or `Lab data`.
+    - **Endpoint URL**: the address of MinIO's S3 API, for example `https://minio.example.com` or `http://10.0.0.5:9000`. This is the API port (9000 by default), not the Console port. See [Endpoint URL rules](#endpoint-url-rules) below.
+    - **Console URL** (optional): the address of the MinIO Console, used for links from PipesHub to your files. Leave it empty if the Console runs on port 9001 of the same host as an endpoint on port 9000; PipesHub then works it out.
+    - **Access Key** and **Secret Key**: the key from Step 1. Paste them without extra spaces.
+    - **Use SSL/TLS**: on by default. It only matters when the Endpoint URL or Console URL has no `http://` or `https://` in front: on means PipesHub uses `https://`, off means `http://`. An address you type with `http://` or `https://` is always used as typed.
+    - **Verify SSL Certificate**: on by default. Turn it off only if your MinIO server uses a self-signed certificate.
+
+    Click **Next**.
+  </Step>
+  <Step title="Set up the Configure records tab">
+    Pick a **Sync strategy** and **Sync interval**, and add any filters you need. See [Choose what to sync](#choose-what-to-sync). With no filters, PipesHub syncs every bucket the key can list.
+  </Step>
+  <Step title="Save and start syncing">
+    Click **Save configuration**, then **Start syncing now**. If you choose **I'll do it later**, turn on **Sync enabled** on the connector's card when you are ready.
+
+    Before the first sync, PipesHub checks that the key can read the buckets you chose. If it can't read any of them, sync stays off and the message says what is missing. If it can read only some, the readable ones sync and you get a warning naming the rest.
+  </Step>
+</Steps>
+
+<Tip>
+  To sync another MinIO server, set up a second MinIO connector with that server's address and key.
+</Tip>
+
+### Endpoint URL rules
+
+- It must start with `http://` or `https://`, or have no scheme at all (then **Use SSL/TLS** decides). A trailing `/` is fine.
+- It can't contain a user name or password (`http://user:pass@host`), a `?` or a `#`. Put the keys in their own fields.
+- PipesHub never connects to its own server, so `localhost` and `127.0.0.1` are refused, as are link-local and cloud metadata addresses. Use the host name or network address at which the PipesHub server can reach MinIO.
+- If your PipesHub deployment sets `PIPESHUB_BLOCK_PRIVATE_ADDRESSES=true`, private network addresses (such as `10.x.x.x` or `192.168.x.x`) are refused too. Leave that setting empty unless several organizations that don't trust each other share your deployment.
+
+The **Console URL** follows the same rules for scheme, user name and password, `?` and `#`.
+
+## Choose what to sync
+
+These settings are on the **Configure records** tab. You can change them later; changes apply from the next sync.
+
+| Setting | What it does |
+|---------|--------------|
+| **Sync strategy** | **Scheduled** checks MinIO for changes automatically. **Manual** syncs only when you click **Sync**. |
+| **Sync interval** | How often a scheduled sync runs. The default is every hour. |
+| **Enable Manual Indexing** | Off: every synced file becomes searchable. On: files are synced but only become searchable after you choose them. Leave it off unless you want to pick files one by one. |
+| **Folders** filter | Folder paths inside each bucket, such as `reports/2026`. Press Enter after each one. **In** syncs only those folders and their subfolders; **Not in** syncs everything except them. |
+| **Bucket Names** filter | Pick buckets from the list (search matches the start of the name). **In** syncs only those buckets; **Not in** syncs every bucket except them. Leave it out to sync every bucket the key can list. |
+| **File Extensions** filter | Sync only certain file types, or leave some out, for example `pdf, docx, txt`. |
+| **Modified Date** filter | Sync only files last changed before, after or between the dates you choose. There is no Created Date filter. |
+
+Add filters with **Add filter**. Filters are the easiest way to make a large first sync faster.
+
+<Note>
+  When you narrow a filter, PipesHub removes the files it now leaves out, so they also disappear from search.
+</Note>
+
+## What gets synced and how it stays up to date
+
+- **What you see:** each bucket appears in PipesHub with its folders and files. Links on a file or folder open it in the MinIO Console.
+- **How often:** on the schedule you chose (every hour by default), or when you click **Sync**. The first sync of a large bucket can take a long time; later syncs only process files that are new or changed.
+- **Edits:** a changed file is downloaded and indexed again on the next sync. A file that is moved or renamed without changes keeps its place in search.
+- **Deletes:** a file deleted in MinIO is removed from PipesHub after the next sync that lists the whole bucket without errors. A deleted bucket is removed after two syncs in a row can't find it, so a server that briefly comes back empty (for example, restarted without its storage) doesn't wipe your data.
+- **Who can see it:** a team connector makes the files searchable by everyone in your organization. A personal connector keeps them to you. MinIO policies only limit what the key can read.
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Sync won't start: the address is refused">
+    The message says why. Check the [Endpoint URL rules](#endpoint-url-rules): the address may point to `localhost`, contain a user name and password, or use a scheme other than `http://` or `https://`. If it names a private address and says `PIPESHUB_BLOCK_PRIVATE_ADDRESSES` is on, ask whoever runs your PipesHub deployment.
+  </Accordion>
+  <Accordion title="“The server does not answer HTTPS at this address”">
+    PipesHub tried `https://` but MinIO is serving plain HTTP. Type the Endpoint URL with `http://`, turn off **Use SSL/TLS**, or turn on TLS in MinIO.
+  </Accordion>
+  <Accordion title="A certificate error with a self-signed certificate">
+    Turn off **Verify SSL Certificate** in the connector's settings.
+  </Accordion>
+  <Accordion title="“Check the Access Key” or “check the Secret Key”">
+    MinIO doesn't know the access key, or the secret key doesn't match it. Check for extra spaces, and whether the key was deleted or changed in MinIO, then update it in the connector's settings.
+  </Accordion>
+  <Accordion title="“The clocks of PipesHub and the MinIO server differ”">
+    MinIO rejects requests when the two servers' clocks are more than 15 minutes apart. Sync the clocks on both machines, for example with NTP.
+  </Accordion>
+  <Accordion title="Sync won't start: a permission is missing">
+    The message names the permission, for example `s3:ListBucket` or `s3:GetObject`. Add it to the policy from Step 1. `s3:ListBucket` goes on the bucket (`arn:aws:s3:::bucket-name`), `s3:GetObject` on its files (`arn:aws:s3:::bucket-name/*`).
+  </Accordion>
+  <Accordion title="The Bucket Names list is empty, or sync fails with “Failed to list buckets”">
+    The key lacks `s3:ListAllMyBuckets`. Add it to the policy, or pick your buckets in **Bucket Names** with **In** so syncs don't need to list all buckets.
+  </Accordion>
+  <Accordion title="A notification says some buckets were skipped">
+    The key can see those buckets but not read them. Give it `s3:ListBucket` and `s3:GetObject` on them, or leave them out with the **Bucket Names** filter. Files already synced from them stay in PipesHub.
+  </Accordion>
+  <Accordion title="Links to files open the wrong page">
+    Links go to the MinIO Console, which is a separate address from the S3 API. If your Console isn't on port 9001 of the same host as an endpoint on port 9000, fill in **Console URL**.
+  </Accordion>
+  <Accordion title="Synced files don't show up in search">
+    If **Enable Manual Indexing** is on, files aren't searchable until you choose them. Otherwise wait for indexing to finish; large files take longer. Unsupported file types never become searchable.
+  </Accordion>
+</AccordionGroup>

@@ -688,6 +688,39 @@ Quota and rate-limit errors are different: they are never given up on, so no fil
 
 </Accordion>
 
+<Accordion title="The connector says domain-wide delegation is not set up. What do I do?">
+
+PipesHub's service account acts as each person in your Workspace to read their Drive. Google refuses this when the service account's client ID isn't authorized for domain-wide delegation, or is authorized without every scope the connector asks for. Google refuses the whole request if even one scope is missing. The notice names the service account's client ID and the scopes.
+
+Only a Google Workspace super administrator can change domain-wide delegation. If you aren't one, send them the notice.
+
+1. In the Google Admin console, open **Security > Access and data control > API controls > Domain-wide delegation**.
+2. Find the client ID from the notice, or add it, and make sure its scopes include every one of these. They are what the connector requests. Keep any scopes already listed for that client ID: another Google connector, such as Gmail, may use the same service account, and the list you save replaces the old one.
+   - `https://www.googleapis.com/auth/drive.readonly`
+   - `https://www.googleapis.com/auth/drive.file`
+   - `https://www.googleapis.com/auth/drive.metadata.readonly`
+   - `https://www.googleapis.com/auth/documents.readonly`
+   - `https://www.googleapis.com/auth/spreadsheets.readonly`
+   - `https://www.googleapis.com/auth/presentations.readonly`
+   - `https://www.googleapis.com/auth/admin.directory.user.readonly`
+   - `https://www.googleapis.com/auth/admin.directory.group.readonly`
+   - `https://www.googleapis.com/auth/admin.directory.domain.readonly`
+   - `https://www.googleapis.com/auth/admin.reports.audit.readonly`
+3. Save. Nothing needs changing in PipesHub.
+
+Google usually applies the change within minutes, but it can take up to 24 hours, so a sync in the meantime may still show the notice.
+
+Until then, what a sync does depends on which request Google refuses:
+
+- **The directory lookup.** This is usual when the client ID isn't authorized at all. The sync stops before it reads anyone's Drive, and its log shows `Error syncing users` with the error from Google.
+- **Acting as some people.** The directory lookup works, but Google refuses to act as some of the people in it. Only those people's files are skipped. The log shows a warning for the first person refused, then one warning saying how many people were refused.
+
+Either way, the notice isn't repeated on every sync: once sent, it's sent again at most once an hour at first, then less often.
+
+Once delegation works, the next sync picks each of those people up from where their last successful sync stopped, or syncs them in full if they never synced, so no changes are missed.
+
+</Accordion>
+
 <Accordion title="Queries not returning results. What could be wrong?">
 
 There are three common causes:

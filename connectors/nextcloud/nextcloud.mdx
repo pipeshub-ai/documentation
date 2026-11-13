@@ -183,14 +183,14 @@ Notifications from this connector start with the connector's instance name, for 
   **Why:** the address is wrong or isn't allowed.
 
   **Fix:** check that the Base URL:
-  - starts with `https://`;
+  - starts with `https://` (an `http://` address is accepted only when your administrator has set `PIPESHUB_NEXTCLOUD_ALLOW_INSECURE_HTTP=true` on the PipesHub server);
   - is the address Nextcloud ends up on in your browser (PipesHub doesn't follow redirects);
   - includes the sub-folder Nextcloud is installed under, if any, but nothing like `/remote.php/dav`;
   - has no slash at the end.
 
   If it is right, ask your PipesHub administrator whether the PipesHub server can reach your Nextcloud.
 
-  With an `http://` address, turning the connector on shows **Invalid request: The Nextcloud server URL must use https**:
+  With an `http://` address, turning the connector on shows an **Invalid request** message: "The Nextcloud server URL must use https: the app password is sent with every request. http is allowed only when the server sets `PIPESHUB_NEXTCLOUD_ALLOW_INSECURE_HTTP=true`."
 
   <Frame>
     <img className="block dark:hidden" src="/images/connectors/nextcloud/pipeshub-https-required.png" alt="Error message: The Nextcloud server URL must use https" />

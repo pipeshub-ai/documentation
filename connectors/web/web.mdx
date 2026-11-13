@@ -85,7 +85,7 @@ Under **Start from**, a preset fills in the crawl settings for you: **Docs site*
 
 | Field | Description |
 |--------|-------------|
-| **Crawl** | **Only this page**, or **This page and the pages it links to** (the default). The other crawl fields apply only to the second choice, except those marked as applying to both (**Maximum pages**, **Same page, different URL** and **Largest file to download**). |
+| **Crawl** | **Only this page**, or **This page and the pages it links to** (the default). The other crawl fields apply only to the second choice, except those marked as applying to both (**Maximum pages**, **Same page, different URL**, **Largest file to download**, **Always use a browser (slower)**, **Identify as a web browser** and **Respect robots.txt**). |
 | **Find pages using** | **Sitemaps and links (recommended)** (the default), **Links only**, or **Sitemaps only**. Sitemaps are fastest; links find pages a sitemap misses. |
 | **Stay in this section** | Only crawls pages under the start URL's path, such as `/docs/`. Off by default. When it is on, **Also follow links to other sites** is ignored. |
 | **Maximum pages** | The most pages PipesHub keeps from this site. Files such as PDFs count as pages. Default 100, maximum 10,000. Applies to both crawl choices. |
@@ -99,9 +99,9 @@ Under **Advanced**:
 | **Clicks from the start page** | How far to follow links. Pages listed in a sitemap count as one click. Default 3, maximum 10. |
 | **Largest file to download** | Applies to both crawl choices, including **Only this page**. Largest HTTP body to download per URL, from 1 to 100 MB (default 10). A larger file isn't downloaded. If PipesHub doesn't have that address yet, it is listed as a failed page with the reason, so you can raise the limit if you need it. A file PipesHub already has keeps its stored copy (the last version that fit) when it grows past the limit. |
 | **Also follow links to other sites** | When on, links to **other domains** may be followed. When off (the default), crawling stays on the **same host** as the start URL. |
-| **Always use a browser (slower)** | Fetches every page with a real Chromium browser. When off (the default), PipesHub detects pages that need JavaScript and uses a browser only for those sites. Documents such as PDFs are still downloaded directly, so the file itself is stored rather than the browser's viewer page. |
-| **Identify as a web browser** | When off (the default), requests identify as the PipesHub crawler. Turn it on only for a site you may crawl that blocks crawlers; `robots.txt` is still respected. |
-| **Respect robots.txt** | Skips pages that the site's `robots.txt` asks crawlers not to visit. On by default. See **robots.txt** under Connector Workflow below. |
+| **Always use a browser (slower)** | Applies to both crawl choices. Fetches every page with a real Chromium browser. When off (the default), PipesHub detects pages that need JavaScript and uses a browser only for those sites. Documents such as PDFs are still downloaded directly, so the file itself is stored rather than the browser's viewer page. |
+| **Identify as a web browser** | Applies to both crawl choices. When off (the default), requests identify as the PipesHub crawler. Turn it on only for a site you may crawl that blocks crawlers; `robots.txt` is still respected. |
+| **Respect robots.txt** | Applies to both crawl choices. Skips pages that the site's `robots.txt` asks crawlers not to visit. On by default. See **robots.txt** under Connector Workflow below. |
 
 "Browser mode" on the rest of this page means pages fetched with the browser, either because **Always use a browser (slower)** is on or because PipesHub detected that the site needs JavaScript.
 

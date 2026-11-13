@@ -75,7 +75,7 @@ This prerequisite applies to **both** authentication methods (OAuth and API Toke
   <img
     src="/images/connectors/confluence/user_profile_settings.png"
     alt="Access User Profile Settings"
-    className="block mx-auto w-11/12"
+    className="block mx-auto w-full max-w-sm"
   />
 </div>
 
@@ -184,16 +184,13 @@ Use the left sidebar to navigate between **Permissions**, **Authorization**, and
 </div>
 
 4. **Get the Redirect URL from PipesHub:**
-   - In PipesHub, go to **Workspace Settings** → **Connectors**, find **Confluence**, and click **+ Setup** for a new instance.
-   - The connector panel opens as a right-side drawer. On the **Authenticate Instance** tab, copy the **Redirect URL**.
+   - In PipesHub, go to **Workspace settings** → **Connectors**, find **Confluence**, and click **Set up** for a new instance.
+   - The connector panel opens as a right-side drawer. On the **Authenticate** tab, copy the **Redirect/Callback URL**.
 
-<div className="text-center">
-  <img
-    src="/images/connectors/confluence/confluence_config.png"
-    alt="PipesHub Confluence Authenticate Instance tab — copy the Redirect URL"
-    className="block mx-auto w-11/12"
-  />
-</div>
+<Frame>
+  <img className="block dark:hidden" src="/images/connectors/confluence/confluence_config.png" alt="PipesHub Confluence Authenticate tab: copy the Redirect URL" />
+  <img className="hidden dark:block" src="/images/connectors/confluence/confluence_config-dark.png" alt="PipesHub Confluence Authenticate tab: copy the Redirect URL" />
+</Frame>
 
 5. Paste the copied URL into the **Callback URL** field in Atlassian Developer Console.
 6. Click **Save changes**.
@@ -241,7 +238,7 @@ Click **Add** next to User identity API and select:
 </div>
 
 <Info>
-  The `offline_access` scope is automatically included when you configure OAuth 2.0 (3LO). It enables refresh tokens so scheduled synchronization continues when users are not actively logged in.
+  You don't add `offline_access` in the console. PipesHub requests it when you authorize, which gives it a refresh token so scheduled syncs keep running when nobody is signed in.
 </Info>
 
 **Confluence API — Classic scopes**
@@ -323,25 +320,22 @@ Next, the **Granular scopes** tab. Add these read permissions:
   Store the Client ID and Client Secret securely. The secret can be regenerated if needed, but you'll have to update your PipesHub configuration with the new value.
 </Warning>
 
-#### Step 7: Authenticate Instance tab — enter credentials
+#### Step 7: Enter credentials (Authenticate tab)
 
-The connector drawer in PipesHub has three tabs: **Authenticate Instance**, **Authorize**, and **Configure Records**. Start on the **Authenticate Instance** tab.
+Start on the **Authenticate** tab of the connector drawer. The **Authorize** tab appears after you click **Next**.
 
-1. Confirm the **Redirect URL** matches the Callback URL you saved in Atlassian in Step 4.
-2. If your admin has pre-registered an OAuth app, pick it from the **OAuth app** dropdown. Otherwise leave it blank and enter credentials manually.
+1. Confirm the **Redirect/Callback URL** matches the Callback URL you saved in Atlassian in Step 4.
+2. Under **OAuth app**, if saved OAuth apps exist, pick one from the dropdown. Otherwise enter an **OAuth app name** (for example `PipesHub Confluence`), which is how this app shows up when you set up other instances.
 3. Enter:
    - **Client ID** — from Step 6
    - **Client Secret** — from Step 6
    - **Grant Jira user access** — select **Yes** or **No** (see note below).
 4. Click **Next** to move to the **Authorize** tab.
 
-<div className="text-center">
-  <img
-    src="/images/connectors/confluence/connector_add_creds.png"
-    alt="Authenticate Instance tab — enter Client ID, Client Secret, and Grant Jira user access"
-    className="block mx-auto w-11/12"
-  />
-</div>
+<Frame>
+  <img className="block dark:hidden" src="/images/connectors/confluence/connector_add_creds.png" alt="Authenticate tab: enter Client ID, Client Secret, and Grant Jira user access" />
+  <img className="hidden dark:block" src="/images/connectors/confluence/connector_add_creds-dark.png" alt="Authenticate tab: enter Client ID, Client Secret, and Grant Jira user access" />
+</Frame>
 
 <Info>
   **Grant Jira user access.** Choose **Yes** only if your Atlassian OAuth app includes Jira and you've added the `read:jira-user` scope. PipesHub will request that scope during authorization and may use Jira to resolve user emails when Confluence profiles hide them. Choose **No** if you don't use Jira on this site or haven't added that scope.
@@ -349,17 +343,14 @@ The connector drawer in PipesHub has three tabs: **Authenticate Instance**, **Au
 
 #### Step 8: Authorize tab — complete the OAuth flow
 
-On the **Authorize** tab, all the OAuth authorization work happens. The tab shows an **Authenticate** button to kick off the OAuth handshake.
+On the **Authorize** tab, all the OAuth authorization work happens. The tab shows an **Authenticate &lt;instance name&gt; to proceed** button to kick off the OAuth handshake.
 
-<div className="text-center">
-  <img
-    src="/images/connectors/confluence/connector_authenticate_option.png"
-    alt="PipesHub Authorize tab with the Authenticate button"
-    className="block mx-auto w-11/12"
-  />
-</div>
+<Frame>
+  <img className="block dark:hidden" src="/images/connectors/confluence/connector_authenticate_option.png" alt="PipesHub Authorize tab with the Authenticate button" />
+  <img className="hidden dark:block" src="/images/connectors/confluence/connector_authenticate_option-dark.png" alt="PipesHub Authorize tab with the Authenticate button" />
+</Frame>
 
-1. Click **Authenticate** to start the OAuth flow. A popup opens to Atlassian's authorization page.
+1. Click **Authenticate &lt;instance name&gt; to proceed** to start the OAuth flow. A popup opens to Atlassian's authorization page.
 2. Select your Confluence site from the dropdown.
 
 <div className="text-center">
@@ -384,26 +375,23 @@ On the **Authorize** tab, all the OAuth authorization work happens. The tab show
   />
 </div>
 
-4. The popup closes and returns you to PipesHub. The connector tile shows an **Authenticated** badge with a **Reauthenticate** option.
+4. The popup closes and returns you to PipesHub. The **Authorize** tab shows **&lt;instance name&gt; has been authenticated**.
 
-5. Click **Next** to move to the **Configure Records** tab.
+5. Click **Continue to configuration** in the footer to move to the **Configure records** tab.
 
-#### Step 9: Configure Records tab — sync settings, filters, and indexing
+#### Step 9: Sync settings, filters, and indexing (Configure records tab)
 
-On the **Configure Records** tab, control how the connector syncs and what gets synced.
+On the **Configure records** tab, control how the connector syncs and what gets synced.
 
 **Sync settings** — configure your synchronization preferences first:
 
-1. **Sync Strategy** — `Scheduled` or `Manual`.
-2. **Sync Interval** — how often to sync (default: 60 minutes).
+1. **Sync strategy** — `Scheduled` or `Manual`.
+2. **Sync interval** — how often to sync (default: 1 hour).
 
-<div className="text-center">
-  <img
-    src="/images/connectors/confluence/connector_configure_sync_strategy.png"
-    alt="Configure Sync Strategy"
-    className="block mx-auto w-11/12"
-  />
-</div>
+<Frame>
+  <img className="block dark:hidden" src="/images/connectors/confluence/connector_configure_sync_strategy.png" alt="Configure records tab with Sync strategy and Sync interval" />
+  <img className="hidden dark:block" src="/images/connectors/confluence/connector_configure_sync_strategy-dark.png" alt="Configure records tab with Sync strategy and Sync interval" />
+</Frame>
 
 <Note>
   **Scheduled sync** runs automatically at the specified intervals. **Manual sync** requires you to trigger synchronization on-demand.
@@ -414,62 +402,55 @@ On the **Configure Records** tab, control how the connector syncs and what gets 
 - **Spaces:** once the whole space list has been read, a space that is no longer listed is removed with everything in it. That covers a space the space filter now leaves out, and one that was deleted, archived, or that the connector's account can no longer open. Its sync checkpoints are cleared, so a space listed again later is read in full. A space list that can't be read to the end, or that comes back empty (for example, because the space filter now leaves out every space), removes no space.
 - **Pages and blog posts:** a page or blog post is removed when a search of its space finds it without the new filters but not with them. If the search can't tell (for example, because Confluence hasn't indexed the page yet), the page is kept and the next sync reads that space in full again.
 
-<div className="text-center">
-  <img
-    src="/images/connectors/confluence/confluence-filters.png"
-    alt="Confluence Filters Configuration"
-    className="block mx-auto w-11/12"
-  />
-</div>
+<Frame>
+  <img className="block dark:hidden" src="/images/connectors/confluence/confluence-filters.png" alt="Confluence sync filters with the Space Name filter set to In" />
+  <img className="hidden dark:block" src="/images/connectors/confluence/confluence-filters-dark.png" alt="Confluence sync filters with the Space Name filter set to In" />
+</Frame>
 
 Available sync filters:
 
-1. **Space Keys** — filter by Confluence spaces.
+1. **Space Name**: filter by Confluence spaces.
    - Operator: `In` (include only) or `Not In` (exclude)
-   - Value: one or more space keys (e.g., `ENG`, `MKT`, `PROD`). Space keys are case-sensitive.
-   - *Finding space keys:* check your space URL — `https://yourinstance.atlassian.net/wiki/spaces/SPACEKEY/overview` — the `SPACEKEY` is what you need.
+   - Value: click **Select Space Name** and pick one or more spaces from the list.
 
-2. **Page IDs** — filter specific pages (includes all child pages automatically).
+2. **Page Name**: filter specific pages (includes all child pages automatically).
    - Operator: `In` or `Not In`
-   - Value: one or more page IDs (e.g., `88375321`, `90341377`)
-   - *Finding page IDs:* check your page URL — the number after `/pages/` is the page ID.
+   - Value: pick one or more pages from the list.
 
-3. **Blogpost IDs** — filter specific blog posts.
+3. **Blogpost Name**: filter specific blog posts.
    - Operator: `In` or `Not In`
-   - *Finding blogpost IDs:* the number after `/blog/YYYY/MM/DD/` in the URL.
+   - Value: pick one or more blog posts from the list.
 
-4. **Modified Date** — filter by last modification date. Operators: `Is After`, `Is Before`, `Is Between`.
+4. **Modified Date** — filter by last modification date. Operators: `Is after`, `Is before`, `Is between`.
 
 5. **Created Date** — filter by creation date. Same operators.
 
 <Info>
-  Date filters apply exactly as set: `Is Before` keeps content from before that date and time, and `Is After` keeps content from after it. For **Modified Date** and **Created Date** the time defaults to midnight, so `Is Before` 1 June keeps content up to the end of 31 May, and `Is After` 1 March starts just after midnight on 1 March. To include 1 June, choose `Is Before` 2 June. Confluence compares these dates in your site's time zone, so on a site not set to UTC the edge can shift by that time-zone difference.
+  Date filters apply exactly as set: `Is before` keeps content from before that date and time, and `Is after` keeps content from after it. For **Modified Date** and **Created Date** the time defaults to midnight, so `Is before` 1 June keeps content up to the end of 31 May, and `Is after` 1 March starts just after midnight on 1 March. To include 1 June, choose `Is before` 2 June. Confluence compares these dates in your site's time zone, so on a site not set to UTC the edge can shift by that time-zone difference.
 </Info>
 
 **Indexing filters** — control what synced data gets processed for AI search. All data is synced, but only enabled content types are indexed.
 
+- **Enable Manual Indexing** (default: off): when on, synced content is not indexed until you pick it; when off, everything synced is indexed
 - **Pages:** Index Pages / Index Page Attachments / Index Page Comments (all default: enabled)
 - **Blog posts:** Index Blogposts / Index Blogpost Attachments / Index Blogpost Comments (all default: enabled)
 
 **Example configurations:**
 
-- *Sync only Engineering space:* Space Keys → Operator `In`, Value `ENG`
-- *Exclude archived spaces:* Space Keys → Operator `Not In`, Value `ARCHIVE, OLD`
-- *Sync specific documentation tree:* Page IDs → Operator `In`, Value `88375321`
-- *Recent content only:* Modified Date → Operator `Is After`, Date `2024-06-01`
+- *Sync only the Engineering space:* Space Name → Operator `In`, pick **Engineering**
+- *Exclude archived spaces:* Space Name → Operator `Not In`, pick the archived spaces
+- *Sync specific documentation tree:* Page Name → Operator `In`, pick the top page of the tree
+- *Recent content only:* Modified Date → Operator `Is after`, Date `2024-06-01`
 - *Index pages but not attachments:* disable the **Index Page Attachments** toggle
 
-Click **Save** to save your configuration. PipesHub confirms the instance is ready with a final dialog — **"Instance is configured and ready to sync"** — offering two choices: **I'll do it later** or **Start syncing now**.
+Click **Save configuration** to save your configuration. PipesHub confirms the instance is ready with a final dialog, **"Instance is configured and ready to sync"**, offering two choices: **I'll do it later** or **Start syncing now**.
 
-<div className="text-center">
-  <img
-    src="/images/connectors/confluence/enable_connector.png"
-    alt="Instance is configured and ready to sync — I'll do it later or Start syncing now"
-    className="block mx-auto w-11/12"
-  />
-</div>
+<Frame>
+  <img className="block dark:hidden" src="/images/connectors/confluence/enable_connector.png" alt="Dialog: Instance is configured and ready to sync, with I'll do it later and Start syncing now" />
+  <img className="hidden dark:block" src="/images/connectors/confluence/enable_connector-dark.png" alt="Dialog: Instance is configured and ready to sync, with I'll do it later and Start syncing now" />
+</Frame>
 
-Choose **Start syncing now** to kick off the initial sync immediately, or **I'll do it later** to enable the connector without an immediate sync. Monitor the **Indexing Progress** to track sync completion.
+Choose **Start syncing now** to kick off the initial sync immediately, or **I'll do it later** and turn on **Sync enabled** on the connector's card when you are ready. Click the arrow on the card and check **Records status** to track sync completion.
 
 </Tab>
 
@@ -496,7 +477,7 @@ Use this method when you want the fastest setup and only need a single user acco
 <div className="text-center">
   <img
     src="/images/connectors/confluence/api_token_copy.png"
-    alt="Copy the API token — shown once"
+    alt="Copy the API token (shown once)"
     className="block mx-auto w-11/12"
   />
 </div>
@@ -509,87 +490,83 @@ Use this method when you want the fastest setup and only need a single user acco
   The token inherits the permissions of the account that created it. Use an account that can read the Confluence spaces you want to sync — ideally a dedicated integration user rather than a personal account.
 </Info>
 
-#### Step 2: Authenticate Instance tab — enter credentials
+#### Step 2: Enter credentials (Authenticate tab)
 
-1. In PipesHub, go to **Workspace Settings** → **Connectors**, find **Confluence**, and click **+ Setup**.
-2. The connector panel opens as a right-side drawer with three tabs: **Authenticate Instance**, **Authorize**, and **Configure Records**.
-3. On the **Authenticate Instance** tab, pick **API Token** in the **Authentication method** dropdown.
+1. In PipesHub, go to **Workspace settings** → **Connectors**, find **Confluence**, and click **Set up**.
+2. The connector panel opens as a right-side drawer with two tabs: **Authenticate** and **Configure records**. API Token needs no **Authorize** tab.
+3. On the **Authenticate** tab, pick **API Token** in the **Authentication method** dropdown.
 4. Enter:
    - **Base URL** — your Confluence site URL (e.g., `https://your-domain.atlassian.net`)
    - **Email** — your Atlassian account email (the account that created the API token)
    - **API Token** — the token you copied in Step 1
-5. Click **Next**. PipesHub validates the credentials and advances directly to the **Configure Records** tab (the **Authorize** tab is skipped for API Token because the token authenticates on its own).
+5. Click **Next**. PipesHub saves the instance and opens the **Configure records** tab. It does not check the credentials at this step; they are checked when you turn on sync.
 
-<div className="text-center">
-  <img
-    src="/images/connectors/confluence/connector_api_token_form.png"
-    alt="Authenticate Instance tab with API Token method — Base URL, Email, API Token fields"
-    className="block mx-auto w-11/12"
-  />
-</div>
+<Frame>
+  <img className="block dark:hidden" src="/images/connectors/confluence/connector_api_token_form.png" alt="Authenticate tab with API Token method: Base URL, Email, API Token fields" />
+  <img className="hidden dark:block" src="/images/connectors/confluence/connector_api_token_form-dark.png" alt="Authenticate tab with API Token method: Base URL, Email, API Token fields" />
+</Frame>
 
 <Warning>
   The **Email** must match the Atlassian account that owns the API token. Using a different email causes authentication to fail.
 </Warning>
 
-#### Step 3: Configure Records tab — sync settings, filters, and indexing
+#### Step 3: Sync settings, filters, and indexing (Configure records tab)
 
-On the **Configure Records** tab, control how the connector syncs and what gets synced.
+On the **Configure records** tab, control how the connector syncs and what gets synced.
 
 **Sync settings** — configure your synchronization preferences first:
 
-1. **Sync Strategy** — `Scheduled` or `Manual`.
-2. **Sync Interval** — how often to sync (default: 60 minutes).
+1. **Sync strategy** — `Scheduled` or `Manual`.
+2. **Sync interval** — how often to sync (default: 1 hour).
 
-<div className="text-center">
-  <img
-    src="/images/connectors/confluence/connector_configure_sync_strategy.png"
-    alt="Configure Sync Strategy"
-    className="block mx-auto w-11/12"
-  />
-</div>
+<Frame>
+  <img className="block dark:hidden" src="/images/connectors/confluence/connector_configure_sync_strategy.png" alt="Configure records tab with Sync strategy and Sync interval" />
+  <img className="hidden dark:block" src="/images/connectors/confluence/connector_configure_sync_strategy-dark.png" alt="Configure records tab with Sync strategy and Sync interval" />
+</Frame>
 
 **Sync filters** — determine which content is downloaded from Confluence. Data excluded by sync filters is never downloaded. When you narrow the filters, the full sync that follows removes what they now leave out, from search and from storage:
 
 - **Spaces:** once the whole space list has been read, a space that is no longer listed is removed with everything in it. That covers a space the space filter now leaves out, and one that was deleted, archived, or that the connector's account can no longer open. Its sync checkpoints are cleared, so a space listed again later is read in full. A space list that can't be read to the end, or that comes back empty (for example, because the space filter now leaves out every space), removes no space.
 - **Pages and blog posts:** a page or blog post is removed when a search of its space finds it without the new filters but not with them. If the search can't tell (for example, because Confluence hasn't indexed the page yet), the page is kept and the next sync reads that space in full again.
 
-<div className="text-center">
-  <img
-    src="/images/connectors/confluence/confluence-filters.png"
-    alt="Confluence Filters Configuration"
-    className="block mx-auto w-11/12"
-  />
-</div>
+<Frame>
+  <img className="block dark:hidden" src="/images/connectors/confluence/confluence-filters.png" alt="Confluence sync filters with the Space Name filter set to In" />
+  <img className="hidden dark:block" src="/images/connectors/confluence/confluence-filters-dark.png" alt="Confluence sync filters with the Space Name filter set to In" />
+</Frame>
 
 Available sync filters:
 
-1. **Space Keys** — filter by Confluence spaces. Operator `In` / `Not In`; value is one or more space keys (case-sensitive).
-2. **Page IDs** — filter specific pages. Includes all child pages automatically.
-3. **Blogpost IDs** — filter specific blog posts.
-4. **Modified Date** — filter by last modification date. Operators: `Is After`, `Is Before`, `Is Between`.
+1. **Space Name**: filter by Confluence spaces. Operator `In` / `Not In`; pick one or more spaces from the list.
+2. **Page Name**: filter specific pages. Includes all child pages automatically.
+3. **Blogpost Name**: filter specific blog posts.
+4. **Modified Date** — filter by last modification date. Operators: `Is after`, `Is before`, `Is between`.
 5. **Created Date** — filter by creation date. Same operators.
 
 <Info>
-  Date filters apply exactly as set: `Is Before` keeps content from before that date and time, and `Is After` keeps content from after it. For **Modified Date** and **Created Date** the time defaults to midnight, so `Is Before` 1 June keeps content up to the end of 31 May, and `Is After` 1 March starts just after midnight on 1 March. To include 1 June, choose `Is Before` 2 June. Confluence compares these dates in your site's time zone, so on a site not set to UTC the edge can shift by that time-zone difference.
+  Date filters apply exactly as set: `Is before` keeps content from before that date and time, and `Is after` keeps content from after it. For **Modified Date** and **Created Date** the time defaults to midnight, so `Is before` 1 June keeps content up to the end of 31 May, and `Is after` 1 March starts just after midnight on 1 March. To include 1 June, choose `Is before` 2 June. Confluence compares these dates in your site's time zone, so on a site not set to UTC the edge can shift by that time-zone difference.
 </Info>
 
 **Indexing filters** — control what synced data gets processed for AI search.
 
+- **Enable Manual Indexing** (default: off): when on, synced content is not indexed until you pick it; when off, everything synced is indexed
 - **Pages:** Index Pages / Index Page Attachments / Index Page Comments (all default: enabled)
 - **Blog posts:** Index Blogposts / Index Blogpost Attachments / Index Blogpost Comments (all default: enabled)
 
-Click **Save** to save your configuration. PipesHub confirms the instance is ready with a final dialog — **"Instance is configured and ready to sync"** — offering two choices: **I'll do it later** or **Start syncing now**.
+Click **Save configuration** to save your configuration. PipesHub confirms the instance is ready with a final dialog, **"Instance is configured and ready to sync"**, offering two choices: **I'll do it later** or **Start syncing now**.
 
-<div className="text-center">
-  <img
-    src="/images/connectors/confluence/enable_connector.png"
-    alt="Instance is configured and ready to sync — I'll do it later or Start syncing now"
-    className="block mx-auto w-11/12"
-  />
-</div>
+<Frame>
+  <img className="block dark:hidden" src="/images/connectors/confluence/enable_connector.png" alt="Dialog: Instance is configured and ready to sync, with I'll do it later and Start syncing now" />
+  <img className="hidden dark:block" src="/images/connectors/confluence/enable_connector-dark.png" alt="Dialog: Instance is configured and ready to sync, with I'll do it later and Start syncing now" />
+</Frame>
 
-Choose **Start syncing now** to kick off the initial sync immediately, or **I'll do it later** to enable the connector without an immediate sync.
+Choose **Start syncing now** to kick off the initial sync immediately, or **I'll do it later** and turn on **Sync enabled** on the connector's card when you are ready.
+
+To follow the sync, click the arrow on the connector's card. **Records status** shows how many records are synced, by status (Completed, Failed and so on).
+
+<Frame>
+  <img className="block dark:hidden" src="/images/connectors/confluence/connector_records_status.png" alt="Confluence connector with sync enabled and Records status showing synced and indexed records" />
+  <img className="hidden dark:block" src="/images/connectors/confluence/connector_records_status-dark.png" alt="Confluence connector with sync enabled and Records status showing synced and indexed records" />
+</Frame>
 
 </Tab>
 
@@ -652,8 +629,8 @@ The Confluence connector syncs the following data from your Confluence Cloud wor
 - A trailing slash or a trailing `/wiki` is fine: `https://acme.atlassian.net/wiki` works the same as `https://acme.atlassian.net`
 - Do not include longer paths like `/wiki/spaces/...`
 
-**Error when creating, enabling, saving or testing the connector:**
-PipesHub checks the credentials at each of these steps and fails right away with a specific message:
+**Error when enabling sync or loading filter options:**
+PipesHub checks the credentials at these steps and fails right away with a specific message:
 - **Credentials rejected (401):** check the email and API token, or reconnect the OAuth app
 - **Missing OAuth scopes:** the message names the missing scopes. Add them to the app in Atlassian Developer Console, then reconnect
 - **Can't read Confluence (403):** the account signed in but has no Confluence access. Give it Confluence access and permission to view the spaces to sync
@@ -675,14 +652,14 @@ PipesHub checks the credentials at each of these steps and fails right away with
 - Check that all required API scopes are configured
 
 **No data syncing:**
-- Verify the connector status shows **Active**
+- Verify **Sync enabled** is on for the connector
 - Check that the authenticating user (OAuth) or token-owning user (API Token) has access to Confluence spaces
 - Ensure spaces are not restricted or archived
 - Review sync logs for specific error messages
 
 **Token expired or sync stopped:**
 - OAuth tokens may expire per Atlassian's policies; disable and re-enable the connector to re-authenticate
-- API tokens can be revoked from the Atlassian account page; generate a new one and update the Authenticate Instance tab
+- API tokens can be revoked from the Atlassian account page; generate a new one and update the Authenticate tab
 - Check if the OAuth app is still active in Developer Console
 
 **Permission denied for specific content:**
@@ -691,7 +668,7 @@ PipesHub checks the credentials at each of these steps and fails right away with
 - Review page restrictions that may limit access
 
 <Warning>
-  If you modify OAuth application settings in Atlassian Developer Console (Client ID, Secret, Callback URL, or scopes), update the configuration in PipesHub and re-authorize. For API tokens, re-enter the token in the Authenticate Instance tab if you regenerate it.
+  If you modify OAuth application settings in Atlassian Developer Console (Client ID, Secret, Callback URL, or scopes), update the configuration in PipesHub and re-authorize. For API tokens, re-enter the token in the Authenticate tab if you regenerate it.
 </Warning>
 
 </Accordion>
@@ -713,7 +690,7 @@ PipesHub checks the credentials at each of these steps and fails right away with
 ### Incremental sync
 - Uses timestamp-based synchronization to detect changes
 - Only syncs new or modified content since last sync, plus current pages and blog posts that PipesHub doesn't hold (see **Deleted, trashed and hidden content**)
-- Each sync also re-checks the 24 hours before the previous sync, so edits made around then aren't missed. This look-back never goes earlier than a **Modified Date** `Is After` date you set
+- Each sync also re-checks the 24 hours before the previous sync, so edits made around then aren't missed. This look-back never goes earlier than a **Modified Date** `Is after` date you set
 - Syncs every attachment of a page or blog post, however many it has. If the attachment list can't be read in full, the attachments already read are kept, and the space's page or blog post checkpoint doesn't move, so the next sync reads that time window again. That includes a temporary failure (such as a timeout or rate limit) on the list's first request, in which case the connector uses the attachments that came with the page or blog post in the search results. If the first request fails for a lasting reason, such as the list not being found, the connector uses those search-result attachments and the checkpoint moves on as usual
 - Reduces API calls and sync duration
 - The sync point moves only after each batch is saved, so a sync that stops early resumes from the last saved batch
@@ -783,15 +760,15 @@ Choose **OAuth** for production and anything that needs per-user attribution. Ch
 
 </Accordion>
 
-<Accordion title="What's the difference between Confluence Connector and Confluence Toolset?">
+<Accordion title="What's the difference between Confluence Connector and Confluence actions?">
 
-| Aspect | Confluence Connector | Confluence Toolset |
+| Aspect | Confluence Connector | Confluence actions |
 |--------|---------------------|-------------------|
 | **Purpose** | Sync and index Confluence data for search | Enable agents to perform actions in Confluence |
 | **Data Flow** | One-way (import data into PipesHub) | Two-way (read and write via API) |
 | **When to Use** | Query/search pages, spaces, blog posts | Create pages, update content, manage spaces |
 
-**Example:** Use **Confluence Connector** to search and retrieve documentation. Use **Confluence Toolset** to let agents create or update Confluence pages.
+**Example:** Use **Confluence Connector** to search and retrieve documentation. Use **Confluence actions** to let agents create or update Confluence pages.
 
 </Accordion>
 
@@ -802,11 +779,11 @@ There are three common causes:
 1. **Email mismatch** - The email used during connector authentication doesn't match your PipesHub account email. This causes permission issues preventing you from accessing synced data.
    - **Fix:** Reconfigure the connector and authenticate using the same email as your PipesHub account.
 
-2. **Records show in "All Records" but not in search** - Documents display in the All Records section but don't appear in search query results.
+2. **Records show in "All records" but not in search** - Documents display in the All records section but don't appear in search query results.
    - **Fix:** Verify sync filters in the connector settings and ensure indexing has completed. Check that the data matches your search query criteria.
 
 3. **Data not yet indexed** - The connector is still syncing or hasn't completed the initial indexing process.
-   - **Fix:** Go to **Settings > Connectors**, check the sync status, and wait for indexing to complete.
+   - **Fix:** Go to **Workspace settings** → **Connectors**, check the sync status, and wait for indexing to complete.
 
 </Accordion>
 
@@ -822,11 +799,11 @@ Yes. You can achieve this by following these steps:
 
 1. **Create a dedicated connector instance** — Create a Confluence connector instance for the space that contains the pages you want to index.
 
-2. **Select Manual Indexing** — When configuring the connector, choose the **Manual Indexing** option. This gives you granular control over which content gets indexed.
+2. **Select Manual Indexing** — When configuring the connector, turn on **Enable Manual Indexing**. This gives you granular control over which content gets indexed.
 
 3. **Select the Confluence space** — Use the filters to select the specific Confluence space that contains the pages you want to index.
 
-4. **Navigate to specific pages** — Go to **All Records** in the navigation bar, then browse to the specific pages you want to index within the selected Confluence space.
+4. **Navigate to specific pages** — Go to **All records** in the navigation bar, then browse to the specific pages you want to index within the selected Confluence space.
 
 </Accordion>
 

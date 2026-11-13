@@ -181,11 +181,9 @@ Before configuring the Redirect URL in Slack, copy the Redirect URI from PipesHu
 
 ### Step 4: Add required scopes
 
-In **OAuth & Permissions**, scroll to **Scopes**. Slack splits scopes into two sections, **Bot Token Scopes** and **User Token Scopes**, and you'll need to add some in each.
+In **OAuth & Permissions**, scroll to **Scopes**. The Slack action signs in as the user and requests every scope as a user scope, so add all of the scopes below under **User Token Scopes**. Do not add them under **Bot Token Scopes**: PipesHub never requests bot scopes, and the bot section is not used.
 
-#### Bot Token Scopes
-
-Add these under the **Bot Token Scopes** section.
+#### User Token Scopes
 
 **Messaging**
 | Scope | Purpose |
@@ -226,10 +224,7 @@ Add these under the **Bot Token Scopes** section.
 | `pins:write` | Pin/unpin messages |
 | `usergroups:read` | View user groups |
 
-#### User Token Scopes
-
-Scroll further down on the same page to the **User Token Scopes** section and add these. They are not available as Bot Token Scopes. You must add them here for the corresponding tools to work.
-
+**Search and profile**
 | Scope | Purpose |
 |-------|---------|
 | `search:read` | Search messages and files (powers `search_all` and `search_messages`) |
@@ -238,7 +233,7 @@ Scroll further down on the same page to the **User Token Scopes** section and ad
 <div style={{ textAlign: "center" }}>
   <img
     src="/images/toolsets/slack/user-token-scopes.png"
-    alt="Configure Bot Token Scopes"
+    alt="Configure User Token Scopes"
     style={{ display: 'block', margin: '0 auto' }}
     width="90%"
   />

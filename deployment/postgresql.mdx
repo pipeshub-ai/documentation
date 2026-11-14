@@ -53,7 +53,7 @@ You need:
     python -m db.migrate
     ```
 
-    Use a direct address to PostgreSQL, not a pooler. The same job ships as the `pipeshubai/pipeshub-migrate` image. Exit code `0` means done. Exit code `4` means the database failed a safety check and the run changed nothing.
+    Use a direct address to PostgreSQL, not a pooler. The same job ships as the `pipeshubai/pipeshub-migrate` image. Exit code `0` means done. Exit code `4` means the database failed a safety check. On a database that already had the schema, the run changed nothing. On a new, empty database the check runs after the schema is applied, so the schema stays in place: read the reported problems before you start PipesHub on it.
   </Step>
   <Step title="Give each service its login">
     Each process connects with its own service login:

@@ -1,0 +1,61 @@
+---
+title: "Who can see what in search"
+description: "How PipesHub applies the permissions of your connected sources, how fast changes arrive, and what you see when something is incomplete"
+icon: "lock"
+---
+
+PipesHub shows a person only what the source shows them, and it hides a result when it cannot be sure. Search, chat answers and citations all follow the same rule.
+
+## How changes reach PipesHub
+
+Permissions are read when a connector syncs, so a change made at the source is not instant. For a **Scheduled** connector, it reaches PipesHub within the connector's sync interval. For a **Manual** connector, or one with no schedule, it reaches PipesHub on the next sync. Whoever manages the connector sets its schedule: an admin for a team connector, and the person who created it for a personal connector.
+
+<Note>
+  Just got access at the source? New access appears after the next sync. Until then the item can be missing from search.
+</Note>
+
+## What you see when results may be incomplete
+
+PipesHub tells you that something may be incomplete and what to do. It never says which items are hidden.
+
+| You see | What it means |
+| --- | --- |
+| "Some sources are updating permissions, so a few results may be missing for a few minutes." | A connector you can search is applying a permission change. Some results may be missing until it finishes. |
+| "{Source} is still syncing, so results from it may be incomplete." | A source you can search is syncing. With results, this appears only while the connector is on its first sync, when some of its content may not be searchable yet. When the search finds nothing, it also appears during a later re-sync, next to the usual "no results" message. |
+| "Nothing to search yet. {Source} is still syncing." | The search found nothing and the connector has never finished a sync, so there is nothing to search yet. Try again when the first sync has finished. |
+| "We couldn't check which documents you have access to just now, so no results are shown. Please try again in a minute." | PipesHub could not confirm what you may read, so it shows nothing rather than guess. Try again in a minute. |
+
+A notice names only a source you can already see, and never an item, a folder or a person.
+
+## What you see when you browse a connector
+
+Browsing a connector in the Knowledge Hub follows the same access check as search:
+
+- The connector, or any item you open in the tree (a folder, group, page or ticket, for example), never lists an item you may not open. It lists the items in it you may open, including ones you were given through another folder, a group or a role.
+- Some groups are for navigation only and list none of their items, for example a Slack channel. Find their items with search.
+- An item in the tree has an expand arrow only when opening it lists something.
+- An item you may open that sits directly under the connector is listed there.
+- An item shared with you (or with a group or role you are in) on the item itself, where everything it sits under is closed to you, whatever kind of item that is (a folder, group, page, parent ticket, or the item it is attached to, for example), is listed under each of its own groups that you can open. If you can open none of them, it is listed directly under the connector. This applies to items whose own sharing adds to the sharing of what they sit under, which is the usual case.
+- Other items you may open where everything they sit under is closed to you may not be in the tree either. Find them in **All records** or with search.
+
+<Note>
+  With a Neo4j or ArangoDB graph store, the connector or any item in the tree that holds more than 200 items whose access it does not decide itself may leave out some items you can open, even when you were given fewer than 200 of them. This does not affect the items placed by the rule above for an item shared with you on the item itself. Find the left-out items in **All records** or with search.
+</Note>
+
+## When you open an item you cannot read
+
+You get one page that says "You don't have access to this item". It is the same whether the item was moved, deleted, restricted or never shared with you, so it does not confirm that the item exists. Ask the owner, or open it where it came from if you have the link. **Copy details for an admin** copies the item's id and the time, and no names, so an admin can look into it.
+
+## Known differences from the source
+
+These are known cases where PipesHub shows less than the source does:
+
+| Connector | Source permission | What PipesHub does differently |
+| --- | --- | --- |
+| Confluence | A page nested very deep in a space | A page more than 50 levels below its space is hidden from everyone. Move it closer to the top of the space. |
+| Gmail | A delegate added to a mailbox | Delegates cannot search the mailbox in PipesHub. Only the mailbox owner can. |
+| Google Drive | A file shared with your whole domain, or with anyone who has the link | It does not give everyone in the organisation access in PipesHub. People it is shared with directly or through a group still see it. |
+
+## For admins
+
+A connector's **Overview** tab shows how fresh its permissions are: the last sync, changes waiting to be applied, and anything that needs attention.

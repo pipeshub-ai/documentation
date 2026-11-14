@@ -44,7 +44,7 @@ curl -s "$PIPESHUB_URL/api/v1/search/entities" \
 |---|---|---|---|
 | `query` | string, 1–500 characters | required | A name or phrase. |
 | `entityTypes` | array, at most 10 | all | Only these kinds: `department`, `category`, `subcategory`, `topic`, `language`, `record_group`, `record`, `named_entity`. |
-| `namedEntityKinds` | array of strings, at most 10 | all | For `named_entity`, only these kinds, such as `person` or `organization`. |
+| `namedEntityKinds` | array of strings, at most 10 | all | For `named_entity`, only these kinds. Only kinds that are embedded can match: `person_type`, `organization`, `event`, `product`, `skill`, `location`, `city`, `state` and `country_region`. `person` and `address` are personal data and never embedded, and contact and value kinds (`email`, `url`, dates, amounts) are not in this search, so they match nothing here; to find people in your organization, leave out `namedEntityKinds` and `entityTypes`: they come back as `person` results. `organization` also matches `product` and the reverse, and each place kind also matches the others. |
 | `limit` | integer, 1–25 | `10` | Most entities to return. |
 
 ### Response

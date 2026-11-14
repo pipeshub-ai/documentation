@@ -1,10 +1,10 @@
 ---
 title: "Security and privacy"
-description: "Where a self-hosted PipesHub keeps your data, how it protects credentials, and what data leaves your deployment"
+description: "Where a self-hosted PipesHub keeps your data, how it protects credentials, what it logs, and what data leaves your deployment"
 icon: "shield-halved"
 ---
 
-This page describes a self-hosted PipesHub started with the Docker Compose files in the PipesHub repository. You run every service, so your data stays on infrastructure you control, except for the outbound calls listed under [What leaves your deployment](#what-leaves-your-deployment).
+This page describes a self-hosted PipesHub started with the Docker Compose files in the PipesHub repository. You run every service, so your data stays on infrastructure you control, except for the outbound calls listed under [What leaves your deployment](#what-leaves-your-deployment). Telemetry is one of those calls, and it is on by default.
 
 ## Where data is stored
 
@@ -20,10 +20,31 @@ This page describes a self-hosted PipesHub started with the Docker Compose files
 ## Secrets and credentials at rest
 
 - **Settings in the key-value store**, including AI model API keys, connector credentials and the token signing secrets, are encrypted with AES-256-GCM. The key is the SHA-256 hash of the `SECRET_KEY` environment variable. A few non-secret settings, such as service endpoints, are stored as plain text. Storage credentials, such as S3 keys, are encrypted on their own before they are saved.
-- **`SECRET_KEY`** is required: the services don't start without it. Set it to a long random value, keep it safe, and keep it the same across upgrades. Without it, PipesHub can't decrypt its stored settings.
+- **`SECRET_KEY`** is required: the services don't start without it. Set it to a long random value, keep it safe, and keep it the same across upgrades. Without it, PipesHub can't decrypt its stored settings. On Helm, set `secretKey`. If you leave it empty, a new random key is generated on each install.
 - **The `.env` file.** Values you set for Docker Compose, such as database passwords, are kept in the `.env` file on the host as plain text, outside the encrypted key-value store. Restrict access to that file and to any backup that contains it.
 - **Passwords** are stored as bcrypt hashes. One-time sign-in codes are hashed the same way.
 - **OAuth and personal access tokens** are stored as hashes, not as the tokens themselves.
+
+## Data stores and encryption
+
+PipesHub encrypts only the secrets and settings described above. Everything else is stored as the datastore writes it:
+
+| Data | Encrypted by PipesHub | What protects it at rest |
+| --- | --- | --- |
+| Settings, API keys, connector credentials, signing secrets (key-value store) | Yes, AES-256-GCM | `SECRET_KEY`, plus your store's own protection |
+| Passwords, sign-in codes, OAuth and personal access tokens | Hashed, not encrypted | Hashing |
+| Records, permissions and metadata (graph database) | No | The database's or the disk's encryption |
+| Embeddings and indexed text (vector database) | No | The database's or the disk's encryption |
+| Users, conversations, OAuth apps (MongoDB) | No | The database's or the disk's encryption |
+| Uploaded and synced files (local disk, S3 or Azure Blob) | No | The disk's encryption, or the bucket's server-side encryption |
+
+To encrypt these at rest, turn on encryption in the datastore, on the volumes, or on the bucket.
+
+**In transit.** The Docker Compose files don't set up TLS between PipesHub's services or to the datastores, and serve the web app over plain HTTP. Encrypting that traffic, and putting HTTPS in front of the web app, is part of your deployment. The Helm chart has these options:
+
+- `ingress.tls` for HTTPS on the ingress.
+- `mongodb.tls.enabled` for TLS on the bundled MongoDB. It is off by default.
+- `redis.clientTls` for TLS from PipesHub to an external Redis. It is off by default.
 
 ## Sign-in sessions and tokens
 
@@ -37,6 +58,51 @@ This page describes a self-hosted PipesHub started with the Docker Compose files
 Search, chat and agents only use records the signed-in user is allowed to see. PipesHub checks the user's permissions in the graph database before it returns results. If it can't check them, it shows no results and says why, instead of showing everything.
 
 For a connected app, PipesHub syncs each item's permissions from the source and matches them to PipesHub users by email address. Use the same email for a connector account as for PipesHub. See [Connectors](/connectors/overview).
+
+### How access changes reach search
+
+PipesHub does not ask the source app who can see an item when you search. It checks the permissions it last synced from that app. So a change made in the source, such as a new share, a removed member or a deleted file, reaches search only after a sync picks it up:
+
+- A scheduled sync is incremental. It reads what the source reports as changed since the last run.
+- Some changes are never reported by some sources, such as certain deletions and revoked shares. Those are removed on the next **full sync**. A full sync runs when an admin starts one, after the connector's sync filters change, or to finish a full sync that was interrupted.
+- Some connectors don't check access per item. Everyone who can use the connector sees all of its records.
+- After a sync, the list of records each user can see is cached for up to 300 seconds. Set `PIPESHUB_ACCESSIBLE_RECORDS_CACHE_TTL` to change this.
+
+See [Permissions and freshness by connector](/connectors/permissions-matrix) for each connector's permission model and sync method, and for how to start a full sync.
+
+## AI agents and untrusted content
+
+- **Web content is marked as untrusted.** Web search results and pages that chat or an agent reads are wrapped in a marker that tells the model the text was written by a third party and is information, not instructions. A page can't close that marker early. This lowers the risk that a page steers the agent, but it does not remove it. See [Web search](/web-search#safety).
+- **Tool calls follow approval rules.** Each tool is pre-approved, asks first or is denied. Until someone sets a rule, a built-in toolset tool (Jira, Slack and so on) runs if it reads or changes data, and asks first if it deletes data. A tool from an MCP server or an API action runs if it only reads, asks first if it changes data, and is denied if it deletes data.
+- **Nobody can approve outside the web app.** In Slack, over the API, through PipesHub's MCP server and for service accounts, a tool that would ask first is denied instead. Only pre-approved tools run there.
+
+See [Governing agents](/agent-guide/governance) for the defaults, who can change them, and how to keep an agent from acting unattended.
+
+## What is logged
+
+PipesHub writes its logs to each container's standard output. It has no in-app audit log screen and no built-in export to other systems. Collect the container logs with your own tooling if you need to keep them.
+
+**Sign-in and account events.** The Node.js service writes one log line, on a logger named `audit`, for each of these:
+
+- Sign-in (including each step of a multi-step sign-in), sign-out, and failed sign-ins with a reason code
+- Account locked and unlocked
+- Account setup, and accounts created on first sign-in through single sign-on
+- Password set up, changed, reset requested and reset completed
+- One-time code sent
+- Email address changed
+- Authentication policy updated
+
+Each line has the event name, who acted, the target, the outcome and a reason code. It names users by PipesHub ID, never by email address. These lines are written at the `info` level, so they appear when `LOG_LEVEL` is `info` or lower, the default.
+
+**Agent tool calls.** Each tool call an agent or chat makes writes a log line with the tool's name, its outcome and, for a refused call, why it was refused.
+
+**Not logged as audit events:** which records a user opened or searched for, the questions asked in chat, changes to connectors, agents or settings, and user and group changes other than the account events above.
+
+## Deleting data
+
+- **Deleting a connector** removes its records and permissions from the graph database, its embeddings from the vector database, its files from file storage and its saved credentials. If another connector holds the same file, that connector keeps it. If a step fails, the connector stays marked as deleting, and PipesHub keeps retrying the removal of its files.
+- **Deleting a user** signs them out and ends their sessions and tokens, removes them from groups and projects, clears their password, and marks the account deleted. OAuth apps they created move to the admin who deleted them, unless the app's tokens act as that user, in which case the app and its tokens are deleted. Their own MCP servers, personal actions and the credentials for them are removed. The account is marked deleted, not erased, so it can be restored. Only members can be deleted: demote an admin first.
+- **Removing a file or item in the source app** removes it from PipesHub on a later sync. See [How access changes reach search](#how-access-changes-reach-search).
 
 ## What leaves your deployment
 
@@ -55,20 +121,29 @@ The [demo data](/demo-data) is bundled with PipesHub. Loading it contacts no ext
 
 ### Telemetry
 
-Telemetry is on by default. Every 5 minutes, each PipesHub service sends usage metrics and product events to PipesHub's metrics collector over HTTPS.
+Telemetry is on by default. Every 5 minutes, each PipesHub service sends usage metrics and product events over HTTPS to PipesHub's metrics collector at `metrics-collector.intellysense.com`. Telemetry is not anonymous.
 
-Some events identify people:
+**What is sent:**
 
-- **Sign-up and sign-in** events include the user's email address, user ID and organization ID.
-- **Workspace creation** includes the admin's email address and full name.
-- **Usage metrics**, such as user counts and API request counts, are labelled with the organization ID and email domain.
+- **Usage metrics**, such as user and record counts, connector and sync counts, API requests by route and status, and search and model-call counts. Request metrics are labelled with the organization ID and the user's email domain.
+- **Product events**, with the organization ID and user ID:
+  - Sign-up, sign-in, starting a chat and running an agent also include the user's **email address** and email domain. Searches do too.
+  - Workspace creation includes the admin's **email address and full name**.
+  - Adding a connector includes the email address of the person who added it, the connector type and its scope.
+  - Creating a personal access token, issuing an OAuth token, and connecting to or calling a tool on PipesHub's MCP server include the token's scope count, the client's name, or the tool's name.
+  - Answers include counts, such as how many citations, and which connector types were cited.
+- An installation ID that identifies your deployment.
 
-To turn telemetry off, set `TELEMETRY_COLLECTION_FLAG=false` in your `.env` file and restart PipesHub. No telemetry code runs in any service while it is off.
+The events don't include the text of chat messages or search queries, file names or document content.
+
+**To turn telemetry off,** set `TELEMETRY_COLLECTION_FLAG=false` in your `.env` file and restart PipesHub. On Helm, set `telemetry.collection.enabled: false`. No telemetry code runs in any service while it is off. Left empty, the flag keeps the default, which is on.
 
 An admin can also stop sending telemetry from the app: in **Workspace → General**, under **Data collection settings**, turn off **Enable**. The environment variable is the stronger switch, because with it off no telemetry code runs at all.
 
 ## Related
 
+- [Permissions and freshness by connector](/connectors/permissions-matrix)
+- [Governing agents](/agent-guide/governance)
 - [Personal access tokens](/developer/personal-access-tokens)
 - [OAuth 2.0 apps](/developer/oauth2)
 - [Deployment](/deployment/overview)

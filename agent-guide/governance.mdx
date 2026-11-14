@@ -1,0 +1,115 @@
+---
+title: "Governing agents"
+description: "Control which tools agents may run, what runs without a person watching, whose access an agent uses, and what is logged"
+icon: "scale-balanced"
+---
+
+<div className="not-prose mt-10">
+  <div className="p-6 border border-gray-200 dark:border-gray-700 rounded-xl bg-blue-50 dark:bg-gray-800">
+    <div className="flex items-center gap-3 mb-4">
+      <Icon icon="scale-balanced" size={32} />
+      <div className="text-xl font-semibold text-gray-900 dark:text-white">Governing agents</div>
+    </div>
+    <p className="text-base text-gray-700 dark:text-gray-300 my-0">Decide what agents may do, and when a person has to approve it</p>
+  </div>
+</div>
+
+Agents and the assistant can search your indexed data, read the web, and call tools that change things in other apps. This page explains the controls PipesHub gives you over each of these, and their defaults.
+
+## Tool approval rules
+
+Every tool an agent can call has one of three rules:
+
+| Rule | What happens |
+| --- | --- |
+| **Pre-approved** | The tool runs without asking. |
+| **Allow on approval** | The chat shows **Needs your approval** with the call's details, and waits for the person to select **Allow** or **Deny**. |
+| **Deny** | The tool never runs. The model is told why. |
+
+An approval request expires after 15 minutes. **Don't ask again for this tool** saves the answer as that person's rule, where they own the rules (see below).
+
+### Defaults
+
+Until someone sets a rule, a tool starts from what it does to data:
+
+| Tool comes from | Reads data | Changes data | Deletes data or can't be undone |
+| --- | --- | --- | --- |
+| A toolset (Jira, Slack, Google Workspace and so on) | Pre-approved | Pre-approved | Allow on approval |
+| An [MCP server](/agent-guide/mcp-servers) | Pre-approved | Allow on approval | Deny |
+| An [API action](/agent-guide/api-actions) | Pre-approved | Allow on approval | Deny |
+
+- **A toolset tool's kind** comes from PipesHub's own tag on the tool. A tool that sends email or clears a sheet counts as one that can't be undone.
+- **An MCP tool's kind** comes from the hints its server gives. A tool with no hints counts as one that changes data. A tool whose name contains a deleting word, such as "delete", "remove" or "drop", counts as one that deletes data, whatever the server says.
+- A few calls are checked one by one. For example, a SQL query that changes data counts as one that can't be undone even though the tool itself only runs queries.
+
+<Warning>
+  Toolset tools that change data, such as creating a Jira issue or posting a Slack message, run without asking by default. Give an agent only the toolset tools it needs.
+</Warning>
+
+### Who sets the rules
+
+| Tools | Who can change the rules | Where |
+| --- | --- | --- |
+| An MCP server's tools | Each person, for their own chats. The rules apply in every chat they have, agent chats included | **Workspace → Your MCP servers** → server card → **Tool approvals** |
+| A personal action (a toolset someone added for themselves) | Its owner | The action's **Tool approvals** |
+| A toolset an admin added for the organization | Nobody. The defaults above always apply, and each person answers the approval request in the chat | — |
+
+### Require approval before an agent changes data
+
+- **MCP servers and API actions** already ask before a tool that changes data runs. Keep those rules at **Allow on approval**, or set a tool to **Deny**.
+- **Personal actions:** set each tool that changes data to **Allow on approval**.
+- **Organization toolsets:** their tools that change data can't be made to ask. Limit what the agent can do instead: on the toolset's node in the agent builder, use **+** to choose only the tools the agent needs. See [Agent setup guide](/agent-guide/setup-guide).
+
+The deployment settings `MCP_TOOL_APPROVALS=false` and `TOOLSET_TOOL_APPROVALS=false` turn approval checks off, for MCP tools and for toolset tools. With them off, every tool runs without asking. Leave them unset, which keeps approvals on.
+
+## What runs unattended
+
+An approval request can only be answered in the PipesHub web app. Where nobody can answer one, a tool that would ask is denied instead:
+
+- the Slack bot,
+- the API, with an OAuth token or a personal access token,
+- PipesHub's own [MCP server](/mcp/overview), used from clients such as Claude or Cursor,
+- service accounts.
+
+There, only pre-approved tools run. A tool set to **Deny** never runs anywhere. Because toolset tools that change data are pre-approved by default, they also run unattended.
+
+## Whose access an agent uses
+
+| Agent type | Knowledge it can search | Toolset credentials |
+| --- | --- | --- |
+| **User agent** | What the person chatting can read | Each person's own sign-in |
+| **Service agent** | What its creator can read, or a service account an admin grants | Stored on the agent and used for everyone |
+
+A service agent is always shared with the whole organization, and everyone who uses it sees search results from what its search identity can read. Converting a user agent to a service agent can't be undone. See [Agent types](/agent-guide/setup-guide#step-2-name-the-agent-and-choose-its-type).
+
+## Knowledge sources
+
+An agent searches only the **Apps** (connectors) and **Collections** connected to its **Knowledge** handle. Within those, it finds only what its search identity is allowed to see. Access is checked in PipesHub against the permissions synced from each source, so a change in a source reaches the agent after the next sync. See [Permissions and freshness by connector](/connectors/permissions-matrix).
+
+## Web search
+
+- An agent you build searches the web only if you connect a web search provider from **Tools → Web search** in the builder. Leave it off to keep the agent off the web.
+- In chat, a person can turn **Web search** off for a message from the composer's **+** menu. A per-message setting can only narrow what an agent was built with, never add to it.
+- Text from search results and pages is marked as untrusted, so the model treats it as information, not instructions. This lowers the risk of a page steering the agent but does not remove it. See [Web search](/web-search#safety).
+
+## MCP servers
+
+MCP servers are on by default. An admin turns them off for the whole workspace in **Workspace → Labs** with **Enable MCP Servers**. While they are off, no agent or chat can use MCP tools. If PipesHub can't read the setting, it treats MCP servers as off.
+
+Local command (STDIO) servers that are not in the catalog are off unless the deployment turns them on, because they run on the PipesHub server with its privileges. See [MCP servers in agents](/agent-guide/mcp-servers).
+
+## What is logged
+
+- **Each tool call** writes one line to the service log with the tool's name, its kind, the outcome and, for a refused call, why it was refused (for example a **Deny** rule, or no one able to approve).
+- **Each agent turn** writes one line with counts: model calls, tool calls, tool errors and tokens.
+- **Conversations**, including each tool step, are saved with the chat, where the person who had the chat can open them.
+
+PipesHub writes these logs to each container's standard output. There is no in-app audit log of agent activity, and no record of who approved or denied a request other than the chat itself. Keep the container logs with your own tooling if you need a history. See [What is logged](/security-and-privacy#what-is-logged) for sign-in events and [Telemetry](/security-and-privacy#telemetry) for what PipesHub sends about agent runs.
+
+## Related
+
+- [Agents overview](/agent-guide/overview)
+- [Agent setup guide](/agent-guide/setup-guide)
+- [MCP servers in agents](/agent-guide/mcp-servers)
+- [API actions](/agent-guide/api-actions)
+- [Security and privacy](/security-and-privacy)

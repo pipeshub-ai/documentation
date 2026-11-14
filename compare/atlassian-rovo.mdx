@@ -1,0 +1,79 @@
+---
+title: "PipesHub vs Atlassian Rovo"
+description: "How open-source, self-hosted PipesHub compares with Atlassian Rovo for Jira and Confluence teams, including Data Center, on deployment, model choice, permissions, connectors, MCP and pricing"
+icon: "atlassian"
+---
+
+Atlassian Rovo is the AI search, chat and agent layer built into Atlassian Cloud, on top of Atlassian's Teamwork Graph. PipesHub is an open-source (Apache 2.0) context layer that indexes Jira and Confluence (Cloud and Data Center) together with 35+ other sources, and that you can run yourself or use on PipesHub Cloud.
+
+<Note>
+  Atlassian facts are dated **as of November 2026** and linked under [Sources](#sources). See [How PipesHub compares](/compare/overview) for the summary across all products.
+</Note>
+
+## When Rovo fits better
+
+- **Your teams work in Jira and Confluence Cloud.** Rovo is part of the Atlassian apps people already use, with Atlassian's permissions and the Teamwork Graph behind it.
+- **You want AI included in your Atlassian plan.** Rovo is included in paid Atlassian Cloud plans, with pooled credits, so there is no separate product to deploy.
+- **You want Atlassian's agents and actions.** Rovo agents work inside Jira and Confluence, for example creating Jira work items.
+- **You want a widely used product.** Atlassian reported more than 5 million monthly active Rovo users in February 2026.
+- **You use the Atlassian MCP server.** Atlassian runs a remote MCP server for Jira, Confluence and other Atlassian products, for clients such as Claude, ChatGPT and Cursor.
+
+## When PipesHub fits better
+
+- **You run Jira or Confluence Data Center and want to stay on your network.** PipesHub indexes [Jira Data Center](/connectors/jira/jira-data-center) and [Confluence Data Center](/connectors/confluence/confluence-data-center) from a PipesHub instance you host, including on an [air-gapped network](/deployment/vendor/private). Rovo's Data Center connectors need an Atlassian Cloud plan and pull data into Atlassian Cloud.
+- **Your knowledge is spread beyond Atlassian.** PipesHub searches Jira and Confluence together with Slack, Google Drive, SharePoint, GitHub, Salesforce, ServiceNow and the other [indexed sources](/connectors/overview) in one permission-aware index.
+- **You want to choose the model.** PipesHub works with about 20 LLM providers, including local [Ollama](/ai-models/llm/ollama) and [vLLM](/ai-models/llm/vllm). Rovo uses models Atlassian selects; letting agent builders choose the model is an open suggestion on Atlassian's public tracker.
+- **You want cost that doesn't depend on credits.** The open-source edition has no licence or credit cost; you pay for infrastructure and model usage.
+
+## Feature comparison
+
+| | PipesHub | Atlassian Rovo |
+| --- | --- | --- |
+| **Licence** | Apache 2.0 | Proprietary |
+| **Deployment** | Self-host (Docker Compose, Helm), including air-gapped; or PipesHub Cloud | Atlassian Cloud |
+| **Jira and Confluence Data Center** | Indexed directly by your PipesHub instance | Through Rovo connectors that need a Cloud plan |
+| **Model choice** | About 20 providers, bring your own key, local models | Models chosen by Atlassian |
+| **Permissions** | Synced from each source, matched to users by email, checked before results are returned; no results if the check can't run | Atlassian permissions; connectors respect source access |
+| **Non-Atlassian sources** | 35+ indexed sources in total | Third-party connectors (for example SharePoint and Box) |
+| **Sync** | Scheduled, not real-time | Native for Atlassian Cloud; connectors sync |
+| **MCP** | MCP server on the official MCP registry; OAuth 2.0 or personal access tokens | Atlassian remote MCP server |
+| **Agents** | Agent builder with actions, including [Jira](/toolsets/jira/jira) and [Confluence](/toolsets/confluence/confluence) actions; actions that can't be undone ask first | Rovo agents in Atlassian apps |
+| **Pricing** | No licence fee for open source | Included in paid Cloud plans with pooled credits |
+
+## Deployment and data control
+
+PipesHub stores indexed content, permissions and embeddings in databases you run. Data leaves your deployment only for the services you configure, such as a hosted model provider, plus product telemetry, which is on by default and can be turned off. See [Security and privacy](/security-and-privacy).
+
+Rovo runs in Atlassian Cloud. For Data Center, Atlassian describes a cloud-based pull model over an application link secured with OAuth 2.0.
+
+## Pricing model
+
+As reported by Atlassian partners in September 2026, Rovo is included in paid Atlassian Cloud plans and metered with pooled organization credits (about 25 per user on Standard, 70 on Premium and 150 on Enterprise), with overage billed at about $0.01 per credit from 3 December 2026. Check Atlassian's pricing page for your plan.
+
+PipesHub's open-source edition has no licence, seat or credit fee. Your costs are servers and model usage; local models remove per-token charges.
+
+## Working alongside Rovo
+
+- **Keep Rovo in Jira and Confluence, use PipesHub for cross-tool questions** that need Slack, Drive, SharePoint, GitHub or databases in the same answer.
+- **Cover Data Center without Cloud.** Teams that stay on Jira or Confluence Data Center can use PipesHub inside their network.
+- **Give coding agents Jira and Confluence context** with permission checks, over the [PipesHub MCP server](/mcp/overview).
+
+## Where PipesHub is weaker
+
+- No in-product experience inside Jira or Confluence; people use the PipesHub app, the Slack bot or an MCP client.
+- Sync is scheduled. A deletion or removed permission that the source does not report is cleaned up only on the next complete full sync; scheduled runs are not full syncs. See [Permissions and freshness by connector](/connectors/permissions-matrix).
+- No SAML, OIDC or SCIM in the open-source edition, no usage analytics and no scheduled agents.
+
+## Sources
+
+Accessed 14 November 2026 unless noted.
+
+- Atlassian, "Rovo connectors for Data Center": https://www.atlassian.com/migration/rovo-connectors-data-center
+- Atlassian Community, "Get inspired by Rovo connectors for Data Center use cases" (Cloud plan requirement): https://community.atlassian.com/forums/Data-Center-articles/Get-inspired-by-Rovo-connectors-for-Data-Center-use-cases/ba-p/3194496
+- Atlassian Support, "Manage connector details": https://support.atlassian.com/organization-administration/docs/manage-rovo-connectors
+- Atlassian, "Remote MCP server": https://www.atlassian.com/platform/remote-mcp-server
+- Atlassian, MCP server repository: https://github.com/atlassian/atlassian-mcp-server
+- Atlassian public issue tracker, Rovo project (connectors such as SharePoint and Box; ROVO-229 work-item creation; ROVO-275 model selection): https://jira.atlassian.com/projects/ROVO
+- Breeze, "Atlassian pricing changes 2026" (September 2026): https://www.breeze.pm/articles/atlassian-pricing-changes-2026
+- Seibert Group, "Atlassian usage-based pricing": https://us.seibert.group/blog/atlassian-usage-based-pricing
+- Atlassian Q3 FY2026 earnings call transcript (30 April 2026): https://www.fool.com/earnings/call-transcripts/2026/04/30/atlassian-team-q3-2026-earnings-transcript/

@@ -1,0 +1,87 @@
+---
+title: "PipesHub vs Glean"
+description: "How open-source, self-hosted PipesHub compares with Glean on deployment, data control, model choice, permissions, connectors, MCP and pricing model, and when each is the better fit"
+icon: "magnifying-glass"
+---
+
+Glean is a managed enterprise search and agent platform. PipesHub is an open-source (Apache 2.0) context layer you can run yourself or use on PipesHub Cloud. Both index company apps, follow source permissions and expose that index to other AI tools over MCP. They differ most in who runs the system, how it is licensed and priced, and how much is built in.
+
+<Note>
+  Glean facts are dated **as of November 2026** and linked under [Sources](#sources). See [How PipesHub compares](/compare/overview) for the summary across all products.
+</Note>
+
+## When PipesHub fits better
+
+- **You must run it yourself.** PipesHub runs with Docker Compose or Helm in your cloud, your data centre or an [air-gapped network](/deployment/vendor/private). Glean offers SaaS and a "Customer Hosted" option in your own GCP or AWS account.
+- **You want your own or local models.** PipesHub works with about 20 LLM providers, including [Ollama](/ai-models/llm/ollama) and [vLLM](/ai-models/llm/vllm) on your own hardware, and embeddings can run inside the PipesHub container.
+- **You want an open licence and no per-seat fee.** The open-source edition has no licence fee; you pay for infrastructure and model usage.
+- **You need self-hosted Atlassian.** PipesHub indexes [Jira Data Center](/connectors/jira/jira-data-center) and [Confluence Data Center](/connectors/confluence/confluence-data-center) directly.
+
+## When Glean fits better
+
+- **You want a managed service.** Glean runs, scales and supports the platform for you. With PipesHub self-hosted, your team operates it.
+- **You need more connectors.** Glean has a broad native connector catalog. PipesHub has 35+ indexed sources.
+- **You need built-in governance and agents.** Glean ships features such as Glean Protect for oversharing scans, agent governance policies and agent evaluations (in beta at launch). PipesHub has no usage or adoption analytics, and its agents can't run on a schedule or a trigger.
+- **You need enterprise sign-in and assurance.** The open-source edition of PipesHub offers password, email one-time code, Google and Microsoft sign-in, without SAML, OIDC or SCIM.
+- **You want a vendor with a long enterprise track record.** Glean reports more than $300M in annual recurring revenue, and Gartner places it in its 2026 market research.
+
+## Feature comparison
+
+| | PipesHub | Glean |
+| --- | --- | --- |
+| **Licence** | Apache 2.0 | Proprietary |
+| **Deployment** | Self-host (Docker Compose, Helm), including air-gapped; or PipesHub Cloud | SaaS, or Customer Hosted in your GCP or AWS account |
+| **Model choice** | About 20 providers, bring your own key, local models | Many hosted LLMs with automatic routing; discount for bring-your-own LLM key |
+| **Permissions** | Synced from each source, matched to users by email, checked before results are returned; no results if the check can't run | Mirrors source permissions |
+| **Indexed connectors** | 35+ sources | Broad native catalog |
+| **Sync** | Scheduled, not real-time | Connector-specific; some sources such as Slack are searched at query time |
+| **MCP server** | Yes, listed on the official MCP registry; OAuth 2.0 or personal access tokens | Yes, remote MCP servers |
+| **Agents** | Agent builder with actions; actions that can't be undone ask first | Agent builder, autonomous agents, agent governance |
+| **Usage and agent measurement** | Not included | Part of Glean's agent development lifecycle |
+| **Sign-in (open source)** | Password, email code, Google, Microsoft | See Glean's security documentation |
+| **Pricing** | No licence fee for open source | Quote only; seat licence plus pooled credits |
+
+## Deployment and data control
+
+PipesHub keeps indexed content, permissions and embeddings in databases you run. Data leaves your deployment only for the services you configure, such as a hosted model provider, plus product telemetry, which is on by default and can be turned off. [Security and privacy](/security-and-privacy) lists every outbound call.
+
+Glean's Customer Hosted deployment places Glean in your GCP or AWS account. Glean documents that its region is fixed at deployment and that changing it means a rebuild.
+
+## Pricing model
+
+Glean does not publish list prices. Its documented Enterprise Flex model combines a seat licence with organization-wide FlexCredits. Credits are used by premium-model reasoning, agent runs, API calls (including search through the API) and other features. Glean gives discounts for bringing your own LLM key or for self-hosting. Buyer data from Vendr shows a median contract of about $99,000 per year and minimums of 100 to 250 users (as of November 2026).
+
+PipesHub's open-source edition has no licence or seat fee. Your costs are the servers you run it on and the models you call; local models remove per-token charges.
+
+## Migration and coexistence
+
+Many organizations run Glean and other assistants side by side. PipesHub can sit next to Glean rather than replace it, for example:
+
+- for teams or systems that must stay on your own network, such as Jira and Confluence Data Center or file shares;
+- as the context source for coding agents such as Claude Code, Cursor and Codex through the [PipesHub MCP server](/mcp/overview), using [personal access tokens](/developer/personal-access-tokens) or OAuth 2.0.
+
+There is no import from Glean. To move, connect the same sources in PipesHub and let them sync; permissions come from the sources, not from Glean.
+
+## Where PipesHub is weaker
+
+- Fewer connectors, and Microsoft Teams is an [action](/toolsets/microsoft-365/teams), not an indexed source.
+- Sync is scheduled. A deletion or removed permission that the source does not report is cleaned up only on the next complete full sync; scheduled runs are not full syncs.
+- Team connectors for S3-compatible storage, Azure Blob, SMB shares and Notion can't share per-item permissions, so everyone in the organization (or Notion workspace) can search what they sync. See [Permissions and freshness by connector](/connectors/permissions-matrix).
+- No SAML, OIDC or SCIM in the open-source edition, no usage analytics and no scheduled agents.
+
+## Sources
+
+Accessed 14 November 2026 unless noted.
+
+- Glean, "Enterprise Flex pricing" (page updated 12 November 2026): https://docs.glean.com/glean-enterprise-flex-pricing
+- Glean, "About connectors": https://docs.glean.com/connectors/about
+- Glean, "About MCP": https://docs.glean.com/administration/platform/mcp/about
+- Glean, "Cloud-prem / Customer Hosted deployment": https://docs.glean.com/security/cloud-prem/
+- Glean, "Deployment best practices" (Glean Protect): https://docs.glean.com/security/deployment-best-practices
+- Glean, "Glean:GO 2026" (26 August 2026): https://www.glean.com/blog/glean-agents-go-2026
+- TechCrunch, "Glean's top line crosses $300M" (28 May 2026): https://techcrunch.com/2026/05/28/gleans-top-line-crosses-300m-as-ai-budget-cutting-becomes-its-major-selling-point/
+- Futurum, "Glean doubles ARR to $200M" (3 April 2026), on LLM routing: https://futurumgroup.com/insights/glean-doubles-arr-to-200m-can-its-knowledge-graph-beat-copilot/
+- Glean, "Enterprise Agent Development Lifecycle" (12 May 2026): https://www.glean.com/press/glean-introduces-the-enterprise-agent-development-lifecycle-codifying-how-enterprises-build-govern-and-measure-ai-agents
+- Business Wire, Gartner 2026 Emerging Market Quadrant placement (22 June 2026): https://www.businesswire.com/news/home/20260622358987/en/
+- Vendr, Glean buyer pricing data: https://www.vendr.com/marketplace/glean
+- Hunton, "Salesforce locks down Slack data" (June 2025), on query-time Slack access: https://www.hunton.com/insights/legal/salesforce-locks-down-slack-data-time-to-review-your-slack-api-terms

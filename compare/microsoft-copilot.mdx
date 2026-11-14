@@ -1,0 +1,85 @@
+---
+title: "PipesHub vs Microsoft 365 Copilot"
+description: "How open-source, self-hosted PipesHub compares with Microsoft 365 Copilot on deployment, data control, model choice, permissions, connectors, MCP and pricing, and how the two work together"
+icon: "microsoft"
+---
+
+Microsoft 365 Copilot is the AI assistant built into Microsoft 365: Word, Excel, PowerPoint, Outlook and Teams, grounded in your tenant's mail, files and meetings. PipesHub is an open-source (Apache 2.0) context layer that indexes apps across vendors and serves that index to people and to agent harnesses over MCP. For most Microsoft 365 organizations the question is not which one, but whether PipesHub covers something Copilot doesn't.
+
+<Note>
+  Microsoft facts are dated **as of November 2026** and linked under [Sources](#sources). See [How PipesHub compares](/compare/overview) for the summary across all products.
+</Note>
+
+## When Microsoft 365 Copilot fits better
+
+- **Your work lives in Microsoft 365.** Copilot works inside the Office apps and Teams, with your mail, calendar, meetings and SharePoint content. PipesHub has no Office add-ins and does not index Microsoft Teams (Teams is an agent [action](/toolsets/microsoft-365/teams)).
+- **You want governance in tools you already run.** Copilot uses Microsoft 365 permissions and works with Microsoft Purview and Entra. PipesHub's open-source edition has its own sign-in (password, email one-time code, Google, Microsoft) without SAML, OIDC or SCIM.
+- **You want a large connector catalog without running servers.** Microsoft offers more than 100 prebuilt Copilot connectors, plus custom connectors. PipesHub has 35+ indexed sources and, self-hosted, your team operates it.
+- **You want an established vendor.** Microsoft provides enterprise support and contracts. PipesHub has no usage or adoption analytics.
+
+## When PipesHub fits better
+
+- **Content must stay on infrastructure you control.** PipesHub runs with Docker Compose or Helm in your cloud, data centre or an [air-gapped network](/deployment/vendor/private). Copilot runs in Microsoft's cloud.
+- **You want to choose the models.** PipesHub works with about 20 LLM providers, including local [Ollama](/ai-models/llm/ollama) and [vLLM](/ai-models/llm/vllm). Copilot uses models Microsoft selects (OpenAI and Anthropic models); Microsoft notes that Anthropic models are hosted outside Microsoft and are excluded from the EU Data Boundary.
+- **Your agents run outside Microsoft 365.** PipesHub's [MCP server](/mcp/overview), listed on the official MCP registry, gives Claude Code, Cursor, Codex, Gemini CLI and other clients permission-aware search over the same index.
+- **You want no per-seat fee.** The open-source edition has no licence cost; you pay for infrastructure and model usage.
+
+## Feature comparison
+
+| | PipesHub | Microsoft 365 Copilot |
+| --- | --- | --- |
+| **Licence** | Apache 2.0 | Proprietary; needs a qualifying Microsoft 365 plan |
+| **Deployment** | Self-host (Docker Compose, Helm), including air-gapped; or PipesHub Cloud | Microsoft cloud, in your tenant |
+| **Where people use it** | PipesHub web app, [Slack bot](/integrations/slackBot), MCP clients, API | Word, Excel, PowerPoint, Outlook, Teams, Copilot app |
+| **Model choice** | About 20 providers, bring your own key, local models | OpenAI and Anthropic models chosen by Microsoft |
+| **Permissions** | Synced from each source, matched to users by email, checked before results are returned; no results if the check can't run | Microsoft 365 permissions; synced connectors carry each item's ACL |
+| **Non-Microsoft sources** | 35+ indexed sources | 100+ prebuilt connectors, synced or federated (live, through MCP) |
+| **Sync** | Scheduled, not real-time | Synced connectors check for changes periodically; federated connectors fetch live |
+| **MCP** | MCP server for any MCP client | Uses MCP for federated connectors; Copilot Studio agents |
+| **Agents** | Agent builder with actions; actions that can't be undone ask first | Copilot Studio agents, metered in Copilot Credits |
+| **Pricing** | No licence fee for open source | $30 per user per month, annual; agents metered |
+
+## Deployment and data control
+
+PipesHub stores indexed content, permissions and embeddings in databases you run. Data leaves your deployment only for the services you configure, such as a hosted model provider, plus product telemetry, which is on by default and can be turned off. See [Security and privacy](/security-and-privacy).
+
+Copilot keeps connector content in your Microsoft 365 tenant, in Microsoft's cloud. Microsoft also controls oversharing risk with tools such as Purview DSPM for AI and Restricted Content Discovery.
+
+Both products depend on source permissions being right. If a SharePoint site is open to everyone, both will show its content to everyone.
+
+## Pricing model
+
+As of November 2026, Microsoft lists Microsoft 365 Copilot at $30 per user per month paid yearly ($31.50 paid monthly on an annual term), on top of a qualifying Microsoft 365 subscription. Copilot Business for organizations of up to 300 users is reported at $21 per user per month. Copilot Studio agents use Copilot Credits, reported at about $0.01 per credit pay-as-you-go or $200 for a 25,000-credit pack. Microsoft also sells Microsoft 365 E7 at $99 per user per month, which includes Copilot.
+
+PipesHub's open-source edition has no licence or seat fee. Your costs are servers and model usage; local models remove per-token charges.
+
+## Working alongside Copilot
+
+Most organizations run more than one assistant, and Gartner reports that only a small share standardize on one. Common ways to use PipesHub with Copilot:
+
+- **Keep Copilot for Microsoft 365, use PipesHub for the rest**, for example self-hosted Jira and Confluence Data Center, file shares, or databases, or teams who use other assistants.
+- **Give coding agents company context.** Developers using Claude Code, Cursor or Codex connect to PipesHub over [MCP](/mcp/overview) with a [personal access token](/developer/personal-access-tokens) or OAuth 2.0.
+- **Serve restricted networks.** Where a hosted assistant isn't allowed, PipesHub with local models runs fully inside the network.
+
+PipesHub can index Microsoft 365 too, through its [SharePoint](/connectors/microsoft-365/sharepoint), [OneDrive](/connectors/microsoft-365/one-drive) and [Outlook](/connectors/microsoft-365/outlook) connectors.
+
+## Where PipesHub is weaker
+
+- No Office app integration, and Microsoft Teams messages are not indexed.
+- Sync is scheduled. A deletion or removed permission that the source does not report is cleaned up only on the next complete full sync; scheduled runs are not full syncs.
+- Some team connectors (S3-compatible storage, Azure Blob, SMB shares, Notion) can't share per-item permissions. See [Permissions and freshness by connector](/connectors/permissions-matrix).
+- No SAML, OIDC or SCIM in the open-source edition, no usage analytics and no scheduled agents.
+
+## Sources
+
+Accessed 14 November 2026 unless noted.
+
+- Microsoft, "Microsoft 365 Copilot enterprise pricing": https://www.microsoft.com/en-us/microsoft-365-copilot/pricing/enterprise
+- Microsoft Learn, "Copilot connectors overview" (updated 6 October 2026): https://learn.microsoft.com/en-us/microsoft-365/copilot/connectors/overview
+- Microsoft, "Expanding model choice in Microsoft 365 Copilot" (24 September 2025): https://microsoft.com/en-us/microsoft-365/blog/2025/09/24/expanding-model-choice-in-microsoft-365-copilot/
+- Microsoft, "Powering Frontier transformation with Copilot and agents" (9 March 2026): https://microsoft.com/en-us/microsoft-365/blog/2026/03/09/powering-frontier-transformation-with-copilot-and-agents
+- Microsoft Tech Community, "Mitigate oversharing to govern Microsoft 365 Copilot and agents": https://techcommunity.microsoft.com/blog/microsoft365copilotblog/mitigate-oversharing-to-govern-microsoft-365-copilot-and-agents/4448744
+- Licensing School, "Copilot Credits guide" (October 2026): https://www.licensingschool.co.uk/wp-content/uploads/2026/10/Copilot-Credits-Guide-October-2026-v4.pdf
+- Holger Imbery, "Copilot pricing, licenses and credits" (Copilot Business pricing): https://holgerimbery.blog/copilot-pricing-licenses-and-credits
+- UC Today, Microsoft 365 E7 at $99 (May 2026): https://www.uctoday.com/?p=355469
+- Computerworld, Gartner survey on AI assistants (26 January 2026): https://www.computerworld.com/article/4119325/why-ai-assistants-still-face-barriers-at-scale.html

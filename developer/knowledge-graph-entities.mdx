@@ -6,7 +6,7 @@ icon: "diagram-project"
 
 Two calls let your own code walk the knowledge graph PipesHub builds from your connectors:
 
-- `POST /api/v1/search/entities` finds entities by name or meaning: departments, categories, subcategories, topics, languages, record groups (a drive, a space, a project), record titles and, where named-entity extraction is on, people, organizations and other named entities.
+- `POST /api/v1/search/entities` finds entities by name or meaning: departments, categories, subcategories, topics, languages, record groups (a drive, a space, a project), record titles, people in your organization, outside organizations your records belong to and, where named-entity extraction is on, other named entities.
 - `POST /api/v1/search/entities/neighbors` takes one entity and returns the records connected to it, the other entities those records share with it, and the relation types between them.
 
 Use them to find what a topic or a person is attached to, or to let an agent browse by entity before it fetches passages with the [Retrieval API](/developer/retrieval-api).
@@ -75,16 +75,14 @@ curl -s "$PIPESHUB_URL/api/v1/search/entities" \
 
 | Field | Description |
 |---|---|
-| `results[].entityId`, `results[].entityType` | Pass both to the neighbors call. |
+| `results[].entityId`, `results[].entityType` | Pass both to the neighbors call. `entityType` can also be `person` or `organization`; the neighbors call and the `entityTypes` filter do not accept those two. |
 | `results[].name` | The entity's name, shortened when it is very long. |
-| `results[].kind` | For `named_entity` results, the kind, such as `person`. |
 | `results[].apps` | The connectors whose records carry the entity. |
 | `results[].records` | A few readable records, for the first entities only. Each has `recordId`, `name`, `type`, `app` and one date key (`modified`, `dated`, `fileModified` or `uploaded`) as `YYYY-MM-DD`. |
 | `results[].moreRecords` | `true` when the entity has more readable records than `records` shows. |
+| `results[].indexingStatus`, `results[].note` | For a `record` result whose content is not indexed yet: its indexing status and why its text cannot be read yet. |
 | `message`, `results: []` | Nothing matched. This is a `200`, not an error. |
-| `scopeNote` | Set when the caller's access covers only part of some connectors' records, so matches can be missing. |
-| `ignoredEntityTypes` | Requested `entityTypes` this search does not cover; they were left out. |
-| `kindNotes` | Why some requested `namedEntityKinds` were not searched. |
+| `scopeNote` | With an empty result, set when the caller's access covers only part of some connectors' records, so matches can be missing. |
 
 ---
 

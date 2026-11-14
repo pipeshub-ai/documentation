@@ -263,7 +263,7 @@ The API still calls actions toolsets, so these scopes are named `toolset:*`.
 | `code:read` | Read indexed code repositories and their code graph. |
 | `code:write` | Push a local repository to be indexed into the code graph (`/api/v1/local-repos`). |
 
-`code:write` is off by default: it is not in the default `MCP_SCOPES`, so no token can hold it until whoever runs the server adds it there and restarts PipesHub. The local repository routes that only read (listing your repositories and reading one) accept `code:read` or `code:write`; registering, uploading, committing and deleting need `code:write`. A pushed repository belongs to the user the token acts as, and nobody else can see or change it.
+`code:write` is not in the default `MCP_SCOPES`. `MCP_SCOPES` caps personal access tokens, service account tokens, clients that register themselves (see [Dynamic Client Registration](#dynamic-client-registration)) and the built-in `pipeshub-agent` client, so none of these can hold `code:write` until whoever runs the server adds it to `MCP_SCOPES` and restarts PipesHub. It does not cap an application created in **Developer settings**: any member can select `code:write` for their own application, and tokens issued to that application can carry it. The local repository routes that only read (listing your repositories and reading one) accept `code:read` or `code:write`; registering, uploading, committing and deleting need `code:write`. A pushed repository belongs to the user the token acts as, and nobody else can see or change it.
 
 </Accordion>
 

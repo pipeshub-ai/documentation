@@ -15,27 +15,16 @@ New to the API? Start with the [API Quickstart](/developer/api-quickstart).
 
 ### Totals that are not exact
 
-The Knowledge Hub listings (`GET /knowledgeBase/knowledge-hub/nodes` and `GET /knowledgeBase/knowledge-hub/nodes/{parentType}/{parentId}`) can return a total that is not exact. This happens only when the knowledge graph is stored in PostgreSQL; the other graph stores count exactly and do not send these fields. `pagination.totalCapped` is `true` when `pagination.totalItems` is not exact.
+The Knowledge Hub listings (`GET /knowledgeBase/knowledge-hub/nodes` and `GET /knowledgeBase/knowledge-hub/nodes/{parentType}/{parentId}`) count only items you are allowed to read. When the knowledge graph is stored in PostgreSQL, a total may not be exact; the other graph stores count exactly and do not send the fields below.
 
-The total is **lower** than the real count when counting stopped early. Which way a total is counted depends on whether PipesHub can count from the access it has already worked out for the connector, with no more than 200 rows left to check one at a time:
+When `pagination.totalCapped` is `true`, `totalItems` may not be exact. Usually it is lower than the real number: the count stops at 10,000, or covers only part of a very large or slow-to-check connector, folder or group. In the folder tree (`onlyContainers=true`) it can rarely include a record that a finished check would leave out. Totals across several connectors are added, so a search total can exceed 10,000.
 
-- **At 10,000.** When it can, the flat listing of a connector (`flattened=true`) and, outside the folder tree, the connector, a folder or a group with more than 5,000 children are counted exactly up to 10,000, and the count stops there.
-- **After the first 500 rows.** When it cannot (a connector it cannot count that way yet, or more than 200 rows to check one at a time), whatever the size of the listing, connector, folder or group, and in the folder tree (`onlyContainers=true`) for the connector, a folder or a group with more than 5,000 children, the total is the rows you may read among the first 500 it looks at. Such a total can be well below 500.
-- **A check that stopped early.** Any other connector, folder or group, which has 5,000 children or fewer, is counted in full, including in the folder tree, so its total can be well above 500. If the request runs out of its time or work budget before it has checked every child, the total counts only the children it reached. The same applies to the rows checked one at a time when a connector, folder or group with more than 5,000 children is counted up to 10,000.
-
-The total can be **higher** than the real count in one case: in the folder tree (`onlyContainers=true`), a record is listed only when opening it lists something. When the request runs out of its budget before it has decided that for a record you may open, it lists and counts the record anyway, and a finished check could leave it out.
-
-A total only ever counts rows you are allowed to read. A search or a filtered listing adds up each connector's total, so `totalItems` can be above 10,000, and `totalCapped` is `true` when any connector's total is not exact.
-
-What the fields mean:
-
-- `pagination.totalCapped` is `true` when `pagination.totalItems` is not exact, as above.
-- `counts.capped` (with `include=counts`) is `true` when `counts.total` and the per-type counts are not exact.
+- Use `hasNext` and `nextCursor` to page. Don't rely on `totalItems` or `totalPages` to know when you have reached the end.
+- `counts.capped` (with `include=counts`) is `true` when `counts.total` and the per-type counts may not be exact, in the same way.
 - `pagination.totalPages` is `ceil(totalItems / limit)` for a page asked for by number. For a page asked for with `cursor`, `totalPages` and `page` are `null`.
-- Use `hasNext` and `nextCursor` to tell whether another page exists, not `totalPages`.
 - Older servers do not send `totalCapped` or `capped`. Treat a missing value as `false`.
 
-In the web app, a capped total reads "Showing 1-50 of at least 500", and the page marker reads "1 / 10+" instead of "1 / 10".
+In the web app, a capped total is shown as approximate: "Showing 1-50 of at least 500", and the page marker reads "1 / 10+" instead of "1 / 10".
 
 ## Common request bodies
 

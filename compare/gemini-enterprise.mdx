@@ -1,0 +1,84 @@
+---
+title: "PipesHub vs Gemini Enterprise"
+description: "How open-source, self-hosted PipesHub compares with Google Gemini Enterprise on deployment, data control, model choice, permissions, connectors, MCP and pricing, and how the two work together"
+icon: "google"
+---
+
+Gemini Enterprise (formerly Google Agentspace) is Google's AI assistant and agent platform for work, delivered from Google Cloud with Gemini models, Google Workspace data and third-party connectors. PipesHub is an open-source (Apache 2.0) context layer you run yourself or use on PipesHub Cloud, with the model of your choice.
+
+<Note>
+  Google facts are dated **as of November 2026** and linked under [Sources](#sources). See [How PipesHub compares](/compare/overview) for the summary across all products.
+</Note>
+
+## When Gemini Enterprise fits better
+
+- **You are on Google Workspace and Google Cloud.** Gemini Enterprise works with Gmail, Drive, Calendar and the rest of Workspace and is bought and managed in Google Cloud.
+- **You want a full agent platform.** Google offers an agent designer, long-running agents, an agent registry and a partner agent marketplace. PipesHub's agents run when someone asks; they can't run on a schedule or a trigger.
+- **You want Google's models and infrastructure, managed for you.** Gemini Enterprise is a managed service. PipesHub self-hosted is operated by your team.
+- **You need an established vendor.** Google reports more than 8 million paid Gemini Enterprise seats (February 2026), and Gartner named Google a Leader in its first Magic Quadrant for Enterprise AI Assistants.
+
+## When PipesHub fits better
+
+- **Content must stay on infrastructure you control.** PipesHub runs with Docker Compose or Helm in your cloud, data centre or an [air-gapped network](/deployment/vendor/private).
+- **You want to pick the model.** PipesHub works with about 20 LLM providers, including Google [Gemini](/ai-models/llm/gemini) and [Vertex AI](/ai-models/llm/vertex-ai), other hosted providers, and local [Ollama](/ai-models/llm/ollama) or [vLLM](/ai-models/llm/vllm).
+- **Your sources are self-hosted.** PipesHub indexes [Jira Data Center](/connectors/jira/jira-data-center), [Confluence Data Center](/connectors/confluence/confluence-data-center), [SMB](/connectors/smb/smb) file shares, [PostgreSQL](/connectors/postgres/postgres) and [MariaDB](/connectors/mariadb/mariadb) from inside your network.
+- **You want no per-seat fee.** The open-source edition has no licence cost; you pay for infrastructure and model usage.
+
+## Feature comparison
+
+| | PipesHub | Gemini Enterprise |
+| --- | --- | --- |
+| **Licence** | Apache 2.0 | Proprietary |
+| **Deployment** | Self-host (Docker Compose, Helm), including air-gapped; or PipesHub Cloud | Google Cloud |
+| **Model choice** | About 20 providers, bring your own key, local models | Gemini models; Claude available in the agent platform catalog |
+| **Permissions** | Synced from each source, matched to users by email, checked before results are returned; no results if the check can't run | Source permissions through connector identity data |
+| **Indexed connectors** | 35+ sources | Google Workspace plus third-party data connectors, some in private preview |
+| **Sync** | Scheduled, not real-time | Data stores are synced; Google notes they are not real-time mirrors |
+| **MCP** | MCP server for any MCP client, on the official MCP registry | MCP support in the Gemini Enterprise Agent Platform |
+| **Agents** | Agent builder with actions; actions that can't be undone ask first | Agent designer, long-running agents, agent marketplace |
+| **Pricing** | No licence fee for open source | Per seat, plus a pay-as-you-go option |
+
+## Deployment and data control
+
+PipesHub stores indexed content, permissions and embeddings in databases you run. Data leaves your deployment only for the services you configure, such as a hosted model provider, plus product telemetry, which is on by default and can be turned off. See [Security and privacy](/security-and-privacy).
+
+Gemini Enterprise keeps connected data in Google Cloud data stores. Each search app can use up to 50 data stores.
+
+## Sync, deletions and permissions
+
+Both products sync on a schedule, and both have limits worth testing:
+
+- **Gemini Enterprise.** A Google-tagged admin guide says data stores are not instant real-time mirrors and that incremental sync does not pick up identity data or deletions.
+- **PipesHub.** Connectors sync on a schedule. A deletion or removed permission that the source does not report is cleaned up on the next complete full sync, and scheduled runs are not full syncs. Some team connectors (S3-compatible storage, Azure Blob, SMB shares, Notion) can't share per-item permissions. See [Permissions and freshness by connector](/connectors/permissions-matrix).
+
+## Pricing model
+
+As of November 2026, Google lists the Gemini Enterprise Business edition from $21 per seat per month and the Standard and Plus editions from $30 per seat per month. In August 2026 Google added a pay-as-you-go option billed on agent and model usage.
+
+PipesHub's open-source edition has no licence or seat fee. Your costs are servers and model usage; local models remove per-token charges.
+
+## Working alongside Gemini Enterprise
+
+- **Keep Gemini for Workspace, use PipesHub where it doesn't reach**, such as self-hosted systems and networks where a hosted assistant isn't allowed.
+- **Give coding agents company context.** Gemini CLI, Claude Code, Cursor and Codex can search PipesHub over [MCP](/mcp/overview); see the [Gemini CLI setup](/mcp/gemini-cli).
+- **Index Google Workspace in PipesHub too**, with the [Google Drive](/connectors/google-workspace/drive/drive) and [Gmail](/connectors/google-workspace/gmail/gmail) connectors, when you want one index for every assistant.
+
+## Where PipesHub is weaker
+
+- Fewer built-in agent features: no scheduled or long-running agents and no agent marketplace.
+- Self-hosted PipesHub is yours to operate and scale.
+- SAML, OIDC and SCIM are in the [Enterprise edition](/editions), not open source. No usage analytics.
+
+## Sources
+
+Accessed 14 November 2026 unless noted.
+
+- Google Cloud, "Gemini Enterprise" product and pricing page: https://cloud.google.com/gemini-enterprise
+- Google Cloud documentation, "About apps and data stores": https://docs.cloud.google.com/gemini/enterprise/docs/apps-data-stores
+- Google Cloud documentation, "Connect a third-party data source": https://docs.cloud.google.com/gemini/enterprise/docs/connectors/connect-third-party-data-source
+- Google Developer forum, "Admin guide: best practices for setting up Gemini Enterprise connectors" (18 September 2026): https://discuss.google.dev/t/admin-guide-best-practices-dos-and-donts-for-setting-up-gemini-enterprise-connectors/398175
+- Google Cloud blog, "Welcome to Google Cloud Next '26" (22 April 2026): https://cloud.google.com/blog/topics/google-cloud-next/welcome-to-google-cloud-next26?hl=en
+- THE Journal, "Google announces new Gemini Enterprise Agent Platform" (4 May 2026): https://thejournal.com/articles/2026/05/04/google-announces-new-gemini-enterprise-agent-platform.aspx
+- TechRepublic, "Google Gemini Enterprise pay-as-you-go pricing" (27 August 2026): https://www.techrepublic.com/article/news-google-gemini-enterprise-pay-as-you-go-pricing/
+- Alphabet, Q1 2026 earnings remarks (seat figures): https://blog.google/company-news/inside-google/message-ceo/alphabet-earnings-q1-2026/
+- Softprom, summary of Gartner's 2026 Magic Quadrant for Enterprise AI Assistants (18 September 2026): https://softprom.com/gartner-magic-quadrant-for-enterprise-ai-assistants-2026-google-and-openai-named-leaders-aws-challenger

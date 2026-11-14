@@ -145,7 +145,7 @@ Each search has 12 seconds and each page read 20 seconds. The built-in reader st
 
 - PipesHub only reads public websites. Addresses that point inside your network, such as `localhost`, private IP ranges or cloud metadata addresses, are refused. The built-in reader also checks every redirect.
 - Firecrawl and Crawl4AI follow redirects on their own servers, so PipesHub checks only the address it sends them and the one they land on. Run them where they can't reach your internal services. The Docker Compose profiles above do this; a server you run elsewhere and add by its Server URL needs the same isolation.
-- Text from the web is marked as untrusted, so the model treats it as information, not instructions. A page can't use it to change what the agent does.
+- Text from the web is marked as untrusted, so the model is told to treat it as information, not instructions. This lowers the risk that a page steers the agent, but it does not remove it; keep approvals on for actions that write or send. See [Governing agents](/agent-guide/governance).
 - A citation link the model invents is removed from the answer.
 
 ## Troubleshooting

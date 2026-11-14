@@ -1,0 +1,65 @@
+---
+title: "How PipesHub compares"
+description: "A one-screen comparison of PipesHub with Glean, Microsoft 365 Copilot, Onyx, Gemini Enterprise and Atlassian Rovo: deployment, licence, model choice, permissions, connectors, MCP and pricing model, with guidance on when to choose each"
+icon: "scale-balanced"
+---
+
+Most organizations run more than one AI assistant. This page summarizes how PipesHub differs from five products buyers often evaluate next to it, and when each one is the better fit. Each product has a detailed page with sources:
+
+<CardGroup cols={3}>
+  <Card title="Glean" icon="magnifying-glass" href="/compare/glean">Managed enterprise search and agents</Card>
+  <Card title="Microsoft 365 Copilot" icon="microsoft" href="/compare/microsoft-copilot">The assistant inside Microsoft 365</Card>
+  <Card title="Onyx" icon="code-branch" href="/compare/onyx">Open-source chat and search</Card>
+  <Card title="Gemini Enterprise" icon="google" href="/compare/gemini-enterprise">Google's agent platform for work</Card>
+  <Card title="Atlassian Rovo" icon="atlassian" href="/compare/atlassian-rovo">AI built into Atlassian Cloud</Card>
+</CardGroup>
+
+<Note>
+  Competitor facts come from each vendor's public documentation, pricing pages and public reporting, and are dated **as of November 2026**. Products change quickly. Check the linked sources on each page before you decide. If you find an error, tell us through [Contact us](/contact-us).
+</Note>
+
+## Summary table
+
+| | PipesHub | Glean | Microsoft 365 Copilot | Onyx | Gemini Enterprise | Atlassian Rovo |
+| --- | --- | --- | --- | --- | --- | --- |
+| **Deployment** | Self-host with Docker Compose or Helm, in your cloud, data centre or an air-gapped network; or PipesHub Cloud | SaaS, or "Customer Hosted" in your own GCP or AWS account | Microsoft cloud, in your Microsoft 365 tenant | Self-host (Docker, Kubernetes), described as air-gappable; or Onyx Cloud | Google Cloud (SaaS) | Atlassian Cloud; Data Center sites connect through connectors that need a Cloud plan |
+| **Licence** | Apache 2.0 | Proprietary | Proprietary | MIT, with Enterprise Edition code under a separate licence | Proprietary | Proprietary |
+| **Model choice** | About 20 LLM providers, bring your own key, local models through Ollama or vLLM | Many hosted LLMs; discounts for bring-your-own LLM key | OpenAI and Anthropic models chosen by Microsoft | Major providers, including self-hosted Ollama and vLLM | Gemini models; Claude in the agent platform catalog | Models chosen by Atlassian |
+| **Permissions** | Synced from each source and checked before results are returned; fails closed if the check can't run | Mirrors source permissions | Honours Microsoft 365 permissions; connectors carry source ACLs | Permission sync requires the Enterprise Edition | Source ACLs through connector identity sync | Atlassian permissions; connectors respect source access |
+| **Indexed connectors** | 35+ sources ([list](/connectors/overview)) | Broad catalog (no count on Glean's connector docs) | Microsoft 365, plus 100+ prebuilt Copilot connectors | 58 listed | Google Workspace plus third-party connectors, some in preview | Jira, Confluence and other Atlassian apps, plus third-party connectors |
+| **MCP server for agent harnesses** | Yes, on the official MCP registry; OAuth 2.0 or personal access tokens | Yes, remote MCP servers | Uses MCP for federated connectors; no general MCP server found in Microsoft's connector docs | Yes | MCP in the agent platform | Rovo MCP server |
+| **Pricing model** | Open source: no licence fee, you pay for infrastructure and model usage | Quote only; seat licence plus pooled credits | $30 per user per month, annual, on top of a qualifying Microsoft 365 plan; agents metered in credits | Free community edition; paid Enterprise Edition | Per-seat tiers plus a pay-as-you-go option | Included in paid Atlassian Cloud plans with pooled credits |
+
+## Where PipesHub is weaker
+
+Read these before you choose PipesHub:
+
+- **Fewer connectors.** 35+ indexed sources, fewer than Copilot's 100+ prebuilt connectors or the 58 Onyx lists. Microsoft Teams is an agent [action](/toolsets/microsoft-365/teams), not an indexed source.
+- **Scheduled sync, not real-time.** Connectors sync on a schedule. A deletion or a removed permission that the source does not report is cleaned up on the next complete full sync, and scheduled runs are not full syncs.
+- **Some sources can't share permissions.** For team connectors to S3-compatible storage, Azure Blob, SMB shares and Notion, everyone in the organization (or the Notion workspace) can search what they sync. [Permissions and freshness by connector](/connectors/permissions-matrix) says who can search what.
+- **Sign-in.** The open-source edition offers password, email one-time code, Google and Microsoft sign-in. SAML and OIDC single sign-on, LDAP and SCIM provisioning are available in the [Enterprise edition](/editions).
+- **No usage analytics or scheduled agents.** There is no adoption or ROI dashboard, and agents run when someone asks; they can't run on a schedule or a trigger.
+- **Your controls apply when you self-host.** Certifications for a self-hosted deployment are yours; ask PipesHub for its own security reports if you use PipesHub Cloud.
+- **Smaller ecosystem.** PipesHub has a smaller open-source community than Onyx, and far less market presence than Microsoft, Google, Atlassian or Glean.
+
+## Choose each when…
+
+| Choose | When |
+| --- | --- |
+| **PipesHub** | You need to run the whole stack yourself (including air-gapped), use your own or local models, keep an Apache 2.0 licence, and serve the same permission-aware index to people and to agent harnesses such as Claude Code, Cursor or Codex over MCP. |
+| **Glean** | You want a mature managed service with a broad connector catalog, built-in agents and governance features, and you are ready for an enterprise contract. |
+| **Microsoft 365 Copilot** | Most of your work lives in Microsoft 365 and you want AI inside Word, Excel, Outlook and Teams, governed with the Microsoft tools you already use. |
+| **Onyx** | You want an open-source chat and search tool with a larger community and connector list, and you accept that permission sync is in its paid edition. |
+| **Gemini Enterprise** | You are on Google Workspace and Google Cloud and want Google's models and agent platform in one place. |
+| **Atlassian Rovo** | Your knowledge lives mainly in Jira and Confluence Cloud and you want AI that is already part of your Atlassian plan. |
+
+## Using PipesHub alongside other assistants
+
+PipesHub does not need to replace your assistant. Its [MCP server](/mcp/overview) lets Claude, Cursor, Codex, Gemini CLI and other MCP clients search the same permission-aware index, so you can keep Copilot, Gemini or Rovo in their own apps and use PipesHub where they don't reach: sources outside their ecosystem, self-hosted systems such as Jira and Confluence Data Center, or networks where a hosted assistant isn't allowed.
+
+## Related
+
+- [Security and privacy](/security-and-privacy)
+- [Deployment](/deployment/overview)
+- [AI models](/ai-models/overview)
+- [Connectors](/connectors/overview)

@@ -1,0 +1,69 @@
+---
+title: "PipesHub vs Onyx"
+description: "How PipesHub and Onyx, two self-hostable open-source AI search and chat platforms, compare on licence, permissions, connectors, model choice, MCP and deployment, and when each is the better fit"
+icon: "code-branch"
+---
+
+Onyx (formerly Danswer) and PipesHub are both open-source platforms you can self-host to search and chat over company apps with any LLM. They are closer to each other than to the SaaS products on the other comparison pages, so the differences are in the details: licence terms, which features are in the free edition, connectors and how each serves other AI tools.
+
+<Note>
+  Onyx facts are dated **as of November 2026** and linked under [Sources](#sources). See [How PipesHub compares](/compare/overview) for the summary across all products.
+</Note>
+
+## When Onyx fits better
+
+- **You want a larger community.** Onyx's GitHub repository shows about 33,400 stars (November 2026), and the company is backed by a seed round from Khosla Ventures and First Round. PipesHub's community is smaller.
+- **You need more connectors.** Onyx lists 58 connectors. PipesHub has 35+ indexed sources.
+- **You want the project more people already know.** More guides, integrations and community answers exist for Onyx, which shortens the path for a team new to the category.
+
+## When PipesHub fits better
+
+- **You want permission-aware search in the free edition.** Onyx documents that permission sync requires its Enterprise Edition. In open-source PipesHub, permissions are synced from each source that records them, matched to users by email, and checked before results are returned; if the check can't run, PipesHub shows no results and says why. See [Security and privacy](/security-and-privacy#permission-aware-search).
+- **You want one licence for the whole codebase.** PipesHub's open-source repository is Apache 2.0. Onyx's repository is MIT outside its `ee` directories, which are under the Onyx Enterprise License.
+- **You want the MCP server on the official registry.** Both products offer an MCP server for Claude Code, Codex and other clients. PipesHub's is listed on the official MCP registry and accepts a [personal access token](/developer/personal-access-tokens) or OAuth 2.0; see [MCP overview](/mcp/overview).
+
+## Feature comparison
+
+| | PipesHub | Onyx |
+| --- | --- | --- |
+| **Licence** | Apache 2.0 | MIT, except `ee` directories under the Onyx Enterprise License |
+| **Deployment** | Docker Compose or Helm, including air-gapped; or PipesHub Cloud | Docker, Kubernetes or Helm, described as air-gappable; or Onyx Cloud |
+| **Model choice** | About 20 providers, bring your own key, local models through Ollama or vLLM | Major LLM providers, including self-hosted Ollama, LiteLLM and vLLM |
+| **Permission sync** | In the open-source edition, for sources that record permissions | Enterprise Edition |
+| **Indexed connectors** | 35+ sources | 58 listed |
+| **Sync** | Scheduled, not real-time | See Onyx documentation |
+| **MCP server for agent harnesses** | Yes, on the official MCP registry | Yes |
+| **Agents** | Agent builder with actions; actions that can't be undone ask first | Custom agents with external actions and MCP |
+| **Sign-in (open source)** | Password, email one-time code, Google, Microsoft | See Onyx documentation |
+| **Pricing** | No licence fee for open source; PipesHub Cloud available | Free community edition; paid Enterprise Edition |
+
+## Deployment and data control
+
+Both can run on your own infrastructure, including networks without internet access, so indexed content and permissions stay in databases you control. In PipesHub, data leaves your deployment only for the services you configure, such as a hosted model provider, plus product telemetry, which is on by default and can be turned off with one setting. See [Security and privacy](/security-and-privacy).
+
+PipesHub runs several services and databases. The [Helm chart](/deployment/kubernetes) has high-availability presets, but Neo4j Community and Redis stay single-node. Check [system requirements](/deployment/system-requirements) before you size a host.
+
+## Pricing model
+
+Both have a free open-source edition. Onyx sells an Enterprise Edition that includes features such as permission sync. PipesHub's open-source edition includes permission-aware search; SAML and OIDC single sign-on and SCIM are in the [Enterprise edition](/editions).
+
+## Migration and coexistence
+
+There is no import between the two. To move, connect the same sources in PipesHub and let them sync; permissions come from each source. Because both expose APIs, you can also run them side by side during an evaluation and compare answers on the same questions.
+
+## Where PipesHub is weaker
+
+- Fewer connectors and a smaller community.
+- Sync is scheduled. A deletion or removed permission that the source does not report is cleaned up only on the next complete full sync; scheduled runs are not full syncs.
+- Some team connectors (S3-compatible storage, Azure Blob, SMB shares, Notion) can't share per-item permissions. See [Permissions and freshness by connector](/connectors/permissions-matrix).
+- SAML, OIDC and SCIM are in the [Enterprise edition](/editions), not open source. No usage analytics and no scheduled agents.
+
+## Sources
+
+Accessed 14 November 2026 unless noted.
+
+- Onyx, "Connectors" documentation (connector list; permission sync requires the Enterprise Edition): https://docs.onyx.app/overview/core_features/connectors
+- Onyx, "Seed round" (March 2025): https://onyx.app/blog/seed-round
+- Onyx GitHub repository and README (features, deployment, star count): https://github.com/onyx-dot-app/onyx
+- Onyx licence file: https://github.com/onyx-dot-app/onyx/blob/main/LICENSE
+- Hacker News, "Launch HN: Onyx (YC W24) – Open-source chat UI" (25 November 2025), discussion of the licence split: https://news.ycombinator.com/item?id=46045987

@@ -1,0 +1,52 @@
+---
+title: "Editions"
+description: "What the open-source edition, PipesHub Cloud and the Enterprise edition of PipesHub include: enterprise single sign-on (SAML, OIDC, LDAP), SCIM provisioning, organization-wide agent approval rules, connector sync across several workers, and more."
+icon: "layer-group"
+---
+
+PipesHub comes in three editions. Every page in these docs describes the open-source edition unless it says a feature is in the Enterprise edition.
+
+| | Open source | PipesHub Cloud | Enterprise |
+| --- | --- | --- | --- |
+| **Licence** | Apache 2.0 | Hosted service | Commercial |
+| **Where it runs** | Your infrastructure: Docker Compose or Kubernetes, including isolated networks | Run by PipesHub at [app.pipeshub.com](https://app.pipeshub.com/?ref=docs) | Your infrastructure or hosted |
+| **Search, chat, agents, MCP, SDKs and the 35+ connectors** | Yes | Yes | Yes |
+| **Permission-aware search** | Yes | Yes | Yes |
+| **Model choice, including local models** | Yes | Yes | Yes |
+| **Enterprise sign-in and provisioning** | Password, email one-time code, Google, Microsoft | — | Adds SAML, OIDC, LDAP and SCIM (below) |
+| **Governance and scale features** | — | — | Below |
+
+## What the Enterprise edition adds
+
+### Sign-in and user provisioning
+
+- **SAML single sign-on** and **generic OAuth / OIDC sign-in** with your identity provider. See [Authentication](/auth).
+- **LDAP / Active Directory sign-in**, with group membership synced from the directory.
+- **SCIM provisioning**: create, update and deactivate people and groups from your identity provider.
+- **Directory sync and just-in-time provisioning**: people and groups come from your directory, and a person's account is created at first sign-in.
+
+### Governance
+
+- **Organization-wide tool approval rules.** Admins set, for each tool in a toolset added for the organization, whether it runs, asks for approval or is denied. In the open-source edition these toolsets use fixed defaults. See [Governing agents](/agent-guide/governance).
+- **Admin control of MCP server access**: choose which MCP servers people and agents in the organization may use.
+- **Group-based permissions** for managing who can administer and use each part of the workspace.
+- **Usage and spend limits** for model usage, by person and across the organization.
+- **Branding**: your name and logo in the app.
+
+### Scale
+
+- **Connector sync across several workers**, with a shared lease so two workers never sync the same connector at once. In the open-source edition connector sync runs as one worker per pod. See [Reference architecture](/deployment/reference-architecture).
+
+### AI and data
+
+- **Automatic model selection**: each request goes to a model suited to it, with escalation to a stronger model when needed.
+- **Entity resolution**: the same person, customer or project recognized across sources.
+- **Answers over structured data**: questions answered from tables and databases alongside documents.
+
+## Choosing an edition
+
+- Start with **open source** to evaluate on your own data, or when password, Google or Microsoft sign-in is enough.
+- Use **PipesHub Cloud** to try PipesHub without running servers.
+- Choose **Enterprise** when you need SAML, OIDC, LDAP or SCIM, organization-wide agent approval rules, or connector sync across several workers.
+
+To talk about the Enterprise edition, see [Contact us](/contact-us).

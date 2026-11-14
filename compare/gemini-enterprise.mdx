@@ -32,7 +32,7 @@ Gemini Enterprise (formerly Google Agentspace) is Google's AI assistant and agen
 | **Deployment** | Self-host (Docker Compose, Helm), including air-gapped; or PipesHub Cloud | Google Cloud |
 | **Model choice** | About 20 providers, bring your own key, local models | Gemini models; Claude available in the agent platform catalog |
 | **Permissions** | Synced from each source, matched to users by email, checked before results are returned; no results if the check can't run | Source permissions through connector identity data |
-| **Indexed connectors** | 35+ sources | Google Workspace plus third-party data connectors, some in private preview |
+| **Indexed connectors** | 30+ sources | Google Workspace plus third-party data connectors, some in private preview |
 | **Sync** | Scheduled, not real-time | Data stores are synced; Google notes they are not real-time mirrors |
 | **MCP** | MCP server for any MCP client, on the official MCP registry | MCP support in the Gemini Enterprise Agent Platform |
 | **Agents** | Agent builder with actions; actions that can't be undone ask first | Agent designer, long-running agents, agent marketplace |
@@ -49,7 +49,7 @@ Gemini Enterprise keeps connected data in Google Cloud data stores. Each search 
 Both products sync on a schedule, and both have limits worth testing:
 
 - **Gemini Enterprise.** A Google-tagged admin guide says data stores are not instant real-time mirrors and that incremental sync does not pick up identity data or deletions.
-- **PipesHub.** Connectors sync on a schedule. A deletion or removed permission that the source does not report is cleaned up on the next complete full sync, and scheduled runs are not full syncs. Some team connectors (S3-compatible storage, Azure Blob, SMB shares, Notion) can't share per-item permissions. See [Permissions and freshness by connector](/connectors/permissions-matrix).
+- **PipesHub.** Connectors sync on a schedule. A deletion or removed permission that the source does not report is cleaned up on the next complete full sync, and scheduled runs are not full syncs. Some team connectors (S3-compatible storage, Azure Blob, Notion, and SMB shares in the open-source edition) can't share per-item permissions. The Enterprise edition applies an SMB share's Windows permissions. See [Permissions and freshness by connector](/connectors/permissions-matrix).
 
 ## Pricing model
 

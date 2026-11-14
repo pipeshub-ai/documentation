@@ -20,7 +20,7 @@ This page describes a self-hosted PipesHub started with the Docker Compose files
 ## Secrets and credentials at rest
 
 - **Settings in the key-value store**, including AI model API keys, connector credentials and the token signing secrets, are encrypted with AES-256-GCM. The key is the SHA-256 hash of the `SECRET_KEY` environment variable. A few non-secret settings, such as service endpoints, are stored as plain text. Storage credentials, such as S3 keys, are encrypted on their own before they are saved.
-- **`SECRET_KEY`** is required: the services don't start without it. Set it to a long random value, keep it safe, and keep it the same across upgrades. Without it, PipesHub can't decrypt its stored settings. On Helm, set `secretKey`. If you leave it empty, a new random key is generated on each install.
+- **`SECRET_KEY`** is required: the services don't start without it. Set it to a long random value, keep it safe, and keep it the same across upgrades. Without it, PipesHub can't decrypt its stored settings. On Helm, set `secretKey` (generate one with `openssl rand -hex 32`) or supply it from an existing or external secret. The chart refuses to install without it.
 - **The `.env` file.** Values you set for Docker Compose, such as database passwords, are kept in the `.env` file on the host as plain text, outside the encrypted key-value store. Restrict access to that file and to any backup that contains it.
 - **Passwords** are stored as bcrypt hashes. One-time sign-in codes are hashed the same way.
 - **OAuth and personal access tokens** are stored as hashes, not as the tokens themselves.

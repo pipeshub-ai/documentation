@@ -14,7 +14,7 @@ Microsoft 365 Copilot is the AI assistant built into Microsoft 365: Word, Excel,
 
 - **Your work lives in Microsoft 365.** Copilot works inside the Office apps and Teams, with your mail, calendar, meetings and SharePoint content. PipesHub has no Office add-ins and does not index Microsoft Teams (Teams is an agent [action](/toolsets/microsoft-365/teams)).
 - **You want governance in tools you already run.** Copilot uses Microsoft 365 permissions and works with Microsoft Purview and Entra. PipesHub's open-source edition has its own sign-in (password, email one-time code, Google, Microsoft); SAML, OIDC and SCIM are in the [Enterprise edition](/editions).
-- **You want a large connector catalog without running servers.** Microsoft offers more than 100 prebuilt Copilot connectors, plus custom connectors. PipesHub has 35+ indexed sources and, self-hosted, your team operates it.
+- **You want a large connector catalog without running servers.** Microsoft offers more than 100 prebuilt Copilot connectors, plus custom connectors. PipesHub has 30+ indexed sources and, self-hosted, your team operates it.
 - **You want an established vendor.** Microsoft provides enterprise support and contracts. PipesHub has no usage or adoption analytics.
 
 ## When PipesHub fits better
@@ -33,7 +33,7 @@ Microsoft 365 Copilot is the AI assistant built into Microsoft 365: Word, Excel,
 | **Where people use it** | PipesHub web app, [Slack bot](/integrations/slackBot), MCP clients, API | Word, Excel, PowerPoint, Outlook, Teams, Copilot app |
 | **Model choice** | About 20 providers, bring your own key, local models | OpenAI and Anthropic models chosen by Microsoft |
 | **Permissions** | Synced from each source, matched to users by email, checked before results are returned; no results if the check can't run | Microsoft 365 permissions; synced connectors carry each item's ACL |
-| **Non-Microsoft sources** | 35+ indexed sources | 100+ prebuilt connectors, synced or federated (live, through MCP) |
+| **Non-Microsoft sources** | 30+ indexed sources | 100+ prebuilt connectors, synced or federated (live, through MCP) |
 | **Sync** | Scheduled, not real-time | Synced connectors check for changes periodically; federated connectors fetch live |
 | **MCP** | MCP server for any MCP client | Uses MCP for federated connectors; Copilot Studio agents |
 | **Agents** | Agent builder with actions; actions that can't be undone ask first | Copilot Studio agents, metered in Copilot Credits |
@@ -67,7 +67,7 @@ PipesHub can index Microsoft 365 too, through its [SharePoint](/connectors/micro
 
 - No Office app integration, and Microsoft Teams messages are not indexed.
 - Sync is scheduled. A deletion or removed permission that the source does not report is cleaned up only on the next complete full sync; scheduled runs are not full syncs.
-- Some team connectors (S3-compatible storage, Azure Blob, SMB shares, Notion) can't share per-item permissions. See [Permissions and freshness by connector](/connectors/permissions-matrix).
+- Some team connectors (S3-compatible storage, Azure Blob, Notion, and SMB shares in the open-source edition) can't share per-item permissions. The Enterprise edition applies an SMB share's Windows permissions. See [Permissions and freshness by connector](/connectors/permissions-matrix).
 - SAML, OIDC and SCIM are in the [Enterprise edition](/editions), not open source. No usage analytics and no scheduled agents.
 
 ## Sources

@@ -261,6 +261,9 @@ The API still calls actions toolsets, so these scopes are named `toolset:*`.
 | Scope | Description |
 |-------|-------------|
 | `code:read` | Read indexed code repositories and their code graph. |
+| `code:write` | Push a local repository to be indexed into the code graph (`/api/v1/local-repos`). |
+
+`code:write` is off by default: it is not in the default `MCP_SCOPES`, so no token can hold it until whoever runs the server adds it there and restarts PipesHub. The local repository routes that only read (listing your repositories and reading one) accept `code:read` or `code:write`; registering, uploading, committing and deleting need `code:write`. A pushed repository belongs to the user the token acts as, and nobody else can see or change it.
 
 </Accordion>
 
@@ -570,6 +573,7 @@ Rules for registered clients:
 - `redirect_uris` is required with `authorization_code`, up to 10 URIs.
 - `token_endpoint_auth_method` defaults to `none` (a public client).
 - Each requested scope must be one a regular member may hold and, when `MCP_SCOPES` is set, one listed there. Otherwise the request fails with `invalid_client_metadata`.
+- With no `scope` in the request, the client gets the scopes command-line agents use, minus any not in `MCP_SCOPES`. That set includes `code:write`, so it is dropped unless you added it to `MCP_SCOPES`.
 - The application belongs to the instance's organization. The consent screen tells users that the application registered itself.
 
 ---

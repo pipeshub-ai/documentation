@@ -319,6 +319,7 @@ A Notion [personal access token](https://developers.notion.com/guides/connection
 - At each sync, PipesHub checks that the token belongs to you (the same verified email as your PipesHub sign-in) in the connector's Notion workspace, then searches Notion with it.
 - Each page or database the search lists is then opened with your token, and you can search only the synced ones that open. A listing alone is not enough: Notion's search index [takes time to reflect changes and is not a complete inventory](https://developers.notion.com/reference/search-optimizations-and-limitations). Files follow their page.
 - New pages are confirmed over the following syncs, up to 2,000 per person per sync. Pages you can already search are re-checked 200 per person per sync, oldest first, and all of them on a **Full sync**.
+- A confirmation lasts 24 hours. A page not re-checked within 24 hours of its last confirmation is hidden from you until a later sync confirms it again.
 - A database's table is shown only to people who may open every row of it. Each row stays searchable on its own.
 - A token Notion refuses (revoked, expired, or its creator lost access or left the workspace), one without **Notion API** access, or one that is not your own, is removed and you get a notification. Link a new one to see your Notion pages again.
 - If Notion cannot be read with your token during a sync, the pages it gave you are hidden until a later sync succeeds.
@@ -359,7 +360,8 @@ Other limits that come from the same Notion API:
 - **Only pages the connection can see.** Search never returns content you did not share with the integration.
 - **Rate limit.** Notion allows an average of about **3 requests per second** per connection on most plans (some paid plans allow more). Large pages need many block fetches, so the first sync of a big workspace can take a long time.
 - **Images are not separate files.** Inline images stay on the page (and may be inlined for indexing). **Index Files** covers file, video, PDF, and audio attachments - not image blocks.
-- **Lost access can lag.** A page someone can no longer open in Notion can stay searchable for them until its re-check comes round (200 per person per sync, oldest first) or the next **Full sync**.
+- **Lost access can lag, up to a day.** A page someone can no longer open in Notion can stay searchable for them until its re-check, and at most 24 hours after it was last confirmed plus the time to the next sync. Notion sends no event when sharing changes, so PipesHub can't learn of it sooner.
+- **Large accounts may briefly lose pages.** Someone with more pages than the re-checks cover in a day (about 4,800 on an hourly schedule) can lose some of them from search until they are re-checked, at the latest on the next **Full sync**.
 - **Users without a verified email.** The team connector matches a Notion member to a PipesHub user only if Notion reports their email as verified ([`email_verified`](https://developers.notion.com/reference/user)). A token whose creator is not matched grants nothing until they are. If Notion returns no email for anyone, the sync stops and asks you to enable the email capability.
 - **Personal access tokens** from Developer tools are not a supported auth method for the connection itself. They are only for each person's own access.
 
@@ -487,7 +489,7 @@ Use the **team** connector when many people should search one synced workspace. 
 
 <Accordion title="Does the team connector honor Notion page permissions?">
 
-Yes, through each person's own personal access token. Notion's API does not say who a page is shared with, so PipesHub asks Notion what each person's token can open and grants exactly those pages. People without a token, including guests, see no pages from the team connector. A page someone loses access to can stay searchable for them until its next re-check; see [Current limitations](#current-limitations).
+Yes, through each person's own personal access token. Notion's API does not say who a page is shared with, so PipesHub asks Notion what each person's token can open and grants exactly those pages. People without a token, including guests, see no pages from the team connector. A page someone loses access to can stay searchable for them for up to a day; see [Current limitations](#current-limitations).
 
 </Accordion>
 

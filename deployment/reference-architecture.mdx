@@ -148,7 +148,7 @@ Limits to plan around:
 - **Redis has no automatic failover in the cluster.** The app's Redis client is not Sentinel-aware, so the chart leaves Sentinel off.
 - **Kafka topics are created with replication factor 1.** The app creates any missing topic with one replica, whatever the brokers' default. With two brokers, losing the broker that holds a partition makes that partition unavailable.
 - **Qdrant replication comes from the server default.** The app does not set a replication factor when it creates a collection. In the chart that default is 2 when `qdrant.replicaCount` is above 1. A single Qdrant, as in Docker Compose, has one copy.
-- **Connector sync runs as one worker process per app pod.** The connector service's worker count is fixed at 1. Its guard against running the same sync twice is kept in that process's memory, so it does not cover other pods.
+- **Connector sync runs as one worker process per app pod.** The connector service's worker count is fixed at 1. Its guard against running the same sync twice is kept in that process's memory, so it does not cover other pods. The [Enterprise edition](/editions) runs connector sync across several workers with a shared lease.
 
 What an operator can do:
 

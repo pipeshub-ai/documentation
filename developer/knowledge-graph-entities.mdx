@@ -1,0 +1,161 @@
+---
+title: "Knowledge graph entity API"
+description: "Find departments, topics, people and other entities in your organization's knowledge graph, then list the records and related entities around one"
+icon: "diagram-project"
+---
+
+Two calls let your own code walk the knowledge graph PipesHub builds from your connectors:
+
+- `POST /api/v1/search/entities` finds entities by name or meaning: departments, categories, subcategories, topics, languages, record groups (a drive, a space, a project), record titles, people in your organization, outside organizations your records belong to and, where named-entity extraction is on, other named entities.
+- `POST /api/v1/search/entities/neighbors` takes one entity and returns the records connected to it, the other entities those records share with it, and the relation types between them.
+
+Use them to find what a topic or a person is attached to, or to let an agent browse by entity before it fetches passages with the [Retrieval API](/developer/retrieval-api).
+
+- **Same permissions as search.** Only entities connected to records the caller can read are returned, decided by the same access check as the assistant's entity tools. The caller is always the signed-in user: the bodies carry no user or organization id.
+- **Not saved to search history.** Each call is a read: the API forwards your request and returns the answer, and writes no search record or conversation.
+
+<Note>
+  These routes need a PipesHub version that includes them. An older instance answers `404` for these paths.
+</Note>
+
+---
+
+## Authentication
+
+Send a [personal access token](/developer/personal-access-tokens) or an [OAuth 2.0](/developer/oauth2) access token that carries the `semantic:read` or the `semantic:write` scope. The token decides whose permissions apply.
+
+```bash
+export PIPESHUB_URL="https://your-pipeshub-instance.com"
+export PIPESHUB_TOKEN="phpat_..."
+```
+
+---
+
+## Search entities
+
+```bash
+curl -s "$PIPESHUB_URL/api/v1/search/entities" \
+  -H "Authorization: Bearer $PIPESHUB_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"query": "payments", "entityTypes": ["topic", "category"], "limit": 5}'
+```
+
+| Field | Type | Default | Description |
+|---|---|---|---|
+| `query` | string, 1–500 characters | required | A name or phrase. |
+| `entityTypes` | array, at most 10 | all | Only these kinds: `department`, `category`, `subcategory`, `topic`, `language`, `record_group`, `record`, `named_entity`. |
+| `namedEntityKinds` | array of strings, at most 10 | all | For `named_entity`, only these kinds, such as `person` or `organization`. |
+| `limit` | integer, 1–25 | `10` | Most entities to return. |
+
+### Response
+
+```json
+{
+  "status": "success",
+  "results": [
+    {
+      "entityId": "0c9b3e0e-6f4e-4f07-a6d3-2a8c1d7e9b11",
+      "entityType": "topic",
+      "name": "Payments",
+      "apps": ["Confluence", "Google Drive"],
+      "records": [
+        {
+          "recordId": "1d0a…",
+          "name": "Payments runbook",
+          "type": "FILE",
+          "app": "Confluence",
+          "modified": "2026-10-01"
+        }
+      ],
+      "moreRecords": true
+    }
+  ]
+}
+```
+
+| Field | Description |
+|---|---|
+| `results[].entityId`, `results[].entityType` | Pass both to the neighbors call. `entityType` can also be `person` or `organization`; the neighbors call and the `entityTypes` filter do not accept those two. |
+| `results[].name` | The entity's name, shortened when it is very long. |
+| `results[].apps` | The connectors whose records carry the entity. |
+| `results[].records` | A few readable records, for the first entities only. Each has `recordId`, `name`, `type`, `app` and one date key (`modified`, `dated`, `fileModified` or `uploaded`) as `YYYY-MM-DD`. |
+| `results[].moreRecords` | `true` when the entity has more readable records than `records` shows. |
+| `results[].indexingStatus`, `results[].note` | For a `record` result whose content is not indexed yet: its indexing status and why its text cannot be read yet. |
+| `message`, `results: []` | Nothing matched. This is a `200`, not an error. |
+| `scopeNote` | With an empty result, set when the caller's access covers only part of some connectors' records, so matches can be missing. |
+
+---
+
+## Get an entity's neighbors
+
+```bash
+curl -s "$PIPESHUB_URL/api/v1/search/entities/neighbors" \
+  -H "Authorization: Bearer $PIPESHUB_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"entityId": "0c9b3e0e-6f4e-4f07-a6d3-2a8c1d7e9b11", "entityType": "topic", "recordLimit": 10}'
+```
+
+| Field | Type | Default | Description |
+|---|---|---|---|
+| `entityId` | string, 1–256 characters | required | From a search result. |
+| `entityType` | string | required | One of the eight entity types above. |
+| `recordTypes` | array, at most 20 | all | Only records of these types, such as `FILE`. |
+| `recordLimit` | integer, 1–50 | `20` | Most records per page, newest first. |
+| `relatedLimit` | integer, 1–50 | `20` | Most related entities, most shared records first. |
+| `cursor` | string, at most 64 characters | none | `nextCursor` from the previous page. |
+
+### Response
+
+```json
+{
+  "status": "success",
+  "entityId": "0c9b3e0e-6f4e-4f07-a6d3-2a8c1d7e9b11",
+  "entityType": "topic",
+  "records": [
+    {
+      "recordId": "1d0a…",
+      "recordName": "Payments runbook",
+      "recordType": "FILE",
+      "app": "Confluence",
+      "webUrl": "https://acme.atlassian.net/wiki/…",
+      "modified": "2026-10-01"
+    }
+  ],
+  "relatedEntities": [
+    {
+      "entityId": "5e7c…",
+      "entityType": "department",
+      "name": "Finance",
+      "relation": "belongsToDepartment",
+      "sharedRecords": 7
+    }
+  ],
+  "relationTypes": ["belongsToDepartment"],
+  "nextCursor": "…"
+}
+```
+
+| Field | Description |
+|---|---|
+| `records` | Readable records connected to the entity. `webUrl` is `null` for a record whose source link is hidden. Each has one date key (`modified`, `dated`, `fileModified` or `uploaded`) as `YYYY-MM-DD`. |
+| `relatedEntities` | Entities those records are tagged with or mention, with the `relation` and how many of the listed records share it (`sharedRecords`). Named entities also carry `kind`. |
+| `relationTypes` | The relation types seen: `belongsToCategory`, `belongsToTopic`, `belongsToLanguage`, `belongsToDepartment`, `mentionsEntity`. |
+| `nextCursor` | Present when there are more records. Send it as `cursor` for the next page. |
+| `note` | Present when the entity has more records than one listing can scan; the records shown are the newest of a sample. |
+| `relatedNote` | Present with `nextCursor`: related entities are counted over the records listed in this response, never the whole entity and never records the caller cannot read. |
+
+An entity the caller cannot reach and an entity with no readable records answer alike: empty `records` and `relatedEntities`.
+
+---
+
+## Errors
+
+| Status | Meaning |
+|---|---|
+| `400` | The body is invalid, for example an unsupported `entityType`, a `limit` out of range, or `named_entity` while named-entity lookup is off. |
+| `401` | The token is missing, expired or revoked. |
+| `403` | The token lacks `semantic:read` and `semantic:write`. |
+| `503` | Entity search is not available in this deployment, or the lookup failed or timed out. This is not an empty result: retry with backoff. |
+| `504` | The AI search service did not answer in time. Retry with backoff. |
+
+See the [API reference](/developer/api-reference) for the full schema.

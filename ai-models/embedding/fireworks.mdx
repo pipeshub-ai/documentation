@@ -1,0 +1,48 @@
+---
+title: Fireworks
+description: "Configure PipesHub to generate embeddings with Fireworks AI"
+---
+
+Fireworks AI hosts embedding models behind an API. PipesHub can use them to index your documents and embed search queries.
+
+## Before you start
+
+Create an account at [fireworks.ai](https://fireworks.ai/) and generate an API key.
+
+## Required Fields
+
+### API Key *
+
+Your Fireworks API key.
+
+### Model Name *
+
+The embedding model's identifier, for example `nomic-ai/nomic-embed-text-v1.5` or `fireworks/qwen3-embedding-8b`. See Fireworks' [embeddings guide](https://docs.fireworks.ai/guides/querying-embeddings-models) for the models it serves.
+
+### Endpoint URL *
+
+The base address of the Fireworks API. PipesHub has no default for it, so enter it even if you use the standard Fireworks API.
+
+**Standard value:** `https://api.fireworks.ai/inference/v1`
+
+## Optional Fields
+
+### Model Friendly Name
+
+A label shown in the PipesHub interface so you can tell several configurations apart. If you leave it blank, the model name is used.
+
+### Output Dimensions
+
+Override the size of the vectors the model produces. Leave it blank to use the model's default. Set it only for a model that accepts a dimensions parameter.
+
+### Multimodal
+
+Turn this on only if the model can embed images as well as text. It is off by default. With it on, saving the model also checks that it can embed a test image; see [Health check messages for other model types](/ai-models/overview#health-check-messages-for-other-model-types).
+
+<Warning>
+While content is indexed, PipesHub refuses to switch the embedding model in use to a different model or vector size. See [Changing the embedding model in use](/ai-models/overview#changing-the-embedding-model-in-use).
+</Warning>
+
+## Related
+
+- [Fireworks for text generation](/ai-models/llm/fireworks)

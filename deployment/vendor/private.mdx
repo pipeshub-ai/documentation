@@ -4,14 +4,12 @@ description: "Run PipesHub on your own hardware, including air-gapped networks"
 icon: "building"
 ---
 
-# Private Cloud and On-Premises
-
 PipesHub is designed to run entirely inside your own network. Nothing about the core product requires an outbound connection once the images are on the host, which makes it suitable for regulated environments and air-gapped networks.
 
 ## Requirements
 
-- A Linux host with Docker and Compose v2.
-- 16 GB RAM or more for the full deployment; 50 GB or more of disk.
+- A Linux host with Docker and Compose 2.20 or later.
+- 4 CPU cores and a 16 GB-class machine. The installer stops below 4 cores, and warns below 16 GB of RAM or 20 GB of free disk. Leave more disk for your indexed content. See [System Requirements](/deployment/system-requirements).
 - Internal DNS pointing a hostname at the machine.
 - A TLS certificate, from your internal certificate authority or a public one.
 
@@ -25,49 +23,61 @@ curl -fsSL https://get.pipeshub.com/install | bash
 
 ## Air-gapped installation
 
-On a host with no internet access, move the images across yourself.
+On a host with no internet access, use the `full` deployment type. Its image tag, `latest`, has the embedding model built in; the `slim` image downloads the model on first use and cannot do that offline. The `full` type uses Kafka as its message broker.
 
-**On a machine that does have access,** pull and save the images:
+**On a machine that does have access,** download the deployment files for a release and save the images:
 
 ```bash
+REF=v1.0.0   # the release you want
+mkdir pipeshub && cd pipeshub
+curl -fsSLO https://raw.githubusercontent.com/pipeshub-ai/pipeshub-ai/$REF/deployment/docker-compose/docker-compose.yml
+curl -fsSLO https://raw.githubusercontent.com/pipeshub-ai/pipeshub-ai/$REF/deployment/docker-compose/install.sh
+chmod +x install.sh
+
 docker pull pipeshubai/pipeshub-ai:latest
 docker pull pipeshubai/pipeshub-sandbox:latest
 docker pull mongo:8.0.17
 docker pull redis:7.4-bookworm
 docker pull qdrant/qdrant:v1.15
-docker pull neo4j:5.26.0          # or arangodb, if that is your graph backend
+docker pull neo4j:5.26.0
+docker pull confluentinc/cp-zookeeper:7.9.0
+docker pull confluentinc/cp-kafka:7.9.0
 
 docker save -o pipeshub-images.tar \
-  pipeshubai/pipeshub-ai:latest \
-  pipeshubai/pipeshub-sandbox:latest \
-  mongo:8.0.17 redis:7.4-bookworm qdrant/qdrant:v1.15 neo4j:5.26.0
+  pipeshubai/pipeshub-ai:latest pipeshubai/pipeshub-sandbox:latest \
+  mongo:8.0.17 redis:7.4-bookworm qdrant/qdrant:v1.15 neo4j:5.26.0 \
+  confluentinc/cp-zookeeper:7.9.0 confluentinc/cp-kafka:7.9.0
 ```
 
-The sandbox image is required — PipesHub will not start without it. Add
-`zookeeper` and `kafka` images as well if you chose Kafka as the message broker.
+These image versions are the ones in the Compose file for that release; check `docker-compose.yml` if you use a different one. If you choose ArangoDB instead of Neo4j, save `arangodb:3.12.4`; for etcd as the key-value store, save `quay.io/coreos/etcd:v3.5.17`.
 
-**On the air-gapped host,** load them and install without pulling:
+The sandbox image is only needed if agents should run code. To leave it out, install the `eval` type with the `latest` image (`PIPESHUB_DEPLOY_TYPE=eval ./install.sh --version latest --no-pull`). `eval` uses Redis instead of Kafka, so you can also skip the two Kafka images, but agents cannot run code.
+
+**On the air-gapped host,** copy the `pipeshub` directory and `pipeshub-images.tar` across, then load the images and install without pulling:
 
 ```bash
 docker load -i pipeshub-images.tar
-./install.sh --no-pull
+cd pipeshub
+PIPESHUB_DEPLOY_TYPE=full ./install.sh --version latest --no-pull
 ```
 
-`--no-pull` tells the installer to use the images already present rather than trying to reach Docker Hub.
+`--no-pull` tells the installer to use the images already present. `--version` must match the tag you saved; otherwise the installer looks for an image you do not have.
+
+After the install, set `HF_HUB_OFFLINE=1` and `TRANSFORMERS_OFFLINE=1` in `.env` and run `docker compose -p pipeshub-ai up -d`, so the model libraries do not try to reach the internet. See [Environment Variables](/deployment/environment-variables#air-gapped-hosts).
 
 ## Choosing models
 
 An air-gapped deployment cannot reach a hosted model provider, so configure local ones:
 
 - **Text generation:** [Ollama](/ai-models/llm/ollama) or [vLLM](/ai-models/llm/vllm) on your own hardware.
-- **Embeddings:** [Sentence Transformers](/ai-models/embedding/sentence-transformer), which run inside PipesHub with no separate server.
+- **Embeddings:** [Sentence Transformers](/ai-models/embedding/sentence-transformer), which run inside the PipesHub container. The `latest` image includes the default embedding model.
 - **Speech to text:** [Whisper](/ai-models/stt/whisper), which runs locally.
 
-Download the model weights on a connected machine and mount them into the deployment, since the first run would otherwise try to fetch them.
+Download the weights for your text-generation models on a connected machine before you move them across.
 
 ## Telemetry
 
-PipesHub collects usage telemetry by default. On an isolated network those requests simply fail and nothing breaks, but you can turn the collection off in **Settings → General** so the attempts stop.
+PipesHub collects usage telemetry by default. On an isolated network those requests simply fail and nothing breaks, but you can turn the collection off so the attempts stop: switch off **Data collection settings** under **Workspace → General**, or set `TELEMETRY_COLLECTION_FLAG=false` in `.env`.
 
 ## Certificates
 
@@ -81,9 +91,9 @@ If you terminate TLS with a certificate from an internal certificate authority, 
 ./install.sh --uninstall    # stop and delete all data
 ```
 
-On an air-gapped host, `--upgrade` will not find new images. Load the new image with `docker load` first, then run `./install.sh --upgrade --no-pull`.
+On an air-gapped host, `--upgrade` will not find new images. Load the new images with `docker load` first, then run `./install.sh --upgrade --no-pull`. Before upgrading from 0.x, read [Upgrading to 1.0](/deployment/upgrade-to-1-0).
 
-For backup and restore, follow the [procedures in the GCP guide](/deployment/vendor/gcp#backup-data) — they operate on Docker volumes and work anywhere.
+For backup and restore, see [Backup and Restore](/deployment/backup-restore).
 
 ## Related
 

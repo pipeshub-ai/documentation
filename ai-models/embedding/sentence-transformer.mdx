@@ -3,9 +3,10 @@ title: Sentence Transformers
 description: "Configure PipesHub to use Sentence Transformer embedding models"
 ---
 
-# Sentence Transformers Embeddings Configuration
-
-![Sentence Transformer Embeddings Configuration Interface](/images/ai-models/embedding/SentenceTransformer_EmbeddingConfig.png)
+<Frame>
+  <img className="block dark:hidden" src="/images/ai-models/embedding/SentenceTransformer_EmbeddingConfig.png" alt="Sentence Transformer Embeddings Configuration Interface" />
+  <img className="hidden dark:block" src="/images/ai-models/embedding/SentenceTransformer_EmbeddingConfig-dark.png" alt="Sentence Transformer Embeddings Configuration Interface" />
+</Frame>
 
 *The Sentence Transformers configuration screen in PipesHub where you'll enter your Model Name*
 
@@ -15,18 +16,24 @@ PipesHub allows you to use Sentence Transformer embedding models to enable seman
 
 ### Model Name *
 
-The Model Name is the only required field. It defines which Sentence Transformer model you want to use.
+The Model Name is the only required field. It defines which Sentence Transformer model you want to use. Enter the full HuggingFace repository name, including the owner, such as `sentence-transformers/all-MiniLM-L6-v2`. A name without the owner is not found.
 
 **Popular Sentence Transformer models include:**
-- `all-MiniLM-L6-v2` - Lightweight general-purpose model, good balance of speed and quality
-- `all-mpnet-base-v2` - Higher accuracy general-purpose model
-- `paraphrase-multilingual-mpnet-base-v2` - Supports 50+ languages for multilingual applications
+- `sentence-transformers/all-MiniLM-L6-v2` - Lightweight general-purpose model, good balance of speed and quality
+- `sentence-transformers/all-mpnet-base-v2` - Higher accuracy general-purpose model
+- `sentence-transformers/paraphrase-multilingual-mpnet-base-v2` - Supports 50+ languages for multilingual applications
 
 **How to choose a model:**
-- For general purpose use, select `all-MiniLM-L6-v2`
-- For higher accuracy when speed is less critical, select `all-mpnet-base-v2`
-- For multilingual content, select `paraphrase-multilingual-mpnet-base-v2`
+- For general purpose use, select `sentence-transformers/all-MiniLM-L6-v2`
+- For higher accuracy when speed is less critical, select `sentence-transformers/all-mpnet-base-v2`
+- For multilingual content, select `sentence-transformers/paraphrase-multilingual-mpnet-base-v2`
 - Check the [Sentence Transformers documentation](https://www.sbert.net/docs/pretrained_models.html) for the full list of available models
+
+## Optional Fields
+
+### Trust Remote Code
+
+Off by default. Turn it on only for a model that needs its own code from HuggingFace Hub, such as `nomic-ai/nomic-embed-text-v2-moe`, and only for a model you trust.
 
 ## Configuration Steps
 
@@ -34,7 +41,7 @@ As shown in the image above:
 
 1. Click **Configure** on the Sentence Transformers provider card
 2. Specify your desired Model Name (marked with *)
-3. Click **Add Model** to save and validate
+3. Click **Add model** to save and validate
 
 > Model Name is the only required field. No API key or external service is needed — the model runs locally inside PipesHub.
 
@@ -48,7 +55,7 @@ As shown in the image above:
 ## Troubleshooting
 
 - If you encounter errors, verify the model name is spelled correctly
-- For memory issues, consider switching to a smaller model such as `all-MiniLM-L6-v2`
+- For memory issues, consider switching to a smaller model such as `sentence-transformers/all-MiniLM-L6-v2`
 - For multilingual applications, ensure you are using a model that supports your target languages
 
 For additional support, refer to the [Sentence Transformers documentation](https://www.sbert.net/) or contact PipesHub support.

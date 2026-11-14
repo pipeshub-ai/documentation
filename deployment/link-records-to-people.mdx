@@ -18,7 +18,7 @@ Run it once per organisation after upgrading to a version that has record author
 
 - Reads the organisation's tickets, projects, mails, comments, pull requests and deals in pages of 200.
 - Links each record to the members it names, using the people already stored on the record. No new user is created.
-- Someone who is not a member gets a person entry and a link when a connector names them as an author, editor or owner, or in a ticket role. Unmatched mail recipients get neither, and Bcc recipients are never linked.
+- Someone who is not a member gets a person entry and a link when a record names them in any role other than mail recipient, such as author, owner, assignee or reviewer. Unmatched mail recipients get neither, and Bcc recipients are never linked.
 - Links each record to the CRM account its record group belongs to.
 - With `--apply`, before linking it records the organisation on CRM accounts synced before accounts carried one, and gives each external organisation a normalized-name key, so names that documents mention find accounts synced earlier. At the end it schedules the entity index to run again, so the new links are searchable.
 - Is safe to re-run. Each record's links are replaced, not added to, so running it again does not create duplicates.
@@ -29,13 +29,13 @@ Run it once per organisation after upgrading to a version that has record author
 From the directory that holds your Compose files, run the dry run first:
 
 ```bash
-docker compose exec pipeshub-ai python -m app.scripts.kg_record_people backfill --org <ORG_ID>
+docker compose exec -w /app/python pipeshub-ai python -m app.scripts.kg_record_people backfill --org <ORG_ID>
 ```
 
 Replace `<ORG_ID>` with your organisation's id. If the counts look right, write the links:
 
 ```bash
-docker compose exec pipeshub-ai python -m app.scripts.kg_record_people backfill --org <ORG_ID> --apply
+docker compose exec -w /app/python pipeshub-ai python -m app.scripts.kg_record_people backfill --org <ORG_ID> --apply
 ```
 
 <Note>

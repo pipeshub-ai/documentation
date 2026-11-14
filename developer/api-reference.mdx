@@ -22,7 +22,7 @@ When `pagination.totalCapped` is `true`, `totalItems` may not be exact. Usually 
 - Use `hasNext` and `nextCursor` to page. Don't rely on `totalItems` or `totalPages` to know when you have reached the end.
 - `counts.capped` (with `include=counts`) is `true` when `counts.total` and the per-type counts may not be exact, in the same way.
 - `pagination.totalPages` is `ceil(totalItems / limit)` for a page asked for by number. For a page asked for with `cursor`, `totalPages` and `page` are `null`.
-- `page` can be at most 50 (at most 5 for a search by a connected app whose access is limited to some spaces, folders or files). A higher `page` gets `400` ("Invalid page: page must not exceed 50. Use the cursor from a previous response."), even when `totalPages` is higher. To go further, follow `nextCursor`.
+- `page` can be at most N: 50, or 5 for a search on the root listing (`GET /knowledgeBase/knowledge-hub/nodes`) by a connected app whose access is limited to some spaces, folders or files. A higher `page` gets `400` ("Invalid page: page must not exceed N. Use the cursor from a previous response."), even when `totalPages` is higher. To go further, follow `nextCursor`.
 - Older servers do not send `totalCapped` or `capped`. Treat a missing value as `false`.
 
 In the web app, a capped total is shown as approximate: "Showing 1-50 of at least 500", and the page marker reads "1 / 10+" instead of "1 / 10".

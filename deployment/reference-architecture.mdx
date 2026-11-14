@@ -1,0 +1,174 @@
+---
+title: "Reference architecture"
+description: "The services PipesHub runs, the datastores it needs, and how to lay them out for evaluation, production and high availability"
+icon: "sitemap"
+---
+
+PipesHub is one application image plus a set of datastores. This page describes those pieces, then three ways to deploy them: a single machine for evaluation, a production install on Kubernetes, and what high availability covers today. For CPU, memory and disk figures, see [Sizing and capacity](/deployment/sizing).
+
+## The application container
+
+Every PipesHub process runs in one container (one pod on Kubernetes), from the `pipeshubai/pipeshub-ai` image. A process monitor starts each process and restarts any that exits.
+
+| Process | Port | What it does |
+|---|---|---|
+| Node.js API | `3000` in Docker Compose, `3001` in the Helm chart | Serves the web app, the REST API and `/mcp`. Handles sign-in, users, organizations, file upload and download, and is the only port people need to reach. |
+| Query service | `8000` | Search, chat and agents. Calls your configured AI models. |
+| Connector service | `8088` | Connector sign-in (OAuth), token refresh and syncing from each source. |
+| Indexing service | `8091` | Parses, chunks and embeds records, and writes them to the graph and vector databases. |
+| Docling | `8081` | Layout analysis and OCR for PDFs and other complex documents. |
+| Embedding server | `8002` | Runs the local embedding model when you use one. |
+| Parsing and extraction | `8092`, `8093` | Off by default. Started only when `USE_PARSING_SERVICE=true`. |
+| Slack bot | none | Started unless `PIPESHUB_SKIP_SLACKBOT=true`. The `eval` deployment does not start it. |
+
+The processes talk to each other over `localhost` inside the container. On Kubernetes, the chart's Service also exposes `8000`, `8081`, `8088` and `8091` inside the cluster.
+
+## Datastores
+
+| Role | Default | Required | Alternatives |
+|---|---|---|---|
+| Document database (users, organizations, conversations) | MongoDB | Yes | PostgreSQL, opt-in, for new Docker Compose installs built from a repository checkout. The Helm chart does not configure it. |
+| Graph database (records, permissions, hierarchy) | Neo4j | Yes | ArangoDB |
+| Vector database (search vectors) | Qdrant | Yes | Set by `VECTOR_DB_TYPE`. Neither the installer nor the chart changes it. |
+| Cache, configuration and message broker | Redis | Yes | Kafka as the broker; etcd as the configuration store |
+| File storage (uploads, stored record content) | Local disk in the app's data volume | Yes | S3 or Azure Blob, chosen in the product |
+
+Redis does three jobs in the default stack: cache, key-value store for configuration, and message broker through Redis Streams. If you choose Kafka as the broker, Redis is still needed for the other two.
+
+## Optional services
+
+These run beside the app only when you turn them on:
+
+- **Coding sandbox:** a sandbox image and a Docker API proxy that only allows the calls the sandbox makes. On Kubernetes, a Docker-in-Docker sidecar, a Docker daemon you run, or E2B. See [Kubernetes (Helm)](/deployment/kubernetes#other-settings).
+- **Web search and page reading:** SearXNG and Crawl4AI, behind an internal gateway.
+- **Kafka and Zookeeper**, when `MESSAGE_BROKER=kafka`.
+- **etcd**, when `KV_STORE_TYPE=etcd`.
+
+## How the pieces connect
+
+```mermaid
+flowchart LR
+  user[Browser, MCP client or API] -->|HTTPS| proxy[Reverse proxy or ingress]
+  proxy -->|3000 or 3001| node
+
+  subgraph app[PipesHub app container]
+    node[Node.js API]
+    query[Query :8000]
+    conn[Connectors :8088]
+    idx[Indexing :8091]
+    docling[Docling :8081]
+    emb[Embedding :8002]
+    node --> query
+    node --> conn
+    idx --> docling
+    idx --> emb
+    query --> emb
+  end
+
+  node --> mongo[(MongoDB)]
+  node --> redis[(Redis)]
+  conn --> redis
+  redis -->|record events| idx
+  conn --> graph[(Neo4j or ArangoDB)]
+  idx --> graph
+  idx --> qdrant[(Qdrant)]
+  query --> graph
+  query --> qdrant
+  node --> files[(Local disk, S3 or Azure Blob)]
+  query --> llm[AI model providers]
+  idx --> llm
+  conn --> sources[Connected sources]
+```
+
+The connector service writes records to the graph and publishes an event for each one. The indexing service consumes those events, fetches the content, parses and embeds it, and writes the vectors. The query service searches both stores and calls the AI models.
+
+## Ports and health checks
+
+| What | Where |
+|---|---|
+| Public port, Docker Compose | `3000` on the host (`APP_PORT` in `.env`). Nothing else is published. |
+| Public port, Helm | `3001` through the ingress. Expose `8088` on a second host only for OAuth connectors or provider webhooks, and set `config.connectorPublicBackend` to its URL. |
+| Datastore health | `GET /api/v1/health` reports Redis, the message broker, MongoDB, the graph database and the vector database. The Helm chart's startup, readiness and liveness probes use it. |
+| Service health | `GET /api/v1/health/services` reports the query, connector, indexing, Docling and embedding services (and parsing and extraction when enabled). |
+
+Both endpoints answer HTTP `200` and put the result in the body: `"status": "healthy"` or `"unhealthy"`, with a value for each component under `services`. Monitor the `status` field, not the HTTP code.
+
+`/api/v1/health/services` reports `healthy` overall when the query and connector services are up. The Docker Compose health check is stricter: it requires the query, connector, indexing and Docling services to be healthy, and leaves out the embedding server, which can take minutes to download its model on first start. This endpoint calls every service each time, so poll it every few seconds at most, not several times a second.
+
+## Tier 1: single machine for evaluation
+
+Run the installer on one machine. It starts the app container and the datastores with Docker Compose.
+
+- **What runs:** the app container, MongoDB, Redis and Qdrant always, plus Neo4j (or ArangoDB). Redis Streams is the broker unless you pick Kafka. `slim` and `full` add the coding sandbox; `eval` leaves it out.
+- **Machine:** 4 CPU cores or more and a 16 GB-class machine (8 GB for `eval`). See [System requirements](/deployment/system-requirements).
+- **Data:** Docker volumes on the same disk. Back them up with [Backup and restore](/deployment/backup-restore).
+- **Limits:** every service is a single instance on one host. A host failure or reboot takes PipesHub down until the host is back.
+
+This is the right shape for trying PipesHub, demos and small teams that can accept downtime for upgrades and host maintenance. Put a TLS-terminating proxy in front of it for anything reached by hostname. See [Serving it over HTTPS](/deployment/overview#serving-it-over-https).
+
+## Tier 2: production in one region on Kubernetes
+
+Install the Helm chart (see [Kubernetes (Helm)](/deployment/kubernetes)). By default it runs two or more app pods behind a Service, with autoscaling between 2 and 6 pods and a PodDisruptionBudget that keeps at least one running. The datastores run as StatefulSets in the same namespace.
+
+Requirements for more than one app pod:
+
+- **File storage must be S3 or Azure Blob.** Local storage keeps files on each pod's own disk, so the app refuses it when the chart allows more than one replica. Choose the storage in the product, on the onboarding Storage step, before anyone uploads a file.
+- **Any shared app volume must be ReadWriteMany.** The chart refuses to install more than one replica on a ReadWriteOnce app volume. The EKS preset turns the app volume off instead.
+
+What you can move to a managed service:
+
+| Store | Managed option in the chart |
+|---|---|
+| Redis | Yes. Set `redis.enabled=false` and `redis.external.*`: a standalone primary such as ElastiCache with cluster mode disabled, or a Redis Cluster. Cluster mode also needs a standalone Redis for the background worker (`celery.brokerUrl`). See the [chart README](https://github.com/pipeshub-ai/pipeshub-ai/tree/main/deployment/helm/pipeshub-ai). |
+| File storage | Yes. S3 or Azure Blob, set in the product. |
+| MongoDB | No. The chart always runs MongoDB in the cluster and builds the connection string itself. |
+| Neo4j, ArangoDB, Qdrant | No. The chart runs them in the cluster. |
+| PostgreSQL | Not configured by the chart. |
+
+For the default stack on Kubernetes, you therefore run MongoDB, Neo4j and Qdrant in the cluster, and either the bundled Redis or a managed one. Put the datastores on block storage with snapshots, and spread them across nodes.
+
+## Tier 3: high availability today
+
+High availability in PipesHub today means the app layer and some datastores have more than one copy. Others run as one instance. The table shows what the default chart (`values.yaml`) runs.
+
+| Component | Default chart | When its pod or node fails |
+|---|---|---|
+| App pods | 2, autoscaled up to 6 | The other pods keep serving. |
+| MongoDB | Replica set: 2 data members and an arbiter | The replica set keeps serving. |
+| Qdrant | 2 nodes. With more than one node, the chart sets Qdrant's default collection replication factor to 2. | The other node keeps serving. |
+| Redis | 1 primary and 1 replica, no Sentinel | The app talks only to the primary. The replica is not promoted, so Redis is unavailable until the primary pod restarts. |
+| Neo4j | 1 instance, Community edition | Unavailable until the pod restarts and re-attaches its disk. The Community edition cannot cluster, and running more than one replica creates separate databases that diverge. |
+| ArangoDB, etcd (if used) | 1 instance each | Unavailable until the pod restarts. |
+| Kafka (if used) | 2 brokers and 3 Zookeeper nodes | See below. |
+| Connector sync | One worker process in each app pod | See below. |
+
+Limits to plan around:
+
+- **Neo4j is a single instance.** It is the one store whose failure always stops indexing and search until its pod is back. On Amazon EKS that restart is typically 5 to 15 minutes after a node fails.
+- **Redis has no automatic failover in the cluster.** The app's Redis client is not Sentinel-aware, so the chart leaves Sentinel off.
+- **Kafka topics are created with replication factor 1.** The app creates any missing topic with one replica, whatever the brokers' default. With two brokers, losing the broker that holds a partition makes that partition unavailable.
+- **Qdrant replication comes from the server default.** The app does not set a replication factor when it creates a collection. In the chart that default is 2 when `qdrant.replicaCount` is above 1. A single Qdrant, as in Docker Compose, has one copy.
+- **Connector sync runs as one worker process per app pod.** The connector service's worker count is fixed at 1. Its guard against running the same sync twice is kept in that process's memory, so it does not cover other pods.
+
+What an operator can do:
+
+- **Use a managed Redis with automatic failover**, such as ElastiCache with cluster mode disabled and one replica. Failover then does not wait on a Kubernetes node.
+- **Store files in S3 or Azure Blob**, which also lets the app run more than one pod.
+- **Create the Kafka topics yourself** with the replication factor you want, before the first start, if you use Kafka. The app only creates topics that are missing.
+- **Spread pods across nodes and zones.** Set `spreadAcrossNodes`, `qdrant.antiAffinity` and topology spread constraints so the copies do not share a node.
+- **Shorten pod recovery** with node auto-repair, so a single-instance store's pod moves to a healthy node sooner.
+- **Back up every store**, and test a restore. Replicas do not protect against deletion or corruption.
+
+The [Amazon EKS guide](https://github.com/pipeshub-ai/pipeshub-ai/blob/main/docs/deployment/aws-eks.md) in the repository lays this out for one cloud: three MongoDB members, three Qdrant nodes, Redis with a replica or ElastiCache, one Neo4j, daily volume snapshots, and what happens when each node fails.
+
+## Backups
+
+On Docker Compose, back up the volumes and the `.env` file together. On Kubernetes, snapshot the PersistentVolumeClaims and keep `secretKey` and the database passwords with them. See [Backup and restore](/deployment/backup-restore).
+
+## Related
+
+- [Sizing and capacity](/deployment/sizing)
+- [System requirements](/deployment/system-requirements)
+- [Kubernetes (Helm)](/deployment/kubernetes)
+- [Backup and restore](/deployment/backup-restore)
+- [Environment variables](/deployment/environment-variables)

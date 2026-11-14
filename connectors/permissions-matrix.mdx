@@ -1,0 +1,127 @@
+---
+title: "Permissions and freshness by connector"
+description: "For each connector: who can see its records, whether groups are mirrored, how scheduled syncs read changes, and how deletions and revoked access reach search"
+icon: "user-lock"
+---
+
+This page answers two questions for each connector: who in PipesHub can see what it syncs, and how soon a change in the source app shows up in search, chat and agents.
+
+## How access is checked
+
+- **At query time, against synced permissions.** When someone searches, chats or runs an agent, PipesHub checks their access in its own graph database. It does not ask the source app at that moment. The permissions it checks are the ones it last synced from the source, matched to PipesHub users by email address.
+- **Permission checks fail closed.** If PipesHub can't check which records a user may see, it shows no results and says so, instead of showing everything.
+- **Results are cached briefly.** The list of records each user can see is cached for up to 300 seconds. A sync that changes access clears the cache, so the limit only matters if that fails. Set `PIPESHUB_ACCESSIBLE_RECORDS_CACHE_TTL` (in seconds) to change it. See [Environment variables](/deployment/environment-variables).
+
+## How changes reach PipesHub
+
+- **A scheduled sync is incremental.** It picks up from where the last run stopped and reads what changed since. How it finds the changes depends on the source: a change feed, an audit log, a modified-since date, or a full listing compared with what PipesHub already holds. The tables below say which.
+- **Some changes are only picked up by a full sync.** Some sources don't report every deletion or every removed share. A record deleted, or an access removed, in such a source stays in PipesHub until the next full sync. At the end of a full sync that read the whole source, PipesHub removes every record and grant the run did not see.
+- **A full sync runs only when:**
+  - an admin starts one (see [How to force a full sync](#how-to-force-a-full-sync)),
+  - the connector's sync filters change, or
+  - an earlier full sync was interrupted, so the next run finishes it.
+
+  A scheduled run is never a full sync on its own.
+- **A full sync that could not read everything removes nothing.** If part of the source couldn't be read, PipesHub keeps what it already had rather than treating the unread part as deleted. It retries on a later full sync.
+
+## Reading the tables
+
+- **Who sees records:**
+  - **Per item**: PipesHub syncs each item's sharing from the source, and only people who can see the item there can see it in PipesHub.
+  - **Everyone with the connector**: the source has no per-item access that PipesHub reads. Everyone who can use a team connector sees all of its records.
+  - **Only you**: a personal connector, visible only to the person who set it up.
+- **Groups**: whether the source's groups, teams or roles are synced as groups in PipesHub. **Nested** means members of child groups are included.
+- **Scheduled run reads**: what an incremental run reads.
+- **Interval**: the interval the sync settings start with when you choose **Scheduled**. You can change it. **Manual** means PipesHub syncs only when someone starts a sync.
+- **Next full sync**: the change waits for the next full sync.
+
+<Note>
+  Rows marked **Check connector page** could not be confirmed for this page. See that connector's own page for details.
+</Note>
+
+## Wikis and project tools
+
+| Connector | Who sees records | Groups | Scheduled run reads | Interval | Deletions | Revoked access |
+| --- | --- | --- | --- | --- | --- | --- |
+| [Confluence Cloud](/connectors/confluence/confluence) | Per item | Yes, members replaced each run | Pages changed since the last run, per space | 60 min | Found each run by comparing with a listing of each space | Each run, from the audit log. If the audit log can't be read, restrictions are checked again |
+| [Confluence Data Center](/connectors/confluence/confluence-data-center) | Per item. Personal version: only you | Yes, members replaced each run | Pages changed since the last run, per space | 60 min | Found each run by comparing with a listing of each space | Each run, from the audit log and space permissions |
+| [Jira Cloud](/connectors/jira/jira) | Per item, including issue security levels. Personal version: only you | Yes, groups and project roles, members replaced each run | Issues updated since the last run | 60 min | Each run, from the audit log. Without it, by comparing issue IDs | Each run for projects, roles and groups. For issues, when the issue changes |
+| [Jira Data Center](/connectors/jira/jira-data-center) | Per item. Personal version: only you | Yes, groups and project roles, members replaced each run | Issues updated since the last run | 60 min | Each run, from the audit log. Without audit log access: next full sync. The personal version compares issue IDs each run | Each run for projects, roles and groups. For issues, when the issue changes |
+| [Notion](/connectors/notion/notion) | Everyone with the connector. Personal version: only you | No | Pages edited since the last run | 60 min | Found each run by comparing with a full listing; each one is confirmed with Notion | A page no longer shared with the integration is removed the same way. A person leaving the Notion workspace: check connector page |
+| [BookStack](/connectors/bookstack/bookstack) | Per item, from role permissions | Yes, roles | Events since the last run, from the audit log | 60 min | Each run, from the audit log's delete events | Check connector page |
+| [Drupal Wiki](/connectors/drupal-wiki/drupal-wiki) | Per space: open spaces to everyone, private spaces to their members | Yes | Pages modified since the last run, per space | 60 min | Next full sync | Check connector page |
+| [Linear](/connectors/linear/linear) | Per item, by team | Yes, teams and a workspace-members group. Nested: members of parent teams are included | Items updated since the last run | 60 min | Found each run by comparing IDs | Each run: team members and team access are written again |
+
+## Files and storage
+
+| Connector | Who sees records | Groups | Scheduled run reads | Interval | Deletions | Revoked access |
+| --- | --- | --- | --- | --- | --- | --- |
+| [Google Drive](/connectors/google-workspace/drive/drive) | Per item. Personal version: only you | Yes (team), nested, members replaced each run | Drive's change feed | 60 min | Each run, from the change feed | Each run, from the change feed |
+| [SharePoint](/connectors/microsoft-365/sharepoint) | Per item | Yes, Microsoft Entra groups (nested) and site groups | Microsoft Graph delta, per library. Site pages are listed each run | 60 min | Each run, from the delta and the page listing | Each run, from sharing changes in the delta |
+| [OneDrive](/connectors/microsoft-365/one-drive) | Per item | Yes. Nested: one level only | Microsoft Graph delta, per user | 60 min | Each run, from the delta | Each run, from sharing changes in the delta |
+| [Box](/connectors/box/box) | Per item | Yes, members replaced each run | Box's admin event stream. Runs a full listing if the last run was more than 14 days ago | 60 min | Each run, from events | Each run, from collaboration events |
+| [Dropbox](/connectors/dropbox/dropbox_teams) | Per item | Yes, from the team activity log | Dropbox's change cursor, per folder, and the team activity log | 60 min | Each run, from the change cursor | Each run, from sharing events |
+| [Dropbox Personal](/connectors/dropbox/dropbox_personal) | Only you | No | Dropbox's change cursor | 60 min | Each run, from the change cursor | Not applicable |
+| [Nextcloud](/connectors/nextcloud/nextcloud) | Only you | No | Nextcloud's activity feed, plus a full listing once a day | 60 min | Each run, from delete and trash events | Not applicable |
+| [Local FS](/connectors/local-fs/local-fs) | Only you | No | File events from the desktop app | 60 min | Each run, from delete events | Not applicable |
+| [Amazon S3](/connectors/s3/s3), [MinIO](/connectors/minio/minio), [Google Cloud Storage](/connectors/gcs/gcs) | Everyone with the connector. Personal: only you | No | A full listing. Only objects changed since the last run are processed | 60 min | Each run, by comparing with the listing | Not applicable |
+| [Azure Blob](/connectors/azure-blob/azure-blob), [Azure Files](/connectors/azure-files/azure-files) | Everyone with the connector. Personal: only you | No | A full listing. Unchanged files are skipped | 60 min | Each run, by comparing with the listing | Not applicable |
+| [SMB](/connectors/smb/smb) | Everyone with the connector. Personal: only you | No | A full walk of the share. Unchanged files are skipped | 60 min | Each run, by comparing with the walk. Paths that couldn't be read are kept | Not applicable |
+
+## Email, chat and meetings
+
+| Connector | Who sees records | Groups | Scheduled run reads | Interval | Deletions | Revoked access |
+| --- | --- | --- | --- | --- | --- | --- |
+| [Gmail](/connectors/google-workspace/gmail/gmail) | The mailbox owner. Personal version: only you | Yes (team), nested, members replaced each run | Gmail's history since the last run. If that history has expired, the mailbox is read again | 60 min | Each run, from deletions and moves to Trash or Spam | Not applicable |
+| [Outlook](/connectors/microsoft-365/outlook) | The mailbox owner. Group conversations: group members | Yes, Microsoft 365 groups (nested), read in full each run | Microsoft Graph delta per mail folder. Group conversations since the last delivered message | 60 min | Each run, from the delta. Deleted groups are removed each run | Each run, for group members |
+| [Outlook Personal](/connectors/microsoft-365/outlook-personal) | Only you | No | Microsoft Graph delta per mail folder | 60 min | Each run, from the delta | Not applicable |
+| [Slack](/connectors/slack/slack) | Per channel. Personal version: only you | Yes, Slack user groups | New messages per channel, plus threads that grew in the last 24 hours | 60 min | Deleted messages: next full sync | Each run: channel members are written again |
+| [Zoom](/connectors/zoom/zoom) | Per meeting: host and participants | No | Meetings since the last run, per user | 60 min | Next full sync | Next full sync |
+
+## Code
+
+| Connector | Who sees records | Groups | Scheduled run reads | Interval | Deletions | Revoked access |
+| --- | --- | --- | --- | --- | --- | --- |
+| [GitHub Teams](/connectors/github/github) | Per repository: its collaborators | No. Team members are written as individual users | Issues and pull requests updated since the last run. Code: the commits since the last run | 60 min | Found each run, confirmed with GitHub. Deleted files from the commit diff | Each run: collaborator lists are written again |
+| [Github](/connectors/github/github) (personal) | Only you | No | Same as GitHub Teams | 60 min | Same as GitHub Teams | Not applicable |
+| [GitLab](/connectors/gitlab/gitlab) | Per project, including members inherited from parent groups | GitLab groups are kept as a hierarchy, not as user groups | Issues and merge requests updated since the last run. Code: the repository diff | 60 min | Found each run, confirmed with GitLab | Each run: project and group members are written again |
+| [GitLab Personal](/connectors/gitlab/gitlab) | Only you | No | Same as GitLab | 60 min | Same as GitLab | Not applicable |
+
+## Support and CRM
+
+| Connector | Who sees records | Groups | Scheduled run reads | Interval | Deletions | Revoked access |
+| --- | --- | --- | --- | --- | --- | --- |
+| [Salesforce](/connectors/salesforce/salesforce) | Per item | Yes, public groups and queues (nested), and roles | Records modified since the last run, per object | 60 min | Each run, from Salesforce's deleted-records list (last 15 days), or by comparing IDs | Groups are rebuilt each run. Record-level sharing changes: check connector page |
+| [ServiceNow](/connectors/servicenow/servicenow) | Per item, from knowledge base and article criteria | Yes, groups (nested) and roles | Items updated since the last run | 60 min | Each run, from the deletion audit and by comparing | Each run: group and role members are read in full and replaced |
+| [Zendesk](/connectors/zendesk/zendesk) | Per item | Yes, groups and organizations, members replaced each run | Zendesk's incremental exports | 60 min | Tickets: each run, from the export. Articles: each run, by comparing IDs | Each run. A deleted or suspended user's access is withdrawn |
+| [Zammad](/connectors/zammad/zammad) | Per item, by group and role | Yes, groups and roles, members replaced each run | Tickets updated since the last run, per group | 60 min | Each run, by comparing with each group's tickets | Each run |
+
+## Databases and web
+
+| Connector | Who sees records | Groups | Scheduled run reads | Interval | Deletions | Revoked access |
+| --- | --- | --- | --- | --- | --- | --- |
+| [PostgreSQL](/connectors/postgres/postgres), [MariaDB](/connectors/mariadb/mariadb) | Everyone with the connector. Personal: only you | No | The database catalog, compared with the last run | 120 min | Dropped tables are removed each run | Not applicable |
+| [RSS](/connectors/rss/rss) | Everyone with the connector. Personal: only you | No | Every feed, each run | Manual by default; 60 min when scheduled | Entries are never removed, since a feed only shows its latest entries. Removing a feed from the settings removes its entries | Not applicable |
+| [Web](/connectors/web/web) | Everyone with the connector. Personal: only you | No | A new crawl. Unchanged pages are skipped | 1 day | A page that returns 404 or 410 on two syncs in a row, or that two complete crawls no longer reach | Not applicable |
+
+## How to force a full sync
+
+Run a full sync after you change sharing or delete content in a source that only reports those changes to a full sync, or when search results don't match the source.
+
+<Steps>
+  <Step title="Open the connector">
+    Go to **Workspace → Connectors** (or **Your connectors** for a personal connector) and find the connector's card.
+  </Step>
+  <Step title="Start the full sync">
+    Click **Full sync**, then **Confirm**. If a normal sync is running, the button is disabled: stop that sync first.
+  </Step>
+</Steps>
+
+While it runs, the button becomes **Stop full sync**. A full sync reads the whole source again, so it takes longer than a normal sync.
+
+Over the API, send `POST /api/v1/connectors/{connectorId}/resync` with `{"connectorName": "<connector type>", "fullSync": true}`. The token needs the `connector:write` scope (`kb:write` is also accepted). See [Connector manager](/system-overview/connector-manager).
+
+## Related
+
+- [Security and privacy](/security-and-privacy#how-access-changes-reach-search)
+- [Connectors overview](/connectors/overview)

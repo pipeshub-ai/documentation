@@ -30,12 +30,12 @@ You can switch each store on its own. For example, you can keep Kafka for messag
 
 You need:
 
-- A PostgreSQL server you control. For vectors, pgvector 0.7.0 or later. The stock `postgres` image does not include pgvector.
+- A PostgreSQL server you control, with pgvector 0.7.0 or later. You need it even if you keep Qdrant for vectors, because the schema always includes the vector tables. The stock `postgres` image does not include pgvector.
 - An administrator login to create roles, and the database prepared with the steps below.
 
 <Steps>
   <Step title="Create the roles">
-    Run from the `backend` directory of the repository. This creates the roles and, with `PG_BOOTSTRAP_EXTENSIONS`, installs the extensions:
+    Run from the `backend` directory of the repository. This creates the roles and installs the extensions into schema `ext`:
 
     ```bash
     PG_ADMIN_URL=postgresql://admin:...@db-host:5432/pipeshub \
@@ -43,7 +43,9 @@ You need:
     python -m db.bootstrap_roles
     ```
 
-    Set a `PG_<NAME>_PASSWORD` variable for each login role you need, for example `PG_NODE_PASSWORD`, `PG_MIGRATE_PASSWORD` and `PG_JOBS_PASSWORD`. A role that already exists is never changed. Skip `PG_BOOTSTRAP_EXTENSIONS` if you do not use pgvector.
+    Also set a password for every login the run creates: `PG_NODE_PASSWORD`, `PG_CONNECTORS_PASSWORD`, `PG_INDEXING_PASSWORD`, `PG_QUERY_PASSWORD`, `PG_KV_PASSWORD`, `PG_MIGRATE_PASSWORD`, `PG_JOBS_PASSWORD` and `PG_BACKUP_PASSWORD`. If one is missing, the run exits with code `2` before it creates anything. Set `PG_BOOTSTRAP_ALLOW_NO_PASSWORD=1` instead if these logins use peer, trust or certificate authentication. A role that already exists is never changed, so its password is not needed.
+
+    Keep `PG_BOOTSTRAP_EXTENSIONS=vector,pg_trgm` even if you do not use pgvector. The next step stops with an error when the `vector` extension is not installed in schema `ext`.
   </Step>
   <Step title="Apply the schema">
     ```bash
@@ -74,7 +76,7 @@ You need:
 
 ## Switch a store on
 
-Set the variable in your `.env`, then restart. Do these one at a time and check each (see [Check that it works](#check-that-it-works)).
+Set the variable in the environment of every PipesHub process, then restart. With Docker Compose, most of these do not reach the container yet; see [Docker Compose](#docker-compose). Do these one at a time and check each (see [Check that it works](#check-that-it-works)).
 
 ### Configuration, messages and shared state
 
@@ -124,6 +126,12 @@ The graph lives in the `graph` schema. Each process uses its `PG_CORE_URL` login
 - **Logs:** each service logs the store it chose at start. Look for `pgvector provider created and connected` for vectors and `Creating postgres provider (from DATA_STORE env)` for the graph. An unsupported `PIPESHUB_STORE`, `DOC_STORE`, `MESSAGE_BROKER`, `REDIS_MODE`, `VECTOR_DB_TYPE` or `DATA_STORE` value stops the service with an error that names the variable.
 - **Round trip:** sign in, add a record or run a search, and confirm it works end to end.
 
-<Note>
-  Docker Compose has an opt-in `postgres` profile that starts PostgreSQL (with pgvector) and PgBouncer and creates the roles. From a repository checkout, `PIPESHUB_COMPOSE_OVERRIDES=docker-compose.postgres-docstore.yml ./install.sh` also runs the schema job and puts the document store of a new install on it. It sets only `DOC_STORE` and its logins, so set the other variables above yourself. See the [Compose PostgreSQL README](https://github.com/pipeshub-ai/pipeshub-ai/blob/main/deployment/docker-compose/postgres/README.md). **Coming soon:** a Helm chart option.
-</Note>
+## Docker Compose
+
+With the shipped Compose files, only the document store can be moved to PostgreSQL today:
+
+- The opt-in `postgres` profile starts PostgreSQL (with pgvector) and PgBouncer and creates the roles.
+- From a repository checkout, `PIPESHUB_COMPOSE_OVERRIDES=docker-compose.postgres-docstore.yml ./install.sh` also runs the schema job and gives the app container `DOC_STORE=postgres`, `PG_NODE_URL` and `PG_JOBS_URL`. Use it for a new install: it does not copy data from MongoDB. See the [Compose PostgreSQL README](https://github.com/pipeshub-ai/pipeshub-ai/blob/main/deployment/docker-compose/postgres/README.md).
+- The app container gets `KV_STORE_TYPE`, `MESSAGE_BROKER`, `REDIS_MODE` and `DATA_STORE` from `.env`, but not `PIPESHUB_STORE`, `CRAWL_SCHEDULER`, `VECTOR_DB_TYPE`, `PG_CORE_URL`, `PG_POOLER`, `PG_LISTEN_URL` or `PGVECTOR_DSN`. Setting those in `.env` changes nothing, and the Python services cannot reach PostgreSQL without `PG_CORE_URL`, so keep the other stores on their defaults with Compose.
+
+There is no Helm chart option yet.

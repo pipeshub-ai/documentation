@@ -188,45 +188,35 @@ These align with the agent OAuth scope configuration for the Microsoft Teams act
 
 ### Step 5: Create the Microsoft Teams action in PipesHub
 
-These steps require a **workspace administrator**. Open **Workspace → Actions** (or `/workspace/actions/team`). Use the path that matches whether your organization already has a Microsoft Teams **org instance**.
+These steps require a **workspace administrator**. Open **Workspace settings → Actions** (`/workspace/actions/team`). Use the path that matches whether your organization already has a Microsoft Teams **org instance**.
 
 #### Case A — Organization does not have a Microsoft Teams instance yet
 
 1. In the sidebar, open **Workspace**, then **Actions**.
-2. On the catalog, find **Microsoft Teams**. With no org instance yet, the card is **Not configured** and the primary control is **Setup**.
-3. Click **Setup** on the Microsoft Teams card (or open the card and start setup). The **Action configuration** drawer opens.
+2. On the catalog, find **Teams**. With no org instance yet, the card is **Not configured** and the primary control is **Set up**.
+3. Click **Set up** on the **Teams** card (or open the card and start setup). The **Action configuration** drawer opens.
 
-{/* TODO: add asset `images/toolsets/ms-teams/ms-teams-actions-catalog-setup.png` — Actions catalog, Microsoft Teams not configured, Setup */}
-
-<div className="text-center">
-  <img
-    src="/images/toolsets/ms-teams/ms-teams-actions-catalog-setup.png"
-    alt="Workspace Actions catalog showing Microsoft Teams with Setup when the organization has no instance yet"
-    className="block mx-auto w-11/12"
-  />
-</div>
+<Frame>
+  <img className="block dark:hidden" src="/images/toolsets/ms-teams/ms-teams-actions-catalog-setup.png" alt="Actions catalog with the Teams Action configuration drawer opened from Set up" />
+  <img className="hidden dark:block" src="/images/toolsets/ms-teams/ms-teams-actions-catalog-setup-dark.png" alt="Actions catalog with the Teams Action configuration drawer opened from Set up" />
+</Frame>
 
 #### Case B — Organization already has at least one Microsoft Teams instance
 
 1. In the sidebar, open **Workspace**, then **Actions**.
-2. Find **Microsoft Teams** in the catalog. When an org instance already exists, clicking the card opens the **Microsoft Teams** type page (instances list) instead of launching setup immediately.
+2. Find **Teams** in the catalog. When an org instance already exists, clicking the card opens the **Teams** page (instances list) instead of launching setup immediately.
 3. On the type page, click **Add instance**. The **Action configuration** drawer opens.
 
-{/* TODO: add asset `images/toolsets/ms-teams/ms-teams-actions-type-add-instance.png` — Microsoft Teams type page, Add instance */}
-
-<div className="text-center">
-  <img
-    src="/images/toolsets/ms-teams/ms-teams-actions-type-add-instance.png"
-    alt="Microsoft Teams action type page with Add instance when the organization already has instances"
-    className="block mx-auto w-11/12"
-  />
-</div>
+<Frame>
+  <img className="block dark:hidden" src="/images/toolsets/ms-teams/ms-teams-actions-type-add-instance.png" alt="Teams action page with one instance and the Add instance drawer open" />
+  <img className="hidden dark:block" src="/images/toolsets/ms-teams/ms-teams-actions-type-add-instance-dark.png" alt="Teams action page with one instance and the Add instance drawer open" />
+</Frame>
 
 #### Complete configuration (both cases)
 
 4. In the **Action configuration** drawer, set **Instance name** (for example, “Production Teams”).
-5. Enter **Client ID** and **Client secret** from Entra (and **Tenant ID** if the form shows it—your directory GUID, domain, or **`common`** for the default multi-tenant and personal Microsoft account behavior, as described in the product UI).
-6. Click **Create** to save the organization action instance.
+5. Enter an **OAuth app name** (or pick a saved app), then the **Client ID** and **Client Secret** from Entra. **Tenant ID** is optional: enter your directory ID or domain, or leave it blank (or `common`) to allow both work and personal Microsoft accounts.
+6. Before you click **Create**, copy the **Redirect URI** from the top of the drawer and register it in Entra (Step 6). Then click **Create** to save the organization action instance.
 
 <Info>
   After you create an OAuth-backed action, the product may remind you that each user must sign in from **Your actions** before they can use it in agents.
@@ -234,21 +224,20 @@ These steps require a **workspace administrator**. Open **Workspace → Actions*
 
 ### Step 6: Copy the Redirect URI and register it in Azure
 
-The **Action configuration** drawer does not show the redirect URL; you copy it from **Manage action configuration** after the instance exists.
+The **Action configuration** drawer from Step 5 shows the **Redirect URI** at the top. Copy it before you click **Create**, register it as below, then return to the drawer and click **Create**.
 
-1. On the Microsoft Teams action page, find your new instance in the list.
-2. Open **Manage action configuration** (the settings control on the instance row).
-3. Under **Redirect URI**, copy the value (or use **Copy**). It matches your deployment host and this pattern:
+1. In the **Action configuration** drawer, find **Redirect URI**.
+2. Copy the value with the copy button. It matches your deployment host and this pattern:
 
    `https://<your-pipeshub-host>/toolsets/oauth/callback/teams`
 
    The path segment `teams` matches the Microsoft Teams action type. The value must match what you register in Entra **exactly** (scheme, host, path; no stray trailing slash unless your deployment includes one).
 
-4. In the Entra app registration, open **Authentication**.
-5. Under **Platform configurations**, add a **Web** platform if needed.
-6. Under **Redirect URIs**, paste the **exact** Redirect URI from PipesHub.
-7. For a web-based OAuth callback, you can enable **Access tokens** and **ID tokens** under **Implicit grant and hybrid flows** only if your organization’s security policy requires it; many confidential-client flows use the authorization code flow only.
-8. Save the **Authentication** blade.
+3. In the Entra app registration, open **Authentication**.
+4. Under **Platform configurations**, add a **Web** platform if needed.
+5. Under **Redirect URIs**, paste the **exact** Redirect URI from PipesHub.
+6. For a web-based OAuth callback, you can enable **Access tokens** and **ID tokens** under **Implicit grant and hybrid flows** only if your organization’s security policy requires it; many confidential-client flows use the authorization code flow only.
+7. Save the **Authentication** blade.
 
 <Warning>
   The Redirect URI in Azure must match the value from PipesHub **exactly** (including scheme, host, path, and trailing slashes).
@@ -267,20 +256,15 @@ The **Action configuration** drawer does not show the redirect URL; you copy it 
 ### Step 7: Sign in and authorize
 
 **Administrators (org instance)**  
-On **Workspace → Actions**, open Microsoft Teams, select your instance, and use **Authenticate** to complete the Microsoft sign-in and consent flow. After redirect back to PipesHub, the instance should show as authenticated.
+On **Workspace settings → Actions**, open Teams, select your instance, and use **Authenticate** to complete the Microsoft sign-in and consent flow. After redirect back to PipesHub, the instance should show as authenticated.
 
 **End users**  
 Each person who should use Microsoft Teams in agents opens **Your actions** in the workspace sidebar (`/workspace/actions/personal`), finds Microsoft Teams, and completes **Authenticate** for the organization instance they need.
 
-{/* Screenshot: Microsoft consent or success redirect for Teams OAuth */}
-
-<div className="text-center">
-  <img
-    src="/images/toolsets/ms-teams/oauth-consent.png"
-    alt="Microsoft account consent for Teams action OAuth"
-    className="block mx-auto w-11/12"
-  />
-</div>
+<Frame>
+  <img className="block dark:hidden" src="/images/toolsets/ms-teams/oauth-consent.png" alt="Teams instance page with the Authenticate drawer open on Authenticate with OAuth" />
+  <img className="hidden dark:block" src="/images/toolsets/ms-teams/oauth-consent-dark.png" alt="Teams instance page with the Authenticate drawer open on Authenticate with OAuth" />
+</Frame>
 
 </Accordion>
 

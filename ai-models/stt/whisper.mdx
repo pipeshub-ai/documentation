@@ -3,16 +3,17 @@ title: Whisper (Local)
 description: "Configure PipesHub to use a self-hosted Whisper speech-to-text model"
 ---
 
-# Whisper (Local) Speech to Text Configuration
-
-![Whisper Local STT Configuration Interface](/images/ai-models/stt/Whisper_STTConfig.png)
+<Frame>
+  <img className="block dark:hidden" src="/images/ai-models/stt/Whisper_STTConfig.png" alt="Whisper Local STT Configuration Interface" />
+  <img className="hidden dark:block" src="/images/ai-models/stt/Whisper_STTConfig-dark.png" alt="Whisper Local STT Configuration Interface" />
+</Frame>
 
 *The Whisper local STT configuration screen in PipesHub where you'll select your model size and compute settings*
 
 PipesHub supports running Whisper entirely on your own infrastructure using the faster-whisper library. No API key is required — all audio processing happens locally, keeping your data private and eliminating per-request API costs.
 
 <Note>
-Whisper model weights are downloaded from HuggingFace on first use. Ensure the PipesHub backend host has internet access during initial setup. The `faster-whisper` Python package must also be installed on the backend host.
+Whisper model weights are downloaded from HuggingFace on first use. Ensure the PipesHub backend host has internet access during initial setup. faster-whisper ships with PipesHub, so you don't install it yourself.
 </Note>
 
 ## Required Fields
@@ -69,13 +70,13 @@ This is useful if you want to pre-download models to a specific disk, or if the 
 
 As shown in the image above:
 
-1. Click **Configure** on the Whisper (Local) provider card in the STT tab
+1. Click **Configure** on the Whisper (local) provider card in the STT tab
 2. Select your desired **Model** size from the dropdown (marked with *)
 3. (Optional) Set **Device** — leave on Auto unless you need to force CPU or GPU
 4. (Optional) Set **Compute Type** — leave on `int8` for CPU or `int8_float16` for GPU
 5. (Optional) Set a **Model Cache Directory** to control where weights are stored
 6. (Optional) Set a **Model Friendly Name**
-7. Click **Add Model** to save your configuration
+7. Click **Add model** to save your configuration
 
 > On first use after saving, PipesHub will download the selected model weights from HuggingFace. This may take several minutes depending on model size and network speed.
 
@@ -89,7 +90,7 @@ As shown in the image above:
 
 ## Troubleshooting
 
-- If the health check fails, confirm the `faster-whisper` Python package is installed on the backend host
+- If the health check fails on a custom build of PipesHub, confirm the `faster-whisper` Python package is installed
 - If model weights fail to download, check that the backend host has internet access and can reach HuggingFace (huggingface.co)
 - If transcription is very slow, consider switching to a smaller model or enabling GPU inference with CUDA
 - If you get out-of-memory errors, switch to a smaller model or use `int8` compute type

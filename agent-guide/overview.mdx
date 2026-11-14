@@ -26,38 +26,46 @@ icon: "robot"
 
 Agents are customizable AI assistants that can interact with your connected applications, search collections, and perform actions on your behalf. Unlike the standard chatbot assistant, agents are purpose-built for specific workflows and can be configured with:
 
-- **Reasoning Models** - Choose the AI model with reasoning capabilities that powers your agent
+- **AI models** - Choose the models that power your agent, or use the organization's default
 - **Toolsets** - Connect to external services like Slack, Jira, Confluence, and more
-- **Knowledge sources** - Access indexed documents and collections
-- **Custom system prompts** - Define the agent's personality and behavior
+- **Knowledge sources** - Access indexed connectors and collections
+- **MCP servers and skills** - Add tools from external MCP servers and your own custom skills
+- **Prompts** - Define the agent's behavior, rules and greeting
 
 <Note>
-  **When you want to use both Connector and Toolset:** In the Agent Builder add nodes from **Knowledge** (Collections, API Apps) for document search and context retrieval, and add nodes from **Tools** for performing actions. Connect both to your Agent Core so the agent can search context and take action in the same conversation.
+  **When you want to use both Connector and Toolset:** In the Agent Builder add nodes from **Knowledge** (Apps, Collections) for document search and context retrieval, and add nodes from **Tools** for performing actions. Connect both to the Agent node so the agent can search context and take action in the same conversation.
 </Note>
 
 ## Key Concepts
 
-### Visual Flow Builder
+### Agent Builder
 
-Agents are built using a visual drag-and-drop flow builder powered by ReactFlow. You create agents by:
+Agents are built on a drag-and-drop canvas called Agent Builder. To open it, go to **Chat** and click **+** next to **My agents** in the sidebar. You build an agent by:
 
-1. Adding an **Agent Core** node that defines the agent's basic configuration
-2. Connecting **Reasoning Model** nodes (LLM with reasoning enabled) to power the agent's intelligence
-3. Adding **Toolset** nodes to give the agent access to external applications
-4. Connecting **Collection** nodes for indexed document search
-5. Configuring edges to connect all components together
+1. Giving it a name and choosing its type (user agent or service agent)
+2. Writing its prompts on the **Agent** node
+3. Dragging **AI models**, **Knowledge**, **Tools**, **MCP servers** and **Skills** from the palette and connecting them to the Agent node
 
-### Agent Core
+See the [Setup Guide](/agent-guide/setup-guide) for each step.
 
-The Agent Core is the central configuration for your agent:
+### Agent prompts
+
+The **Agent** node holds the agent's own configuration:
 
 | Field | Description |
 |-------|-------------|
-| **Name** | Display name for your agent |
-| **Description** | Brief description of what the agent does |
-| **Start Message** | Initial greeting when users start a conversation |
-| **Instruction** | Detailed instructions for the agent's behavior and capabilities |
-| **System Prompt** | Instructions that define the agent's behavior and personality |
+| **System prompt** | Who the agent is and how it behaves |
+| **Instructions** | Rules for how it works and answers |
+| **Starting message** | Greeting shown when someone opens a chat with the agent |
+| **Default reasoning effort** | Effort used when the person chatting doesn't choose one (shown once a model that supports reasoning is connected) |
+| **Send user & organization context** | Whether the agent receives the user's name, email and organization |
+
+### Agent types
+
+| Type | Description |
+|------|-------------|
+| **User agent** | Each person who chats signs in to toolsets with their own account and searches what they can read. You can share it with everyone in your organization |
+| **Service agent** | Shared with the whole organization, with toolset credentials stored on the agent. It searches as its creator or as a service account an admin grants, so it can run unattended |
 
 ### Toolsets
 
@@ -151,12 +159,13 @@ Yes! You can create a single OAuth app in the service's developer console and us
 
 Follow this pattern:
 
-1. **Agent Core** (required) - The center of your agent
-2. **Reasoning Model** (required) - Connect at least one AI model
-3. **Toolset nodes** (optional) - For actions like sending emails, creating tickets
-4. **Collection nodes** (optional) - For searching indexed data from Connectors
+1. **Agent** node (always there) - The center of your agent, already connected to chat input and output
+2. **AI models** (optional) - Connect to the **Model** handle. With none, the organization's default model is used
+3. **Tools** (optional) - Toolsets and web search, connected to the **Toolsets** handle, for actions like sending emails or creating tickets
+4. **Knowledge** (optional) - Apps and collections, connected to the **Knowledge** handle, for searching indexed data
+5. **MCP servers** and **Skills** (optional) - Connected to their own handles
 
-All nodes must connect to the Agent Core. The agent will have access to all connected toolsets and collections.
+Every block connects to the Agent node, and the builder tells you if a connection goes to the wrong handle.
 
 </Accordion>
 
@@ -166,15 +175,15 @@ Yes! While chatting with an agent, you can select:
 
 - **Specific Collections** - Query data from particular Connectors (e.g., search only Confluence or only Drive)
 - **Specific Toolsets** - Use particular tools (e.g., send via Gmail or create Jira ticket)
-- **Reasoning Model** - Choose which AI model to use for the query
+- **Model** - Choose which of the agent's models to use for the query
 
 This gives you control at any time during the conversation to specify where the agent should search or which action to perform.
 
 </Accordion>
 
-<Accordion title="Can I connect multiple Reasoning Models to one agent?">
+<Accordion title="Can I connect multiple models to one agent?">
 
-Yes! You can connect multiple Reasoning Model nodes to the Agent Core. 
+Yes! You can connect multiple models to the Agent node. 
 
 When chatting with the agent, users can select which model to use for specific queries from the chat interface. This allows:
 

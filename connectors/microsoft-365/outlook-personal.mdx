@@ -55,8 +55,17 @@ An administrator registers an app in Microsoft Entra and saves it in PipesHub as
 ### Step 1: Register an application
 
 1. Go to the [Azure Portal](https://portal.azure.com) → **Microsoft Entra ID** → **App registrations** → **New registration**.
+
+<div className="text-center">
+  <img
+    src="/images/connectors/outlook/personal/01-new-registration.png"
+    alt="App registrations page with New registration highlighted"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
 2. Give it a name (for example, `PipesHub Outlook Personal`).
-3. Under **Supported account types**, choose **Accounts in this organizational directory only**.
+3. Under **Supported account types**, choose **Single tenant only** (older portals call it **Accounts in this organizational directory only**).
 4. Under **Redirect URI**, choose **Web** and enter:
 
 ```text
@@ -65,6 +74,14 @@ https://{your_pipeshub_base_url}/connectors/oauth/callback/OutlookPersonal
 
 5. Click **Register**.
 
+<div className="text-center">
+  <img
+    src="/images/connectors/outlook/personal/02-register-app.png"
+    alt="Register an application form: name, supported account types, redirect URI and Register button"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
 <Note>
   The redirect URI must match your PipesHub address exactly, including the port if you use one. Microsoft accepts `https` addresses, and `http` only for `localhost` (local development).
 </Note>
@@ -72,23 +89,130 @@ https://{your_pipeshub_base_url}/connectors/oauth/callback/OutlookPersonal
 ### Step 2: Copy the IDs and create a client secret
 
 1. On the app's **Overview** page, copy the **Application (client) ID** and the **Directory (tenant) ID**.
+
+<div className="text-center">
+  <img
+    src="/images/connectors/outlook/personal/03-app-overview.png"
+    alt="App overview with the Application (client) ID and Directory (tenant) ID highlighted"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
 2. Go to **Certificates & secrets** → **New client secret**, add it, and copy its **Value** right away (it is shown only once).
+
+<div className="text-center">
+  <img
+    src="/images/connectors/outlook/personal/04-new-client-secret.png"
+    alt="Certificates & secrets: New client secret, description and expiry, then Add"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+<div className="text-center">
+  <img
+    src="/images/connectors/outlook/personal/05-client-secret-value.png"
+    alt="The new client secret with its Value column highlighted"
+    className="block mx-auto w-11/12"
+  />
+</div>
 
 ### Step 3: Add the delegated permissions
 
 1. Go to **API permissions** → **Add a permission** → **Microsoft Graph** → **Delegated permissions**.
-2. Add `Mail.Read`, `User.Read` and `offline_access`.
 
-These are delegated permissions: each user consents for their own mailbox when they sign in. If your organization blocks user consent, an administrator can grant consent for these three permissions once.
+<div className="text-center">
+  <img
+    src="/images/connectors/outlook/personal/06-microsoft-graph.png"
+    alt="Request API permissions: Add a permission, then Microsoft Graph"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+<div className="text-center">
+  <img
+    src="/images/connectors/outlook/personal/07-delegated-permissions.png"
+    alt="Microsoft Graph: Delegated permissions, the permission search box and offline_access"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+2. Add `Mail.Read`, `User.Read` and `offline_access`. Type each name in the search box and tick it, then click **Add permissions**.
+
+<div className="text-center">
+  <img
+    src="/images/connectors/outlook/personal/08-api-permissions.png"
+    alt="Configured permissions: Mail.Read, offline_access and User.Read, all Delegated"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+3. If your organization does not let users consent to apps, an administrator must grant consent once. Click **Grant admin consent for** *your organization*, then **Yes**. Each permission then shows **Granted for** *your organization* in the **Status** column.
+
+<div className="text-center">
+  <img
+    src="/images/connectors/outlook/personal/08b-admin-consent.png"
+    alt="API permissions: Grant admin consent button and Granted status on all three permissions"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+<Note>
+  These are delegated permissions: PipesHub reads only the mailbox of the person who signs in. If you skip step 3 and your organization blocks user consent, Microsoft shows **Need admin approval** when users sign in (see [Troubleshooting](#troubleshooting)).
+</Note>
 
 ### Step 4: Add the connector in PipesHub
 
-The app registration from steps 1–3 is saved in PipesHub as an OAuth app, which an administrator sets up once for everyone:
+The app registration from steps 1–3 is saved in PipesHub as an OAuth app, which an administrator sets up once for everyone.
 
-- **Administrator:** open **Connectors**, choose **Outlook Personal**, click **Add**, and enter the Client ID, Client Secret and Tenant ID from step 2. PipesHub saves them as an OAuth app and links it to the connector.
-- **Member:** open **Connectors**, choose **Outlook Personal**, click **Add**, and select the OAuth app your administrator set up. Members cannot enter app credentials.
+1. In PipesHub, open **Workspace Settings** → **Your connectors** (under **Personal**), find **Outlook Personal** and click **Set up**.
 
-Then save the connector and click **Authorize**. Microsoft opens its sign-in page: sign in with the mailbox you want to sync and accept the permissions.
+<div className="text-center">
+  <img
+    src="/images/connectors/outlook/personal/09-your-connectors.png"
+    alt="Your connectors page with the Outlook Personal card and its Set up button"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+2. On the **Authenticate** tab:
+   - **Instance name**: keep `Outlook Personal` or enter your own.
+   - **Redirect/Callback URL**: this is the URL to register in step 1. Copy it from here if you have not added it yet.
+   - **Administrator:** enter an **OAuth app name**, then the **Tenant ID**, **Client ID** and **Client Secret** from step 2. PipesHub saves them as an OAuth app that other users can pick.
+   - **Member:** pick the saved OAuth app your administrator set up. Members cannot enter app credentials.
+   - **If an OAuth app is already saved**, pick it under **OAuth app**. Its Tenant ID, Client ID and Client Secret fill in, so you do not enter them again.
+
+3. Click **Next**.
+
+<div className="text-center">
+  <img
+    src="/images/connectors/outlook/personal/10-authenticate.png"
+    alt="Authenticate tab: redirect URL, OAuth app name, Tenant ID, Client ID, Client Secret and Next"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+When you open the connector again, or pick an OAuth app that is already saved, the tab shows the saved app and its credentials instead:
+
+<div className="text-center">
+  <img
+    src="/images/connectors/outlook/personal/10b-saved-oauth-app.png"
+    alt="Authenticate tab with a saved OAuth app selected and its credentials filled in"
+    className="block mx-auto w-11/12"
+    style={{ maxWidth: "600px" }}
+  />
+</div>
+
+4. On the **Authorize** tab, click the button to sign in with Microsoft. A Microsoft window opens: sign in with the mailbox you want to sync and accept the permissions, if asked.
+5. When the tab shows **Connected**, click **Continue to configuration**.
+
+<div className="text-center">
+  <img
+    src="/images/connectors/outlook/personal/11-authorized.png"
+    alt="Authorize tab showing Connected, and the Continue to configuration button"
+    className="block mx-auto w-11/12"
+    style={{ maxWidth: "600px" }}
+  />
+</div>
 
 <Warning>
   Sign in with the same email address as your PipesHub account.
@@ -96,13 +220,53 @@ Then save the connector and click **Authorize**. Microsoft opens its sign-in pag
 
 ### Step 5: Choose what to sync and enable
 
+1. On the **Configure records** tab, choose the **Sync strategy** and **Sync interval** (**Scheduled**, every **1 hour** by default). Leave **Enable Manual Indexing** off to index every synced email; turn it on to pick what gets indexed yourself.
+
+<div className="text-center">
+  <img
+    src="/images/connectors/outlook/personal/12-configure-sync.png"
+    alt="Configure records tab: sync strategy, sync interval and Save configuration"
+    className="block mx-auto w-11/12"
+    style={{ maxWidth: "600px" }}
+  />
+</div>
+
+2. Scroll down to the filters:
+
 | Filter | Behaviour |
 |--------|-----------|
+| **Received Date** | Only mail received in this window is synced (last 90 days by default). Click **Clear** to sync all mail. |
 | **Mail Folders** | The folders to sync. Leave empty to sync every folder except Deleted Items. Only top-level folders can be picked; their subfolders come with them. |
-| **Received Date** | Only mail received in this window is synced. |
 | **Index Emails** / **Index Attachments** | Turn indexing of messages or attachments on or off. |
 
-Enable sync. The first sync reads every selected folder; later syncs read only the changes (every 60 minutes by default, or when you start one).
+<div className="text-center">
+  <img
+    src="/images/connectors/outlook/personal/12b-sync-filters.png"
+    alt="Sync filters: Received Date and Mail Folders, and the Index Emails and Index Attachments filters"
+    className="block mx-auto w-11/12"
+    style={{ maxWidth: "600px" }}
+  />
+</div>
+
+3. Click **Save configuration**, then **Start syncing now**. To start later, click **I'll do it later** and turn on **Sync enabled** on the connector page when you are ready.
+
+<div className="text-center">
+  <img
+    src="/images/connectors/outlook/personal/12c-start-sync.png"
+    alt="Instance is configured and ready to sync, with the Start syncing now button"
+    className="block mx-auto w-11/12"
+  />
+</div>
+
+The connector page now shows **Sync enabled** turned on and **Full sync in progress**. The first sync reads every selected folder; later syncs read only the changes, on the interval you chose or when you click **Sync**.
+
+<div className="text-center">
+  <img
+    src="/images/connectors/outlook/personal/12d-syncing.png"
+    alt="Outlook Personal connector page with Sync enabled on and Full sync in progress"
+    className="block mx-auto w-11/12"
+  />
+</div>
 
 ## Data sync behavior
 
@@ -121,7 +285,16 @@ Enable sync. The first sync reads every selected folder; later syncs read only t
 
 **Redirect URI mismatch during sign-in (AADSTS50011).** The redirect URI in the app registration must match the one in step 1 exactly.
 
-**Need admin approval.** Your organization requires an administrator to consent. Ask them to grant consent for `Mail.Read`, `User.Read` and `offline_access` on the app.
+**Need admin approval.** Your organization requires an administrator to consent. Close the Microsoft window and ask an administrator to click **Grant admin consent** on the app's **API permissions** page (step 3), then click **Authorize** again.
+
+<div className="text-center">
+  <img
+    src="/images/connectors/outlook/personal/13-need-admin-approval.png"
+    alt="Microsoft sign-in window: Need admin approval"
+    className="block mx-auto w-11/12"
+    style={{ maxWidth: "420px" }}
+  />
+</div>
 
 **A personal outlook.com account does not work.** The app registration in step 1 accepts accounts of your organization only.
 

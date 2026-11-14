@@ -9,7 +9,7 @@ icon: "/logo/jira.png"
     <div className="flex items-center gap-3 mb-4">
       <img 
         src="/logo/jira.png" 
-        alt="Jira Logo" 
+        alt="Jira Data Center connector logo" 
         className="w-8 h-8 object-contain flex-shrink-0"
       />
       <div className="text-xl font-semibold text-gray-900 dark:text-white">Jira Data Center</div>
@@ -158,7 +158,7 @@ To make the first sync faster, a Jira administrator can make email addresses vis
 <div className="text-center">
   <img
     src="/images/connectors/jira-data-center/pat_profile_menu.png"
-    alt="Jira Data Center profile menu — Personal Access Tokens"
+    alt="Jira Data Center profile menu: Personal Access Tokens"
     className="block mx-auto w-11/12"
   />
 </div>
@@ -181,7 +181,7 @@ To make the first sync faster, a Jira administrator can make email addresses vis
 <div className="text-center">
   <img
     src="/images/connectors/jira-data-center/pat_copy_token.png"
-    alt="Copy the Personal Access Token — shown once"
+    alt="Copy the Personal Access Token (shown once)"
     className="block mx-auto w-11/12"
   />
 </div>
@@ -196,22 +196,19 @@ To make the first sync faster, a Jira administrator can make email addresses vis
 
 #### Step 2: Authenticate tab — enter your credentials
 
-1. In PipesHub, go to **Workspace Settings** → **Connectors**, find **Jira Data Center**, and click **Set up**.
+1. In PipesHub, go to **Workspace settings** → **Connectors**, find **Jira Data Center**, and click **Set up**.
 2. The connector panel opens as a drawer on the right.
 3. On the **Authenticate** tab, enter an **Instance name** (required), such as `Jira Data Center`.
 4. Select **API Token** in the **Authentication method** dropdown. The field it shows is labelled **Personal Access Token**.
 5. Enter:
    - **Base URL** — the root URL of your Jira, such as `https://jira.company.com` (a trailing slash is removed automatically)
    - **Personal Access Token** — the token you copied in Step 1
-6. Click **Next**. PipesHub checks the credentials and moves you to the **Configure records** tab.
+6. Click **Next**. PipesHub creates the instance and moves you to the **Configure records** tab.
 
-<div className="text-center">
-  <img
-    src="/images/connectors/jira-data-center/connector_pat_form.png"
-    alt="Authenticate Instance tab with Personal Access Token method — Base URL and token fields"
-    className="block mx-auto w-11/12"
-  />
-</div>
+<Frame>
+  <img className="block dark:hidden" src="/images/connectors/jira-data-center/connector_pat_form.png" alt="Authenticate tab with the API Token method: Base URL and Personal Access Token fields" />
+  <img className="hidden dark:block" src="/images/connectors/jira-data-center/connector_pat_form-dark.png" alt="Authenticate tab with the API Token method: Base URL and Personal Access Token fields" />
+</Frame>
 
 #### Step 3: Configure records tab
 
@@ -230,22 +227,19 @@ Use this on instances that do not support Personal Access Tokens, or where an ad
 
 #### Step 2: Authenticate tab — enter your credentials
 
-1. In PipesHub, go to **Workspace Settings** → **Connectors**, find **Jira Data Center**, and click **Set up**.
+1. In PipesHub, go to **Workspace settings** → **Connectors**, find **Jira Data Center**, and click **Set up**.
 2. On the **Authenticate** tab, enter an **Instance name** (required), such as `Jira Data Center`.
 3. Select **Basic authentication** in the **Authentication method** dropdown.
 4. Enter:
    - **Base URL** — the root URL of your Jira, such as `https://jira.company.com` (a trailing slash is removed automatically)
    - **Username** — the Jira username of the service account, such as `svc-jira-sync`
    - **Password** — the account password
-5. Click **Next**. PipesHub checks the credentials and moves you to the **Configure records** tab.
+5. Click **Next**. PipesHub creates the instance and moves you to the **Configure records** tab.
 
-<div className="text-center">
-  <img
-    src="/images/connectors/jira-data-center/connector_basic_auth_form.png"
-    alt="Authenticate Instance tab with Basic Authentication — Base URL, Username, Password fields"
-    className="block mx-auto w-11/12"
-  />
-</div>
+<Frame>
+  <img className="block dark:hidden" src="/images/connectors/jira-data-center/connector_basic_auth_form.png" alt="Authenticate tab with Basic authentication: Base URL, Username and Password fields" />
+  <img className="hidden dark:block" src="/images/connectors/jira-data-center/connector_basic_auth_form-dark.png" alt="Authenticate tab with Basic authentication: Base URL, Username and Password fields" />
+</Frame>
 
 <Warning>
   Enter the Jira **username**, not the email address. On many instances these are different.
@@ -265,16 +259,13 @@ On the **Configure records** tab, you choose how often the connector syncs and w
 
 **Sync settings** — set these first:
 
-1. **Sync Strategy** — `Scheduled` or `Manual`.
-2. **Sync Interval** — how often to sync (default: 60 minutes).
+1. **Sync strategy**: `Scheduled` or `Manual`.
+2. **Sync interval**: how often to sync (default: 1 hour).
 
-<div className="text-center">
-  <img
-    src="/images/connectors/jira-data-center/connector_configure_sync_strategy.png"
-    alt="Configure Sync Strategy"
-    className="block mx-auto w-11/12"
-  />
-</div>
+<Frame>
+  <img className="block dark:hidden" src="/images/connectors/jira-data-center/connector_configure_sync_strategy.png" alt="Configure records tab with Sync strategy and Sync interval" />
+  <img className="hidden dark:block" src="/images/connectors/jira-data-center/connector_configure_sync_strategy-dark.png" alt="Configure records tab with Sync strategy and Sync interval" />
+</Frame>
 
 <Note>
   **Scheduled sync** runs on its own at the interval you set. **Manual sync** runs only when you start it. Real-time sync is not available for Jira Data Center.
@@ -282,20 +273,17 @@ On the **Configure records** tab, you choose how often the connector syncs and w
 
 **Sync filters** — these decide what gets downloaded from Jira. Anything a sync filter excludes is never downloaded.
 
-<div className="text-center">
-  <img
-    src="/images/connectors/jira-data-center/jira_dc_filters.png"
-    alt="Jira Data Center filters configuration"
-    className="block mx-auto w-11/12"
-  />
-</div>
+<Frame>
+  <img className="block dark:hidden" src="/images/connectors/jira-data-center/jira_dc_filters.png" alt="Jira Data Center sync filters with the Project keys and Modified Date filters added" />
+  <img className="hidden dark:block" src="/images/connectors/jira-data-center/jira_dc_filters-dark.png" alt="Jira Data Center sync filters with the Project keys and Modified Date filters added" />
+</Frame>
 
 Available sync filters:
 
 1. **Project keys** — pick which projects to sync.
-   - Operator: `In` to include only those projects, or `Not In` to exclude them
+   - Operator: `In` to include only those projects, or `Not in` to exclude them
    - Selection: a searchable dropdown of the projects your account can see
-2. **Modified Date** — filter by last change date. Operators: `Is After`, `Is Before`, `Is Between`.
+2. **Modified Date**: filter by last change date. Operators: a rolling window (`Last 7 days` up to `Last 365 days`; the default is `Last 7 days`), or `Is after`, `Is before`, `Is between` with fixed dates.
 3. **Created Date** — filter by creation date. Same operators.
 
 <Info>
@@ -315,38 +303,32 @@ Available sync filters:
 **Examples:**
 
 - *Sync only the Engineering project:* Project keys → `In` → select "Engineering"
-- *Skip archived projects:* Project keys → `Not In` → select the archived ones
-- *Recent issues only:* Modified Date → `Is After` → `2024-06-01`
+- *Skip archived projects:* Project keys → `Not in` → select the archived ones
+- *Recent issues only:* Modified Date → `Is after` → `2024-06-01`, or `Last 30 days`
 - *Issues but not attachments:* turn off **Index issue and comment attachments**
 
-Click **Save**. PipesHub shows a dialog saying **"Instance is configured and ready to sync!"**, with two choices: **I'll do it later** or **Start syncing now**.
+Click **Save configuration**. If you added no sync filter, or manual indexing is turned on, PipesHub first asks **Start sync process?**; click **Confirm**. PipesHub then shows a dialog saying **"Instance is configured and ready to sync!"**, with two choices: **I'll do it later** or **Start syncing now**.
 
-<div className="text-center">
-  <img
-    src="/images/connectors/jira-data-center/enable_connector.png"
-    alt="Instance is configured and ready to sync"
-    className="block mx-auto w-11/12"
-  />
-</div>
+<Frame>
+  <img className="block dark:hidden" src="/images/connectors/jira-data-center/enable_connector.png" alt="Dialog: Instance is configured and ready to sync, with I'll do it later and Start syncing now" />
+  <img className="hidden dark:block" src="/images/connectors/jira-data-center/enable_connector-dark.png" alt="Dialog: Instance is configured and ready to sync, with I'll do it later and Start syncing now" />
+</Frame>
 
-Pick **Start syncing now** to start straight away, or **I'll do it later** to turn the connector on without syncing yet. Watch **Indexing Progress** to see how the sync is going.
+Pick **Start syncing now** to start straight away, or **I'll do it later** and turn on **Sync enabled** on the connector's card when you are ready. To follow the sync, click the arrow on the connector's card and check **Records status**.
 
 ## Personal connector
 
-**Jira Data Center Personal** is a separate connector that syncs Jira Data Center issues your own account can see into your personal workspace. Set it up under Workspace Settings → **Personal** → **Your Connectors**.
+**Jira Data Center Personal** is a separate connector that syncs Jira Data Center issues your own account can see into your personal workspace. Set it up under Workspace settings → **Personal** → **Your connectors**.
 
 - **What it syncs:** only the projects and issues visible to the credentials you provide.
 - **Who can see it:** only you, the user who created the connector. It doesn't read Jira permission schemes or other users.
 - **Sign-in:** choose **API Token** (a personal access token) or **Basic authentication** under **Authentication method**, with the same fields as the team connector. Use your own token or account, not a service account.
 - **Configure records:** the same sync settings, filters, and indexing options as the team connector.
 
-<div className="text-center">
-  <img
-    src="/images/connectors/jira/ph-jira-dc-personal-auth-method.png"
-    alt="Set up Jira Data Center Personal with the Authentication method dropdown open"
-    className="block mx-auto w-2/3"
-  />
-</div>
+<Frame>
+  <img className="block dark:hidden" src="/images/connectors/jira/ph-jira-dc-personal-auth-method.png" alt="Set up Jira Data Center Personal with the Authentication method dropdown open" />
+  <img className="hidden dark:block" src="/images/connectors/jira/ph-jira-dc-personal-auth-method-dark.png" alt="Set up Jira Data Center Personal with the Authentication method dropdown open" />
+</Frame>
 
 ## Supported Features
 
@@ -364,7 +346,7 @@ The Jira Data Center connector syncs:
 - **Permissions** — project permission schemes and issue-level security
 
 <Info>
-  **Want agents to act in Jira?** This connector only syncs data into PipesHub. To let agents create and update issues, set up the [Jira Data Center toolset](/toolsets/jira/jira-data-center) as well.
+  **Want agents to act in Jira?** This connector only syncs data into PipesHub. To let agents create and update issues, set up the [Jira Data Center action](/toolsets/jira/jira-data-center) as well.
 </Info>
 
 ## Useful Links
@@ -408,7 +390,7 @@ The Jira Data Center connector syncs:
 - For firewall allowlists, get the addresses PipesHub connects from with `GET /api/v1/connectors/network/egress-ips` (see the [Connector Manager API](/system-overview/connector-manager))
 
 **Nothing is syncing:**
-- Check that the connector shows **Active**
+- Check that the **Sync enabled** switch on the connector card is on
 - Check that the account has **Browse Projects** permission on the projects you expect
 - Check that the projects are not archived
 - Read the sync logs for the exact error
@@ -549,7 +531,7 @@ It is strongly recommended. Without admin access the connector cannot read appli
 
 <Accordion title="Can I sync only certain Jira projects?">
 
-Yes. On the **Configure records** tab, use the **Project keys** filter with the `In` operator and pick the projects you want. Use `Not In` to leave projects out instead.
+Yes. On the **Configure records** tab, use the **Project keys** filter with the `In` operator and pick the projects you want. Use `Not in` to leave projects out instead.
 
 </Accordion>
 
@@ -557,7 +539,7 @@ Yes. On the **Configure records** tab, use the **Project keys** filter with the 
 
 Check these in order:
 
-1. **The sync has not finished.** Go to **Settings → Connectors** and check the sync status, then look in **All Records** for the issues you expect.
+1. **The sync has not finished.** Go to **Workspace settings** → **Connectors** and check the sync status, then look in **All records** for the issues you expect.
 2. **Permissions are incomplete.** If a non-admin account set up the connector, some projects may only be visible to that person. Set it up again with a Jira administrator account.
 3. **Your filters are too narrow.** Check the **Project keys** and date filters on the **Configure records** tab.
 4. **Indexing is off.** Check that **Index issues** is turned on.

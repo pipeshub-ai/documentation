@@ -18,7 +18,7 @@ PostgreSQL can hold all of PipesHub's data in one database. This setup is for **
 | Configuration and credentials | `KV_STORE_TYPE` | `redis` | `postgres` |
 | Message broker | `MESSAGE_BROKER` | `redis` | `postgres` |
 | Crawl and sync scheduler | `CRAWL_SCHEDULER` | BullMQ when Redis is configured | `postgres` |
-| State shared across processes (leader keys, leases, retry counters) | `REDIS_MODE` | `standalone` | `postgres` |
+| State shared across processes (leader keys, leases, retry counters, the Node API cache) | `REDIS_MODE` | `standalone` | `postgres` |
 | Vectors | `VECTOR_DB_TYPE` | `qdrant` | `pgvector` |
 | Knowledge graph | `DATA_STORE` | `neo4j` in `env.template` (`arangodb` if unset) | `postgres` |
 
@@ -59,16 +59,16 @@ You need:
     | Variable | Meaning |
     |---|---|
     | `PG_NODE_URL` | Login of the Node API. |
-    | `PG_CORE_URL` | Login of the Python service. `PG_RUNTIME_SERVICE` names its role: `node`, `connectors`, `indexing`, `query` or `kv`. `connectors` is the default. |
-    | `PG_JOBS_URL` | Jobs login, a direct address. Needed by background jobs. |
-    | `PG_POOLER` | `pgbouncer_txn` (default) or `none`. |
+    | `PG_CORE_URL` | Login of the Python service. `PG_RUNTIME_SERVICE` names its role: `node`, `connectors`, `indexing`, `query` or `kv`. `connectors` is the default. In the all-in-one image, `PG_CORE_QUERY_URL`, `PG_CORE_INDEXING_URL` and `PG_CORE_CONNECTORS_URL` give each process its own login, also used as its `PGVECTOR_DSN`. |
+    | `PG_JOBS_URL` | Jobs login. Required with `DOC_STORE=postgres`. `python -m db.maintain` needs it as a direct address. |
+    | `PG_POOLER` | `pgbouncer_txn` (default), `pgbouncer_session`, `azure_pgbouncer` or `none` (a direct address). |
     | `PG_LISTEN_URL` | A direct address for `LISTEN`. Required behind a transaction pooler. With `PG_POOLER=none`, `PG_CORE_URL` is used. |
 
     <Warning>
       These connections carry credentials and other configuration. When PostgreSQL is not on the same host, require TLS: add `?sslmode=verify-full` (or at least `sslmode=require`) to every `PG_*_URL` and to `PGVECTOR_DSN`, and give each login a strong password.
     </Warning>
 
-    Pool sizes and timers have defaults you can leave alone: `PG_POOL_MAX` 10, `PG_JOBS_POOL_MAX` 3, `PG_POOL_IDLE_SECONDS` 300, `PG_POOL_MIN` 1, `PG_LISTEN_PING_S` 10, `CONFIG_CACHE_TTL_SECONDS` 60.
+    Pool sizes and timers have defaults you can leave alone. Python services: `PG_POOL_MAX` 10, `PG_JOBS_POOL_MAX` 3, `PG_POOL_IDLE_SECONDS` 300, `PG_POOL_MIN` 1, `CONFIG_CACHE_TTL_SECONDS` 60. Node API: `PG_NODE_POOL_MAX` 10, `PG_JOBS_POOL_MAX` 2. Both: `PG_LISTEN_PING_S` 10.
   </Step>
 </Steps>
 
@@ -82,7 +82,7 @@ Set the variable in your `.env`, then restart. Do these one at a time and check 
 PIPESHUB_STORE=postgres
 ```
 
-Or set `KV_STORE_TYPE=postgres`, `MESSAGE_BROKER=postgres` and `REDIS_MODE=postgres` yourself. With these on, PipesHub needs no Redis server. Caches stay in each process.
+Or set `KV_STORE_TYPE=postgres`, `MESSAGE_BROKER=postgres` and `REDIS_MODE=postgres` yourself. With these on, PipesHub needs no Redis server. The Node API keeps its cache (sign-in sessions and e-mail rate-limit counters) in PostgreSQL, so every API process shares it and a restart does not sign users out. The Python services keep their caches in each process and drop stale entries when PostgreSQL notifies them. Without a direct address for `LISTEN` (`PG_LISTEN_URL`, or `PG_POOLER=none`), their permission caches are off.
 
 With `MESSAGE_BROKER=postgres`:
 
@@ -121,9 +121,9 @@ The graph lives in the `graph` schema. Each process uses its `PG_CORE_URL` login
 ## Check that it works
 
 - **Schema:** `python -m db.migrate` exits `0`.
-- **Logs:** each service logs the store it chose at start. Look for `pgvector provider created and connected` for vectors and `Creating postgres provider (from DATA_STORE env)` for the graph. An unsupported value stops the service with an error that names the variable.
+- **Logs:** each service logs the store it chose at start. Look for `pgvector provider created and connected` for vectors and `Creating postgres provider (from DATA_STORE env)` for the graph. An unsupported `PIPESHUB_STORE`, `DOC_STORE`, `MESSAGE_BROKER`, `REDIS_MODE`, `VECTOR_DB_TYPE` or `DATA_STORE` value stops the service with an error that names the variable.
 - **Round trip:** sign in, add a record or run a search, and confirm it works end to end.
 
 <Note>
-  **Coming soon:** a Docker Compose option that starts PostgreSQL and sets these variables for you, and a Helm chart option. They are not released, so set the variables above yourself for now.
+  Docker Compose has an opt-in `postgres` profile that starts PostgreSQL (with pgvector) and PgBouncer and creates the roles. From a repository checkout, `PIPESHUB_COMPOSE_OVERRIDES=docker-compose.postgres-docstore.yml ./install.sh` also runs the schema job and puts the document store of a new install on it. It sets only `DOC_STORE` and its logins, so set the other variables above yourself. See the [Compose PostgreSQL README](https://github.com/pipeshub-ai/pipeshub-ai/blob/main/deployment/docker-compose/postgres/README.md). **Coming soon:** a Helm chart option.
 </Note>

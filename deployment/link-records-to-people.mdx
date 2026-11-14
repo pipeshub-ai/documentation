@@ -6,7 +6,7 @@ icon: "users"
 
 # Link existing records to people
 
-Newer versions of PipesHub link each record to the organisation members it names (a mail's sender and recipients, a ticket's assignee, a pull request's reviewers, and similar) and to the CRM account it belongs to. New and updated records get these links as they sync.
+Newer versions of PipesHub link each record to the organisation members it names (a mail's sender and recipients, a ticket's assignee, a pull request's reviewers, and similar) and links a CRM deal, case or task to the account it is filed under. New and updated records get these links as they sync.
 
 Records that were synced **before** you upgraded do not have them yet. The `kg_record_people` backfill adds them without re-syncing any connector.
 
@@ -19,7 +19,7 @@ Run it once per organisation after upgrading to a version that has record author
 - Reads the organisation's tickets, projects, mails, comments, pull requests and deals in pages of 200.
 - Links each record to the members it names, using the people already stored on the record. No new user is created.
 - Someone who is not a member gets a person entry and a link when a record names them in any role other than mail recipient, such as author, owner, assignee or reviewer. Unmatched mail recipients get neither, and Bcc recipients are never linked.
-- Links each record to the CRM account its record group belongs to.
+- Links each CRM deal, case and task to the account its record group belongs to. Other records (other tickets, mails, projects, comments and pull requests) get no account link.
 - With `--apply`, before linking it records the organisation on CRM accounts synced before accounts carried one, and gives each external organisation a normalized-name key, so names that documents mention find accounts synced earlier. At the end it schedules the entity index to run again, so the new links are searchable.
 - Is safe to re-run. Each record's links are replaced, not added to, so running it again does not create duplicates.
 - Is a **dry run** by default: it counts the links it would create and writes nothing. Add `--apply` to write them.

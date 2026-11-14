@@ -13,6 +13,20 @@ New to the API? Start with the [API Quickstart](/developer/api-quickstart).
 - **Full reference:** every instance serves an interactive API reference at `/api/v1/docs`. Use it for every endpoint, field and response. The OpenAPI spec is the [OpenAPI file](https://github.com/pipeshub-ai/pipeshub-ai/blob/main/backend/nodejs/apps/src/modules/api-docs/pipeshub-openapi.yaml) on GitHub.
 - **Errors:** an error response has an `error` object with `code`, `message` and `requestId`. A missing or invalid token returns `401`; a token without the required scope returns `403`.
 
+### Totals that are not exact
+
+The Knowledge Hub listings (`GET /knowledgeBase/knowledge-hub/nodes` and `GET /knowledgeBase/knowledge-hub/nodes/{parentType}/{parentId}`) count only items you are allowed to read. When the knowledge graph is stored in PostgreSQL, a total may not be exact; the other graph stores count exactly and do not send the fields below.
+
+When `pagination.totalCapped` is `true`, `totalItems` may not be exact. Usually it is lower than the real number: the count stops at 10,000, or covers only part of a very large or slow-to-check connector, folder or group. In the folder tree (`onlyContainers=true`) it can rarely include a record that a finished check would leave out. Totals across several connectors are added, so a search total can exceed 10,000.
+
+- Use `hasNext` and `nextCursor` to page. Don't rely on `totalItems` or `totalPages` to know when you have reached the end.
+- `counts.capped` (with `include=counts`) is `true` when `counts.total` and the per-type counts may not be exact, in the same way.
+- `pagination.totalPages` is `ceil(totalItems / limit)` for a page asked for by number. For a page asked for with `cursor`, `totalPages` and `page` are `null`.
+- `page` can be at most N: 50, or 5 for a search on the root listing (`GET /knowledgeBase/knowledge-hub/nodes`) by a connected app whose access is limited to some spaces, folders or files. A higher `page` gets `400` ("Invalid page: page must not exceed N. Use the cursor from a previous response."), even when `totalPages` is higher. To go further, follow `nextCursor`.
+- Older servers do not send `totalCapped` or `capped`. Treat a missing value as `false`.
+
+In the web app, a capped total is shown as approximate: "Showing 1-50 of at least 500", and the page marker reads "1 / 10+" instead of "1 / 10".
+
 ## Common request bodies
 
 These examples cover the first calls most integrations make. Field names come from the OpenAPI spec; see it for the optional fields.

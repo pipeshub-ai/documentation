@@ -1,0 +1,168 @@
+---
+title: "Agent Sign-up"
+description: "Let an agent get a token for a person from their email alone: the person approves with a short code, the agent polls for the token."
+icon: "user-robot"
+---
+
+<Warning>
+  Not released yet. Agent sign-up is merged into PipesHub but is not in a release: the latest release, v1.0.0, does not contain it.
+</Warning>
+
+Agent sign-up is the `service_auth` registration of the [auth.md](https://github.com/workos/auth.md) convention. An agent that knows only a person's email address can ask PipesHub for a token that acts as that person. The person signs in, checks a code, and approves. Nothing creates a user: the person must already have an account.
+
+For a single user's own client, a [personal access token](/developer/personal-access-tokens) is simpler. Use this flow when an agent has to start from an email address.
+
+## When it is on
+
+Agent sign-up is on exactly when device login is on. Device login is on unless the server sets `PIPESHUB_ENABLE_DEVICE_GRANT=false`. It also needs the built-in `pipeshub-agent` OAuth app, which the server creates on first use.
+
+When it is off, `POST /api/v1/agent/identity` answers `service_auth_not_enabled`.
+
+## Discover
+
+Read the server metadata:
+
+```bash
+curl -s "$PIPESHUB_URL/.well-known/oauth-authorization-server"
+```
+
+When agent sign-up is on, it has an `agent_auth` block:
+
+| Field | Value |
+| --- | --- |
+| `skill` | `<origin>/auth.md`, the agent-readable guide for this server |
+| `identity_endpoint` | `<origin>/api/v1/agent/identity` |
+| `claim_endpoint` | `<origin>/api/v1/agent/identity/claim` |
+| `identity_types_supported` | `["service_auth"]` |
+
+`grant_types_supported` then also lists `urn:workos:agent-auth:grant-type:claim` and `urn:ietf:params:oauth:grant-type:jwt-bearer`.
+
+## The flow
+
+<Steps>
+  <Step title="The agent registers">
+    `POST /api/v1/agent/identity` with `type: "service_auth"` and the person's email as `login_hint`. No credentials are needed. The reply has a `claim_token` and a `claim` block with a six-digit `user_code` and a `verification_uri`. PipesHub answers the same for an email it knows and one it does not.
+  </Step>
+  <Step title="The person approves">
+    The agent shows the person the `verification_uri` and the `user_code`. The person opens the link and signs in with that email. The claim page lists the scopes the agent will get and asks for the six-digit code. The person checks that it matches what the agent showed, then approves or denies. Only approve an agent you started.
+  </Step>
+  <Step title="The agent polls for the token">
+    While it waits, the agent calls `/api/v1/oauth2/token` with the claim grant every 5 seconds. After approval it gets an access token and an identity assertion.
+  </Step>
+</Steps>
+
+## Walk-through
+
+Replace the placeholders. Never paste real tokens into a chat.
+
+```bash
+# 1. Register. login_hint is the person's email.
+curl -s -X POST "$PIPESHUB_URL/api/v1/agent/identity" \
+  -H "Content-Type: application/json" \
+  -d '{"type":"service_auth","login_hint":"person@example.com"}'
+```
+
+```json
+{
+  "registration_id": "reg_<24 hex characters>",
+  "registration_type": "service_auth",
+  "claim_url": "<origin>/api/v1/agent/identity/claim",
+  "claim_token": "clm_<token>",
+  "claim_token_expires": "<ISO time, 24 hours from now>",
+  "post_claim_scopes": ["conversation:chat", "kb:read", "..."],
+  "claim": {
+    "user_code": "123456",
+    "expires_in": 600,
+    "verification_uri": "<frontend>/agent/claim?claim_attempt_token=<token>",
+    "interval": 5
+  }
+}
+```
+
+Show the person `verification_uri` and `user_code`. Then poll:
+
+```bash
+# 2. Poll every 5 seconds. No client_id.
+curl -s -X POST "$PIPESHUB_URL/api/v1/oauth2/token" \
+  -d "grant_type=urn:workos:agent-auth:grant-type:claim" \
+  -d "claim_token=$CLAIM_TOKEN"
+```
+
+Until the person approves, the answer is HTTP 400 with `{"error":"authorization_pending"}`. After approval:
+
+```json
+{
+  "access_token": "<access token>",
+  "token_type": "Bearer",
+  "expires_in": 3600,
+  "scope": "conversation:chat kb:read ...",
+  "identity_assertion": "<signed JWT>",
+  "assertion_expires": "<ISO time, 30 days from now>"
+}
+```
+
+Use the access token as `Authorization: Bearer <access token>` on `/mcp` or `/api/v1/...`. Store the `identity_assertion` safely: it is the only way to get a new token.
+
+```bash
+# 3. Later, trade the assertion for a fresh access token. No client_id.
+curl -s -X POST "$PIPESHUB_URL/api/v1/oauth2/token" \
+  --data-urlencode "grant_type=urn:ietf:params:oauth:grant-type:jwt-bearer" \
+  --data-urlencode "assertion=$IDENTITY_ASSERTION"
+```
+
+This returns `access_token`, `token_type`, `expires_in` and `scope`. It does not return a new assertion.
+
+## Token endpoint errors
+
+Every error is HTTP 400 with an `error` field.
+
+| `error` | Meaning |
+| --- | --- |
+| `authorization_pending` | The person has not approved yet. Keep polling. |
+| `slow_down` | You polled sooner than every 5 seconds. Wait longer. |
+| `expired_token` | The 24-hour claim window closed, or the claim token is unknown. Register again. |
+| `access_denied` | The person denied or revoked this registration, or the approving account no longer exists. Stop. |
+| `invalid_grant` | The claim token was already used, or the assertion is invalid, expired, or its registration is not active. |
+
+## Lifetimes and limits
+
+| What | Value |
+| --- | --- |
+| Claim window (`claim_token`) | 24 hours |
+| Claim code (`user_code`, six digits) and its link | 10 minutes |
+| Poll interval | 5 seconds |
+| Wrong codes before the registration is closed | 5 |
+| Access token | 1 hour (the built-in app's default) |
+| Identity assertion | 30 days |
+
+A claim token works once. After it has issued a token, polling again answers `invalid_grant`. The fifth wrong code closes the whole registration, so the agent must register again. If the 10-minute code lapses while the 24-hour window is still open, the agent can start a new attempt with `POST /api/v1/agent/identity/claim`, sending `claim_token` and `email`. It returns a fresh `claim_attempt` with a new code and link. It answers `invalid_claim_token` when the token is wrong for that email, `claimed_or_in_flight` when the registration was already claimed, and `claim_expired` when the window has closed.
+
+## Scopes
+
+An agent sign-up gets the same scopes as a device sign-in by the `pipeshub-agent` app, less `offline_access`. These grants never issue a refresh token: use the assertion to get new access tokens. The claim page shows the list before the person approves, and the token carries only what they approved. If the server stops allowing a scope later, the token loses it. If it allows a new one, existing sign-ins do not gain it.
+
+`post_claim_scopes` in the registration reply lists them. To see what a server grants, read `<origin>/auth.md`.
+
+## Other registration types
+
+| `type` | Answer |
+| --- | --- |
+| `anonymous` | `anonymous_not_enabled` |
+| `identity_assertion` | `issuer_not_enabled` |
+| anything else, or no `type` | `invalid_request` |
+
+A missing or malformed `login_hint` answers `invalid_request`.
+
+## Where a person sees and revokes agent sign-ins
+
+In **Workspace → Developer settings → Personal access tokens**, the **Agent sign-ins** list shows each agent the person approved. **Revoke** stops it getting new access. Revoking marks the registration revoked, so its assertion no longer works. This page does not promise that an access token already issued stops at once; it expires after its hour.
+
+An agent can also end its own sign-in by sending the assertion, or an access token it was issued, as `token` to `POST /api/v1/oauth2/revoke` with no `client_id`.
+
+Denying on the claim page ends the registration the same way: the agent's next poll answers `access_denied`.
+
+## Related
+
+- [Personal access tokens](/developer/personal-access-tokens)
+- [OAuth 2.0 applications](/developer/oauth2)
+- [For coding agents](/for-agents)

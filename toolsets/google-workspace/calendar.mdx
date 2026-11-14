@@ -1,5 +1,5 @@
 ---
-title: "Google Calendar Toolset"
+title: "Google Calendar actions"
 description: "Calendar and scheduling integration for AI agents"
 icon: "/logo/gcalendar.png"
 ---
@@ -12,7 +12,7 @@ icon: "/logo/gcalendar.png"
         alt="Google Calendar Logo" 
         className="w-8 h-8 object-contain flex-shrink-0"
       />
-      <div className="text-xl font-semibold text-gray-900 dark:text-white">Google Calendar Toolset</div>
+      <div className="text-xl font-semibold text-gray-900 dark:text-white">Google Calendar actions</div>
     </div>
     <p className="text-base text-gray-700 dark:text-gray-300 mt-0 mb-5">Calendar and event management</p>
     <div className="flex flex-wrap items-center gap-2">
@@ -28,7 +28,7 @@ icon: "/logo/gcalendar.png"
 
 ## Overview
 
-The Google Calendar toolset enables AI agents to manage calendar events and scheduling.
+The Google Calendar action enables AI agents to manage calendar events and scheduling.
 
 ### Key Capabilities
 
@@ -88,17 +88,14 @@ The Google Calendar toolset enables AI agents to manage calendar events and sche
 
 ### Step 4: Get Redirect URI from PipesHub
 
-1. In PipesHub, go to **Settings > Toolsets**
-2. Find **Calendar** and click **"Configure"**
+1. In PipesHub, go to **Workspace settings** → **Actions**
+2. Find **Calendar** and click **Set up**
 3. Copy the **Redirect URI** shown in the dialog
 
-<div className="text-center">
-  <img
-    src="/images/toolsets/calendar/pipeshub-config.png"
-    alt="Copy Redirect URI from PipesHub"
-    className="block mx-auto w-11/12"
-  />
-</div>
+<Frame>
+  <img className="block dark:hidden" src="/images/toolsets/calendar/pipeshub-config.png" alt="Calendar action setup drawer with the Redirect URI to copy" />
+  <img className="hidden dark:block" src="/images/toolsets/calendar/pipeshub-config-dark.png" alt="Calendar action setup drawer with the Redirect URI to copy" />
+</Frame>
 
 ### Step 5: Create OAuth Client ID
 
@@ -125,34 +122,22 @@ No Gmail scope is needed: Google Calendar sends invites and update emails itself
 
 ### Step 7: Configure in PipesHub
 
-1. Return to the PipesHub Calendar configuration dialog
-2. Enter your **Client ID** and **Client Secret**
-3. Click **"Authenticate"**
+1. Return to the PipesHub Calendar setup dialog
+2. Enter an **OAuth app name** (or pick a saved app), then your **Client ID** and **Client Secret**
+3. Click **Create**
 
-<div className="text-center">
-  <img
-    src="/images/toolsets/calendar/enter-credentials.png"
-    alt="Enter Credentials in PipesHub"
-    className="block mx-auto w-11/12"
-  />
-</div>
+<Frame>
+  <img className="block dark:hidden" src="/images/toolsets/calendar/enter-credentials.png" alt="Calendar action setup drawer with the Client ID and Client Secret entered" />
+  <img className="hidden dark:block" src="/images/toolsets/calendar/enter-credentials-dark.png" alt="Calendar action setup drawer with the Client ID and Client Secret entered" />
+</Frame>
 
 ### Step 8: Authorize Access
 
-1. A popup will open to Google's consent screen
+1. Open the Calendar instance (in **Actions** or **Your actions**), click **Authenticate**, then **Authenticate with OAuth**. A popup opens to Google's consent screen
 2. Sign in and grant permission for Calendar access
 3. Click **"Allow"**
-
-<div className="text-center">
-  <img
-    src="/images/connectors/googleWorkspace/individual/gmail_consent_screen.png"
-    alt="Google Consent Screen"
-    className="block mx-auto w-11/12"
-  />
-</div>
-
 4. You'll be redirected back to PipesHub
-5. The toolset will show **"Authenticated"** status
+5. The action will show **"Authenticated"** status
 
 </Accordion>
 
@@ -164,15 +149,15 @@ No Gmail scope is needed: Google Calendar sends invites and update emails itself
 
 <AccordionGroup>
 
-<Accordion title="What's the difference between Calendar Connector and Calendar Toolset?">
+<Accordion title="What's the difference between Calendar Connector and Calendar Action?">
 
-| Aspect | Calendar Connector | Calendar Toolset |
+| Aspect | Calendar Connector | Calendar Action |
 |--------|-------------------|-----------------|
 | **Purpose** | Sync and index calendar events for search | Enable agents to perform calendar actions |
 | **Data Flow** | One-way (import data into PipesHub) | Two-way (read and write via API) |
 | **When to Use** | Query/search events and meetings | Create events, update meetings, manage calendar |
 
-**Example:** Use **Calendar Connector** to search past and upcoming events. Use **Calendar Toolset** to let agents schedule meetings or update event details.
+**Example:** Use **Calendar Connector** to search past and upcoming events. Use **Calendar action** to let agents schedule meetings or update event details.
 
 </Accordion>
 

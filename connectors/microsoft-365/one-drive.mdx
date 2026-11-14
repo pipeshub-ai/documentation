@@ -59,7 +59,7 @@ Set up a connector with a client secret before certificates were required? It ke
 <div style={{ textAlign: "center" }}>
   <img
     src="/images/connectors/microsoft365/onedrive/1.png"
-    alt="OneDrive"
+    alt="Microsoft Entra tenant Overview with the Add menu open on App registration"
     style={{ display: 'block', margin: '0 auto' }}
     width="90%"
   />
@@ -72,7 +72,7 @@ Set up a connector with a client secret before certificates were required? It ke
 <div style={{ textAlign: "center" }}>
   <img
     src="/images/connectors/microsoft365/onedrive/3.png"
-    alt="OneDrive"
+    alt="Register an application form with Name, Supported account types and the Register button"
     style={{ display: 'block', margin: '0 auto' }}
     width="90%"
   />
@@ -90,7 +90,7 @@ After registration, you'll see the Overview page. Copy the following values:
 <div style={{ textAlign: "center" }}>
   <img
     src="/images/connectors/microsoft365/onedrive/4.png"
-    alt="OneDrive"
+    alt="App Overview page showing the Application (client) ID and Directory (tenant) ID"
     style={{ display: 'block', margin: '0 auto' }}
     width="90%"
   />
@@ -118,7 +118,7 @@ $env:Path += ";C:\Program Files\OpenSSL-Win64\bin"
 
 **Generate the Certificate and Private Key:**
 
-Run these commands one at a time. Microsoft needs the private key in PKCS#8 format:
+Run these commands one at a time. PipesHub needs the private key in PKCS#8 format:
 
 ```bash
 openssl genrsa -out tempprivatekey.key 2048
@@ -145,7 +145,7 @@ Make sure both `certificate.crt` and `privatekey.key` exist, and open each one t
 <div style={{ textAlign: "center" }}>
   <img
     src="/images/connectors/microsoft365/onedrive/certificate-upload-azure.png"
-    alt="App registration Certificates & secrets: client certificate uploaded"
+    alt="App registration Certificates & secrets with the Upload certificate panel open"
     style={{ display: 'block', margin: '0 auto' }}
     width="90%"
   />
@@ -153,7 +153,13 @@ Make sure both `certificate.crt` and `privatekey.key` exist, and open each one t
 
 <Warning>
 Keep `privatekey.key` safe and don't share it. You upload it to PipesHub in Step 6, and only there. `request.csr` and `tempprivatekey.key` aren't needed afterwards; delete them.
+
+PipesHub also shows a notice on the connector 30 days before the certificate expires. Upload a new certificate before it expires, or sync will stop.
 </Warning>
+
+<Note>
+A connector that was set up with a client secret keeps working with it. See [Switch to certificate sign-in](#switch-to-certificate-sign-in) to change over.
+</Note>
 
 ### Step 4: Configure API Permissions
 
@@ -169,7 +175,7 @@ Keep `privatekey.key` safe and don't share it. You upload it to PipesHub in Step
 <div style={{ textAlign: "center" }}>
   <img
     src="/images/connectors/microsoft365/onedrive/6.png"
-    alt="OneDrive"
+    alt="Request API permissions panel with the Microsoft Graph application permission Files.Read.All selected"
     style={{ display: 'block', margin: '0 auto' }}
     width="90%"
   />
@@ -201,7 +207,7 @@ OneDrive stores each user's files on a SharePoint site. The connector reads from
 <div style={{ textAlign: "center" }}>
   <img
     src="/images/connectors/microsoft365/onedrive/7.png"
-    alt="OneDrive"
+    alt="Configured permissions with Grant admin consent and each permission showing Granted"
     style={{ display: 'block', margin: '0 auto' }}
     width="90%"
   />
@@ -212,12 +218,12 @@ OneDrive stores each user's files on a SharePoint site. The connector reads from
 </Warning>
 
 <Note>
-Admin consent is required for application permissions. Only Global Administrators or Application Administrators can grant this consent.
+Admin consent is required for application permissions. For Microsoft Graph application permissions, only a Privileged Role Administrator or a Global Administrator can grant this consent.
 </Note>
 
 ### Step 6: Configure Connector in PipesHub
 
-- Navigate to Workspace Settings → Connectors in PipesHub
+- Navigate to Workspace settings → Connectors in PipesHub
 - Find the OneDrive connector and click "Configure"
 - Enter the following details:
   - **Application (Client) ID:** From Step 2
@@ -226,17 +232,13 @@ Admin consent is required for application permissions. Only Global Administrator
   - **Private Key (PKCS#8):** Upload `privatekey.key` from Step 3
 - Check the "Has Admin Consent" checkbox
 - Click "Next"
-<div style={{ textAlign: "center" }}>
-  <img
-    src="/images/connectors/microsoft365/onedrive/certificates-configured.png"
-    alt="OneDrive connector form with client ID, tenant ID, client certificate and private key"
-    style={{ display: 'block', margin: '0 auto' }}
-    width="90%"
-  />
-</div>
+<Frame>
+  <img className="block dark:hidden" src="/images/connectors/microsoft365/onedrive/certificates-configured.png" alt="OneDrive connector form with client ID, tenant ID, client certificate and private key" />
+  <img className="hidden dark:block" src="/images/connectors/microsoft365/onedrive/certificates-configured-dark.png" alt="OneDrive connector form with client ID, tenant ID, client certificate and private key" />
+</Frame>
 
 <Note>
-Unlike user-facing OAuth flows, there's no login screen because the connector uses application permissions with client credentials.
+Unlike user-facing OAuth flows, there's no login screen because the connector uses application permissions and signs in with its client certificate.
 </Note>
 
 <Note>
@@ -262,35 +264,35 @@ Sync filters control which files are fetched from OneDrive. Files that don't mat
 
 ### Created Date
 
-Filters files by when they were created. Accepts operators like `Last 365 Days`, `Is After`, `Is Before`, or `Is Between` for a specific range. 
+Filters files by when they were created. Accepts operators like `Last 365 days`, `Is after`, `Is before`, or `Is between` for a specific range. 
 
-For example, set `Last 365 Days` to fetch only files created in the last year.
+For example, set `Last 365 days` to fetch only files created in the last year.
 
 ### Modified Date
 
-Same as Created Date but filters by the file's last modified timestamp. Use `Last 30 Days` or `Is After` to limit sync to recently updated files.
+Same as Created Date but filters by the file's last modified timestamp. Use `Last 30 days` or `Is after` to limit sync to recently updated files.
 
 ### File Extensions
 
-Filters files support 2 options: `In` (only sync listed extensions) or `Not In` (sync everything except listed extensions). After selecting your desired option, you can select your desired extensions from a list of supported extensions.
+Filters files support 2 options: `In` (only sync listed extensions) or `Not in` (sync everything except listed extensions). After selecting your desired option, you can select your desired extensions from a list of supported extensions.
 
 <Note>
-Unsupported extensions are excluded under `In` and allowed through under `Not In`.
+Unsupported extensions are excluded under `In` and allowed through under `Not in`.
 </Note>
 
 ---
 
 ## Indexing Filters
 
-Indexing filters control which synced files are made searchable. Unlike sync filters, these don't prevent files from being fetched — files are still recorded in the system but their indexing status is set to **Manual Indexing**. 
+Indexing filters control which synced files are made searchable. Unlike sync filters, these don't prevent files from being fetched: files are still recorded in the system but their indexing status is set to **Manual Indexing**. 
 
-They can be manually indexed later from the **All Records** section.
+They can be manually indexed later from the **All records** section.
 
 ### Manual Indexing
 
 When enabled, files are synced but not automatically indexed. They won't appear in search results until explicitly indexed. 
 
-This can allow you to explicitly control which files and folders are indexed for search, by going to the **All Records** section and indexing the records manually.
+This can allow you to explicitly control which files and folders are indexed for search, by going to the **All records** section and indexing the records manually.
 
 ### Index Shared Items
 
@@ -328,11 +330,11 @@ The Microsoft Graph permissions the connector already has stay as they are.
 </Step>
 
 <Step title="Open the connector's authentication">
-In PipesHub, go to **Workspace Settings > Connectors**, open the OneDrive connector, and click **Update authentication** next to **Switch to certificate sign-in**. This opens the **Authenticate Instance** tab.
+In PipesHub, go to **Workspace settings > Connectors**, open the OneDrive connector, and click **Update authentication** next to **Switch to certificate sign-in**. This opens the **Authenticate** tab.
 <div style={{ textAlign: "center" }}>
   <img
     src="/images/connectors/microsoft365/onedrive/migrate-action-needed.png"
-    alt="OneDrive connector overview: Action needed, Switch to certificate sign-in, with Update authentication and View setup steps"
+    alt="OneDrive connector card with the Action needed badge"
     style={{ display: 'block', margin: '0 auto' }}
     width="90%"
   />
@@ -352,24 +354,20 @@ In PipesHub, go to **Workspace Settings > Connectors**, open the OneDrive connec
 - Upload `privatekey.key` under **Private Key (PKCS#8)**
 - Remove **Client Secret** (optional)
 - Leave **Client ID**, **Tenant ID** and **Has Admin Consent** as they are
-- Click *Next*
+- Click **Next**
 
-<div style={{ textAlign: "center" }}>
-  <img
-    src="/images/connectors/microsoft365/onedrive/certificates-configured.png"
-    alt="Dialog: Certificates configured"
-    style={{ display: 'block', margin: '0 auto' }}
-    width="90%"
-  />
-</div>
+<Frame>
+  <img className="block dark:hidden" src="/images/connectors/microsoft365/onedrive/certificates-configured.png" alt="OneDrive Authenticate tab with the client certificate and private key uploaded" />
+  <img className="hidden dark:block" src="/images/connectors/microsoft365/onedrive/certificates-configured-dark.png" alt="OneDrive Authenticate tab with the client certificate and private key uploaded" />
+</Frame>
 
-PipesHub checks the credentials first. If the connector is enabled, it then asks to disable it to save the new credentials: click **Disable & Proceed**. It disables the connector and saves what you entered, so you don't upload the files again. **Cancel** keeps the form as it is.
+PipesHub checks the credentials first. If the connector is enabled, it then asks to disable it to save the new credentials: click **Disable & proceed**. It disables the connector and saves what you entered, so you don't upload the files again. **Cancel** keeps the form as it is.
 
 
 </Step>
 
 <Step title="Enable the connector">
-Once the connector is enabled. **Switch to certificate sign-in** no longer shows, and the next sync reads more granular permissions via Sharepoint.
+Turn the connector back on. **Switch to certificate sign-in** no longer shows, and the next sync reads more granular permissions from SharePoint.
 </Step>
 
 </Steps>
@@ -462,7 +460,7 @@ The initial list of all Microsoft 365 users is filtered against the application'
 
 **Workflow:**
 - Calls `_process_users_in_batches(users)`
-- Filtered users are divided into small batches (controlled by `max_concurrent_batches = 3`)
+- Filtered users are divided into small batches (`max_concurrent_batches`, currently 1 user at a time)
 - Each batch is processed in parallel using `asyncio.gather`
 - A short delay is introduced between batches to rate limit API calls
 
@@ -488,6 +486,23 @@ This function manages the synchronization of a single user's OneDrive content us
 
 ---
 
+## Permissions
+
+PipesHub copies OneDrive sharing on every sync. People are matched to PipesHub accounts by email.
+
+| Sharing in OneDrive | Who can find the item in PipesHub |
+|---|---|
+| **The user's own drive** | The drive's owner |
+| **Shared with a person** | That person |
+| **Shared with a group** | The group's members, as synced from Microsoft Entra ID |
+| **A link for "People in your organization" or "Anyone"** | Not copied. Microsoft Graph doesn't list who opened the link, so only people named on the item can find it. |
+| **A link for specific people** | The people Microsoft Graph lists on the link |
+
+- Items inherit access from their folder only when the app has the SharePoint `Sites.Read.All` permission (see [Step 4](#step-4-configure-api-permissions)). Without it, each item keeps the access list OneDrive reports for it.
+- An admin who sets up the connector doesn't get access to other people's files unless they are shared with them.
+
+---
+
 ## FAQ
 
 <AccordionGroup>
@@ -499,11 +514,11 @@ There are three common causes:
 1. **Email mismatch** - The email used during connector authentication doesn't match your PipesHub account email. This causes permission issues preventing you from accessing synced data.
    - **Fix:** Reconfigure the connector and authenticate using the same email as your PipesHub account.
 
-2. **Records show in "All Records" but not in search** - Documents display in the All Records section but don't appear in search query results.
+2. **Records show in "All records" but not in search** - Documents display in the All records section but don't appear in search query results.
    - **Fix:** Verify sync filters in the connector settings and ensure indexing has completed. Check that the data matches your search query criteria.
 
 3. **Data not yet indexed** - The connector is still syncing or hasn't completed the initial indexing process.
-   - **Fix:** Go to **Settings > Connectors**, check the sync status, and wait for indexing to complete.
+   - **Fix:** Go to **Workspace settings > Connectors**, check the sync status, and wait for indexing to complete.
 
 </Accordion>
 
@@ -526,7 +541,7 @@ The simplest fix is to [switch to certificate sign-in](#switch-to-certificate-si
 1. Go to your app registration in the [Azure Portal](https://portal.azure.com)
 2. Navigate to **Certificates & secrets** → **New client secret**
 3. Set a new expiry and copy the secret **Value** immediately (it won't be shown again).
-4. Go to **Settings > Connectors** in PipesHub, open the OneDrive connector, and update the **Client Secret** field with the new value
+4. Go to **Workspace settings > Connectors** in PipesHub, open the OneDrive connector, and update the **Client Secret** field with the new value
 
 </Accordion>
 
@@ -534,7 +549,7 @@ The simplest fix is to [switch to certificate sign-in](#switch-to-certificate-si
 
 The initial sync performs a full scan of all users' drives across your organization. The connector fetches every file, folder, and permission from scratch before it has a delta checkpoint to work from. Depending on the size of your organization and number of files, this can take a significant amount of time.
 
-All subsequent syncs are incremental — only changes since the last run are fetched, making them considerably faster.
+All subsequent syncs are incremental: only changes since the last run are fetched, making them considerably faster.
 
 </Accordion>
 
@@ -562,7 +577,7 @@ For groups, a failed read never empties a group:
 
 Permission changes are picked up automatically on the next sync cycle. The connector compares current permissions from the Microsoft Graph API against what's stored and updates accordingly. 
 
-If your sync is set to **Scheduled**, the change will reflect within the configured sync interval. If set to **Manual**, trigger a sync from **Settings > Connectors** to pull the latest permissions immediately.
+If your sync is set to **Scheduled**, the change will reflect within the configured sync interval. If set to **Manual**, trigger a sync from **Workspace settings > Connectors** to pull the latest permissions immediately.
 
 </Accordion>
 

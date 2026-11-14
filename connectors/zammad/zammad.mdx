@@ -171,20 +171,17 @@ The Zammad connector uses **API Access Token** authentication (HTTP Token Authen
 
 The connector drawer in PipesHub has two tabs: **Authenticate** and **Configure records**. There is no **Authorize** tab, because the access token authenticates on its own. Start on the **Authenticate** tab.
 
-1. In PipesHub, go to **Workspace Settings** → **Connectors**, find **Zammad**, and click **Set up** for a new instance.
+1. In PipesHub, go to **Workspace settings** → **Connectors**, find **Zammad**, and click **Set up** for a new instance.
 2. The connector panel opens as a right-side drawer. On the **Authenticate** tab, enter:
    - **Instance name** (required) — a name to identify this connector instance
    - **Zammad Instance URL** — your Zammad instance base URL (e.g., `https://<name>.zammad.com` for hosted Zammad, or `https://support.yourcompany.com` for self-hosted)
    - **Access Token** — the token you copied in Step 4
 3. Click **Next**. PipesHub validates the credentials and advances to the **Configure records** tab.
 
-<div className="text-center">
-  <img
-    src="/images/connectors/zammad/pipeshub_config.png"
-    alt="Authenticate tab — enter Zammad Instance URL and Access Token"
-    className="block mx-auto w-11/12"
-  />
-</div>
+<Frame>
+  <img className="block dark:hidden" src="/images/connectors/zammad/pipeshub_config.png" alt="Set up Zammad drawer with instance name, Zammad Instance URL and Access Token" />
+  <img className="hidden dark:block" src="/images/connectors/zammad/pipeshub_config-dark.png" alt="Set up Zammad drawer with instance name, Zammad Instance URL and Access Token" />
+</Frame>
 
 <Warning>
   Generate the API token from a Zammad account that uses the same email address as your PipesHub account. Using a different email will cause permission issues on the PipesHub platform.
@@ -200,16 +197,13 @@ On the **Configure records** tab, control how the connector syncs and what gets 
 
 **Sync settings** — configure your synchronization preferences first:
 
-1. **Sync Strategy** — `Scheduled` or `Manual`.
-2. **Sync Interval** — how often to sync (default: 60 minutes).
+1. **Sync strategy**: `Scheduled` or `Manual`.
+2. **Sync interval**: how often to sync (default: 60 minutes).
 
-<div className="text-center">
-  <img
-    src="/images/connectors/zammad/sync_settings.png"
-    alt="Configure Sync Settings"
-    className="block mx-auto w-11/12"
-  />
-</div>
+<Frame>
+  <img className="block dark:hidden" src="/images/connectors/zammad/sync_settings.png" alt="Configure records tab with Sync strategy and Sync interval" />
+  <img className="hidden dark:block" src="/images/connectors/zammad/sync_settings-dark.png" alt="Configure records tab with Sync strategy and Sync interval" />
+</Frame>
 
 <Note>
   **Scheduled sync** runs automatically at the specified intervals. **Manual sync** requires you to trigger synchronization on-demand.
@@ -225,13 +219,10 @@ On the **Configure records** tab, control how the connector syncs and what gets 
   - If one ticket can't be read back, only that ticket stays.
 </Note>
 
-<div className="text-center">
-  <img
-    src="/images/connectors/zammad/sync_filters.png"
-    alt="Zammad Sync Filters"
-    className="block mx-auto w-11/12"
-  />
-</div>
+<Frame>
+  <img className="block dark:hidden" src="/images/connectors/zammad/sync_filters.png" alt="Sync filters with the Groups filter added, and the indexing filters for tickets, attachments and knowledge base" />
+  <img className="hidden dark:block" src="/images/connectors/zammad/sync_filters-dark.png" alt="Sync filters with the Groups filter added, and the indexing filters for tickets, attachments and knowledge base" />
+</Frame>
 
 Available sync filters:
 
@@ -240,11 +231,11 @@ Available sync filters:
    - Disabled (default): records are indexed automatically after sync.
 
 2. **Groups** — filter tickets by support group/department.
-   - Operator: `In` (include only) or `Not In` (exclude)
+   - Operator: `In` (include only) or `Not in` (exclude)
    - Selection: searchable dropdown of your Zammad groups
    - Leave empty to sync all groups.
 
-3. **Modified Date** — filter by last modification date. Operators: `Is After`, `Is Before`, `Is Between`.
+3. **Modified Date**: filter by last modification date. Operators: `Is after`, `Is before`, `Is between`.
 
 4. **Created Date** — filter by creation date. Same operators.
 
@@ -254,17 +245,14 @@ Available sync filters:
 - **Index Ticket Attachments** (default: enabled) — include files attached to ticket articles in search. Knowledge base answer attachments follow **Index Knowledge Base**.
 - **Index Knowledge Base** (default: enabled) — include knowledge base articles in search
 
-Click **Save** to save your configuration. PipesHub confirms the instance is ready with a final dialog — **"Instance is configured and ready to sync!"** — offering two choices: **I'll do it later** or **Start syncing now**.
+Click **Save configuration**. If you added no sync filters, or turned on **Enable Manual Indexing**, PipesHub first asks **Start sync process?**; click **Confirm** to save. PipesHub then shows **Instance is configured and ready to sync!** with two choices: **I'll do it later** or **Start syncing now**.
 
-<div className="text-center">
-  <img
-    src="/images/connectors/zammad/enable_connector.png"
-    alt="Instance is configured and ready to sync — I'll do it later or Start syncing now"
-    className="block mx-auto w-11/12"
-  />
-</div>
+<Frame>
+  <img className="block dark:hidden" src="/images/connectors/zammad/enable_connector.png" alt="Instance is configured and ready to sync dialog on the Zammad page" />
+  <img className="hidden dark:block" src="/images/connectors/zammad/enable_connector-dark.png" alt="Instance is configured and ready to sync dialog on the Zammad page" />
+</Frame>
 
-Choose **Start syncing now** to kick off the initial sync immediately, or **I'll do it later** to enable the connector without an immediate sync. Monitor the **Indexing Progress** to track sync completion.
+Choose **Start syncing now** to start the first sync, or **I'll do it later** to leave the connector off until you turn on **Sync enabled** on the instance card. Click the arrow on the connector card and check **Records status** to track sync completion.
 
 ## Supported Features
 
@@ -333,7 +321,7 @@ This usually means Zammad has no Elasticsearch connected. The connection test on
 
    If it prints `nil` or `""`, Elasticsearch isn't set up, and ticket search can't find tickets.
 2. Set up Elasticsearch and build Zammad's search index by following [Connect and configure Elasticsearch](https://docs.zammad.org/en/latest/install/elasticsearch/connect-configure-elasticsearch.html). Building the index can take a long time on a large Zammad instance.
-3. When the index is built, run a sync again from **Workspace Settings** → **Connectors** in PipesHub. Tickets should now appear.
+3. When the index is built, run a sync again from **Workspace settings** → **Connectors** in PipesHub. Tickets should now appear.
 
 **No data syncing:**
 - Verify the connector status shows "Active"
@@ -465,7 +453,7 @@ There are three common causes:
    - **Fix:** Verify sync filters in the connector settings and ensure indexing has completed. Check that the data matches your search query criteria.
 
 3. **Data not yet indexed** - The connector is still syncing or hasn't completed the initial indexing process.
-   - **Fix:** Go to **Workspace Settings → Connectors**, check the sync status, and wait for indexing to complete.
+   - **Fix:** Go to **Workspace settings → Connectors**, check the sync status, and wait for indexing to complete.
 
 </Accordion>
 

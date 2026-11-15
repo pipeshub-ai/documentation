@@ -17,12 +17,12 @@ PostgreSQL can hold all of PipesHub's data in one database. This setup is for **
 | Documents (users, orgs, chats, files metadata, OAuth) | `DOC_STORE` | `mongo` | `postgres` |
 | Configuration and credentials | `KV_STORE_TYPE` | `redis` | `postgres` |
 | Message broker | `MESSAGE_BROKER` | `redis` | `postgres` |
-| Crawl and sync scheduler | `CRAWL_SCHEDULER` | BullMQ when Redis is configured | `postgres` |
+| Crawl and sync scheduler | `CRAWL_SCHEDULER` | `postgres` when there is no Redis server (`REDIS_MODE` is `postgres` or `inprocess`, or unset with `KV_STORE_TYPE` and `MESSAGE_BROKER` both `postgres`), else BullMQ (`bullmq`) | `postgres` |
 | State shared across processes (leader keys, leases, retry counters, the Node API cache) | `REDIS_MODE` | `standalone` | `postgres` |
 | Vectors | `VECTOR_DB_TYPE` | `qdrant` | `pgvector` |
 | Knowledge graph | `DATA_STORE` | `neo4j` in `env.template` (`arangodb` if unset) | `postgres` |
 
-`PIPESHUB_STORE=postgres` is a shortcut for four of these. It sets `KV_STORE_TYPE`, `MESSAGE_BROKER`, `CRAWL_SCHEDULER` and `REDIS_MODE` to `postgres` for any of them you have not set. A value you set always wins, so remove or comment out the `KV_STORE_TYPE=redis` and `MESSAGE_BROKER=redis` lines in your `.env` first. It does not change `DOC_STORE`, `VECTOR_DB_TYPE` or `DATA_STORE`.
+`PIPESHUB_STORE=postgres` is a shortcut for four of these. It sets `KV_STORE_TYPE`, `MESSAGE_BROKER`, `CRAWL_SCHEDULER` and `REDIS_MODE` to `postgres` for any of them you have not set. A value you set always wins, so remove or comment out the `KV_STORE_TYPE=redis` and `MESSAGE_BROKER=redis` lines in your `.env` first. It does not change `DOC_STORE`, `VECTOR_DB_TYPE` or `DATA_STORE`. If you keep Redis with `REDIS_MODE=standalone` or `cluster`, it still moves the scheduler to PostgreSQL; set `CRAWL_SCHEDULER=bullmq` to keep BullMQ.
 
 You can switch each store on its own. For example, you can keep Kafka for messages and use PostgreSQL for configuration.
 

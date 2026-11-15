@@ -19,11 +19,14 @@ A Docker Compose install keeps its data in Docker volumes named `<project>_<volu
 | `arango_data` (`DATA_STORE=arangodb`) | Graph: records, permissions, hierarchy |
 | `etcd_data` (`KV_STORE_TYPE=etcd`) | Configuration |
 | `kafka_data`, `zookeeper_data`, `zookeeper_log` (`MESSAGE_BROKER=kafka`) | Queued messages |
+| `postgres_data` (the `postgres` Compose profile) | PostgreSQL |
 | `.env` file (always) | `SECRET_KEY` and database passwords |
 
 <Warning>
 Back up `.env` with the volumes, and keep it as secret as the data. Stored settings are encrypted with `SECRET_KEY`, and the databases only accept the passwords they were created with. Volumes restored without the matching `.env` are not usable.
 </Warning>
+
+If you run PipesHub on PostgreSQL, the method below covers `postgres_data` too. For continuous backups that restore to any moment, without stopping PipesHub, see [PostgreSQL backups and point-in-time restore](/deployment/postgresql-backup).
 
 You do not need `pipeshub_hf_cache` (downloaded models) or `neo4j_logs`. The `slim` image downloads the embedding model again on first use.
 
@@ -40,7 +43,7 @@ mkdir -p "$BACKUP_DIR"
 ./install.sh --stop                 # stops every container, keeps the volumes
 
 for v in mongodb_data redis_data qdrant_storage pipeshub_data pipeshub_root_local \
-         neo4j_data arango_data etcd_data kafka_data zookeeper_data zookeeper_log; do
+         neo4j_data arango_data etcd_data kafka_data zookeeper_data zookeeper_log postgres_data; do
   docker volume inspect "${PROJECT}_$v" >/dev/null 2>&1 || continue
   docker run --rm \
     -v "${PROJECT}_$v":/volume:ro \

@@ -1,0 +1,170 @@
+---
+title: "PostgreSQL backups and point-in-time restore"
+description: "Back up the PostgreSQL database of a Docker Compose install and restore it to any moment"
+icon: "clock-rotate-left"
+---
+
+When PipesHub keeps its data in PostgreSQL (the `postgres` Compose profile), you can turn on continuous backups with one more Compose file. The database is then backed up on a schedule and every change is archived as it happens, so you can bring it back to any moment covered by the backups: just before a mistake, or to the last archived change after losing the server's disk.
+
+Backups use [pgBackRest](https://pgbackrest.org/), which is built into the PipesHub PostgreSQL image. This page covers Docker Compose. Kubernetes notes are at the end.
+
+## What is backed up
+
+Everything PipesHub keeps in PostgreSQL lives in one database, `pipeshub`: users and organisations, conversations, the knowledge graph, vector embeddings (when you use pgvector), configuration and the work queues. The backup is a physical copy of the whole server plus its write-ahead log (WAL), so all of it comes back together and at the same instant.
+
+Files you upload are stored outside PostgreSQL (local disk, S3 or Azure Blob, depending on your storage settings), and so is `.env`. Back those up as described in [Backup and restore](/deployment/backup-restore).
+
+## Turn backups on
+
+<Steps>
+  <Step title="Choose where backups go">
+    In `deployment/docker-compose`, copy the example settings file and keep it private:
+
+    ```bash
+    cp pgbackrest.env.example pgbackrest.env
+    chmod 600 pgbackrest.env
+    ```
+
+    By default backups go to a Docker volume on the same machine. That protects you from mistakes and corruption, but not from losing the machine. For real protection, store them in object storage. For S3 or an S3-compatible store (MinIO, Ceph and others), uncomment and fill in:
+
+    ```bash
+    PGBACKREST_REPO1_TYPE=s3
+    PGBACKREST_REPO1_PATH=/pipeshub
+    PGBACKREST_REPO1_S3_BUCKET=my-backups
+    PGBACKREST_REPO1_S3_ENDPOINT=s3.amazonaws.com
+    PGBACKREST_REPO1_S3_REGION=us-east-1
+    PGBACKREST_REPO1_S3_KEY=...
+    PGBACKREST_REPO1_S3_KEY_SECRET=...
+    ```
+
+    Azure Blob Storage and Google Cloud Storage work too. Any [pgBackRest option](https://pgbackrest.org/configuration.html) can be set in this file as `PGBACKREST_<OPTION>`.
+  </Step>
+  <Step title="Encrypt the backups">
+    Set a passphrase before the first backup, and keep it somewhere other than the backups themselves:
+
+    ```bash
+    PGBACKREST_REPO1_CIPHER_TYPE=aes-256-cbc
+    PGBACKREST_REPO1_CIPHER_PASS=<a long random passphrase>
+    ```
+
+    <Warning>Without the passphrase, nothing can be restored.</Warning>
+  </Step>
+  <Step title="Add the backup file to the stack">
+    Start the stack with `docker-compose.postgres-backup.yml` added, next to the files you already use:
+
+    ```bash
+    COMPOSE_PROFILES=graph-neo4j,sandbox,postgres,postgres-migrate \
+      docker compose -f docker-compose.yml -f docker-compose.postgres-docstore.yml \
+        -f docker-compose.postgres-backup.yml -p pipeshub-ai up -d
+    ```
+
+    PostgreSQL restarts once to turn on WAL archiving. A new `pg-backup` service then takes the first full backup.
+  </Step>
+  <Step title="Check that backups run">
+    ```bash
+    docker compose ps pg-backup                       # healthy once the last backup succeeded
+    docker compose exec pg-backup pgbackrest info     # the backups and the archived WAL range
+    ```
+  </Step>
+</Steps>
+
+## Schedule and retention
+
+| Setting (in `.env`) | Default | Meaning |
+|---|---|---|
+| `PG_BACKUP_FULL_DAYS` | `7` | Days between full backups |
+| `PG_BACKUP_INCR_HOURS` | `6` | Hours between incremental backups |
+| `PG_ARCHIVE_TIMEOUT` | `60` | Seconds after which a partly filled WAL segment is archived anyway |
+| `PGBACKREST_REPO1_RETENTION_FULL` (in `pgbackrest.env`) | `2` | Full backups kept, with all WAL since the oldest one |
+
+With the defaults you can restore to any moment in the last one to two weeks. A backup starts at PostgreSQL's next regular checkpoint (within 5 minutes by default); set `PGBACKREST_START_FAST=y` to start at once with a forced checkpoint instead.
+
+### When the backup storage is unreachable
+
+PostgreSQL cannot recycle a WAL segment until it has been archived. If the backup storage stays unreachable, unarchived WAL piles up on the database's disk, and a full disk stops the database. To keep the database running, the archive queue is capped at **4 GiB**: beyond that, [pgBackRest drops WAL](https://pgbackrest.org/configuration.html#section-archive/option-archive-push-queue-max) instead of keeping it.
+
+When that happens:
+
+- PipesHub keeps working.
+- `pg-backup` turns `unhealthy`, and its log says that point-in-time restore has a gap from that moment until the next full backup.
+- `pg-backup` takes a full backup at once, and retries it every 5 minutes (`PG_BACKUP_RETRY_SECS`) until the storage is back. When it succeeds, the gap is closed and the service is healthy again.
+
+Until then you can restore to any moment before the first dropped segment, but not after it.
+
+To ride out longer outages, raise the cap in `pgbackrest.env` if the disk has room, for example `PGBACKREST_ARCHIVE_PUSH_QUEUE_MAX=20GiB`. Set it empty (`PGBACKREST_ARCHIVE_PUSH_QUEUE_MAX=`) for no cap; the disk can then fill up.
+
+## Restore to a point in time
+
+Run the restore script from `deployment/docker-compose`, telling it which Compose files and project your stack uses:
+
+```bash
+export COMPOSE_FILE=docker-compose.yml:docker-compose.postgres-docstore.yml:docker-compose.postgres-backup.yml
+export COMPOSE_PROJECT_NAME=pipeshub-ai
+export COMPOSE_PROFILES=postgres
+```
+
+The time is a timestamp with a time zone. The restore keeps every change committed up to that moment and nothing after it.
+
+### Into a separate copy (safe to try)
+
+```bash
+scripts/pg-restore.sh "2026-11-15 09:30:00+00"
+```
+
+This restores into a new Docker volume and starts it as a separate PostgreSQL server. Your running stack is not touched, and the copy never writes to the backups. The script prints the copy's name; look at the data with:
+
+```bash
+docker exec -it <name> psql -h /tmp -U postgres -d pipeshub
+```
+
+The copy gets the backup service's memory (`PG_BACKUP_MEMORY_LIMIT`, 1 GB by default); raise it before restoring a large database you want to query heavily. Remove the copy when you are done: `docker rm -f <name> && docker volume rm <name>`.
+
+### Over the live database
+
+To put PipesHub itself back to that moment:
+
+```bash
+docker compose stop
+scripts/pg-restore.sh "2026-11-15 09:30:00+00" --in-place
+docker compose up -d
+```
+
+PostgreSQL replays the archived WAL up to the moment you gave, then opens for writes, and backups continue from there.
+
+<Warning>Everything written after that moment is removed from the live database. If you are not sure of the time, restore into a separate copy first and check it.</Warning>
+
+### After losing the server's disk
+
+Use `latest` instead of a time to replay every archived change:
+
+```bash
+scripts/pg-restore.sh latest --in-place
+```
+
+## Recovery objectives
+
+Measured with the restore drill that ships with PipesHub (`deployment/docker-compose/tests/postgres_backup_restore_test.sh`) on PostgreSQL 18: a 2.2 GB database, backups on a local volume, default compression, on a busy shared host.
+
+| Step | Time |
+|---|---|
+| Full backup | about 30 s |
+| Incremental backup after 10% of the rows changed | about 13 s |
+| A committed change reaches the backups, while the database is busy | about 1 s |
+| A committed change reaches the backups, while the database is idle | `PG_ARCHIVE_TIMEOUT` (60 s by default) |
+| Restore to a point in time into a separate copy, ready for writes | about 2.5 min |
+| Restore to a point in time over the live database, ready for writes | under 2 min |
+
+**Targets with the default settings:** you lose at most about 1 minute of changes if the database is lost (nothing if you are undoing a mistake), and a database of up to 10 GB is back within 15 minutes when the backups are on local disk.
+
+- **Data loss (RPO):** at most about one minute (`PG_ARCHIVE_TIMEOUT`) when the database is lost, as long as archiving keeps up. A mistake on a running database loses nothing: restore to just before it. Backups on the same machine are lost with the machine; store them elsewhere for these numbers to hold.
+- **Time to restore (RTO):** the restore copies the newest suitable backup, then replays the WAL written since. It grows with database size and with the time since the last backup. Set `PGBACKREST_PROCESS_MAX` to copy with several processes. Object storage is slower than a local disk. Run the drill with your own data size to measure your numbers.
+
+## Kubernetes (Helm)
+
+See [Kubernetes (Helm)](/deployment/kubernetes) for the chart. Its PostgreSQL server does not schedule backups yet. The same image and settings apply: give the PostgreSQL container the `PGBACKREST_*` settings from a Secret, run a `pg-backup` container in the same pod with the data volume mounted read-only, and keep the backups in object storage. A restore is a Job that runs `pgbackrest restore --type=time --target=<time> --target-action=promote` into a new volume.
+
+## Related
+
+- [Backup and restore](/deployment/backup-restore)
+- [Environment variables](/deployment/environment-variables)
+- [pgBackRest user guide](https://pgbackrest.org/user-guide.html)

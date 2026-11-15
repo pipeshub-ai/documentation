@@ -39,7 +39,7 @@ Browsing a connector in the Knowledge Hub follows the same access check as searc
 - Other items you may open where everything they sit under is closed to you may not be in the tree either. Find them in **All records** or with search.
 
 <Note>
-  With a Neo4j or ArangoDB graph store, the connector or any item in the tree that holds more than 200 items whose access it does not decide itself may leave out some items you can open, even when you were given fewer than 200 of them. This does not affect the items placed by the rule above for an item shared with you on the item itself. Find the left-out items in **All records** or with search.
+  In a very large connector or folder, a page can end before every item has been checked. The next page carries on from there, and the total reads as a minimum, for example "Showing 1-50 of at least 120". Page on to see the rest.
 </Note>
 
 ## When you open an item you cannot read
@@ -54,8 +54,17 @@ These are known cases where PipesHub shows less than the source does:
 | --- | --- | --- |
 | Confluence | A page nested very deep in a space | A page more than 50 levels below its space is hidden from everyone. Move it closer to the top of the space. |
 | Gmail | A delegate added to a mailbox | Delegates cannot search the mailbox in PipesHub. Only the mailbox owner can. |
-| Google Drive | A file shared with your whole domain, or with anyone who has the link | It does not give everyone in the organisation access in PipesHub. People it is shared with directly or through a group still see it. |
+| Google Drive | A file shared by link only: anyone with the link, or anyone in your domain with the link, can open it, but it cannot be found in Drive search | The link gives no one access in PipesHub. People it is shared with directly, through a group, or with a share of your domain or of anyone that can be found in Drive search still see it. |
+
+## When a connector cannot read a permission
+
+If a connector cannot read who may see something at the source, PipesHub does not guess and does not widen access. The item keeps the access read at its last successful sync, or stays hidden when none was read yet, and it is read again on the next sync. For example:
+
+- **Google Drive.** When Google answers a permission read with nothing usable, such as an empty permission list for someone who can share the item, the item keeps its stored access and is read again on the next sync. When a shared drive's answer leaves out its restrictions, the drive keeps the restrictions read at its last sync, and the sync is reported as incomplete.
+- **Jira.** When the connector cannot read a project's issue security levels, issues with a security level there keep the access they had while the cause is temporary, such as Jira not answering. When the cause lasts, such as the sync account lacking the Administer Jira permission, or when no access was stored for those issues yet, they are hidden from everyone. The connector's owner gets a notification that names the projects and the cause. On Jira Cloud, a sync that could not read some projects for a reason that may pass keeps those projects' stored issues and is reported as failed, not as a success.
 
 ## For admins
 
 A connector's **Overview** tab shows how fresh its permissions are: the last sync, changes waiting to be applied, and anything that needs attention.
+
+To find out why someone cannot see a record, use **Check someone's access** on the same tab. Choose the person, paste the record's ID, and PipesHub says whether they can see it and, if not, why and what to change at the source. A folder or group you cannot read yourself is named only as "a restricted area".

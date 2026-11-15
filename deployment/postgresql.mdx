@@ -30,10 +30,18 @@ You can switch each store on its own. For example, you can keep Kafka for messag
 
 You need:
 
-- A PostgreSQL server you control, with pgvector 0.7.0 or later. You need it even if you keep Qdrant for vectors, because the schema always includes the vector tables. The stock `postgres` image does not include pgvector.
-- An administrator login to create roles, and the database prepared with the steps below.
+- A PostgreSQL 17 or 18 server you control. These are the versions PipesHub is tested on. Earlier versions do not work: the role step below uses `GRANT` options that PostgreSQL added in version 16, and the schema step's safety check exits with code `4` on any other major version. A newer minor release of 17 or 18 that adds built-in functions can also make the check exit `4`, until a PipesHub release has reviewed that minor release.
+- pgvector 0.7.0 or later on that server. You need it even if you keep Qdrant for vectors, because the schema always includes the vector tables. The stock `postgres` image does not include pgvector.
+- An administrator login that can create roles and databases, and the database prepared with the steps below.
 
 <Steps>
+  <Step title="Create the database">
+    The next step connects to the database and does not create it. Create it with the same administrator login, so that login owns it:
+
+    ```bash
+    psql "postgresql://admin:...@db-host:5432/postgres" -c 'CREATE DATABASE pipeshub'
+    ```
+  </Step>
   <Step title="Create the roles">
     Run from the `backend` directory of the repository. This creates the roles and installs the extensions into schema `ext`:
 

@@ -173,9 +173,8 @@ The copy gets the backup service's memory (`PG_BACKUP_MEMORY_LIMIT`, 1 GB by def
 To put PipesHub itself back to that moment:
 
 ```bash
-./install.sh --stop                                 # or scripts/pipeshub-compose.sh stop
-scripts/pg-restore.sh "2026-11-15 09:30:00+00" --in-place
-./install.sh --no-pull                              # or scripts/pipeshub-compose.sh up -d
+scripts/pipeshub-compose.sh stop
+scripts/pg-restore.sh "2026-11-15 09:30:00+00" --in-place && scripts/pipeshub-compose.sh up -d
 ```
 
 PostgreSQL replays the archived WAL up to the moment you gave, then opens for writes, and backups continue from there.
@@ -184,7 +183,9 @@ PostgreSQL replays the archived WAL up to the moment you gave, then opens for wr
 
 ### Mark each regular backup in PostgreSQL
 
-To bring PostgreSQL back to exactly the moment of a [regular backup](/deployment/backup-restore) of the other stores, that backup marks the moment in the WAL first: with the application stopped, so nothing writes from then on, it saves the WAL location into the backup directory as `pg-restore-point.txt`, makes a restore point, and lets `pgbackrest check` archive it (the commands are in its Back up step, and run only when `pgbackrest.env` exists). A time does not work as well for this: recovery to a time stops at the first transaction committed after it, so with nothing committed after the backup the time cannot be reached at all.
+To bring PostgreSQL back to exactly the moment of a [regular backup](/deployment/backup-restore) of the other stores, that backup marks the moment in the WAL first: with the application stopped, so nothing writes from then on, it saves the WAL location into the backup directory as `pg-restore-point.txt`, makes a restore point, and lets `pgbackrest check` archive it (the commands are in its Back up step, and run only when `pgbackrest.env` exists; the file appears only when all of them succeeded).
+
+The restore by WAL location needs a backup older than the mark still in the repository. Retention keeps `PGBACKREST_REPO1_RETENTION_FULL` full backups (2 by default, a full backup every `PG_BACKUP_FULL_DAYS`, 7 by default), so with the defaults a mark older than one to two weeks can no longer be restored this way: `pg-restore.sh` stops with pgBackRest's error and the stack is not started. Set the retention to cover the oldest regular backup you keep, for example `PGBACKREST_REPO1_RETENTION_FULL=5` for a month of weekly fulls, at the cost of the storage they take. A time does not work as well for this: recovery to a time stops at the first transaction committed after it, so with nothing committed after the backup the time cannot be reached at all.
 
 ### After losing the machine or its disk
 

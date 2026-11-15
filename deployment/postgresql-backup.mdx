@@ -106,6 +106,7 @@ A PostgreSQL restore brings back only what is in PostgreSQL. Neo4j, Qdrant and R
 | `PG_BACKUP_INCR_HOURS` | `6` | Hours between incremental backups |
 | `PG_ARCHIVE_TIMEOUT` | `60` | Seconds after which a partly filled WAL segment is archived anyway |
 | `PGBACKREST_REPO1_RETENTION_FULL` (in `pgbackrest.env`) | `2` | Full backups kept, with all WAL since the oldest one |
+| `PG_BACKUP_GAP_HOLD_DAYS` (in `pgbackrest.env`) | `14` | Days a [WAL gap hold](#when-the-backup-storage-is-unreachable) keeps every backup before it is released |
 
 With the defaults you can restore to any moment in the last one to two weeks. A backup starts at PostgreSQL's next regular checkpoint (within 5 minutes by default); set `PGBACKREST_START_FAST=y` to start at once with a forced checkpoint instead.
 
@@ -130,6 +131,8 @@ So that the full backups after the gap do not expire that backup, `pg-backup` st
 ```bash
 docker compose exec pg-backup pg-backup.sh clear-gap-hold
 ```
+
+If nobody clears it, the hold is released after 14 days (`PG_BACKUP_GAP_HOLD_DAYS` in `pgbackrest.env`), with a loud line in the `pg-backup` log, so the storage cannot grow until backups fail. From then on the backup before the gap is expired like any other.
 
 A time target works only for a time with a later commit before the gap: recovery stops at the first transaction committed after the time you give, so a time just before the gap ends with `recovery ended before configured recovery target was reached`. The script then shows that log line.
 

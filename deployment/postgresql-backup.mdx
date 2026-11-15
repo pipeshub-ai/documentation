@@ -4,15 +4,24 @@ description: "Back up the PostgreSQL database of a Docker Compose install and re
 icon: "clock-rotate-left"
 ---
 
-When PipesHub keeps its data in PostgreSQL (the `postgres` Compose profile), you can turn on continuous backups with one more Compose file. The database is then backed up on a schedule and every change is archived as it happens, so you can bring it back to any moment covered by the backups: just before a mistake, or to the last archived change after losing the server's disk.
+When PipesHub keeps data in PostgreSQL (the `postgres` Compose profile), you can turn on continuous backups with one more Compose file. The database is then backed up on a schedule and every change is archived as it happens, so you can bring it back to any moment covered by the backups: just before a mistake, or to the last archived change after losing the server's disk.
 
 Backups use [pgBackRest](https://pgbackrest.org/), which is built into the PipesHub PostgreSQL image. This page covers Docker Compose. Kubernetes notes are at the end.
 
 ## What is backed up
 
-Everything PipesHub keeps in PostgreSQL lives in one database, `pipeshub`: users and organisations, conversations, the knowledge graph, vector embeddings (when you use pgvector), configuration and the work queues. The backup is a physical copy of the whole server plus its write-ahead log (WAL), so all of it comes back together and at the same instant.
+The backup is a physical copy of the PostgreSQL server plus its write-ahead log (WAL), so everything PipesHub keeps in PostgreSQL comes back together, at the same instant. What that covers depends on which stores you moved to PostgreSQL:
 
-Files you upload are stored outside PostgreSQL (local disk, S3 or Azure Blob, depending on your storage settings), and so is `.env`. Back those up as described in [Backup and restore](/deployment/backup-restore).
+| Your setup | In PostgreSQL, and in this backup | Not in this backup |
+|---|---|---|
+| Document store on PostgreSQL: `docker-compose.postgres-docstore.yml`, as in the commands on this page | Users, organisations, conversations and the rest of the document store (`DOC_STORE=postgres`) | The knowledge graph (Neo4j, `neo4j_data`), vectors (Qdrant, `qdrant_storage`), configuration, cache and queues (Redis, `redis_data`) |
+| Every store on PostgreSQL: `DOC_STORE`, `DATA_STORE`, `KV_STORE_TYPE` and `MESSAGE_BROKER` set to `postgres`, and `VECTOR_DB_TYPE=pgvector` | The document store, the knowledge graph, vectors, configuration and queues | Any store whose setting you left on another backend |
+
+Files you upload are stored outside PostgreSQL (local disk, S3 or Azure Blob, depending on your storage settings), and so is `.env`.
+
+<Warning>
+A PostgreSQL restore brings back only what is in PostgreSQL. Neo4j, Qdrant and Redis are not restored with it, and they have no point-in-time restore. Back them up, with `.env` and your files, as described in [Backup and restore](/deployment/backup-restore). To bring a whole install back, restore those volumes from that backup and restore PostgreSQL to the moment the backup was taken (when you stopped PipesHub for it), so every store shows the same moment.
+</Warning>
 
 ## Turn backups on
 
@@ -50,17 +59,22 @@ Files you upload are stored outside PostgreSQL (local disk, S3 or Azure Blob, de
     <Warning>Without the passphrase, nothing can be restored.</Warning>
   </Step>
   <Step title="Add the backup file to the stack">
-    Start the stack with `docker-compose.postgres-backup.yml` added, next to the files you already use:
+    Every `docker compose` command and the restore script must see the same Compose files, project and profiles as your stack. Set them once, in the shell or as three lines in `.env`. Keep the files and profiles your stack already uses, and add `docker-compose.postgres-backup.yml` to the files:
 
     ```bash
-    COMPOSE_PROFILES=graph-neo4j,sandbox,postgres,postgres-migrate \
-      docker compose -f docker-compose.yml -f docker-compose.postgres-docstore.yml \
-        -f docker-compose.postgres-backup.yml -p pipeshub-ai up -d
+    export COMPOSE_FILE=docker-compose.yml:docker-compose.postgres-docstore.yml:docker-compose.postgres-backup.yml
+    export COMPOSE_PROJECT_NAME=pipeshub-ai
+    export COMPOSE_PROFILES=graph-neo4j,sandbox,postgres,postgres-migrate
+    docker compose up -d
     ```
+
+    With the document-store file, keep both `postgres` and `postgres-migrate` in the profiles: without `postgres-migrate`, Compose rejects the project (`service "pipeshub-ai" depends on undefined service "pipeshub-migrate"`).
 
     PostgreSQL restarts once to turn on WAL archiving. A new `pg-backup` service then takes the first full backup.
   </Step>
   <Step title="Check that backups run">
+    In the same shell (or with the same `.env`):
+
     ```bash
     docker compose ps pg-backup                       # healthy once the last backup succeeded
     docker compose exec pg-backup pgbackrest info     # the backups and the archived WAL range
@@ -95,13 +109,7 @@ To ride out longer outages, raise the cap in `pgbackrest.env` if the disk has ro
 
 ## Restore to a point in time
 
-Run the restore script from `deployment/docker-compose`, telling it which Compose files and project your stack uses:
-
-```bash
-export COMPOSE_FILE=docker-compose.yml:docker-compose.postgres-docstore.yml:docker-compose.postgres-backup.yml
-export COMPOSE_PROJECT_NAME=pipeshub-ai
-export COMPOSE_PROFILES=postgres
-```
+Run the restore script from `deployment/docker-compose`, with the same `COMPOSE_FILE`, `COMPOSE_PROJECT_NAME` and `COMPOSE_PROFILES` as in [Turn backups on](#turn-backups-on) (in the shell or in `.env`). If the files or profiles do not match, the script stops with Compose's error before it changes anything; a different project name points it at another project's volumes.
 
 The time is a timestamp with a time zone. The restore keeps every change committed up to that moment and nothing after it.
 
@@ -140,6 +148,8 @@ Use `latest` instead of a time to replay every archived change:
 ```bash
 scripts/pg-restore.sh latest --in-place
 ```
+
+The stores outside PostgreSQL come back from your [regular backup](/deployment/backup-restore), from the moment it was taken; see the warning under [What is backed up](#what-is-backed-up).
 
 ## Recovery objectives
 

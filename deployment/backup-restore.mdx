@@ -19,11 +19,19 @@ A Docker Compose install keeps its data in Docker volumes named `<project>_<volu
 | `arango_data` (`DATA_STORE=arangodb`) | Graph: records, permissions, hierarchy |
 | `etcd_data` (`KV_STORE_TYPE=etcd`) | Configuration |
 | `kafka_data`, `zookeeper_data`, `zookeeper_log` (`MESSAGE_BROKER=kafka`) | Queued messages |
+| `postgres_data` (the `postgres` Compose profile) | PostgreSQL |
 | `.env` file (always) | `SECRET_KEY` and database passwords |
+| `pgbackrest.env` file (PostgreSQL backups turned on) | The backup repository's credentials and encryption passphrase |
 
 <Warning>
 Back up `.env` with the volumes, and keep it as secret as the data. Stored settings are encrypted with `SECRET_KEY`, and the databases only accept the passwords they were created with. Volumes restored without the matching `.env` are not usable.
 </Warning>
+
+<Warning>
+If you turned on [PostgreSQL backups](/deployment/postgresql-backup), also keep `pgbackrest.env`: it holds the backup repository's credentials and the encryption passphrase, and without it an encrypted repository cannot be read after you lose the machine. The steps below copy it with the backup. Also keep a copy somewhere secure apart from both the machine and the backup repository, for example in a password manager.
+</Warning>
+
+If you run PipesHub on PostgreSQL, the method below covers `postgres_data` too. For continuous backups that restore to any moment, without stopping PipesHub, see [PostgreSQL backups and point-in-time restore](/deployment/postgresql-backup).
 
 You do not need `pipeshub_hf_cache` (downloaded models) or `neo4j_logs`. The `slim` image downloads the embedding model again on first use.
 
@@ -31,16 +39,42 @@ You do not need `pipeshub_hf_cache` (downloaded models) or `neo4j_logs`. The `sl
 
 This method stops PipesHub so that every store is copied in a consistent state. It works for every backend. Plan for a few minutes of downtime.
 
+<Note>
+With [PostgreSQL backups](/deployment/postgresql-backup) turned on, the steps below also [mark the backup in PostgreSQL](/deployment/postgresql-backup#mark-each-regular-backup-in-postgresql) and keep the mark (`pg-restore-point.txt`) in the backup directory, and the restore puts PostgreSQL back to that mark from the backup repository.
+</Note>
+
+The commands run in a subshell with `set -e`, so the first failing step stops the backup without closing your terminal.
+
 ```bash
 cd ~/pipeshub                       # your install directory
+( set -euo pipefail
 PROJECT=pipeshub-ai                 # COMPOSE_PROJECT_NAME from .env, if set
 BACKUP_DIR=~/pipeshub-backups/$(date +%Y%m%d-%H%M%S)
 mkdir -p "$BACKUP_DIR"
 
-./install.sh --stop                 # stops every container, keeps the volumes
+# Started by install.sh, or by hand with COMPOSE_FILE in .env (which install.sh ignores; scripts/pipeshub-compose.sh reads it)
+if grep -q '^COMPOSE_FILE=' .env; then
+  stop_stack() { scripts/pipeshub-compose.sh stop; };  start_stack() { scripts/pipeshub-compose.sh up -d; }
+else
+  stop_stack() { ./install.sh --stop; };               start_stack() { ./install.sh --no-pull; }
+fi
+
+# PostgreSQL backups on (pgbackrest.env): mark this moment in the WAL, so PostgreSQL can be restored to exactly it. The mark file
+# appears only when every step of it succeeded.
+if [ -f pgbackrest.env ]; then
+  scripts/pipeshub-compose.sh stop pipeshub-ai     # the application: nothing writes from here on
+  scripts/pipeshub-compose.sh exec -T postgres psql -v ON_ERROR_STOP=1 -U postgres -d pipeshub -Atc "select pg_current_wal_lsn()" \
+    > "$BACKUP_DIR/pg-restore-point.txt.new"
+  scripts/pipeshub-compose.sh exec -T postgres psql -v ON_ERROR_STOP=1 -U postgres -d pipeshub -c "select pg_create_restore_point('regular-backup')"
+  scripts/pipeshub-compose.sh exec -T pg-backup pgbackrest check   # archives the mark
+  [ -s "$BACKUP_DIR/pg-restore-point.txt.new" ] || { echo "The PostgreSQL mark is empty: stopping" >&2; exit 1; }
+  mv "$BACKUP_DIR/pg-restore-point.txt.new" "$BACKUP_DIR/pg-restore-point.txt"
+fi
+
+stop_stack                          # stops every container, keeps the volumes
 
 for v in mongodb_data redis_data qdrant_storage pipeshub_data pipeshub_root_local \
-         neo4j_data arango_data etcd_data kafka_data zookeeper_data zookeeper_log; do
+         neo4j_data arango_data etcd_data kafka_data zookeeper_data zookeeper_log postgres_data; do
   docker volume inspect "${PROJECT}_$v" >/dev/null 2>&1 || continue
   docker run --rm \
     -v "${PROJECT}_$v":/volume:ro \
@@ -49,8 +83,10 @@ for v in mongodb_data redis_data qdrant_storage pipeshub_data pipeshub_root_loca
 done
 cp .env "$BACKUP_DIR/env.backup"
 chmod 600 "$BACKUP_DIR/env.backup"
+if [ -f pgbackrest.env ]; then cp pgbackrest.env "$BACKUP_DIR/pgbackrest.env.backup"; chmod 600 "$BACKUP_DIR/pgbackrest.env.backup"; fi
 
-./install.sh --no-pull              # start again on the same images
+start_stack                         # start again on the same images
+)
 ```
 
 The loop skips volumes your install does not have. The `.tar.gz` files are owned by `root`, because a container writes them. Run the commands with `sudo` if your user is not in the `docker` group.
@@ -67,13 +103,22 @@ Copy the backup directory off the host.
 
 Restore onto the same PipesHub version that made the backup. To move to a newer version, restore first, then [upgrade](/deployment/upgrade-to-1-0).
 
+As for the backup, the commands run in a subshell with `set -e`: a failed step stops the restore before the stack starts.
+
 ```bash
 cd ~/pipeshub                       # install directory with docker-compose.yml and install.sh
+( set -euo pipefail
 PROJECT=pipeshub-ai
 BACKUP_DIR=~/pipeshub-backups/<timestamp>
 
-./install.sh --stop
 cp "$BACKUP_DIR/env.backup" .env
+if grep -q '^COMPOSE_FILE=' .env; then
+  stop_stack() { scripts/pipeshub-compose.sh stop; };  start_stack() { scripts/pipeshub-compose.sh up -d; }
+else
+  stop_stack() { ./install.sh --stop; };               start_stack() { ./install.sh --no-pull; }
+fi
+stop_stack
+if [ -f "$BACKUP_DIR/pgbackrest.env.backup" ]; then cp "$BACKUP_DIR/pgbackrest.env.backup" pgbackrest.env; chmod 600 pgbackrest.env; fi
 
 # Create any missing volumes for the profiles in .env, without starting anything
 docker compose -p "$PROJECT" create
@@ -86,7 +131,14 @@ for f in "$BACKUP_DIR"/*.tar.gz; do
     ubuntu sh -c "find /volume -mindepth 1 -delete && tar xzf /backup/$v.tar.gz -C /volume"
 done
 
-./install.sh --no-pull
+# PostgreSQL backups on: PostgreSQL back to the backup's mark from the backup repository, before the stack starts
+if [ -f pgbackrest.env ]; then
+  [ -s "$BACKUP_DIR/pg-restore-point.txt" ] || { echo "No PostgreSQL mark in $BACKUP_DIR: not starting" >&2; exit 1; }
+  scripts/pg-restore.sh "lsn:$(cat "$BACKUP_DIR/pg-restore-point.txt")" --in-place
+fi
+
+start_stack
+)
 ```
 
 The loop empties each volume before it extracts the backup into it. When the installer reports healthy, sign in and check that your conversations, knowledge bases and connectors are there.

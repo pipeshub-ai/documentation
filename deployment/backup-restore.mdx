@@ -40,7 +40,7 @@ You do not need `pipeshub_hf_cache` (downloaded models) or `neo4j_logs`. The `sl
 This method stops PipesHub so that every store is copied in a consistent state. It works for every backend. Plan for a few minutes of downtime.
 
 <Note>
-With [PostgreSQL backups](/deployment/postgresql-backup) turned on, first [mark the backup in PostgreSQL](/deployment/postgresql-backup#mark-each-regular-backup-in-postgresql), so that after losing the machine PostgreSQL can be restored to exactly this moment.
+With [PostgreSQL backups](/deployment/postgresql-backup) turned on, the steps below also [mark the backup in PostgreSQL](/deployment/postgresql-backup#mark-each-regular-backup-in-postgresql) and keep the mark (`pg-restore-point.txt`) in the backup directory, and the restore puts PostgreSQL back to that mark from the backup repository.
 </Note>
 
 ```bash
@@ -48,6 +48,14 @@ cd ~/pipeshub                       # your install directory
 PROJECT=pipeshub-ai                 # COMPOSE_PROJECT_NAME from .env, if set
 BACKUP_DIR=~/pipeshub-backups/$(date +%Y%m%d-%H%M%S)
 mkdir -p "$BACKUP_DIR"
+
+# PostgreSQL backups on (pgbackrest.env): mark this moment in the WAL, so PostgreSQL can be restored to exactly it
+if [ -f pgbackrest.env ]; then
+  scripts/pipeshub-compose.sh stop pipeshub-ai     # the application: nothing writes from here on
+  scripts/pipeshub-compose.sh exec -T postgres psql -U postgres -d pipeshub -Atc "select pg_current_wal_lsn()" > "$BACKUP_DIR/pg-restore-point.txt"
+  scripts/pipeshub-compose.sh exec -T postgres psql -U postgres -d pipeshub -c "select pg_create_restore_point('regular-backup')"
+  scripts/pipeshub-compose.sh exec -T pg-backup pgbackrest check   # archives the mark
+fi
 
 ./install.sh --stop                 # stops every container, keeps the volumes
 
@@ -99,6 +107,11 @@ for f in "$BACKUP_DIR"/*.tar.gz; do
     -v "$BACKUP_DIR":/backup:ro \
     ubuntu sh -c "find /volume -mindepth 1 -delete && tar xzf /backup/$v.tar.gz -C /volume"
 done
+
+# PostgreSQL backups on: PostgreSQL back to the backup's mark from the backup repository, before the stack starts
+if [ -f "$BACKUP_DIR/pg-restore-point.txt" ]; then
+  scripts/pg-restore.sh "lsn:$(cat "$BACKUP_DIR/pg-restore-point.txt")" --in-place
+fi
 
 ./install.sh --no-pull
 ```

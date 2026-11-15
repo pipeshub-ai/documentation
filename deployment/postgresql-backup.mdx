@@ -63,13 +63,15 @@ A PostgreSQL restore brings back only what is in PostgreSQL. Neo4j, Qdrant and R
     <Warning>Without the passphrase, nothing can be restored. Keep a copy of `pgbackrest.env` (passphrase and repository credentials) somewhere secure apart from both this machine and the repository, for example in a password manager; the [regular backup](/deployment/backup-restore) also copies it.</Warning>
   </Step>
   <Step title="Add the backup file to the stack">
-    Every `docker compose` command and the restore script must see the same Compose files, project and profiles as your stack. Set them once, in the shell or as three lines in `.env`. Keep the files and profiles your stack already uses, and add `docker-compose.postgres-backup.yml` to the files:
+    Every Compose command and the restore script must see the same Compose files, project and profiles as your stack. Without `install.sh`, set them once as three lines in `.env` (so a new shell sees them too). Keep the files and profiles your stack already uses, and add `docker-compose.postgres-backup.yml` to the files:
 
     ```bash
-    export COMPOSE_FILE=docker-compose.yml:docker-compose.postgres-docstore.yml:docker-compose.postgres-backup.yml
-    export COMPOSE_PROJECT_NAME=pipeshub-ai
-    export COMPOSE_PROFILES=graph-neo4j,sandbox,postgres,postgres-migrate
-    docker compose up -d
+    cat >> .env <<'EOF'
+    COMPOSE_FILE=docker-compose.yml:docker-compose.postgres-docstore.yml:docker-compose.postgres-backup.yml
+    COMPOSE_PROJECT_NAME=pipeshub-ai
+    COMPOSE_PROFILES=graph-neo4j,sandbox,postgres,postgres-migrate
+    EOF
+    scripts/pipeshub-compose.sh up -d
     ```
 
     With the document-store file, keep both `postgres` and `postgres-migrate` in the profiles: without `postgres-migrate`, Compose rejects the project (`service "pipeshub-ai" depends on undefined service "pipeshub-migrate"`).
@@ -81,28 +83,22 @@ A PostgreSQL restore brings back only what is in PostgreSQL. Neo4j, Qdrant and R
     ./install.sh --no-pull
     ```
 
-    The `docker compose` commands on this page then need the same files; build `COMPOSE_FILE` from that line:
-
-    ```bash
-    export COMPOSE_FILE="docker-compose.yml:$(grep '^PIPESHUB_COMPOSE_OVERRIDES=' .env | tail -1 | cut -d= -f2-)"
-    ```
-
-    `scripts/pg-restore.sh` does this by itself when `COMPOSE_FILE` is not set.
+    The commands on this page and on [Backup and restore](/deployment/backup-restore) use `scripts/pipeshub-compose.sh`, which is `docker compose` with your stack's files from any shell: `COMPOSE_FILE` when it is set (in the shell or in `.env`), otherwise `docker-compose.yml` plus the installer's saved `PIPESHUB_COMPOSE_OVERRIDES`. `scripts/pg-restore.sh` uses it too.
 
     PostgreSQL restarts once to turn on WAL archiving. A new `pg-backup` service then takes the first full backup.
   </Step>
   <Step title="Check that backups run">
-    In the same shell (or with the same `.env`):
+    From the install directory:
 
     ```bash
-    docker compose ps pg-backup                       # healthy: the last backup succeeded, or the first one is running
-    docker compose exec pg-backup pgbackrest info     # the backups and the archived WAL range
+    scripts/pipeshub-compose.sh ps pg-backup                     # healthy: the last backup succeeded, or the first one is running
+    scripts/pipeshub-compose.sh exec pg-backup pgbackrest info   # the backups and the archived WAL range
     ```
 
     `healthy` alone does not mean you are protected yet: the service is also healthy while its very first full backup runs. You can restore only once `pgbackrest info` shows `status: ok` and a line `full backup: <label>` (a label ending in `F`) under `db (current)`:
 
     ```bash
-    docker compose exec pg-backup pgbackrest info | grep -E 'status:|full backup:'
+    scripts/pipeshub-compose.sh exec pg-backup pgbackrest info | grep -E 'status:|full backup:'
     ```
   </Step>
 </Steps>
@@ -138,8 +134,11 @@ scripts/pg-restore.sh latest --set <label>
 So that the full backups after the gap do not expire that backup, `pg-backup` stops expiring old backups while the gap is held, and the backup storage grows. When you no longer need to restore up to the gap, clear the hold; old backups are then expired by your retention setting at once:
 
 ```bash
-docker compose exec pg-backup pg-backup.sh clear-gap-hold
+scripts/pipeshub-compose.sh exec pg-backup pg-backup.sh clear-gap-hold                 # every gap
+scripts/pipeshub-compose.sh exec pg-backup pg-backup.sh clear-gap-hold <first segment> # one gap, as the log names it
 ```
+
+Each gap is held on its own, with its own backup. Old backups are expired only when the last hold is released; if expiry fails, the holds stay.
 
 If nobody clears it, the hold is released after 14 days (`PG_BACKUP_GAP_HOLD_DAYS` in `pgbackrest.env`), with a loud line in the `pg-backup` log, so the storage cannot grow until backups fail. From then on the backup before the gap is expired like any other.
 
@@ -149,7 +148,7 @@ To ride out longer outages, raise the cap in `pgbackrest.env` if the disk has ro
 
 ## Restore to a point in time
 
-Run the restore script from `deployment/docker-compose`, with the same `COMPOSE_FILE`, `COMPOSE_PROJECT_NAME` and `COMPOSE_PROFILES` as in [Turn backups on](#turn-backups-on) (in the shell or in `.env`). If the files or profiles do not match, the script stops with Compose's error before it changes anything; a different project name points it at another project's volumes.
+Run the restore script from the install directory. It finds the stack's files as `scripts/pipeshub-compose.sh` does (see [Turn backups on](#turn-backups-on)), and the project and profiles in `.env`. If the files or profiles do not match, the script stops with Compose's error before it changes anything; a different project name points it at another project's volumes.
 
 The time is a timestamp with a time zone. The restore keeps every change committed up to that moment and nothing after it.
 
@@ -174,9 +173,9 @@ The copy gets the backup service's memory (`PG_BACKUP_MEMORY_LIMIT`, 1 GB by def
 To put PipesHub itself back to that moment:
 
 ```bash
-docker compose stop
+./install.sh --stop                                 # or scripts/pipeshub-compose.sh stop
 scripts/pg-restore.sh "2026-11-15 09:30:00+00" --in-place
-docker compose up -d
+./install.sh --no-pull                              # or scripts/pipeshub-compose.sh up -d
 ```
 
 PostgreSQL replays the archived WAL up to the moment you gave, then opens for writes, and backups continue from there.
@@ -185,28 +184,19 @@ PostgreSQL replays the archived WAL up to the moment you gave, then opens for wr
 
 ### Mark each regular backup in PostgreSQL
 
-To bring PostgreSQL back to exactly the moment of a [regular backup](/deployment/backup-restore) of the other stores, mark that moment in the WAL before you take the backup. Stop the application first, so nothing writes from then on, note the WAL location, make a restore point, and let `pgbackrest check` archive it:
-
-```bash
-docker compose stop pipeshub-ai
-docker compose exec -T postgres psql -U postgres -d pipeshub -Atc "select pg_current_wal_lsn()" > pg-restore-point.txt
-docker compose exec -T postgres psql -U postgres -d pipeshub -c "select pg_create_restore_point('regular-backup')"
-docker compose exec pg-backup pgbackrest check      # closes the WAL segment and waits until it is in the repository
-```
-
-Then take the regular backup as described there, and keep `pg-restore-point.txt` with it. A time does not work as well for this: recovery to a time stops at the first transaction committed after it, so with nothing committed after the backup the time cannot be reached at all.
+To bring PostgreSQL back to exactly the moment of a [regular backup](/deployment/backup-restore) of the other stores, that backup marks the moment in the WAL first: with the application stopped, so nothing writes from then on, it saves the WAL location into the backup directory as `pg-restore-point.txt`, makes a restore point, and lets `pgbackrest check` archive it (the commands are in its Back up step, and run only when `pgbackrest.env` exists). A time does not work as well for this: recovery to a time stops at the first transaction committed after it, so with nothing committed after the backup the time cannot be reached at all.
 
 ### After losing the machine or its disk
 
 This needs an off-machine repository, set up before the loss (see [Choose where backups go](#turn-backups-on)): the default repository is a Docker volume on the lost disk. It also needs `pgbackrest.env`, which holds the repository's credentials and passphrase.
 
-On the new machine, bring back `.env`, `pgbackrest.env`, your uploaded files and the volumes of the stores outside PostgreSQL from your regular backup. Then, **before you start the stack**, restore PostgreSQL to that backup's mark, so every store shows the same moment:
+On the new machine, build the PostgreSQL image first (it is built locally, not pulled):
 
 ```bash
-docker compose build postgres                       # the PostgreSQL image is built locally, not pulled
-scripts/pg-restore.sh "lsn:$(cat pg-restore-point.txt)" --in-place
-./install.sh --no-pull                              # or docker compose up -d, with COMPOSE_FILE set as above
+scripts/pipeshub-compose.sh build postgres
 ```
+
+Then follow the Restore step of [Backup and restore](/deployment/backup-restore). It brings back `.env`, `pgbackrest.env`, your files and the other stores' volumes and, **before it starts the stack**, restores PostgreSQL to the backup's mark with `scripts/pg-restore.sh "lsn:$(cat "$BACKUP_DIR/pg-restore-point.txt")" --in-place`, so every store shows the same moment.
 
 `lsn:` stops recovery just after the restore point, which needs no later transaction. Use `latest` (every archived change) only when nothing outside PostgreSQL would be left behind: every store on PostgreSQL and your files in object storage. Otherwise `latest` puts PostgreSQL ahead of Neo4j, Qdrant, Redis and the files. Starting the stack before the restore creates a new, empty database, whose archiving the repository refuses.
 

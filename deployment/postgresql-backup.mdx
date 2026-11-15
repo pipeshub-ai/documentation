@@ -119,10 +119,16 @@ When that happens:
 - `pg-backup` turns `unhealthy`. Its log names the dropped WAL segments and when the drops were noticed. Recovery cannot cross a missing segment, so the gap starts at the earliest dropped one: point-in-time restore cannot reach past it until the next full backup. If that segment holds a commit, the log gives its time, the first transaction lost; otherwise it says the last reachable point is before that segment. The noticed times are not the start of the gap: a dropped segment can hold transactions from before it was noticed.
 - `pg-backup` takes a full backup at once, and retries it every 5 minutes (`PG_BACKUP_RETRY_SECS`) until the storage is back. When it succeeds, the gap is closed and the service is healthy again.
 
-To restore exactly up to the gap, restore the end of the archive from the newest backup taken before it (its label is in `pgbackrest info`, as long as retention still keeps it):
+To restore exactly up to the gap, restore the end of the archive from the newest backup taken before it. The `pg-backup` log names its label:
 
 ```bash
 scripts/pg-restore.sh latest --set <label>
+```
+
+So that the full backups after the gap do not expire that backup, `pg-backup` stops expiring old backups while the gap is held, and the backup storage grows. When you no longer need to restore up to the gap, clear the hold; old backups are then expired by your retention setting at once:
+
+```bash
+docker compose exec pg-backup pg-backup.sh clear-gap-hold
 ```
 
 A time target works only for a time with a later commit before the gap: recovery stops at the first transaction committed after the time you give, so a time just before the gap ends with `recovery ended before configured recovery target was reached`. The script then shows that log line.

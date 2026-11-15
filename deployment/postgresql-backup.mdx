@@ -116,10 +116,16 @@ PostgreSQL cannot recycle a WAL segment until it has been archived. If the backu
 When that happens:
 
 - PipesHub keeps working.
-- `pg-backup` turns `unhealthy`. Its log names the dropped WAL segments, when the drops were noticed, and the commit time of the first transaction in them: point-in-time restore cannot reach that transaction or anything after it until the next full backup. The noticed times are not the start of the gap: a dropped segment can hold transactions from before it was noticed. When none of the dropped segments holds a commit, the log gives the first dropped segment instead.
+- `pg-backup` turns `unhealthy`. Its log names the dropped WAL segments and when the drops were noticed. Recovery cannot cross a missing segment, so the gap starts at the earliest dropped one: point-in-time restore cannot reach past it until the next full backup. If that segment holds a commit, the log gives its time, the first transaction lost; otherwise it says the last reachable point is before that segment. The noticed times are not the start of the gap: a dropped segment can hold transactions from before it was noticed.
 - `pg-backup` takes a full backup at once, and retries it every 5 minutes (`PG_BACKUP_RETRY_SECS`) until the storage is back. When it succeeds, the gap is closed and the service is healthy again.
 
-Until then, restore to a time before that first lost transaction. Recovery stops at the first transaction committed after the time you give, so a time just before the gap, with no later transaction left before it, ends with `recovery ended before configured recovery target was reached`; the script then shows that log line, and an earlier time works.
+To restore exactly up to the gap, restore the end of the archive from the newest backup taken before it (its label is in `pgbackrest info`, as long as retention still keeps it):
+
+```bash
+scripts/pg-restore.sh latest --set <label>
+```
+
+A time target works only for a time with a later commit before the gap: recovery stops at the first transaction committed after the time you give, so a time just before the gap ends with `recovery ended before configured recovery target was reached`. The script then shows that log line.
 
 To ride out longer outages, raise the cap in `pgbackrest.env` if the disk has room, for example `PGBACKREST_ARCHIVE_PUSH_QUEUE_MAX=20GiB`. Set it empty (`PGBACKREST_ARCHIVE_PUSH_QUEUE_MAX=`) for no cap; the disk can then fill up.
 

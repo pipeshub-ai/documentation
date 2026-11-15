@@ -125,6 +125,8 @@ This restores into a new Docker volume and starts it as a separate PostgreSQL se
 docker exec -it <name> psql -h /tmp -U postgres -d pipeshub
 ```
 
+The script waits until the copy is ready for writes. If recovery cannot reach the moment you gave, it stops and prints the copy's log: for example when a setting such as `max_locks_per_transaction` was raised after the backup (restart the copy with it raised), or after `PG_RESTORE_WAIT_SECS` (6 hours by default).
+
 The copy gets the backup service's memory (`PG_BACKUP_MEMORY_LIMIT`, 1 GB by default); raise it before restoring a large database you want to query heavily. Remove the copy when you are done: `docker rm -f <name> && docker volume rm <name>`.
 
 ### Over the live database

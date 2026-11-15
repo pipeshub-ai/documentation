@@ -95,7 +95,17 @@ In Notion, open **Settings → Connections → Go to developer portal**, create 
   <img className="hidden dark:block" src="/images/connectors/common/personal_connectors_list-new-dark.png" alt="Your Connectors page under Personal for Notion Personal" />
 </Frame>
 
-The team instance shows a notice that each person searches only the synced pages their own Notion personal access token can open, linked under **Your Notion access**. Without one, a person sees no Notion pages. Notion guests and restricted members cannot create a token, admins can limit who may, and a token expires. It points to **Notion Personal** for searching the pages you share with it.
+The team connector's page in **Workspace → Connectors** and its **Authenticate** step show this notice:
+
+> Important: Notion's integration API does not say who may open a page, so each person searches only the synced pages their own Notion personal access token can open: link yours under "Your Notion access" on this connector. Without one you see no Notion pages. Notion guests and restricted members cannot create a token, admins can limit who may, and a token expires. Use the Notion Personal connector to search the pages you share with it.
+
+Each person links their token in the **Your Notion access** panel. Everyone finds it under **Personal → Your connectors**, one panel per Notion team connector, and admins also find it on the connector's **Overview** tab. The panel says:
+
+> Notion does not say who may open a page, so PipesHub shows you the pages your own Notion personal access token can open.
+>
+> Notion guests and restricted members can't create one, workspace admins can limit who may, and a token expires (after a year unless you chose another time).
+
+It links to Notion's guide (**How to create a personal access token**) and shows your token's state. See [Your Notion personal access token](#your-notion-personal-access-token).
 
 #### Step 2: Copy the Redirect URL (OAuth)
 
@@ -321,7 +331,8 @@ A Notion [personal access token](https://developers.notion.com/guides/connection
 - New pages are confirmed over the following syncs, up to 2,000 per person per sync. Pages you can already search are re-checked oldest first, from about 20 hours after their last check, spread over the syncs so that each is checked again before its confirmation runs out, and all of them on a **Full sync**.
 - A confirmation lasts 24 hours. A page not re-checked within 24 hours of its last confirmation is hidden from you until a later sync confirms it again.
 - A database's table is shown only to people who may open every row of it. Each row stays searchable on its own.
-- A token Notion refuses (revoked, expired, or its creator lost access or left the workspace), one without **Notion API** access, or one that is not your own, is removed and you get a notification. Link a new one to see your Notion pages again.
+- A token is removed and you get a notification when Notion refuses it (revoked or expired), when it has no **Notion API** access, when it belongs to someone else or another workspace, or when its creator is no longer a member of the connector's Notion workspace with a verified email. Link a new one to see your Notion pages again.
+- If PipesHub cannot tell this sync whether the token's creator is still a member (the member list could not be read in full, or Notion showed no email for them), the token is kept and gives you no pages until a later sync can tell.
 - If Notion cannot be read with your token during a sync, the pages it gave you are hidden until a later sync succeeds.
 - Admins can see who linked a token and its state on the connector's **Overview** tab, never the token itself.
 

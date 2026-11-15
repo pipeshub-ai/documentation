@@ -9,7 +9,7 @@ icon: "/logo/box.png"
     <div className="flex items-center gap-3 mb-4">
       <img 
         src="/logo/box.png" 
-        alt="Box Logo" 
+        alt="Box connector logo" 
         className="w-8 h-8 object-contain flex-shrink-0"
       />
       <div className="text-xl font-semibold text-gray-900 dark:text-white">Box</div>
@@ -150,9 +150,8 @@ This guide will walk you through the process of creating a Box application and c
    - Copy both values for later use
 
 2. Find your **Enterprise ID**:
-   - Go to your Box Admin Console
-   - Navigate to **General Settings** → **App Info**
-   - Copy your **Enterprise ID**
+   - In the Developer Console, open your app's **General Settings** tab
+   - Under **App Info**, copy the **Enterprise ID**
 
 <img
     src="/images/connectors/box/b2.png"
@@ -169,8 +168,8 @@ This guide will walk you through the process of creating a Box application and c
 
 1. As an admin, approve the app:
    - Go to the [Admin Console](https://app.box.com/master/settings/apps)
-   - Navigate to **Apps** → **Custom Apps**
-   - Find your application and click **Authorize**
+   - Go to **Integrations** → **Platform Apps Manager** → **Server Authentication Apps**
+   - Click **+** (Add Platform App), enter your app's **Client ID**, click **Next**, then click **Authorize**
 
 <img
     src="/images/connectors/box/a1.png"
@@ -201,55 +200,51 @@ Box is a **team** connector — only an organization admin can configure it, and
 
 ### Step 1: Open the Connector Catalog
 
-1. In PipesHub, navigate to **Workspace Settings** > **Connectors** > **Team**.
-2. Find the **Box** card and click **Setup**.
+1. In PipesHub, navigate to **Workspace settings** > **Connectors**.
+2. Find the **Box** card and click **Set up**.
 
 ### Step 2: Authenticate
 
 On the **Authenticate** tab, enter:
 
-- **Instance Name:** A label for this Box connection (e.g., "Box Production").
+- **Instance name:** A label for this Box connection (e.g., "Box Production").
 - **Application (Client) ID:** From the Box Developer Console (Step 3 above).
 - **Client Secret:** From the Box Developer Console (Step 3 above).
-- **Box Enterprise ID:** From the Box Admin Console (Step 3 above).
+- **Box Enterprise ID:** From your app's **General Settings** tab in the Box Developer Console (Step 3 above).
 
-<img
-  src="/images/connectors/box/t1.png"
-  alt="Box connector Authenticate tab with Client ID, Client Secret, and Enterprise ID fields"
-  style={{ display: 'block', margin: '0 auto' }}
-  width="90%"
-/>
+<Frame>
+  <img className="block dark:hidden" src="/images/connectors/box/t1.png" alt="Box connector Authenticate tab with Client ID, Client Secret, and Enterprise ID fields" />
+  <img className="hidden dark:block" src="/images/connectors/box/t1-dark.png" alt="Box connector Authenticate tab with Client ID, Client Secret, and Enterprise ID fields" />
+</Frame>
 
 <Warning>
   **Email must match.** The Box admin who authorized the app should use the same email address as the PipesHub admin configuring this connector. A mismatch breaks permission resolution and users will not see their synced records in search.
 </Warning>
 
-Click **Save**. PipesHub fetches an access token using Client Credentials Grant to verify the credentials before persisting.
+Click **Next**. PipesHub fetches an access token using Client Credentials Grant to verify the credentials before saving them, then opens **Configure records**.
 
 </Accordion>
 
 <Accordion title="Configure Settings" icon="gear">
 
-After authenticating, open the **Configure** tab on the connector instance.
+After authenticating, open the **Configure records** tab.
 
 ## Sync Settings
 
 Sync settings control how the connector pulls data from Box.
 
-**Sync Strategy:**
-- **Scheduled** — The connector automatically syncs on a fixed interval.
-- **Manual** — The connector only syncs when an admin triggers it from the connector page.
+**Sync strategy:**
+- **Scheduled**: The connector automatically syncs on a fixed interval.
+- **Manual**: The connector only syncs when an admin triggers it from the connector page.
 
-**Sync Interval:** For scheduled syncs, the cadence in minutes (default: 60).
+**Sync interval:** For scheduled syncs, how often a sync runs (default: 1 hour).
 
-**Batch Size:** Number of items processed per batch when committing to PipesHub (default: 100).
+**Batch Size:** The field offers 25, 50 or 100 (default 50). The Box connector currently commits records in batches of 100, whatever you choose.
 
-<img
-  src="/images/connectors/box/t2.png"
-  alt="Box connector Configure tab with sync strategy, sync interval, and batch size settings"
-  style={{ display: 'block', margin: '0 auto' }}
-  width="90%"
-/>
+<Frame>
+  <img className="block dark:hidden" src="/images/connectors/box/t2.png" alt="Box Configure records tab with Sync strategy, Sync interval, Batch Size, sync filters and indexing filters" />
+  <img className="hidden dark:block" src="/images/connectors/box/t2-dark.png" alt="Box Configure records tab with Sync strategy, Sync interval, Batch Size, sync filters and indexing filters" />
+</Frame>
 
 ## Filters
 
@@ -262,7 +257,7 @@ Filters split into two categories:
 
 | Filter | Default | What it does |
 |---|---|---|
-| **Modified Date** | No restriction | Filter files and folders by last-modified date. Use a preset (Last 7/14/30/90/180/365 days) or a custom range (`is_after`, `is_before`, `is_between`). |
+| **Modified Date** | No restriction | Filter files and folders by last-modified date. Use a preset (Last 7/14/30/90/180/365 days) or a custom range (**Is after**, **Is before**, **Is between**). |
 | **Created Date** | No restriction | Filter files and folders by creation date. Same operators as Modified Date. |
 | **File Extensions** | All extensions | Include or exclude specific file types (e.g., `pdf`, `docx`, `xlsx`). Folders are always traversed regardless of this filter so the hierarchy stays intact. |
 
@@ -273,14 +268,12 @@ Filters split into two categories:
 | **Index Items Shared by Me** | Enabled | When disabled, items the authenticated users have shared (via link or collaboration) are fetched but not indexed. |
 | **Index Items Shared With Me** | Enabled | When disabled, items shared with the authenticated users via collaboration are fetched but not indexed. |
 
-<img
-  src="/images/connectors/box/t3.png"
-  alt="Box connector sync and indexing filters: modified date, created date, file extensions, shared by me, shared with me"
-  style={{ display: 'block', margin: '0 auto' }}
-  width="90%"
-/>
+<Frame>
+  <img className="block dark:hidden" src="/images/connectors/box/t3.png" alt="Box sync filters with the File Extensions list open" />
+  <img className="hidden dark:block" src="/images/connectors/box/t3-dark.png" alt="Box sync filters with the File Extensions list open" />
+</Frame>
 
-Once your settings are configured, click **Save Configuration**. PipesHub confirms the instance is ready with a final dialog — *"Instance is configured and ready to sync"* — offering two choices: **I'll do it later** or **Start syncing now**.
+Once your settings are configured, click **Save configuration**. PipesHub confirms the instance is ready with a final dialog, *"Instance is configured and ready to sync!"*, offering two choices: **I'll do it later** or **Start syncing now**.
 
 </Accordion>
 
@@ -560,7 +553,7 @@ The Box connector supports filtering files by extension during sync:
 
 The connector uses intelligent batching to optimize performance:
 
-- **Batch Size:** Configurable (default 100 items)
+- **Batch Size:** 100 items per batch (the **Batch Size** setting is not used by the Box connector yet)
 - **Concurrent Batches:** Processes multiple batches for different users in parallel
 - **Rate Limiting:** Respects Box API rate limits (50 requests per second)
 
@@ -575,7 +568,7 @@ The connector automatically determines the optimal sync approach:
 
 ### One sync at a time
 
-Scheduled syncs, manual syncs and Box webhooks never run two syncs of the same connector at once. A webhook that arrives while a sync is running queues one follow-up sync, and any more webhooks before it starts are folded into that same run.
+Scheduled and manual syncs never run two syncs of the same connector at once. Box syncs are pull-based: the connector reads the event stream when a sync runs, and Box does not push changes to PipesHub.
 
 </Accordion>
 
@@ -685,11 +678,11 @@ There are three common causes:
 1. **Email mismatch** - The email used during connector authentication doesn't match your PipesHub account email. This causes permission issues preventing you from accessing synced data.
    - **Fix:** Reconfigure the connector and authenticate using the same email as your PipesHub account.
 
-2. **Records show in "All Records" but not in search** - Documents display in the All Records section but don't appear in search query results.
+2. **Records show in "All records" but not in search** - Documents display in the All records section but don't appear in search query results.
    - **Fix:** Verify sync filters in the connector settings and ensure indexing has completed. Check that the data matches your search query criteria.
 
 3. **Data not yet indexed** - The connector is still syncing or hasn't completed the initial indexing process.
-   - **Fix:** Go to **Settings > Connectors**, check the sync status, and wait for indexing to complete.
+   - **Fix:** Go to **Workspace settings > Connectors**, check the sync status, and wait for indexing to complete.
 
 </Accordion>
 

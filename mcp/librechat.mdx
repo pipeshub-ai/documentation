@@ -33,14 +33,14 @@ LibreChat supports remote MCP servers with OAuth authentication via its custom c
     - **Client Secret**: `YOUR_CLIENT_SECRET`
     - **Authorization URL**: `PIPESHUB_INSTANCE_URL/api/v1/oauth2/authorize`
     - **Token URL**: `PIPESHUB_INSTANCE_URL/api/v1/oauth2/token`
-    - **Scope**: `openid profile email offline_access semantic:write conversation:write conversation:chat kb:read team:read user:read config:read`
+    - **Scope**: `openid profile email offline_access semantic:write conversation:chat agent:read agent:execute kb:read kb:write kb:upload connector:read config:read user:read team:read usergroup:read code:read`
   </Step>
   <Step title="Trust and save">
     Check **I trust this application** and click **Add** to save the connector.
   </Step>
   <Step title="Register the redirect URI">
     After adding, LibreChat generates a **Redirect URI** displayed in the connector settings panel (next to the copy button), in the format:
-    ```
+    ```text
     http://localhost:3080/api/mcp/<server-identifier>/oauth/callback
     ```
     Copy the Redirect URI and register it as an allowed redirect URI in your PipesHub OAuth app (see [Step 1](/mcp/overview#step-1-create-an-oauth-app)).
@@ -54,7 +54,7 @@ LibreChat supports remote MCP servers with OAuth authentication via its custom c
 
 LibreChat generates the redirect URI **after** the connector is created. The URI follows this format:
 
-```
+```text
 http://localhost:3080/api/mcp/<server-identifier>/oauth/callback
 ```
 
@@ -68,14 +68,14 @@ Where `<server-identifier>` is the unique identifier assigned by LibreChat (visi
 
 LibreChat allows you to specify the OAuth scopes in the **Scope** field. Use a space-separated list:
 
-```
+```text
 openid email
 ```
 
 To request PipesHub-specific scopes, add them to the scope field:
 
-```
-openid profile email offline_access semantic:write conversation:write conversation:chat kb:read team:read user:read config:read
+```text
+openid profile email offline_access semantic:write conversation:chat agent:read agent:execute kb:read kb:write kb:upload connector:read config:read user:read team:read usergroup:read code:read
 ```
 
 <Note>

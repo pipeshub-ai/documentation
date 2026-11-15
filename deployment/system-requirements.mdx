@@ -1,0 +1,62 @@
+---
+title: "System requirements"
+description: "Hardware, Docker version and deployment types that the PipesHub installer checks for"
+icon: "microchip"
+---
+
+These are the figures the Docker Compose installer (`install.sh`) checks before it starts anything. For Kubernetes, see [Kubernetes (Helm)](/deployment/kubernetes).
+
+## What the installer checks
+
+| Check | Requirement, and what happens if it fails |
+|---|---|
+| Docker | Docker Engine with the Compose v2 plugin. **If not met:** The installer stops. |
+| Docker Compose version | 2.20 or later. **If not met:** Warning. Older versions may not honour optional service dependencies, so the stack can fail to start. |
+| CPU | 4 cores or more. **If not met:** The installer stops. |
+| Memory, `slim` and `full` | A 16 GB-class machine (it warns below 15,000 MB). **If not met:** Warning, and a prompt to continue. |
+| Memory, `eval` | An 8 GB-class machine (it warns below 7,500 MB). The lower check applies only when `PIPESHUB_DEPLOY_TYPE=eval` is set before you run the installer; picking `eval` at the prompt still uses the 16 GB check. **If not met:** Warning, and a prompt to continue. |
+| Memory, WSL | 10 GB given to the WSL virtual machine. **If not met:** Warning, and a prompt to continue. |
+| Memory, Docker Desktop on macOS or Windows | 8 GB given to the Docker Desktop virtual machine. **If not met:** Warning. |
+| Free disk | 20 GB free where Docker stores its data. **If not met:** Warning. |
+
+With `--yes`, the memory prompt is skipped and the install continues. The checks do not run for `--upgrade` or `--rotate-signing-secrets`.
+
+The installer supports macOS, Linux (x86_64 and arm64) and Windows through WSL or Git Bash.
+
+<Note>
+20 GB is the point at which the installer warns, not a sizing target. Indexed content, vectors and uploaded files grow with your data, so leave room for them.
+</Note>
+
+## Deployment types
+
+The installer asks for a deployment type, or reads it from `PIPESHUB_DEPLOY_TYPE`:
+
+| Type | Meant for |
+|---|---|
+| `slim` (default), image `slim` | Laptops and smaller servers |
+| `full`, image `latest` | Production servers and air-gapped hosts |
+| `eval`, image `slim` | 8 GB-class laptops and demos of search and chat over MCP |
+
+By default, every type uses Redis as the key-value store and Neo4j as the graph database. The types differ in these ways:
+
+- **Message broker:** `full` uses Kafka. `slim` and `eval` use Redis Streams.
+- **Coding sandbox:** `slim` and `full` have one. `eval` does not.
+- The `slim` image is smaller. It downloads the embedding model the first time it is needed, so that first start needs internet access.
+- The `latest` image has the embedding model built in. Use it where the host cannot reach the internet.
+- `eval` does not pull the coding-sandbox image and does not start the Slack bot, so agents cannot run code.
+
+You can change the graph database (Neo4j or ArangoDB), broker and key-value store in the installer. `eval` defaults to Neo4j and needs it. Do not pick ArangoDB for `eval`.
+
+## Ports
+
+Docker Compose publishes one port on the host: `3000` by default (`APP_PORT` in `.env`). If 3000 is taken, the installer tries the next free port, or you can set `PIPESHUB_PORT`. The other services talk to each other on the internal Docker network.
+
+## HTTPS
+
+Anyone reaching PipesHub by a hostname, rather than `localhost`, needs HTTPS. See [Serving it over HTTPS](/deployment/overview#serving-it-over-https).
+
+## Related
+
+- [Deployment Overview](/deployment/overview)
+- [Environment variables](/deployment/environment-variables)
+- [Troubleshooting](/additional-resources/troubleshooting)

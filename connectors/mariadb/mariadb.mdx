@@ -28,10 +28,10 @@ icon: "/logo/mariadb.png"
 
 ## Overview
 
-The MariaDB connector indexes schema metadata, table contents from a MariaDB database so your AI assistant can answer questions over structured data alongside your other knowledge sources.
+The MariaDB connector indexes schema metadata and table contents from a MariaDB database so your AI assistant can answer questions over structured data alongside your other knowledge sources.
 
 <Note>
-  Looking for query execution from agents (run SQL on demand, no indexing)? Use the [MariaDB Toolset](/toolsets/mariadb/mariadb) instead. Connector = sync & search. Toolset = run actions.
+  Looking for query execution from agents (run SQL on demand, no indexing)? Use the [MariaDB Action](/toolsets/mariadb/mariadb) instead. Connector = sync & search. Action = run actions.
 </Note>
 
 ### What Gets Synced
@@ -39,7 +39,17 @@ The MariaDB connector indexes schema metadata, table contents from a MariaDB dat
 | Content Type | Details |
 |--------------|---------|
 | **Tables** | Table names, columns, data types, primary and foreign keys |
-| **Row data** | Row contents from selected tables, capped per table by the **Max rows** filter |
+| **Row data** | Row contents from selected tables, capped per table by the **Max Rows Per Table** filter |
+
+---
+
+## Prerequisites
+
+- A MariaDB server that PipesHub can reach on its host and port. PipesHub can connect to a server on a private IP address unless the deployment has `PIPESHUB_BLOCK_PRIVATE_ADDRESSES` turned on. Link-local and cloud metadata addresses are always refused.
+- A database user with `SELECT` on the database you want to sync, allowed to log in from PipesHub's address (the host part of `'user'@'host'`). Keep it read-only (Step 1 shows the grants).
+- Any firewall between PipesHub and the server must allow the port (default `3306`).
+- For an encrypted connection, the PEM CA certificate that signed the server's certificate. Paste it into the optional **CA Certificate** field to turn on TLS with certificate and hostname checks. Leave the field empty to connect without TLS.
+- A PipesHub admin account for a team connector. Any user can also set up MariaDB as a personal connector from **Your connectors**.
 
 ---
 
@@ -102,34 +112,36 @@ Agents can run SQL queries against this database, so keep this user read-only. S
 
 <Accordion title="Step 2: Configure the connector in PipesHub" icon="plug">
 
-1. In PipesHub, open **Connector Settings**.
-2. In the **Available** tab, find the **MariaDB** card and click **Configure**.
+1. In PipesHub, go to **Workspace settings** > **Connectors** (or **Your connectors** for a personal connector).
+2. Find the **MariaDB** card and click **Set up**.
 
-<div className="text-center">
-  <img
-    src="/images/connectors/mariadb/mariadb-connector-card.png"
-    alt="MariaDB connector card in Available connectors"
-    className="block mx-auto w-11/12"
-  />
-</div>
+<Frame>
+  <img className="block dark:hidden" src="/images/connectors/mariadb/mariadb-connector-card.png" alt="MariaDB connector card in the connectors list" />
+  <img className="hidden dark:block" src="/images/connectors/mariadb/mariadb-connector-card-dark.png" alt="MariaDB connector card in the connectors list" />
+</Frame>
 
-3. Fill in the connection details:
+3. For a team connector, PipesHub warns that everyone in your organization will see the synced data. Click **Continue with team connector**, or **Set up personal connector** to keep the data to yourself.
+
+<Frame>
+  <img className="block dark:hidden" src="/images/connectors/mariadb/mariadb-team-warning.png" alt="Dialog: Everyone in your organization will see this data, with Continue with team connector" />
+  <img className="hidden dark:block" src="/images/connectors/mariadb/mariadb-team-warning-dark.png" alt="Dialog: Everyone in your organization will see this data, with Continue with team connector" />
+</Frame>
+
+4. Fill in the connection details:
 
 | Field | Example |
 |-------|---------|
 | **Host** | `localhost` |
 | **Port** | `3306` |
 | **Database** | `test_db` |
-| **User** | `pipeshub_user` |
+| **Username** | `pipeshub_user` |
 | **Password** | the password you set when creating the user |
+| **CA Certificate** | optional; the PEM CA certificate, to turn on TLS |
 
-<div className="text-center">
-  <img
-    src="/images/connectors/mariadb/mariadb-auth-config.png"
-    alt="MariaDB connector auth configuration"
-    className="block mx-auto w-11/12"
-  />
-</div>
+<Frame>
+  <img className="block dark:hidden" src="/images/connectors/mariadb/mariadb-auth-config.png" alt="MariaDB Authenticate tab with Host, Port, Database, Username, Password and CA Certificate" />
+  <img className="hidden dark:block" src="/images/connectors/mariadb/mariadb-auth-config-dark.png" alt="MariaDB Authenticate tab with Host, Port, Database, Username, Password and CA Certificate" />
+</Frame>
 
 </Accordion>
 
@@ -137,22 +149,20 @@ Agents can run SQL queries against this database, so keep this user read-only. S
 
 Sync filters control what is pulled from MariaDB. Anything excluded by a filter is never downloaded.
 
-<div className="text-center">
-  <img
-    src="/images/connectors/mariadb/mariadb-sync-filters.png"
-    alt="MariaDB sync filters"
-    className="block mx-auto w-11/12"
-  />
-</div>
+<Frame>
+  <img className="block dark:hidden" src="/images/connectors/mariadb/mariadb-sync-filters.png" alt="MariaDB sync filters with the Tables filter set to In" />
+  <img className="hidden dark:block" src="/images/connectors/mariadb/mariadb-sync-filters-dark.png" alt="MariaDB sync filters with the Tables filter set to In" />
+</Frame>
 
 | Filter | Description | Default |
 |--------|-------------|---------|
 | **Tables** | Pick the tables to sync (e.g. `customers`, `orders`). Leave empty to sync all tables in the database. | All tables |
-| **Max rows per table** | Maximum number of rows to fetch from each table. | 1000 |
-| **Index tables** | When enabled, table content is indexed for AI search. When disabled, only schema metadata is indexed. | Enabled |
+| **Max Rows Per Table** | Maximum number of rows to fetch from each table. The highest value is 10000. | 1000 |
+| **Index Tables** | When enabled, table content is indexed for AI search. When disabled, only schema metadata is indexed. | Enabled |
+| **Enable Manual Indexing** | On: synced tables are not indexed until you choose them. Off: every synced table is indexed. | Off |
 
 <Info>
-  Use **Max rows per table** to keep initial syncs fast on large tables, or to cap the amount of data exposed to your assistant.
+  Use **Max Rows Per Table** to keep initial syncs fast on large tables, or to cap the amount of data exposed to your assistant.
 </Info>
 
 </Accordion>
@@ -160,30 +170,32 @@ Sync filters control what is pulled from MariaDB. Anything excluded by a filter 
 <Accordion title="Step 4: Choose a sync strategy and save" icon="rotate">
 
 1. Pick **Scheduled** or **Manual** sync.
-2. If scheduled, set the **Sync interval** (default: 60 minutes).
-3. Click **Save** to enable the connector.
+2. If scheduled, pick a **Sync interval**.
+3. Click **Save configuration**, then **Start syncing now**.
 
-<div className="text-center">
-  <img
-    src="/images/connectors/mariadb/mariadb-sync-settings.png"
-    alt="MariaDB sync settings"
-    className="block mx-auto w-11/12"
-  />
-</div>
+<Frame>
+  <img className="block dark:hidden" src="/images/connectors/mariadb/mariadb-sync-settings.png" alt="MariaDB Configure records tab with Sync strategy and Sync interval" />
+  <img className="hidden dark:block" src="/images/connectors/mariadb/mariadb-sync-settings-dark.png" alt="MariaDB Configure records tab with Sync strategy and Sync interval" />
+</Frame>
 
-The connector verifies the connection, then runs the initial sync. Watch the **Indexing Progress** to track completion.
+The connector verifies the connection, then runs the initial sync. Click the arrow on the connector's card to follow **Records status**.
 
-<div className="text-center">
-  <img
-    src="/images/connectors/mariadb/mariadb-connector-active.png"
-    alt="MariaDB connector active and synced"
-    className="block mx-auto w-11/12"
-  />
-</div>
+<Frame>
+  <img className="block dark:hidden" src="/images/connectors/mariadb/mariadb-connector-active.png" alt="MariaDB connector with sync enabled and Records status showing indexed tables" />
+  <img className="hidden dark:block" src="/images/connectors/mariadb/mariadb-connector-active-dark.png" alt="MariaDB connector with sync enabled and Records status showing indexed tables" />
+</Frame>
 
 </Accordion>
 
 </AccordionGroup>
+
+---
+
+## Permissions
+
+MariaDB grants are not copied into PipesHub. For a team connector, every table and row it syncs is visible to **everyone in your PipesHub organization**. For a personal connector, only the person who set it up can see them.
+
+What the database user can read decides what is synced. Use the **Tables** filter, or a narrower database user, to keep sensitive tables out.
 
 ---
 
@@ -211,16 +223,16 @@ Yes. Use the public host and port of your MariaDB server. Make sure the server a
 
 <Accordion title="How do I keep large tables from blowing up the sync?">
 
-Use **Max rows per table** in sync filters to cap how many rows are fetched per table, and use the **Tables** filter to only sync the tables you actually need.
+Use **Max Rows Per Table** in sync filters to cap how many rows are fetched per table, and use the **Tables** filter to only sync the tables you actually need.
 
 </Accordion>
 
-<Accordion title="What's the difference between this connector and the MariaDB toolset?">
+<Accordion title="What's the difference between this connector and the MariaDB action?">
 
 - **Connector** indexes your table and rows so they can be searched alongside your other knowledge.
-- **Toolset** lets agents run live SQL against MariaDB at query time without indexing.
+- **Action** lets agents run live SQL against MariaDB at query time without indexing.
 
-You can use both together — the connector for fast retrieval and the toolset when an agent needs to run a fresh query.
+You can use both together: the connector for fast retrieval and the action when an agent needs to run a fresh query.
 
 </Accordion>
 

@@ -74,7 +74,7 @@ This guide will walk you through the process of creating a Dropbox application a
 
 <img
     src="/images/connectors/dropbox/db1.png"
-    alt="Dropbox"
+    alt="Dropbox App Console My apps page with the Create app button"
     style={{ display: 'block', margin: '0 auto' }}
     width="90%"
   />
@@ -82,7 +82,7 @@ This guide will walk you through the process of creating a Dropbox application a
 3. Configure your new app with the following settings:
    - **Choose an API:** Select **Scoped access**.
    - **Type of access:** Select **Full Dropbox**.
-   - **Name your app:** Enter a unique name for your application, for example, "Pipeshub Connector".
+   - **Name your app:** Enter a unique name for your application, for example, "PipesHub Connector".
 
 4. Click **Create app**. You will be redirected to your new app's settings page.
 
@@ -92,7 +92,7 @@ This guide will walk you through the process of creating a Dropbox application a
 
 <img
     src="/images/connectors/dropbox/db2.png"
-    alt="Dropbox"
+    alt="Dropbox app Permissions tab with the scope checkboxes"
     style={{ display: 'block', margin: '0 auto' }}
     width="90%"
   />
@@ -117,7 +117,7 @@ This guide will walk you through the process of creating a Dropbox application a
 
 <img
     src="/images/connectors/dropbox/db5.png"
-    alt="Dropbox"
+    alt="Dropbox Permissions tab with the Submit button in the save bar"
     style={{ display: 'block', margin: '0 auto' }}
     width="90%"
   />
@@ -126,15 +126,15 @@ This guide will walk you through the process of creating a Dropbox application a
 
 6. You also need to enable **additional Development users**.
 
-7. Find the **OAuth 2** section and add the following URL to the **Redirect URIs** field (where {your_pipeshub_base_url} is your PipesHub instance URL):
-```
-http://{your_pipeshub_base_url}/connectors/oauth/callback/Dropbox
+7. Find the **OAuth 2** section and add the following URL to the **Redirect URIs** field (where {your_pipeshub_base_url} is your PipesHub instance URL, including `https://` or `http://` as you reach it). PipesHub also shows the exact **Redirect/Callback URL** when you configure the connector, so you can copy it from there:
+```text
+{your_pipeshub_base_url}/connectors/oauth/callback/Dropbox
 ```
 8. Click **Add** to save the URI.
 
 <img
  src="/images/connectors/dropbox/db4.png"
- alt="Dropbox"
+ alt="Dropbox OAuth 2 Redirect URIs field with a callback URL and the Add button"
  style={{ display: 'block', margin: '0 auto' }}
  width="90%"
 />
@@ -153,45 +153,35 @@ http://{your_pipeshub_base_url}/connectors/oauth/callback/Dropbox
 
 ### Step 1: Configure Connection
 
-1. Navigate to **Workspace Settings** > Under **Workspace** section in sidebar > **Connectors** in your application.
-<div style={{ textAlign: "center" }}>
-  <img
-    src="/images/connectors/common/go_to_workspace_settings.png"
-    alt="Go to Workspace Settings"
-    style={{ display: 'block', margin: '0 auto' }}
-    width="90%"
-  />
-</div>
+1. Navigate to **Workspace settings** > Under **Workspace** section in sidebar > **Connectors** in your application.
+<Frame>
+  <img className="block dark:hidden" src="/images/connectors/common/go_to_workspace_settings.png" alt="Go to Workspace settings" />
+  <img className="hidden dark:block" src="/images/connectors/common/go_to_workspace_settings-dark.png" alt="Go to Workspace settings" />
+</Frame>
 
 2. Search for the **Dropbox** connector and click on **Setup** to configure a connector instance.
-<div style={{ textAlign: "center" }}>
-  <img
-    src="/images/connectors/dropbox/search_for_dropbox_connector.png"
-    alt="Search for Dropbox connector"
-    style={{ display: 'block', margin: '0 auto' }}
-    width="90%"
-  />
-</div>
+<Frame>
+  <img className="block dark:hidden" src="/images/connectors/dropbox/search_for_dropbox_connector.png" alt="Search for Dropbox connector" />
+  <img className="hidden dark:block" src="/images/connectors/dropbox/search_for_dropbox_connector-dark.png" alt="Search for Dropbox connector" />
+</Frame>
 
 3. In the configuration dialog that opens:
-   - Enter an **Instance Name** for your connector (e.g., "Dropbox Teams")
-   - Enter the **App key** from your Dropbox App Console
-   - Enter the **App secret** from your Dropbox App Console
+   - Enter an **Instance name** for your connector (e.g., "Dropbox Teams")
+   - Keep or change the **OAuth app name**
+   - Enter the **App key** from your Dropbox App Console in **Client ID**
+   - Enter the **App secret** from your Dropbox App Console in **Client Secret**
    - Click on the **Next** button to save the configuration and move to Authorize page.
 
-   <div style={{ textAlign: "center" }}>
-     <img
-       src="/images/connectors/dropbox/dropbox_configuration.png"
-       alt="Dropbox Configuration"
-       width="90%"
-     />
-   </div>
+   <Frame>
+     <img className="block dark:hidden" src="/images/connectors/dropbox/dropbox_configuration.png" alt="Dropbox Configuration" />
+     <img className="hidden dark:block" src="/images/connectors/dropbox/dropbox_configuration-dark.png" alt="Dropbox Configuration" />
+   </Frame>
 
 ### Step 2: Authorize Dropbox 
 
 1. In the Authorize page that opens:
 
-   - Click on **Authenticate Dropbox to Proceed** button
+   - Click on **Authenticate Dropbox to proceed** button
    - You will be redirected to Dropbox's consent screen where you need to sign in and grant permission for Dropbox and related document access
   
 
@@ -226,20 +216,20 @@ Sync filters control which files are fetched from Dropbox. Files that don't matc
 
 ### Created Date
 
-Filters files by when they were created. Accepts operators like `Last 365 Days`, `Is After`, `Is Before`, or `Is Between` for a specific range. 
+Filters files by when they were created. Accepts operators like `Last 365 days`, `Is after`, `Is before`, or `Is between` for a specific range. 
 
-For example, set `Last 365 Days` to fetch only files created in the last year.
+For example, set `Last 365 days` to fetch only files created in the last year.
 
 ### Modified Date
 
-Same as Created Date but filters by the file's last modified timestamp. Use `Last 30 Days` or `Is After` to limit sync to recently updated files.
+Same as Created Date but filters by the file's last modified timestamp. Use `Last 30 days` or `Is after` to limit sync to recently updated files.
 
 ### File Extensions
 
-Extensions filter support 2 options: `In` (only sync listed extensions) or `Not In` (sync everything except listed extensions). After selecting your desired option, you can select your desired extensions from a list of supported extensions.
+Extensions filter support 2 options: `In` (only sync listed extensions) or `Not in` (sync everything except listed extensions). After selecting your desired option, you can select your desired extensions from a list of supported extensions.
 
 <Note>
-Unsupported extensions are excluded under `In` and allowed through under `Not In`.
+Unsupported extensions are excluded under `In` and allowed through under `Not in`.
 </Note>
 
 ---
@@ -260,13 +250,10 @@ This can allow you to explicitly control which files and folders are indexed for
 
 When enabled, files shared with others are indexed alongside personal files. Disable this to exclude shared content and index only files originating from a user's own drive.
 
-<div style={{ textAlign: "center" }}>
-     <img
-       src="/images/connectors/dropbox/dropbox_filters_example.png"
-       alt="Dropbox Configuration"
-       width="90%"
-     />
-   </div>
+<Frame>
+  <img className="block dark:hidden" src="/images/connectors/dropbox/dropbox_filters_example.png" alt="Configure records tab with Manual indexing on, a Created Date filter of Last 365 days and a File Extensions filter of Not in" />
+  <img className="hidden dark:block" src="/images/connectors/dropbox/dropbox_filters_example-dark.png" alt="Configure records tab with Manual indexing on, a Created Date filter of Last 365 days and a File Extensions filter of Not in" />
+</Frame>
 
 
 </Accordion>
@@ -306,7 +293,7 @@ Workflow for Dropbox sync works like:
 3. Record Groups (aka Team folders + Personal folder in Dropbox)
 4. Files and Folders - for each user
 
-Each workflow has an **Incremental component** which only fetches events that have occurred since last sync. For that we save a **'cursor'** for that event in the sync points collection in the graph database. e.g., `member_events`, `user_group_events`, `record_group_events`.
+User groups, team folders and sharing changes each have an **Incremental component** which only fetches events that have occurred since last sync. For that we save a **'cursor'** for that event in the sync points collection in the graph database, e.g., `user_group_events`, `record_group_events`, `sharing_events`. Users are read in full on every run.
 
 **If no cursor is initialized for that event, we run full sync.**
 
@@ -316,19 +303,11 @@ Each workflow has an **Incremental component** which only fetches events that ha
 
 Users are fetched from Dropbox then converted to type `AppUser` using function `get_app_users`.
 
-### First Sync
+Every run fetches the full member list from Dropbox Teams and sends the users to `data_entities_processor.on_new_app_users`. There is no member cursor.
 
-Fetches all users from Dropbox Teams then initializes a sync point: `member_events` which saves cursor to be used for incremental sync, then sends the users to `data_entities_processor.on_new_app_users`.
+- **Member added:** A new active member is added on the next run.
 
-### Incremental Sync
-
-Uses the saved cursor to call team logs in 'members' category and listens for `member_change_status` events.
-
-- **Member Added:** If a user's status changes to active, the system treats them as a new addition and processes their profile.
-
-- **Member Removed:** If a user's status changes to removed, they are not removed from PipesHub as they might still be part of team.
-
-At the end of the process, the new cursor returned by the Dropbox API is saved to the sync point.
+- **Member suspended, invited or removed:** Their Dropbox access is withdrawn in PipesHub. A member who has left the team also has their personal folder record group removed.
 
 ---
 
@@ -382,7 +361,7 @@ This incremental process only applies to **Team Folders**. It uses a saved curso
 
 - `team_folder_create`
 - `team_folder_rename`
-- `team_folder_archived`
+- `team_folder_change_status` (for example, archived or restored)
 - `team_folder_permanently_delete`
 
 When a new folder is created, the system fetches its full membership list and syncs it, similar to the full sync process. For other events like renaming or deletion, it applies the appropriate change.
@@ -461,7 +440,7 @@ There are three common causes:
    - **Fix:** Verify sync filters in the connector settings and ensure indexing has completed. Check that the data matches your search query criteria.
 
 3. **Data not yet indexed** - The connector is still syncing or hasn't completed the initial indexing process.
-   - **Fix:** Go to **Settings > Connectors**, check the sync status, and wait for indexing to complete.
+   - **Fix:** Go to **Workspace settings > Connectors**, check the sync status, and wait for indexing to complete.
 
 </Accordion>
 

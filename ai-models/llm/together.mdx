@@ -3,11 +3,12 @@ title: Together AI
 description: "Configure PipesHub to use Together AI models"
 ---
 
-# Together AI Configuration
+<Frame>
+  <img className="block dark:hidden" src="/images/ai-models/llm/Together_LLMConfig.png" alt="Together AI Configuration Interface" />
+  <img className="hidden dark:block" src="/images/ai-models/llm/Together_LLMConfig-dark.png" alt="Together AI Configuration Interface" />
+</Frame>
 
-![Together AI Configuration Interface](/images/ai-models/llm/Together_LLMConfig.png)
-
-*The Together AI configuration screen in PipesHub where you'll enter your API Key, Model Name, and optional Endpoint URL*
+*The Together AI configuration screen in PipesHub where you'll enter your API Key, Model Name, and Endpoint URL*
 
 PipesHub allows you to integrate with Together AI to enable AI features in your workspace. Together AI provides access to a broad catalog of open-source models with fast, scalable cloud inference and competitive pricing.
 
@@ -30,38 +31,46 @@ The API Key is required to authenticate your requests to Together AI's services.
 The Model Name field defines which model you want to use through Together AI.
 
 **Popular Together AI models include:**
-- `deepseek-ai/DeepSeek-V3` - DeepSeek's powerful general-purpose model for complex tasks
+- `deepseek-ai/DeepSeek-V4.1-Flash` - DeepSeek's general-purpose model for complex tasks
 
 **How to choose a model:**
-- For powerful general-purpose tasks, select `deepseek-ai/DeepSeek-V3`
+- For powerful general-purpose tasks, select `deepseek-ai/DeepSeek-V4.1-Flash`
 - Browse Together AI's [model catalog](https://api.together.xyz/models) for the full list of available models
 - Use the exact model identifier shown in the catalog (format: `provider/model-name`)
 
+### Endpoint URL *
+
+The base address of the Together AI API. PipesHub has no default for it, so enter it even if you use the standard Together AI API.
+
+**Standard value:** `https://api.together.xyz/v1`
+
+Change it only if you route traffic through a proxy or gateway in front of Together AI.
+
 ## Optional Fields
 
-### Endpoint URL
+### Context Length
 
-The base API endpoint for Together AI. Leave blank to use the default Together AI API endpoint.
+The model's context window in tokens, from 1,024 to 20,000,000. Leave it empty and PipesHub assumes 128,000. Find your model's window in the provider's model documentation.
 
-**Default:** `https://api.together.xyz/v1/`
+### Multimodal
 
-**When to set this:**
-- If you are routing traffic through a custom proxy or gateway
-- For enterprise deployments with a dedicated Together AI endpoint
+Turn this on if the model accepts images as well as text. It is on by default. Turn it off for a text-only model, or chats that include an image will fail.
 
-If left blank, PipesHub will use the standard Together AI API endpoint automatically.
+### Reasoning
+
+Turn this on if the model supports chain-of-thought reasoning. It is on by default. Turn it off for a model without reasoning.
 
 ## Configuration Steps
 
 As shown in the image above:
 
-1. Click **Configure** on the Together AI provider card
+1. Click **Configure** on the Together provider card
 2. Enter your Together AI API Key in the designated field (marked with *)
 3. Specify your desired Model Name (marked with *)
-4. (Optional) Enter a custom Endpoint URL if required — leave blank to use the default
-5. Click **Add Model** to save and validate your credentials
+4. Enter the Endpoint URL (marked with *), for example `https://api.together.xyz/v1`
+5. Click **Add model** to save and validate your credentials
 
-> API Key and Model Name are required fields. Endpoint URL is optional and defaults to the Together AI API if left blank.
+> API Key, Model Name and Endpoint URL are required fields.
 
 ## Usage Considerations
 
@@ -80,4 +89,4 @@ As shown in the image above:
 - Verify the model is available in your region and account tier
 - If you are experiencing rate limits, check your usage in the Together AI dashboard
 
-For additional support, refer to the [Together AI documentation](https://docs.together.ai/) or contact PipesHub support.
+For additional support, refer to the [Together AI documentation](https://docs.together.ai/) or email [support@pipeshub.com](mailto:support@pipeshub.com).

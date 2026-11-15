@@ -56,13 +56,10 @@ Pick the sign-in type in **Authentication method** on the first setup tab. Whate
 | **API Token** | A ServiceNow REST API key, sent in the `x-sn-apikey` header | Instance URL, ServiceNow API key | The user the key belongs to |
 | **Custom** | OAuth 2.0 client credentials (no browser sign-in) | Instance URL, Client ID, Client Secret | The **OAuth application user** set on the OAuth application |
 
-<div className="text-center">
-  <img
-    src="/images/connectors/servicenow/servicenow-connector-auth-types.png"
-    alt="ServiceNow setup — Authentication method selector with OAuth 2.0, Basic authentication, API Token and Custom"
-    className="block mx-auto w-11/12"
-  />
-</div>
+<Frame>
+  <img className="block dark:hidden" src="/images/connectors/servicenow/servicenow-connector-auth-types.png" alt="Authentication method list with OAuth 2.0, Basic authentication, API Token and Custom" />
+  <img className="hidden dark:block" src="/images/connectors/servicenow/servicenow-connector-auth-types-dark.png" alt="Authentication method list with OAuth 2.0, Basic authentication, API Token and Custom" />
+</Frame>
 
 With **OAuth 2.0** the setup has three tabs: **Authenticate**, **Authorize** (sign in to ServiceNow and allow access), then **Configure records**. The other types have no **Authorize** tab. The OAuth steps are below; for the other types, see [Other sign-in types](#other-sign-in-types).
 
@@ -74,55 +71,43 @@ With **OAuth 2.0** the setup has three tabs: **Authenticate**, **Authorize** (si
 
 ## Configuration Guide
 
-Register an OAuth API endpoint in ServiceNow, choose the integration user, then add the connector under **Workspace Settings** in PipesHub. Copy the **Redirect/Callback URL** from PipesHub into ServiceNow **before** you submit the OAuth application. The two values must match **exactly** (scheme, host, path and trailing slash).
+Register an OAuth API endpoint in ServiceNow, choose the integration user, then add the connector under **Workspace settings** in PipesHub. Copy the **Redirect/Callback URL** from PipesHub into ServiceNow **before** you submit the OAuth application. The two values must match **exactly** (scheme, host, path and trailing slash).
 
 ### How to configure and enable the ServiceNow connector
 
 #### Step 1: Open Connectors and start setup
 
-1. In the main app, open your **user profile** menu at the bottom of the left sidebar, then choose **Workspace Settings**.
+1. In the main app, open your **user profile** menu at the bottom of the left sidebar, then choose **Workspace settings**.
 
-<div className="text-center">
-  <img
-    src="/images/connectors/outlook/enterprise/outlook-connector-home-nav.png"
-    alt="User profile menu with Workspace Settings"
-    className="block mx-auto w-11/12"
-  />
-</div>
+<Frame>
+  <img className="block dark:hidden" src="/images/connectors/outlook/enterprise/outlook-connector-home-nav.png" alt="User profile menu with Workspace settings" />
+  <img className="hidden dark:block" src="/images/connectors/outlook/enterprise/outlook-connector-home-nav-dark.png" alt="User profile menu with Workspace settings" />
+</Frame>
 
 2. In the workspace sidebar, under **Workspace**, select **Connectors**.
 
-<div className="text-center">
-  <img
-    src="/images/connectors/outlook/enterprise/outlook-connector-connectors-page.png"
-    alt="Workspace settings sidebar with Connectors selected"
-    className="block mx-auto w-11/12"
-  />
-</div>
+<Frame>
+  <img className="block dark:hidden" src="/images/connectors/outlook/enterprise/outlook-connector-connectors-page.png" alt="Workspace settings sidebar with Connectors selected" />
+  <img className="hidden dark:block" src="/images/connectors/outlook/enterprise/outlook-connector-connectors-page-dark.png" alt="Workspace settings sidebar with Connectors selected" />
+</Frame>
 
-3. On the **Connectors** page, find **ServiceNow** and click **+ Setup** (or open an existing instance to edit).
+3. On the **Connectors** page, find **ServiceNow** and click **+ Set up** (or open an existing instance to edit).
 
-<div className="text-center">
-  <img
-    src="/images/connectors/servicenow/servicenow-connector-conenctors.png"
-    alt="Connectors grid — ServiceNow card with + Setup"
-    className="block mx-auto w-11/12"
-  />
-</div>
+<Frame>
+  <img className="block dark:hidden" src="/images/connectors/servicenow/servicenow-connector-conenctors.png" alt="Connectors page filtered to the ServiceNow card with its Set up button" />
+  <img className="hidden dark:block" src="/images/connectors/servicenow/servicenow-connector-conenctors-dark.png" alt="Connectors page filtered to the ServiceNow card with its Set up button" />
+</Frame>
 
-#### Step 2: Authenticate tab — instance name and Redirect/Callback URL
+#### Step 2: Authenticate tab, instance name and Redirect/Callback URL
 
 1. In **Set up ServiceNow**, stay on the **Authenticate** tab and keep **Authentication method** on **OAuth 2.0**.
 2. Set **Instance name** (for example `ServiceNow knowledge`).
 3. Copy the **Redirect/Callback URL** from the read-only field. It has the form `https://{your-pipeshub-host}/connectors/oauth/callback/ServiceNow`. You paste it into ServiceNow in Step 3.
 
-<div className="text-center">
-  <img
-    src="/images/connectors/servicenow/servicenow-connector-redirect-url.png"
-    alt="ServiceNow setup — Redirect/Callback URL to register in ServiceNow"
-    className="block mx-auto w-11/12"
-  />
-</div>
+<Frame>
+  <img className="block dark:hidden" src="/images/connectors/servicenow/servicenow-connector-redirect-url.png" alt="Set up ServiceNow drawer, Authenticate tab with OAuth 2.0 and the Redirect/Callback URL to register in ServiceNow" />
+  <img className="hidden dark:block" src="/images/connectors/servicenow/servicenow-connector-redirect-url-dark.png" alt="Set up ServiceNow drawer, Authenticate tab with OAuth 2.0 and the Redirect/Callback URL to register in ServiceNow" />
+</Frame>
 
 Use the in-panel **ServiceNow OAuth Setup** and **Pipeshub Documentation** links if you need vendor-specific detail while configuring.
 
@@ -130,7 +115,7 @@ Use the in-panel **ServiceNow OAuth Setup** and **Pipeshub Documentation** links
 
 1. Sign in to your ServiceNow instance (for example `https://acme.service-now.com`) as an administrator.
 2. Open **Application Registry**: type **Application Registry** in the filter navigator, or go to **System OAuth** → **Application Registry**.
-3. Click **New** → **Create an OAuth API endpoint for external clients**.
+3. Click **New** → **Create an OAuth API endpoint for external clients** (newer releases list it as **[Deprecated UI] Create an OAuth API endpoint for external clients**).
 
 <div className="text-center">
   <img
@@ -143,7 +128,7 @@ Use the in-panel **ServiceNow OAuth Setup** and **Pipeshub Documentation** links
 <div className="text-center">
   <img
     src="/images/connectors/servicenow/new_oauth.png"
-    alt="ServiceNow — create new OAuth application"
+    alt="ServiceNow: create new OAuth application"
     className="block mx-auto w-11/12"
   />
 </div>
@@ -151,26 +136,18 @@ Use the in-panel **ServiceNow OAuth Setup** and **Pipeshub Documentation** links
 <div className="text-center">
   <img
     src="/images/connectors/servicenow/oauth_type_selection.png"
-    alt="ServiceNow — OAuth API endpoint for external clients"
+    alt="ServiceNow: OAuth API endpoint for external clients"
     className="block mx-auto w-11/12"
   />
 </div>
 
 4. Configure the application:
-   - **Name** — for example `PipesHub KB Connector`
-   - **Redirect URL** — the **exact** URL you copied from PipesHub in Step 2
-   - **Client ID** / **Client Secret** — generated by ServiceNow; copy both for Step 5
-   - **Accessible from** — typically **All application scopes**
-   - **Access token lifespan** — the default (1,800 seconds) is fine. PipesHub refreshes the token when it expires during a sync
-   - **Refresh token lifespan** — for example `8640000` seconds (100 days). When the refresh token expires, you must run **Authorize** again
-
-<div className="text-center">
-  <img
-    src="/images/connectors/servicenow/redirect_uri.png"
-    alt="ServiceNow OAuth application — redirect URL field"
-    className="block mx-auto w-11/12"
-  />
-</div>
+   - **Name**: for example `PipesHub KB Connector`
+   - **Redirect URL**: the **exact** URL you copied from PipesHub in Step 2
+   - **Client ID** / **Client Secret**: generated by ServiceNow; copy both for Step 5
+   - **Accessible from**: typically **All application scopes**
+   - **Access token lifespan**: the default (1,800 seconds) is fine. PipesHub refreshes the token when it expires during a sync
+   - **Refresh token lifespan**: for example `8640000` seconds (100 days). When the refresh token expires, you must run **Authorize** again
 
 <div className="text-center">
   <img
@@ -233,21 +210,18 @@ To check the roles:
 
 From your instance hostname, derive:
 
-- **ServiceNow Instance URL** — `https://your-instance.service-now.com` (no trailing slash)
-- **ServiceNow Authorize URL** — `https://your-instance.service-now.com/oauth_auth.do`
-- **ServiceNow Token URL** — `https://your-instance.service-now.com/oauth_token.do`
+- **ServiceNow Instance URL**: `https://your-instance.service-now.com` (no trailing slash)
+- **ServiceNow Authorize URL**: `https://your-instance.service-now.com/oauth_auth.do`
+- **ServiceNow Token URL**: `https://your-instance.service-now.com/oauth_token.do`
 
 On the **Authenticate** tab, pick a saved **OAuth app** if your workspace lists one, or enter a new **Client ID** and **Client Secret** from Step 3 together with the three URLs above. Confirm the **Redirect/Callback URL** still matches ServiceNow. The connector asks for the `useraccount` scope.
 
 The **Instance URL** must be the instance address only: `https://`, a host name, and no path, query, fragment, user name or password. Custom domains work. The **Authorize URL** and **Token URL** must be on the same host as the instance. Addresses on this server, link-local and cloud metadata addresses are refused. ServiceNow redirects are not followed, so a URL that redirects (for example to a single sign-on page) fails with a message saying it is not the instance's REST API.
 
-<div className="text-center">
-  <img
-    src="/images/connectors/servicenow/servicenow-connector-config-1.png"
-    alt="ServiceNow setup — instance name and Authentication method set to OAuth 2.0"
-    className="block mx-auto w-11/12"
-  />
-</div>
+<Frame>
+  <img className="block dark:hidden" src="/images/connectors/servicenow/servicenow-connector-config-1.png" alt="Authenticate tab with OAuth 2.0: instance name, Instance URL, Authorize URL, Token URL, Client ID and Client Secret filled in" />
+  <img className="hidden dark:block" src="/images/connectors/servicenow/servicenow-connector-config-1-dark.png" alt="Authenticate tab with OAuth 2.0: instance name, Instance URL, Authorize URL, Token URL, Client ID and Client Secret filled in" />
+</Frame>
 
 Click **Next** to open the **Authorize** tab.
 
@@ -256,18 +230,15 @@ Click **Next** to open the **Authorize** tab.
 1. Click **Authenticate ServiceNow to proceed**. Sign in to ServiceNow **as the integration user** from Step 4 and allow access.
 2. **Continue to configuration →** stays disabled until authentication succeeds. When you see **Connected — you can continue to Configure records**, click **Continue to configuration →**.
 
-<div className="text-center">
-  <img
-    src="/images/connectors/servicenow/servicenow-connector-authenticate.png"
-    alt="ServiceNow setup — Authorize tab before authentication"
-    className="block mx-auto w-11/12"
-  />
-</div>
+<Frame>
+  <img className="block dark:hidden" src="/images/connectors/servicenow/servicenow-connector-authenticate.png" alt="Authorize tab before sign-in, with the Authenticate ServiceNow to proceed button" />
+  <img className="hidden dark:block" src="/images/connectors/servicenow/servicenow-connector-authenticate-dark.png" alt="Authorize tab before sign-in, with the Authenticate ServiceNow to proceed button" />
+</Frame>
 
 <div className="text-center">
   <img
     src="/images/connectors/servicenow/servicenow-connector-authenticated.png"
-    alt="ServiceNow setup — Authorize tab after successful connection"
+    alt="ServiceNow setup: Authorize tab after successful connection"
     className="block mx-auto w-11/12"
   />
 </div>
@@ -278,29 +249,23 @@ Click **Next** to open the **Authorize** tab.
 
 #### Step 7: Configure records
 
-On the **Configure records** tab, set **Sync strategy** (**Scheduled** or **Manual**) and, when scheduled, **Sync interval** (default **1 hour**). Add [filters](#filters) only if you need to narrow the scope. Then click **Save configuration** (**← Back** returns to the previous tab).
+On the **Configure records** tab, set **Sync strategy** (**Scheduled** or **Manual**) and, when scheduled, **Sync interval** (default **1 hour**). Add [filters](#filters) only if you need to narrow the scope. Then click **Save configuration** (**← Back** returns to the previous tab). If you added no sync filters, or turned on **Enable Manual Indexing**, PipesHub first asks **Start sync process?**. Click **Confirm** to save. The connector stays off until you start it in Step 8.
 
-<div className="text-center">
-  <img
-    src="/images/connectors/servicenow/servicenow-connector-configure-records.png"
-    alt="ServiceNow setup — Configure records, sync strategy and sync interval"
-    className="block mx-auto w-11/12"
-  />
-</div>
+<Frame>
+  <img className="block dark:hidden" src="/images/connectors/servicenow/servicenow-connector-configure-records.png" alt="Configure records tab with Sync strategy, Sync interval, filters and indexing options" />
+  <img className="hidden dark:block" src="/images/connectors/servicenow/servicenow-connector-configure-records-dark.png" alt="Configure records tab with Sync strategy, Sync interval, filters and indexing options" />
+</Frame>
 
 There is no realtime sync. Changes appear on the next scheduled run, or when you click **Sync** or **Full sync** on the instance card.
 
 #### Step 8: Start syncing and monitor
 
-After saving, start the first sync with **Sync now**, or later from the instance card (**Sync** or **Full sync**). Use **Manage configuration** to change the sign-in, sync settings or filters.
+After saving, PipesHub shows **Instance is configured and ready to sync!**. Click **Start syncing now** to run the first sync, or **I'll do it later** and turn on **Sync enabled** on the instance card when you are ready (**Sync** and **Full sync** run it again later). Use **Manage configuration** to change the sign-in, sync settings or filters.
 
-<div className="text-center">
-  <img
-    src="/images/connectors/servicenow/servicenow-connector-start-sync.png"
-    alt="ServiceNow instance ready — Start Syncing Now or I'll do it later"
-    className="block mx-auto w-11/12"
-  />
-</div>
+<Frame>
+  <img className="block dark:hidden" src="/images/connectors/servicenow/servicenow-connector-start-sync.png" alt="Instance is configured and ready to sync dialog with I'll do it later and Start syncing now" />
+  <img className="hidden dark:block" src="/images/connectors/servicenow/servicenow-connector-start-sync-dark.png" alt="Instance is configured and ready to sync dialog with I'll do it later and Start syncing now" />
+</Frame>
 
 ### Other sign-in types
 
@@ -313,13 +278,10 @@ For every type, choose the integration user and its roles as in [Step 4](#step-4
 1. In ServiceNow, use (or create) the integration user and give it a password. Do not use a personal account.
 2. In PipesHub, on the **Authenticate** tab, choose **Basic authentication** and enter **ServiceNow Instance URL**, **Username** and **Password**.
 
-<div className="text-center">
-  <img
-    src="/images/connectors/servicenow/servicenow-connector-basic-auth.png"
-    alt="ServiceNow setup — Basic authentication with Instance URL, Username and Password"
-    className="block mx-auto w-11/12"
-  />
-</div>
+<Frame>
+  <img className="block dark:hidden" src="/images/connectors/servicenow/servicenow-connector-basic-auth.png" alt="Authenticate tab with Basic authentication: Instance URL, Username and Password" />
+  <img className="hidden dark:block" src="/images/connectors/servicenow/servicenow-connector-basic-auth-dark.png" alt="Authenticate tab with Basic authentication: Instance URL, Username and Password" />
+</Frame>
 
 If ServiceNow refuses the password during a sync, the sync stops at once instead of retrying, so it does not lock the account.
 
@@ -339,13 +301,10 @@ ServiceNow accepts an API key only on the APIs an access policy allows. In Servi
 
 4. In PipesHub, on the **Authenticate** tab, choose **API Token** and enter **ServiceNow Instance URL** and **ServiceNow API key**.
 
-<div className="text-center">
-  <img
-    src="/images/connectors/servicenow/servicenow-connector-api-key.png"
-    alt="ServiceNow setup — API Token with Instance URL and ServiceNow API key"
-    className="block mx-auto w-11/12"
-  />
-</div>
+<Frame>
+  <img className="block dark:hidden" src="/images/connectors/servicenow/servicenow-connector-api-key.png" alt="Authenticate tab with API Token: Instance URL and ServiceNow API key" />
+  <img className="hidden dark:block" src="/images/connectors/servicenow/servicenow-connector-api-key-dark.png" alt="Authenticate tab with API Token: Instance URL and ServiceNow API key" />
+</Frame>
 
 If ServiceNow refuses the key during a sync, the sync stops at once instead of retrying.
 
@@ -360,13 +319,10 @@ The connector gets its token with the OAuth 2.0 client credentials grant and act
 3. Set the system property `glide.oauth.inbound.client.credential.grant_type.enabled` to `true`. Without it, ServiceNow refuses the client credentials grant.
 4. In PipesHub, on the **Authenticate** tab, choose **Custom** and enter **ServiceNow Instance URL**, **Client ID** and **Client Secret**.
 
-<div className="text-center">
-  <img
-    src="/images/connectors/servicenow/servicenow-connector-client-credentials.png"
-    alt="ServiceNow setup — Custom (client credentials) with Instance URL, Client ID and Client Secret"
-    className="block mx-auto w-11/12"
-  />
-</div>
+<Frame>
+  <img className="block dark:hidden" src="/images/connectors/servicenow/servicenow-connector-client-credentials.png" alt="Authenticate tab with Custom (client credentials): Instance URL, Client ID and Client Secret" />
+  <img className="hidden dark:block" src="/images/connectors/servicenow/servicenow-connector-client-credentials-dark.png" alt="Authenticate tab with Custom (client credentials): Instance URL, Client ID and Client Secret" />
+</Frame>
 
 PipesHub gets a new token before the current one expires, and once more if ServiceNow rejects a token during a sync. The token is never stored.
 
@@ -495,13 +451,10 @@ If a user criterion, group membership or role table cannot be read, the sync sto
 
 The **Configure records** tab has these filters. Leave them empty to sync every knowledge base the integration user can read. The **Knowledge bases** and **Categories** lists show the active knowledge bases and categories, with search; categories are shown as `Knowledge base › Parent › Category`.
 
-<div className="text-center">
-  <img
-    src="/images/connectors/servicenow/servicenow-connector-filters.png"
-    alt="ServiceNow setup — Indexing and sync filters: Enable Manual Indexing, the Add filter menu with Knowledge bases, Categories, Modified Date and Created Date, and the Index articles and Index attachments toggles"
-    className="block mx-auto w-11/12"
-  />
-</div>
+<Frame>
+  <img className="block dark:hidden" src="/images/connectors/servicenow/servicenow-connector-filters.png" alt="Configure records tab with the Add filter menu open: Knowledge bases, Categories, Modified Date and Created Date, above the Index articles and Index attachments options" />
+  <img className="hidden dark:block" src="/images/connectors/servicenow/servicenow-connector-filters-dark.png" alt="Configure records tab with the Add filter menu open: Knowledge bases, Categories, Modified Date and Created Date, above the Index articles and Index attachments options" />
+</Frame>
 
 
 | Filter | Type | Behaviour |
@@ -534,10 +487,10 @@ Saving a filter change queues a full sync. When you narrow a filter, that sync r
 
 ## Useful Links
 
-- **ServiceNow documentation:** [https://www.servicenow.com/docs/](https://www.servicenow.com/docs/) — search for **Application Registry**, **user criteria** and **knowledge base access**
+- **ServiceNow documentation:** [https://www.servicenow.com/docs/](https://www.servicenow.com/docs/). Search for **Application Registry**, **user criteria** and **knowledge base access**
 - **Inbound REST API rate limiting:** [https://www.servicenow.com/docs/r/zurich/api-reference/rest-api-explorer/inbound-REST-API-rate-limiting.html](https://www.servicenow.com/docs/r/zurich/api-reference/rest-api-explorer/inbound-REST-API-rate-limiting.html)
 - **ServiceNow Developer:** [https://developer.servicenow.com/](https://developer.servicenow.com/)
-- **PipesHub:** **Workspace Settings** → **Connectors** → **ServiceNow** for the live **Redirect/Callback URL** and connector status
+- **PipesHub:** **Workspace settings** → **Connectors** → **ServiceNow** for the live **Redirect/Callback URL** and connector status
 
 ---
 
@@ -586,12 +539,12 @@ PipesHub sends these notices to the connector's creator and the org admins. Each
 
 | Notice | Cause | What to do |
 |--------|-------|------------|
-| **needs to be re-authorized** — *ServiceNow refused the connector's sign-in (HTTP 401: …)* | The token or credentials stopped working: the refresh token expired or was revoked, the OAuth application, password or API key changed, or the integration user is inactive or locked out. With OAuth the notice has a **Re-authorize ServiceNow** action | With OAuth, sign in again on the **Authorize** tab. With the other types, update the credentials on the **Authenticate** tab |
-| **cannot read `<table>`** — *The ServiceNow integration user cannot read the table `<table>` …, which decides who may read knowledge articles.* | A table of user criteria, users, groups, memberships, roles, companies, departments or locations is closed to the integration user, or an access rule hides all its rows | Give the user the admin role, or knowledge_admin and user_admin, then sync again |
-| **sync paused, ServiceNow rate limit reached** — *A ServiceNow rate limit rule is used up until HH:MM UTC, so the sync stopped.* | An hourly REST API rate limit rule ran out. The notice says whether the next sync after that time continues where this one stopped or runs the full sync again | Nothing. To avoid it, exclude the integration user from your REST API rate limit rules |
-| **sync failed** — *The sync stopped: …* | Any other error. The sync is retried on its next run | If it repeats, check the connector logs |
+| **needs to be re-authorized**: *ServiceNow refused the connector's sign-in (HTTP 401: …)* | The token or credentials stopped working: the refresh token expired or was revoked, the OAuth application, password or API key changed, or the integration user is inactive or locked out. With OAuth the notice has a **Re-authorize ServiceNow** action | With OAuth, sign in again on the **Authorize** tab. With the other types, update the credentials on the **Authenticate** tab |
+| **cannot read `<table>`**: *The ServiceNow integration user cannot read the table `<table>` …, which decides who may read knowledge articles.* | A table of user criteria, users, groups, memberships, roles, companies, departments or locations is closed to the integration user, or an access rule hides all its rows | Give the user the admin role, or knowledge_admin and user_admin, then sync again |
+| **sync paused, ServiceNow rate limit reached**: *A ServiceNow rate limit rule is used up until HH:MM UTC, so the sync stopped.* | An hourly REST API rate limit rule ran out. The notice says whether the next sync after that time continues where this one stopped or runs the full sync again | Nothing. To avoid it, exclude the integration user from your REST API rate limit rules |
+| **sync failed**: *The sync stopped: …* | Any other error. The sync is retried on its next run | If it repeats, check the connector logs |
 | **the integration user can read less than an admin** | The integration user is not an admin, or cannot read the knowledge settings or the Service Portal settings. The notice lists which | For a complete sync, give the integration user the admin role. See [Step 4](#step-4-choose-the-integration-user-and-its-roles) |
-| **sync finished with problems** — *The sync finished, but: …* | The sync completed, but skipped something. The list can include: articles that could not be synced, or whose attachments, feedback or user criteria could not be read (retried on the next sync); knowledge bases that kept their stored access because their user criteria could not be read; active users with no email address; articles with no reader in PipesHub; user criteria that use a script or are hidden from the integration user; records that could not be removed | Fix the cause named in each line. Lines about your ServiceNow setup (users without email, scripted criteria, articles with no reader) are repeated only when they change |
+| **sync finished with problems**: *The sync finished, but: …* | The sync completed, but skipped something. The list can include: articles that could not be synced, or whose attachments, feedback or user criteria could not be read (retried on the next sync); knowledge bases that kept their stored access because their user criteria could not be read; active users with no email address; articles with no reader in PipesHub; user criteria that use a script or are hidden from the integration user; records that could not be removed | Fix the cause named in each line. Lines about your ServiceNow setup (users without email, scripted criteria, articles with no reader) are repeated only when they change |
 
 **Articles missing from search**
 
@@ -654,10 +607,10 @@ This connector is validated on **ServiceNow Zurich**. It uses the Table and Atta
 
 <Accordion title="Queries not returning results. What could be wrong?">
 
-1. **Email mismatch** — The person's PipesHub email differs from their ServiceNow user's email, or the ServiceNow user has no email.
-2. **Not indexed** — The article is not published, is inactive or expired, or its knowledge base is inactive.
-3. **Access** — ServiceNow does not let that person read the article, or a scripted criterion denies them in PipesHub.
-4. **Still syncing** — Open **Workspace Settings** → **Connectors** → **ServiceNow** and wait for the sync to finish.
+1. **Email mismatch**: the person's PipesHub email differs from their ServiceNow user's email, or the ServiceNow user has no email.
+2. **Not indexed**: the article is not published, is inactive or expired, or its knowledge base is inactive.
+3. **Access**: ServiceNow does not let that person read the article, or a scripted criterion denies them in PipesHub.
+4. **Still syncing**: open **Workspace settings** → **Connectors** → **ServiceNow** and wait for the sync to finish.
 
 </Accordion>
 

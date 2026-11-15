@@ -11,7 +11,7 @@ icon: "/logo/local-fs.svg"
       <span className="inline-flex h-8 w-8 flex-shrink-0 items-center justify-center dark:hidden" aria-hidden="true">
         <img
           src="/logo/local-fs.svg"
-          alt=""
+          alt="Local FS connector logo"
           width={32}
           height={32}
           className="h-8 w-8 object-contain"
@@ -21,7 +21,7 @@ icon: "/logo/local-fs.svg"
       <span className="hidden h-8 w-8 flex-shrink-0 items-center justify-center dark:inline-flex" aria-hidden="true">
         <img
           src="/logo/local-fs.svg"
-          alt=""
+          alt="Local FS connector logo"
           width={32}
           height={32}
           className="h-8 w-8 object-contain"
@@ -53,7 +53,7 @@ Four things to know up front:
 - It works through the **PipesHub desktop app**. The desktop app on your computer reads the folder and sends the files to PipesHub. The PipesHub server never opens the folder itself.
 - PipesHub only **reads** the folder. It doesn't move, rename, copy, or delete anything.
 - There's **no login**. No password, no API key, no cloud account. You just pick a folder.
-- It's a **personal** connector — you set it up under **Workspace Settings → Your Connectors**, and the files you index are searchable by **you** inside PipesHub. It is not shared with the rest of your team.
+- It's a **personal** connector: you set it up under **Workspace settings → Your connectors**, and the files you index are searchable by **you** inside PipesHub. It is not shared with the rest of your team.
 
 ### Words you'll see
 
@@ -81,7 +81,7 @@ A folder on a server, or one mounted into a Docker or Kubernetes container, can'
    - **Linux** — [AppImage](https://github.com/pipeshub-ai/pipeshub-ai/releases/latest/download/PipesHub-linux-x64.AppImage) or [.deb](https://github.com/pipeshub-ai/pipeshub-ai/releases/latest/download/PipesHub-linux-x64.deb)
    - **Linux (ARM)** — [AppImage](https://github.com/pipeshub-ai/pipeshub-ai/releases/latest/download/PipesHub-linux-arm64.AppImage) or [.deb](https://github.com/pipeshub-ai/pipeshub-ai/releases/latest/download/PipesHub-linux-arm64.deb)
 
-2. A PipesHub account where you can open **Workspace Settings** (profile menu at the bottom of the main sidebar) and see **Your Connectors** under the **Personal** section.
+2. A PipesHub account where you can open **Workspace settings** (profile menu at the bottom of the main sidebar) and see **Your connectors** under the **Personal** section.
 3. A folder you want to make searchable.
 
 ---
@@ -96,45 +96,39 @@ A folder on a server, or one mounted into a Docker or Kubernetes container, can'
 
 ### Step 1 — Open Local FS in the PipesHub desktop app
 
-1. In the **desktop app**, open your **user profile** menu at the bottom of the left sidebar, then choose **Workspace Settings**.
-2. In the workspace settings sidebar, under **Personal**, click **Your Connectors**.
+1. In the **desktop app**, open your **user profile** menu at the bottom of the left sidebar, then choose **Workspace settings**.
+2. In the workspace settings sidebar, under **Personal**, click **Your connectors**.
 3. Find the **Local FS** card.
-4. Click **+ Setup** on the card.
+4. Click **+ Set up** on the card.
 
-<div className="text-center">
-  <img
-    src="/images/connectors/local-fs/your_connectors_catalog.png"
-    alt="Your Connectors catalog with Local FS and + Setup"
-    className="block mx-auto w-11/12"
-  />
-</div>
+<Frame>
+  <img className="block dark:hidden" src="/images/connectors/local-fs/your_connectors_catalog.png" alt="Your connectors catalog with Local FS and + Set up" />
+  <img className="hidden dark:block" src="/images/connectors/local-fs/your_connectors_catalog-dark.png" alt="Your connectors catalog with Local FS and + Set up" />
+</Frame>
 
-A panel slides in from the right with two tabs: **Authenticate Instance** and **Configure Records**. You'll fill them in order.
+A panel slides in from the right with two tabs: **Authenticate** and **Configure records**. You'll fill them in order.
 
 <Info>
-  Local FS is a **personal** connector — set it up from **Workspace Settings → Your Connectors**, not **Workspace Settings → Connectors** (team scope). Open Workspace Settings from the profile menu at the bottom of the main sidebar; do not use the **Personal** section of the main app sidebar (that area is for actions like toolsets, not connector setup).
+  Local FS is a **personal** connector. Set it up from **Workspace settings → Your connectors**, not **Workspace settings → Connectors** (team scope). Open Workspace settings from the profile menu at the bottom of the main sidebar; do not use the **Personal** section of the main app sidebar (that area is for actions, not connector setup).
 </Info>
 
 <Info>
-  In a web browser, clicking **+ Setup** on Local FS shows **Desktop app required** instead of the panel. Open the desktop app and start again there.
+  In a web browser, clicking **+ Set up** on Local FS shows **Desktop app required** instead of the panel. Open the desktop app and start again there.
 </Info>
 
 ---
 
-### Step 2 — Name the instance (Authenticate Instance tab)
+### Step 2: Name the instance (Authenticate tab)
 
-The first tab is **Authenticate Instance**. Local FS has no login, so you'll see a banner that says **No authentication required for this connector.** That's normal — there's nothing to paste.
+The first tab is **Authenticate**. Local FS has no login, so you'll see a banner that says **No authentication required for this connector.** That's normal; there's nothing to paste.
 
-<div className="text-center">
-  <img
-    src="/images/connectors/local-fs/authenticate_tab.png"
-    alt="Authenticate Instance tab — no credentials needed"
-    className="block mx-auto w-11/12"
-  />
-</div>
+<Frame>
+  <img className="block dark:hidden" src="/images/connectors/local-fs/authenticate_tab.png" alt="Authenticate tab with the instance name and no credentials needed" />
+  <img className="hidden dark:block" src="/images/connectors/local-fs/authenticate_tab-dark.png" alt="Authenticate tab with the instance name and no credentials needed" />
+</Frame>
 
 1. In **Instance name**, type a short name you'll recognise later (for example `My laptop` or `Work notes`).
-2. Click **Next →** at the bottom.
+2. Click **Next** at the bottom.
 
 <Info>
   The instance name is just a label for you. Pick something descriptive — when you add a second folder later, this is how you'll tell them apart.
@@ -142,33 +136,30 @@ The first tab is **Authenticate Instance**. Local FS has no login, so you'll see
 
 ---
 
-### Step 3 — Pick the folder and how often to sync (Configure Records tab)
+### Step 3: Pick the folder and how often to sync (Configure records tab)
 
-The panel moves you to the **Configure Records** tab. This is the only tab where you actually have to make choices.
+The panel moves you to the **Configure records** tab. This is the only tab where you actually have to make choices.
 
-<div className="text-center">
-  <img
-    src="/images/connectors/local-fs/configure_tab.png"
-    alt="Configure Records tab with Sync settings and the Local folder field"
-    className="block mx-auto w-11/12"
-  />
-</div>
+<Frame>
+  <img className="block dark:hidden" src="/images/connectors/local-fs/configure_tab.png" alt="Configure records tab with Sync settings and the Local folder field" />
+  <img className="hidden dark:block" src="/images/connectors/local-fs/configure_tab-dark.png" alt="Configure records tab with Sync settings and the Local folder field" />
+</Frame>
 
 Under **Sync settings** there are two choices:
 
-- **Sync Strategy**
+- **Sync strategy**
   - **Scheduled** — PipesHub syncs on its own at the interval you pick, while the desktop app is open.
-  - **Manual** — only syncs when you press **Sync** / **Full sync** yourself. The first sync still starts when you turn on **Sync Enabled**.
-- **Sync Interval** — how often a scheduled sync runs. The default, **1 Hour**, is a good starting point.
+  - **Manual** — only syncs when you press **Sync** / **Full sync** yourself. The first sync still starts when you turn on **Sync enabled**.
+- **Sync interval** — how often a scheduled sync runs. The default, **1 hour**, is a good starting point.
 
 Under **Additional settings**:
 
 - **Local folder** — the folder you want to index. Click **Choose folder** to pick it, or type the full path.
 - **Include subfolders** — leave this on to index everything inside the folder. Turn it off to index only the files at the top level.
-- **Batch size** — leave it as the default unless someone has told you otherwise.
+- **Batch Size** — leave it as the default unless someone has told you otherwise.
 
 <Info>
-  Not sure what to pick? **Scheduled**, **1 Hour**, **Include subfolders ON**, batch size as-is — that's the right answer for most people.
+  Not sure what to pick? **Scheduled**, **1 hour**, **Include subfolders ON**, batch size as-is — that's the right answer for most people.
 </Info>
 
 <Note>
@@ -183,13 +174,10 @@ If your folder has lots of files you don't care about (build outputs, photos, do
 
 Scroll to **Indexing & sync filters** and click **+ Add filter**.
 
-<div className="text-center">
-  <img
-    src="/images/connectors/local-fs/filters_section.png"
-    alt="Indexing & sync filters with + Add filter"
-    className="block mx-auto w-11/12"
-  />
-</div>
+<Frame>
+  <img className="block dark:hidden" src="/images/connectors/local-fs/filters_section.png" alt="Indexing and sync filters with the Add filter menu open" />
+  <img className="hidden dark:block" src="/images/connectors/local-fs/filters_section-dark.png" alt="Indexing and sync filters with the Add filter menu open" />
+</Frame>
 
 The available filters:
 
@@ -207,7 +195,7 @@ Quick examples:
 - **Skip videos and archives** — *File Extensions* · *Not in* · `.mp4`, `.mov`, `.zip`
 - **Recent files only** — *Modified Date* · *Is after* · pick a date
 
-When you're done, click **Save Configuration** at the bottom of the panel.
+When you're done, click **Save configuration** at the bottom of the panel. If you added no sync filters, PipesHub first asks **Start sync process?**; click **Confirm** to save. In the **Instance is configured and ready to sync!** dialog that follows, click **I'll do it later** to turn sync on yourself in Step 5.
 
 <Info>
   No filters? That's fine for small folders. PipesHub will just sync everything it can read.
@@ -217,22 +205,19 @@ When you're done, click **Save Configuration** at the bottom of the panel.
 
 ### Step 5 — Turn sync on
 
-After you save, you'll land on the **Local FS** instance page with one row — your new instance.
+After you save, you'll land on the **Local FS** instance page with one card: your new instance.
 
-<div className="text-center">
-  <img
-    src="/images/connectors/local-fs/instance_row.png"
-    alt="Local FS instance row with Sync Enabled toggle"
-    className="block mx-auto w-11/12"
-  />
-</div>
+<Frame>
+  <img className="block dark:hidden" src="/images/connectors/local-fs/instance_row.png" alt="Local FS instance card with the Sync enabled switch off" />
+  <img className="hidden dark:block" src="/images/connectors/local-fs/instance_row-dark.png" alt="Local FS instance card with the Sync enabled switch off" />
+</Frame>
 
-Right now the row shows **Sync Paused** — nothing is happening yet.
+Right now the **Sync enabled** switch on the card is off, so nothing is happening yet.
 
-1. Find the **Sync Enabled** toggle on the right of the row.
-2. Click it on.
+1. Find the **Sync enabled** switch on the card.
+2. Turn it on.
 
-The status flips to **Sync Enabled**, this computer becomes the instance's owner, and the **first sync starts right away**. You don't need to press **Sync** yourself.
+The switch turns on, this computer becomes the instance's owner, and the **first sync starts right away**. You don't need to press **Sync** yourself.
 
 <Warning>
   Turn sync on from the desktop app on the computer that has the folder. A web browser, or the desktop app on a different computer, can't turn it on.
@@ -242,25 +227,18 @@ The status flips to **Sync Enabled**, this computer becomes the instance's owner
 
 ### Step 6 — Watch progress
 
-Click anywhere on the instance row to open the **Overview** panel on the right.
+Click the **>** arrow on the instance card to open the **Overview** panel on the right.
 
-<div className="text-center">
-  <img
-    src="/images/connectors/local-fs/instance_overview.png"
-    alt="Overview panel with record stats and sync actions"
-    className="block mx-auto w-11/12"
-  />
-</div>
 
 In the panel you can see:
 
 - **Total** — how many files PipesHub has found.
 - **Completed** — files that are fully indexed and searchable.
 - **Processing** — files being read right now.
-- **Queued** / **Not Started** — files waiting their turn.
+- **Queued** / **Not started** — files waiting their turn.
 - **Failed** — files PipesHub couldn't read (usually a corrupt or protected file, or a file over 100 MB).
 - **Sync** / **Full sync** — re-run a sync any time. **Sync** picks up only what's changed; **Full sync** rescans the whole folder.
-- **Manage Configuration** — re-opens the two tabs from Steps 2–4 if you want to change the folder or filters later. Settings can only be changed in the desktop app; in a web browser this view is read-only.
+- **Manage configuration** — re-opens the two tabs from Steps 2–4 if you want to change the folder or filters later. Settings can only be changed in the desktop app; in a web browser this view is read-only.
 
 That's it! 🎉 Once **Processing** and **Queued** drop to zero, your folder is fully searchable in PipesHub.
 
@@ -332,7 +310,7 @@ These get parsed so you can search the actual contents:
 - E-books — **EPUB**, unless copy-protected (DRM). Their text is searchable, but they can't be previewed in PipesHub; download the book to read it
 - Plain text and data — **TXT**, **MD**, **MDX**, **CSV**, **TSV**, **JSON**, **YAML**, **HTML**
 - Code — **.py**, **.js**, **.ts**, **.java**, and most others
-- Images — **JPG**, **JPEG**, **PNG**, **WebP**, **SVG**, **HEIC**, **HEIF**
+- Images: **JPG**, **JPEG**, **PNG**, **WebP**, **SVG**, and **HEIC** and **HEIF** when `USE_PARSING_SERVICE=true` is set
 
 ### Stored but not searched inside
 
@@ -370,7 +348,7 @@ Local FS only syncs while the desktop app is open and signed in on the computer 
 
 <Accordion title="The connector says it can't find or read my folder">
 
-- The folder may have been renamed, moved, or deleted. Open the instance in the desktop app, click **Manage Configuration**, choose the folder again, and save.
+- The folder may have been renamed, moved, or deleted. Open the instance in the desktop app, click **Manage configuration**, choose the folder again, and save.
 - If the folder is on an external drive or network share, make sure it's connected.
 - Make sure your user account on that computer can open the folder.
 
@@ -388,7 +366,7 @@ Files already indexed stay in search until the folder is back.
 <Accordion title="Sync runs but I see 0 files">
 
 - The folder might genuinely be empty, or all the files might live in subfolders while **Include subfolders** is off.
-- Your filters might be excluding everything — open **Manage Configuration** and double-check.
+- Your filters might be excluding everything — open **Manage configuration** and double-check.
 - The files might all be skipped types (see **Files that are skipped** under **How syncing works**).
 
 </Accordion>
@@ -404,8 +382,8 @@ Files already indexed stay in search until the folder is back.
 
 <Accordion title="Scheduled sync never seems to run">
 
-- Make sure **Sync Strategy** is set to **Scheduled** and **Sync Interval** has a value.
-- Confirm **Sync Enabled** on the instance card is on (not paused).
+- Make sure **Sync strategy** is set to **Scheduled** and **Sync interval** has a value.
+- Confirm **Sync enabled** on the instance card is on (not paused).
 - Make sure the desktop app is open and signed in on the computer that owns the instance. Scheduled syncs are skipped while it isn't.
 
 </Accordion>

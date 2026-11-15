@@ -1,0 +1,122 @@
+---
+title: "MCP servers in agents"
+description: "Add MCP servers for your team or for yourself, sign in to them, and give their tools to agents"
+icon: "server"
+---
+
+<div className="not-prose mt-10">
+  <div className="p-6 border border-gray-200 dark:border-gray-700 rounded-xl bg-blue-50 dark:bg-gray-800">
+    <div className="flex items-center gap-3 mb-4">
+      <Icon icon="server" size={32} />
+      <div className="text-xl font-semibold text-gray-900 dark:text-white">MCP servers in agents</div>
+    </div>
+    <p className="text-base text-gray-700 dark:text-gray-300 my-0">Give agents tools from outside MCP servers</p>
+  </div>
+</div>
+
+An MCP server is an outside service that offers tools over the Model Context Protocol. Once you add one and sign in, the assistant and your agents can call its tools in chat.
+
+<Info>
+  This page is about MCP servers that PipesHub **uses**. To connect an AI client such as Claude or Cursor **to** PipesHub, see [PipesHub MCP server](/mcp/overview).
+</Info>
+
+<Note>
+  MCP servers are on by default. An admin can turn them off in **Workspace → Labs** with **Enable MCP Servers**.
+</Note>
+
+## Team servers and your own servers
+
+| | Team servers | Your own servers |
+| --- | --- | --- |
+| Where | **Workspace → MCP servers** | **Workspace → Your MCP servers** |
+| Who adds them | Admins | Any user |
+| Who can use them | Everyone in the organization | Only you |
+| In agents | Any agent | Only agents that aren't shared with the organization or run as a service agent |
+
+**Your MCP servers** also lists the team servers your admin added, so you can sign in to them.
+
+## Add a team server (admin)
+
+1. Go to **Workspace → MCP servers**.
+2. Pick a server from the catalog, or select **New server** to add a custom one.
+3. Fill in the server details:
+   - **Name** and **Description**.
+   - **Transport**: **Streamable HTTP** or **STDIO (command)**. A new custom server can't use **SSE**; only catalog servers and servers added earlier may use it. HTTP and SSE servers need a **URL**. A STDIO server needs a **Command**, its **Arguments** and any **Required env** variables.
+   - **Auth mode** (see below).
+4. Optional: under **Timeouts**, set **Connect timeout (seconds)** and **Tool call timeout (seconds)**. Leave them blank for the defaults.
+5. Optional: add the sign-in under **Credentials (optional)** now, or save and connect later: reopen the server with **Manage** and select **Connect**.
+
+The catalog includes servers such as GitHub, Linear, Notion, Slack, ClickUp, Box, Exa, Atlassian Rovo, Gmail, Google Drive and Google Calendar. You can add more than one instance of a catalog server.
+
+<Warning>
+  A custom STDIO server runs a command on the PipesHub server, with the service's privileges and network access. These servers stay off unless the operator sets `MCP_ALLOW_CUSTOM_STDIO=true` in the deployment environment (Docker Compose `.env`, or `config.mcpAllowCustomStdio` in Helm). Until then the server shows **Disabled on this deployment** and agents can't use its tools. Catalog servers and remote (HTTP) servers are not affected.
+</Warning>
+
+## Add your own server
+
+1. Go to **Workspace → Your MCP servers** and select **New server**.
+2. In **Add an MCP server**, pick a server from the catalog, or select **Custom server** to connect any remote MCP server by its URL.
+3. Fill in the details and save, then select **Connect** to sign in.
+
+Only you see and use servers you add this way.
+
+## Authentication
+
+Each server uses one **Auth mode**:
+
+| Auth mode | What you provide |
+| --- | --- |
+| **No authentication** | Nothing. |
+| **API token** | A token. For a STDIO server it is passed to the command as an environment variable. |
+| **Custom header** | A **Header name** and its value. |
+| **OAuth 2.0** | You sign in with the provider in a pop-up window. |
+
+For OAuth 2.0, PipesHub checks whether the server supports dynamic client registration. If it does, leave the client fields blank: PipesHub registers itself. If it doesn't, register an OAuth app with the provider using the **Callback URL** PipesHub shows, then enter its client ID and client secret. A custom OAuth server can also take an **Authorization URL**, a **Token URL** and **Scopes**.
+
+### Shared sign-in for a team server
+
+For a team server with **API token** or **Custom header** auth, an admin can turn on **Use shared admin authentication for all users**. The admin enters the credential once and everyone uses it. The server then shows **Shared admin auth**.
+
+Without a shared sign-in, each user signs in to the server from **Workspace → Your MCP servers** with **Connect**.
+
+### Connection status
+
+A server card shows its state, for example **Connected**, **Not connected**, **Reconnect needed**, **Needs auth** or **Can't reach server**. If a sign-in expires, select **Reconnect** or **Reauthenticate**. **Disconnect** removes your saved sign-in but keeps the server's settings and approval rules.
+
+Changing how a server is reached or signed in to removes the credentials people and agents saved for it. Everyone has to connect again.
+
+## Tool approvals
+
+You decide what happens when the assistant or an agent wants to call a server's tool in your chats.
+
+1. Go to **Workspace → Your MCP servers**.
+2. On a server card, select **Tool approvals**.
+3. Set a rule for each tool:
+   - **Pre-approved**: the tool runs without asking.
+   - **Allow on approval**: the chat shows **Needs your approval** and waits for you to select **Allow** or **Deny**.
+   - **Deny**: the tool never runs.
+
+Tools are grouped as **Read-only**, **Changes data** and **Can't be undone**. Until you set a rule, a read-only tool is pre-approved, a tool that changes data asks first, and a tool that can't be undone is denied. A tool whose name contains a deleting word such as "delete", "remove" or "drop" counts as one that can't be undone, whatever the server says about it.
+
+In chat, an approval request expires after a while. You can also select **Don't ask again for this tool**. Each person's own rules apply.
+
+## Use MCP servers in an agent
+
+1. Sign in to the server first. In the agent builder palette, a server you haven't signed in to can't be added.
+2. In the palette, open **MCP servers** and drag a server onto the canvas.
+3. Choose which tools the agent may use, or turn on **All tools**. **All tools** also includes tools the server adds later.
+4. Connect it to the **MCP servers** section of the Agent node and save.
+
+Some rules apply:
+
+- An agent can use one server of each type.
+- Every MCP server on the agent needs at least one tool, or **All tools**.
+- Your own servers can't be added to an agent that is shared with your organization or runs as a service agent.
+- On a service agent, use the key icon next to the server in the palette to store the agent's own credentials.
+
+## Related
+
+- [Agents overview](/agent-guide/overview)
+- [Skills](/agent-guide/skills)
+- [API actions](/agent-guide/api-actions)
+- [PipesHub MCP server](/mcp/overview)

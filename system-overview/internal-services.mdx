@@ -1,60 +1,34 @@
 ---
 title: "PipesHub Internal Services"
-description: "Configure public DNS for the services"
+description: "Set the public URLs of the frontend and the connector service"
 ---
 
-# Internal Services: Public DNS Configuration
+# Internal Services: Public URLs
 
-This document provides guidance on configuring public DNS for internal services, both for the connector and frontend components.
+PipesHub stores two public URLs: one for the frontend (the web app) and one for the connector service. There is no settings page for them. Set them with environment variables or with the Configuration Manager API.
 
-## Configuration
+<Info>
+  **Workspace > Services** in the app is a health monitor for the infrastructure and application services. It does not edit these URLs.
+</Info>
 
-Navigate to the profile page-> Select the Settings tab-> Click the Services Tab -> Go to Internal services,
+## Frontend public URL
 
-<img
-  src="/images/services/internal_services.png"
-  alt="Internal Services Configuration"
-  width="90%"
-/>
+The frontend public URL is the address users open in the browser. PipesHub uses it to build OAuth redirect URIs for connectors, actions and MCP servers, and to build links back to records and chats.
 
-<Tabs>
- <Tab title= "Frontend Public DNS">
-    ## Frontend Public DNS
+Set it in one of these ways:
 
-    ### Overview
-    The frontend public DNS configuration enables users to access the application interface through a user-friendly URL. Proper configuration ensures optimal performance and security.
+- **Environment variable:** set `FRONTEND_PUBLIC_URL` in your `.env` file (for example `https://pipeshub.example.com`) and restart. When it is set, it replaces the stored value each time the service starts.
+- **API:** send `POST /api/v1/configurationManager/frontendPublicUrl` with `{"url": "https://pipeshub.example.com"}`. This needs an admin user and the `config:write` scope. See [Configuration Manager](/system-overview/configuration-manager).
 
-    1. Click on the setting icon on the frontend card.
-    2. Enter the public Frontend DNS url of the app.
-    3. Click on the save button.
+<Warning>
+  Set the frontend public URL before you configure OAuth connectors. The Redirect URI that PipesHub shows for a connector is built from it, and the URI you register with the vendor must match exactly.
+</Warning>
 
-    ### DNS Configuration Steps
+## Connector public URL
 
-      <img
-         src="/images/services/frontend_dns.png"
-         alt="Google credentials individual config dialog"
-         width="90%"
-       />
-    </Tab>
+The connector public URL is the public address of the connector service. The web app is allowed to call it from the browser.
 
-  <Tab title= "Connector Public DNS">
-    ## Connector Public DNS
+Set it in one of these ways:
 
-    ### Overview
-    The connector service provides API endpoints for data integration between external systems and internal services. Configuring public DNS for connectors ensures secure and reliable communication between these systems.
-    1. Click on the settings icon on the connectors card.
-    2. Enter the public Connector DNS url of the app.
-    3. Click on the save button.
-
-    ### DNS Configuration Steps
-      <img
-         src="/images/services/connector_dns.png"
-         alt="Google credentials individual config dialog"
-         width="90%"
-       />
-      <Info>
-          Public connector DNS is required for receiving webhook events in real time from business applications or connectors.
-      </Info>
-    </Tab>
-
-</Tabs>
+- **Environment variable:** set `CONNECTOR_PUBLIC_BACKEND` and restart. When it is set, it replaces the stored value each time the service starts.
+- **API:** send `POST /api/v1/configurationManager/connectorPublicUrl` with `{"url": "https://connectors.example.com"}`. This needs an admin user and the `config:write` scope.

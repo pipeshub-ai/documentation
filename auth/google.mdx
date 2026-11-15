@@ -1,73 +1,74 @@
 ---
-title: "Google Authentication"
+title: "Google authentication"
 description: "Configure how users authenticate and access the application using google"
 icon: "google"
 ---
 
-## Google Authentication Allow users to sign in with their Google accounts using OAuth 2.0.
+## Google authentication
 
-### How It Works
+Allow users to sign in with their Google accounts using OAuth 2.0.
 
-1. User clicks "Sign in with Google"
-2. User is redirected to Google's authentication page
-3. After authenticating with Google, user is returned to the application
-4. Upon successful validation, access is granted
+### How it works
 
-### Configuration To enable Google authentication:
+1. A user clicks **Sign in with Google**.
+2. The user is redirected to Google's sign-in page.
+3. After signing in, the user is returned to the application.
+4. Once PipesHub validates the sign-in, access is granted.
 
-1. Create OAuth credentials in [Google Cloud Console](https://console.cloud.google.com/) Google Cloud Console: - Create a project (if you don't have one) - Configure
-   OAuth consent screen - Create OAuth client ID (Web application) - Note your Client ID and Client Secret
+### Configuration
+
+To enable Google authentication:
+
+1. Create OAuth credentials in the [Google Cloud Console](https://console.cloud.google.com/):
+   - Create a project (if you don't have one).
+   - Configure the OAuth consent screen.
+   - Create an OAuth client ID (Web application).
+   - Note your Client ID. PipesHub doesn't need the client secret.
 
    <div style={{ textAlign: "center" }}>
      <img
        src="/images/auth/google/google_create_clientId.png"
-       alt="Google create credentials in console"
+       alt="Google Cloud Console create credentials page"
        width="90%"
      />
    </div>
 
    <Warning>
-     Redirect Uri in you Google Cloud Console should match exactly with the
-     (your-app-url/auth/google/callback)
+     The redirect URI in your Google Cloud Console must match exactly
+     `your-app-url/auth/google/callback`.
      <Info>
-       For example - if your app is running on https://f7f0-240.ngrok-free.app
-       then redirectUri should be
-       https://f7f0-240.ngrok-free.app/auth/google/callback in Google Cloud
-       Console.
+       For example, if your app runs at `https://pipeshub.example.com`, the redirect URI is
+       `https://pipeshub.example.com/auth/google/callback`.
      </Info>
    </Warning>
 
    <div style={{ textAlign: "center" }}>
      <img
        src="/images/auth/google/google_redirectUri.png"
-       alt="Google console redirect uri page"
+       alt="Google Cloud Console redirect URI page"
        width="90%"
      />
    </div>
 
    <Warning>
-     Authorized Javascript Origin in you Google Cloud Console should match
-     exactly with the (your-app-url)
+     The authorized JavaScript origin in your Google Cloud Console must match exactly
+     `your-app-url`.
      <Info>
-       For example - if your app is running on https://f7f0-240.ngrok-free.app
-       then authorized Javascript origin should be
-       https://f7f0-240.ngrok-free.app in Google Cloud Console.
+       For example, if your app runs at `https://pipeshub.example.com`, the authorized
+       JavaScript origin is `https://pipeshub.example.com`.
      </Info>
    </Warning>
 
    <div style={{ textAlign: "center" }}>
      <img
        src="/images/auth/google/google_origin.png"
-       alt="Google console origin"
+       alt="Google Cloud Console authorized JavaScript origin page"
        width="90%"
      />
    </div>
 
-2. Navigate to Authentication Settings - Toggle on "Google" - Enter Client ID - Click "Save"
-   <div style={{ textAlign: "center" }}>
-     <img
-       src="/images/auth/google/google_config.png"
-       alt="Google configuration Dialog"
-       width="90%"
-     />
-   </div>
+2. In PipesHub, open **Workspace settings** > **Authentication**, click the settings (gear) icon on **Google**, enter the **Client ID** and click **Save**. Then click **Edit**, turn on **Google** and click **Save**. (The toggle stays off until the method is configured.)
+   <Frame>
+     <img className="block dark:hidden" src="/images/auth/google/google_config.png" alt="Configure Google authentication dialog with Redirect URI, Authorized Origin and Client ID" />
+     <img className="hidden dark:block" src="/images/auth/google/google_config-dark.png" alt="Configure Google authentication dialog with Redirect URI, Authorized Origin and Client ID" />
+   </Frame>

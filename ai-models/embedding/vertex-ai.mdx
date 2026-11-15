@@ -1,9 +1,8 @@
 ---
-title: Vertex AI
+title: "Vertex AI Embeddings"
+sidebarTitle: "Vertex AI"
 description: "Configure PipesHub to generate embeddings with Google Cloud Vertex AI"
 ---
-
-# Vertex AI Embedding Configuration
 
 Vertex AI serves Google's text embedding models from your own Google Cloud project, billed and governed alongside the rest of your cloud resources.
 
@@ -23,9 +22,8 @@ Upload the JSON key file. PipesHub checks that it is valid JSON, contains `type`
 
 ### Model Name *
 
-The embedding model to use, for example `text-embedding-004` or `text-multilingual-embedding-002`.
+The embedding model to use, for example `gemini-embedding-001` or `gemini-embedding-2`. Google lists April 1, 2027 as the retirement date of `text-embedding-004`, `text-embedding-005` and `text-multilingual-embedding-002`; see Google's [model versions and lifecycle](https://docs.cloud.google.com/vertex-ai/generative-ai/docs/learn/model-versions).
 
-Use a multilingual model if your documents are not all in English.
 
 ## Optional Fields
 
@@ -39,17 +37,17 @@ The Vertex AI region, for example `us-central1`.
 
 A label shown in the PipesHub interface so you can tell several configurations apart. If you leave it blank, the model name is used.
 
-### Dimensions
+### Output Dimensions
 
-The number of dimensions in the vectors this model produces. PipesHub uses it to size the vector collection.
+Override the size of the vectors the model produces. Leave it blank to use the model's default. Set it only for a model that accepts a dimensions parameter.
+
+### Multimodal
+
+Turn this on only if the model can embed images as well as text. It is off by default. With it on, saving the model also checks that it can embed a test image; see [Health check messages for other model types](/ai-models/overview#health-check-messages-for-other-model-types).
 
 <Warning>
-Changing the embedding model or its dimensions after documents are indexed means existing vectors no longer match new ones. Re-index your content after switching.
+While content is indexed, PipesHub refuses to switch the embedding model in use to a different model or vector size. See [Changing the embedding model in use](/ai-models/overview#changing-the-embedding-model-in-use).
 </Warning>
-
-### Is Multimodal
-
-Turn this on if the model can embed images as well as text. It is off by default.
 
 ## Related
 

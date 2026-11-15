@@ -9,7 +9,7 @@ icon: "/logo/jira.png"
     <div className="flex items-center gap-3 mb-4">
       <img 
         src="/logo/jira.png" 
-        alt="Jira Logo" 
+        alt="Jira connector logo" 
         className="w-8 h-8 object-contain flex-shrink-0"
       />
       <div className="text-xl font-semibold text-gray-900 dark:text-white">Jira Cloud</div>
@@ -84,7 +84,7 @@ PipesHub matches Jira users to PipesHub accounts by email address. This applies 
   <img
     src="/images/connectors/jira/user_profile_settings.png"
     alt="Access User Profile Settings"
-    className="block mx-auto w-11/12"
+    className="block mx-auto w-full max-w-sm"
   />
 </div>
 
@@ -205,16 +205,13 @@ Use the left sidebar to navigate between **Permissions**, **Authorization**, and
 </div>
 
 4. **Get the Redirect/Callback URL from PipesHub:**
-   - In PipesHub, go to **Workspace Settings** → **Connectors**, find **Jira**, and click **Set up** for a new instance.
+   - In PipesHub, go to **Workspace settings** → **Connectors**, find **Jira**, and click **Set up** for a new instance.
    - The connector panel opens as a right-side drawer. On the **Authenticate** tab, copy the **Redirect/Callback URL**. It ends in `connectors/oauth/callback/Jira`.
 
-<div className="text-center">
-  <img
-    src="/images/connectors/jira/jira_config.png"
-    alt="PipesHub Jira Authenticate Instance tab — copy the Redirect URL"
-    className="block mx-auto w-11/12"
-  />
-</div>
+<Frame>
+  <img className="block dark:hidden" src="/images/connectors/jira/jira_config.png" alt="PipesHub Jira Authenticate tab: copy the Redirect/Callback URL" />
+  <img className="hidden dark:block" src="/images/connectors/jira/jira_config-dark.png" alt="PipesHub Jira Authenticate tab: copy the Redirect/Callback URL" />
+</Frame>
 
 5. Paste the copied URL into the **Callback URL** field in Atlassian Developer Console.
 6. Click **Save changes**.
@@ -341,37 +338,31 @@ Next, the **Granular scopes** tab. Add these read permissions for fine-grained a
 
 #### Step 7: Authenticate tab — enter credentials
 
-The connector drawer in PipesHub has three tabs: **Authenticate**, **Authorize**, and **Configure records**. Start on the **Authenticate** tab.
+The connector drawer in PipesHub has three tabs for OAuth 2.0: **Authenticate**, **Authorize** (shown after you click **Next**), and **Configure records**. Start on the **Authenticate** tab.
 
 1. Enter an **Instance name** (required), such as `Jira Production`.
 2. Confirm the **Redirect/Callback URL** matches the Callback URL you saved in Atlassian in Step 4.
-3. If your admin has pre-registered an OAuth app, pick it from the **OAuth app** dropdown. Otherwise leave it blank and enter credentials manually.
-4. Enter:
+3. Under **OAuth app**, enter an **OAuth app name** (required), such as `PipesHub Jira`. PipesHub saves the app under this name so other instances can reuse it. If saved OAuth apps already exist, you can pick one from the **OAuth app** dropdown instead.
+4. Under **OAuth 2.0 credentials**, enter:
    - **Application (Client) ID** — from Step 6
    - **Client Secret** — from Step 6
 5. Click **Next** to move to the **Authorize** tab.
 
-<div className="text-center">
-  <img
-    src="/images/connectors/jira/connector_add_creds.png"
-    alt="Authenticate Instance tab — enter Client ID and Client Secret"
-    className="block mx-auto w-11/12"
-  />
-</div>
+<Frame>
+  <img className="block dark:hidden" src="/images/connectors/jira/connector_add_creds.png" alt="Authenticate tab: enter the OAuth app name, Client ID and Client Secret" />
+  <img className="hidden dark:block" src="/images/connectors/jira/connector_add_creds-dark.png" alt="Authenticate tab: enter the OAuth app name, Client ID and Client Secret" />
+</Frame>
 
 #### Step 8: Authorize tab — complete the OAuth flow
 
-On the **Authorize** tab, all the OAuth authorization work happens. The tab shows an **Authenticate** button to kick off the OAuth handshake.
+On the **Authorize** tab, all the OAuth authorization work happens. The tab shows an **Authenticate Jira to proceed** button to kick off the OAuth handshake.
 
-<div className="text-center">
-  <img
-    src="/images/connectors/jira/connector_authenticate_option.png"
-    alt="PipesHub Authorize tab with the Authenticate button"
-    className="block mx-auto w-11/12"
-  />
-</div>
+<Frame>
+  <img className="block dark:hidden" src="/images/connectors/jira/connector_authenticate_option.png" alt="PipesHub Authorize tab with the Authenticate Jira to proceed button" />
+  <img className="hidden dark:block" src="/images/connectors/jira/connector_authenticate_option-dark.png" alt="PipesHub Authorize tab with the Authenticate Jira to proceed button" />
+</Frame>
 
-1. Click **Authenticate** to start the OAuth flow. A popup opens to Atlassian's authorization page.
+1. Click **Authenticate Jira to proceed** to start the OAuth flow. A popup opens to Atlassian's authorization page.
 2. Select your Jira site from the dropdown.
 
 <div className="text-center">
@@ -398,7 +389,7 @@ On the **Authorize** tab, all the OAuth authorization work happens. The tab show
 
 4. The popup closes and returns you to PipesHub. The connector tile shows an **Authenticated** badge with a **Reauthenticate** option.
 
-5. Click **Next** to move to the **Configure records** tab.
+5. Click **Continue to configuration** in the footer to move to the **Configure records** tab.
 
 #### Step 9: Configure records tab — sync settings, filters, and indexing
 
@@ -406,16 +397,13 @@ On the **Configure records** tab, control how the connector syncs and what gets 
 
 **Sync settings** — configure your synchronization preferences first:
 
-1. **Sync Strategy** — `Scheduled` or `Manual`.
-2. **Sync Interval** — how often to sync (default: 60 minutes).
+1. **Sync strategy**: `Scheduled` or `Manual`.
+2. **Sync interval**: how often to sync (default: 1 hour).
 
-<div className="text-center">
-  <img
-    src="/images/connectors/jira/connector_configure_sync_strategy.png"
-    alt="Configure Sync Strategy"
-    className="block mx-auto w-11/12"
-  />
-</div>
+<Frame>
+  <img className="block dark:hidden" src="/images/connectors/jira/connector_configure_sync_strategy_oauth.png" alt="OAuth instance on the Configure records tab with Sync strategy and Sync interval" />
+  <img className="hidden dark:block" src="/images/connectors/jira/connector_configure_sync_strategy_oauth-dark.png" alt="OAuth instance on the Configure records tab with Sync strategy and Sync interval" />
+</Frame>
 
 <Note>
   **Scheduled sync** runs automatically at the specified intervals. **Manual sync** requires you to trigger synchronization on-demand. Real-time sync is not available; changes arrive on the next scheduled or manual sync.
@@ -423,20 +411,17 @@ On the **Configure records** tab, control how the connector syncs and what gets 
 
 **Sync filters** — determine which content is downloaded from Jira. Data excluded by sync filters is never downloaded.
 
-<div className="text-center">
-  <img
-    src="/images/connectors/jira/jira-filters.png"
-    alt="Jira Filters Configuration"
-    className="block mx-auto w-11/12"
-  />
-</div>
+<Frame>
+  <img className="block dark:hidden" src="/images/connectors/jira/jira-filters.png" alt="Jira sync filters with the Project Keys and Modified Date filters added" />
+  <img className="hidden dark:block" src="/images/connectors/jira/jira-filters-dark.png" alt="Jira sync filters with the Project Keys and Modified Date filters added" />
+</Frame>
 
 Available sync filters:
 
 1. **Project Keys** — Filter by Jira projects.
-   - Operator: `In` (include only) or `Not In` (exclude)
+   - Operator: `In` (include only) or `Not in` (exclude)
    - Selection: searchable dropdown of all your Jira projects (shows names + keys, e.g., "Engineering (ENG)")
-2. **Modified Date** — Filter by last modification date. Operators: `Is After`, `Is Before`, `Is Between`.
+2. **Modified Date**: Filter by last modification date. Operators: a rolling window (`Last 7 days`, `Last 14 days`, `Last 30 days`, `Last 90 days`, `Last 180 days`, `Last 365 days`; the default is `Last 7 days`), or `Is after`, `Is before`, `Is between` with fixed dates.
 3. **Created Date** — Filter by creation date. Same operators.
 
 <Info>
@@ -456,21 +441,18 @@ Available sync filters:
 **Example configurations:**
 
 - *Sync only Engineering project:* Project Keys → Operator `In` → select "Engineering"
-- *Exclude archived projects:* Project Keys → Operator `Not In` → select archived projects
-- *Recent issues only:* Modified Date → Operator `Is After` → Date `2024-06-01`
+- *Exclude archived projects:* Project Keys → Operator `Not in` → select archived projects
+- *Recent issues only:* Modified Date → Operator `Is after` → Date `2024-06-01`, or Operator `Last 30 days`
 - *Index issues but not attachments:* disable the **Index Issue and comment Attachments** toggle
 
-Click **Save** to save your configuration. PipesHub confirms the instance is ready with a final dialog — **"Instance is configured and ready to sync!"** — offering two choices: **I'll do it later** or **Start syncing now**.
+Click **Save configuration**. If you added no sync filter, or manual indexing is turned on, PipesHub first asks **Start sync process?**; click **Confirm**. PipesHub then confirms the instance is ready with a final dialog, **"Instance is configured and ready to sync!"**, offering two choices: **I'll do it later** or **Start syncing now**.
 
-<div className="text-center">
-  <img
-    src="/images/connectors/jira/enable_connector.png"
-    alt="Instance is configured and ready to sync — I'll do it later or Start syncing now"
-    className="block mx-auto w-11/12"
-  />
-</div>
+<Frame>
+  <img className="block dark:hidden" src="/images/connectors/jira/enable_connector.png" alt="Dialog: Instance is configured and ready to sync, with I'll do it later and Start syncing now" />
+  <img className="hidden dark:block" src="/images/connectors/jira/enable_connector-dark.png" alt="Dialog: Instance is configured and ready to sync, with I'll do it later and Start syncing now" />
+</Frame>
 
-Choose **Start syncing now** to kick off the initial sync immediately, or **I'll do it later** to enable the connector without an immediate sync. Monitor the **Indexing Progress** to track sync completion.
+Choose **Start syncing now** to kick off the initial sync immediately, or **I'll do it later** and turn on **Sync enabled** on the connector's card when you are ready. To follow the sync, click the arrow on the connector's card and check **Records status**.
 
 </Tab>
 
@@ -498,7 +480,7 @@ Use this method when you want the fastest setup and only need a single user acco
 <div className="text-center">
   <img
     src="/images/connectors/jira/api_token_copy.png"
-    alt="Copy the API token — shown once"
+    alt="Copy the API token (shown once)"
     className="block mx-auto w-11/12"
   />
 </div>
@@ -513,23 +495,20 @@ Use this method when you want the fastest setup and only need a single user acco
 
 #### Step 2: Authenticate tab — enter credentials
 
-1. In PipesHub, go to **Workspace Settings** → **Connectors**, find **Jira**, and click **Set up**.
-2. The connector panel opens as a right-side drawer with three tabs: **Authenticate**, **Authorize**, and **Configure records**.
+1. In PipesHub, go to **Workspace settings** → **Connectors**, find **Jira**, and click **Set up**.
+2. The connector panel opens as a right-side drawer with the tabs **Authenticate** and **Configure records**. (The **Authorize** tab appears only for **OAuth 2.0**.)
 3. On the **Authenticate** tab, enter an **Instance name** (required), such as `Jira Production`.
 4. Pick **API Token** in the **Authentication method** dropdown.
 5. Enter:
    - **Base URL** — your Jira site URL (e.g., `https://your-domain.atlassian.net`; a trailing slash is removed automatically)
    - **Email** — your Atlassian account email (the account that created the API token)
    - **API Token** — the token you copied in Step 1
-6. Click **Next**. PipesHub validates the credentials and advances directly to the **Configure records** tab (the **Authorize** tab is skipped for API Token because the token authenticates on its own).
+6. Click **Next**. PipesHub creates the instance and opens the **Configure records** tab. The API Token method has no **Authorize** step because the token authenticates on its own.
 
-<div className="text-center">
-  <img
-    src="/images/connectors/jira/connector_api_token_form.png"
-    alt="Authenticate Instance tab with API Token method — Base URL, Email, API Token fields"
-    className="block mx-auto w-11/12"
-  />
-</div>
+<Frame>
+  <img className="block dark:hidden" src="/images/connectors/jira/connector_api_token_form.png" alt="Authenticate tab with the API Token method: Base URL, Email and API Token fields" />
+  <img className="hidden dark:block" src="/images/connectors/jira/connector_api_token_form-dark.png" alt="Authenticate tab with the API Token method: Base URL, Email and API Token fields" />
+</Frame>
 
 <Warning>
   The **Email** must match the Atlassian account that owns the API token. Using a different email causes authentication to fail.
@@ -541,33 +520,27 @@ On the **Configure records** tab, control how the connector syncs and what gets 
 
 **Sync settings** — configure your synchronization preferences first:
 
-1. **Sync Strategy** — `Scheduled` or `Manual`.
-2. **Sync Interval** — how often to sync (default: 60 minutes).
+1. **Sync strategy**: `Scheduled` or `Manual`.
+2. **Sync interval**: how often to sync (default: 1 hour).
 
-<div className="text-center">
-  <img
-    src="/images/connectors/jira/connector_configure_sync_strategy.png"
-    alt="Configure Sync Strategy"
-    className="block mx-auto w-11/12"
-  />
-</div>
+<Frame>
+  <img className="block dark:hidden" src="/images/connectors/jira/connector_configure_sync_strategy.png" alt="Configure records tab with Sync strategy and Sync interval" />
+  <img className="hidden dark:block" src="/images/connectors/jira/connector_configure_sync_strategy-dark.png" alt="Configure records tab with Sync strategy and Sync interval" />
+</Frame>
 
 **Sync filters** — determine which content is downloaded from Jira. Data excluded by sync filters is never downloaded.
 
-<div className="text-center">
-  <img
-    src="/images/connectors/jira/jira-filters.png"
-    alt="Jira Filters Configuration"
-    className="block mx-auto w-11/12"
-  />
-</div>
+<Frame>
+  <img className="block dark:hidden" src="/images/connectors/jira/jira-filters.png" alt="Jira sync filters with the Project Keys and Modified Date filters added" />
+  <img className="hidden dark:block" src="/images/connectors/jira/jira-filters-dark.png" alt="Jira sync filters with the Project Keys and Modified Date filters added" />
+</Frame>
 
 Available sync filters:
 
 1. **Project Keys** — Filter by Jira projects.
-   - Operator: `In` (include only) or `Not In` (exclude)
+   - Operator: `In` (include only) or `Not in` (exclude)
    - Selection: searchable dropdown of all your Jira projects
-2. **Modified Date** — Filter by last modification date. Operators: `Is After`, `Is Before`, `Is Between`.
+2. **Modified Date**: Filter by last modification date. Operators: a rolling window (`Last 7 days`, `Last 14 days`, `Last 30 days`, `Last 90 days`, `Last 180 days`, `Last 365 days`; the default is `Last 7 days`), or `Is after`, `Is before`, `Is between` with fixed dates.
 3. **Created Date** — Filter by creation date. Same operators.
 
 **Indexing filters** — control what synced data gets processed for AI search.
@@ -576,17 +549,14 @@ Available sync filters:
 - **Index Issues** (default: enabled) — include issue content (description + comments) in search
 - **Index Issue and comment Attachments** (default: enabled) — include attachments in search
 
-Click **Save** to save your configuration. PipesHub confirms the instance is ready with a final dialog — **"Instance is configured and ready to sync!"** — offering two choices: **I'll do it later** or **Start syncing now**.
+Click **Save configuration**. If you added no sync filter, or manual indexing is turned on, PipesHub first asks **Start sync process?**; click **Confirm**. PipesHub then confirms the instance is ready with a final dialog, **"Instance is configured and ready to sync!"**, offering two choices: **I'll do it later** or **Start syncing now**.
 
-<div className="text-center">
-  <img
-    src="/images/connectors/jira/enable_connector.png"
-    alt="Instance is configured and ready to sync — I'll do it later or Start syncing now"
-    className="block mx-auto w-11/12"
-  />
-</div>
+<Frame>
+  <img className="block dark:hidden" src="/images/connectors/jira/enable_connector.png" alt="Dialog: Instance is configured and ready to sync, with I'll do it later and Start syncing now" />
+  <img className="hidden dark:block" src="/images/connectors/jira/enable_connector-dark.png" alt="Dialog: Instance is configured and ready to sync, with I'll do it later and Start syncing now" />
+</Frame>
 
-Choose **Start syncing now** to kick off the initial sync immediately, or **I'll do it later** to enable the connector without an immediate sync.
+Choose **Start syncing now** to kick off the initial sync immediately, or **I'll do it later** and turn on **Sync enabled** on the connector's card when you are ready.
 
 </Tab>
 
@@ -594,15 +564,12 @@ Choose **Start syncing now** to kick off the initial sync immediately, or **I'll
 
 ## Personal connector
 
-**Jira Cloud Personal** is a separate connector that syncs Jira Cloud issues your own account can see into your personal workspace. Set it up under Workspace Settings → **Personal** → **Your Connectors**.
+**Jira Cloud Personal** is a separate connector that syncs Jira Cloud issues your own account can see into your personal workspace. Set it up under Workspace settings → **Personal** → **Your connectors**.
 
-<div className="text-center">
-  <img
-    src="/images/connectors/jira/ph-jira-cloud-personal-setup.png"
-    alt="Set up Jira Cloud Personal: Authenticate tab"
-    className="block mx-auto w-2/3"
-  />
-</div>
+<Frame>
+  <img className="block dark:hidden" src="/images/connectors/jira/ph-jira-cloud-personal-setup.png" alt="Set up Jira Cloud Personal: Authenticate tab with OAuth 2.0 credentials" />
+  <img className="hidden dark:block" src="/images/connectors/jira/ph-jira-cloud-personal-setup-dark.png" alt="Set up Jira Cloud Personal: Authenticate tab with OAuth 2.0 credentials" />
+</Frame>
 
 - **What it syncs:** only the projects and issues visible to the credentials you provide.
 - **Who can see it:** only you, the user who created the connector. It doesn't read Jira permission schemes, groups, other users, or the audit log, so it doesn't need Jira admin rights.
@@ -678,7 +645,7 @@ The Jira connector syncs the following data from your Jira Cloud workspace:
 - Check that all required API scopes are configured
 
 **No data syncing:**
-- Verify the connector status shows **Active**
+- Verify the **Sync enabled** switch on the connector card is on
 - Check that the authenticating user (OAuth) or token-owning user (API Token) has access to Jira projects
 - Ensure projects are not restricted or archived
 - Review sync logs for specific error messages
@@ -849,15 +816,15 @@ Choose **OAuth** for production. Choose **API Token** when you cannot register a
 
 </Accordion>
 
-<Accordion title="What's the difference between Jira Connector and Jira Toolset?">
+<Accordion title="What's the difference between Jira Connector and Jira Action?">
 
-| Aspect | Jira Connector | Jira Toolset |
+| Aspect | Jira Connector | Jira Action |
 |--------|----------------|--------------|
 | **Purpose** | Sync and index Jira data for search | Enable agents to perform actions in Jira |
 | **Data Flow** | One-way (import data into PipesHub) | Two-way (read and write via API) |
 | **When to Use** | Query/search issues, projects, comments | Create issues, update tickets, add comments |
 
-**Example:** Use **Jira Connector** to search and retrieve existing ticket information. Use **Jira Toolset** to let agents create new issues or update ticket status.
+**Example:** Use **Jira Connector** to search and retrieve existing ticket information. Use **Jira action** to let agents create new issues or update ticket status.
 
 </Accordion>
 
@@ -871,13 +838,13 @@ Check these in order:
 2. **Hidden email** — if your Atlassian email visibility is set to *Only you and admins*, PipesHub matches you only if you already exist in PipesHub or in another connected source.
    - **Fix:** set it to **Anyone** or **Your organization** (see [Email visibility](#email-visibility-recommended) above), then run a sync.
 
-3. **Verify in All Records** — go to **All Records** in PipesHub and confirm the Jira issues you expect are actually present. If they're missing, the sync hasn't reached them yet — check sync status in **Settings → Connectors**.
+3. **Verify in All records** — go to **All records** in PipesHub and confirm the Jira issues you expect are actually present. If they're missing, the sync hasn't reached them yet — check sync status in **Workspace settings** → **Connectors**.
 
 </Accordion>
 
 <Accordion title="Is it possible to index only specific Jira projects?">
 
-Yes. On the **Configure records** tab, use the **Project Keys** filter with the `In` operator and pick the projects you want to include. Or use `Not In` to exclude specific projects.
+Yes. On the **Configure records** tab, use the **Project Keys** filter with the `In` operator and pick the projects you want to include. Or use `Not in` to exclude specific projects.
 
 </Accordion>
 

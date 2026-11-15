@@ -60,7 +60,7 @@ A PostgreSQL restore brings back only what is in PostgreSQL. Neo4j, Qdrant and R
     PGBACKREST_REPO1_CIPHER_PASS=<a long random passphrase>
     ```
 
-    <Warning>Without the passphrase, nothing can be restored.</Warning>
+    <Warning>Without the passphrase, nothing can be restored. Keep a copy of `pgbackrest.env` (passphrase and repository credentials) somewhere secure apart from both this machine and the repository, for example in a password manager; the [regular backup](/deployment/backup-restore) also copies it.</Warning>
   </Step>
   <Step title="Add the backup file to the stack">
     Every `docker compose` command and the restore script must see the same Compose files, project and profiles as your stack. Set them once, in the shell or as three lines in `.env`. Keep the files and profiles your stack already uses, and add `docker-compose.postgres-backup.yml` to the files:
@@ -74,11 +74,20 @@ A PostgreSQL restore brings back only what is in PostgreSQL. Neo4j, Qdrant and R
 
     With the document-store file, keep both `postgres` and `postgres-migrate` in the profiles: without `postgres-migrate`, Compose rejects the project (`service "pipeshub-ai" depends on undefined service "pipeshub-migrate"`).
 
-    If you manage the stack with `install.sh`, give it the backup file too, or `./install.sh --stop` and the next start drop it (the installer passes its own Compose files and ignores `COMPOSE_FILE`). The installer saves this setting in `.env` and keeps it for `--stop` and `--upgrade`:
+    If you manage the stack with `install.sh`, give it the backup file too, or `./install.sh --stop` and the next start drop it. The installer passes its own Compose files, ignores `COMPOSE_FILE`, and reads its extra files from the last `PIPESHUB_COMPOSE_OVERRIDES` line in `.env`. On an install that already has a `.env`, a `PIPESHUB_COMPOSE_OVERRIDES=… ./install.sh` on the command line counts for that run only, so write it into `.env` and restart through the installer:
 
     ```bash
-    PIPESHUB_COMPOSE_OVERRIDES=docker-compose.postgres-docstore.yml:docker-compose.postgres-backup.yml ./install.sh
+    echo 'PIPESHUB_COMPOSE_OVERRIDES=docker-compose.postgres-docstore.yml:docker-compose.postgres-backup.yml' >> .env
+    ./install.sh --no-pull
     ```
+
+    The `docker compose` commands on this page then need the same files; build `COMPOSE_FILE` from that line:
+
+    ```bash
+    export COMPOSE_FILE="docker-compose.yml:$(grep '^PIPESHUB_COMPOSE_OVERRIDES=' .env | tail -1 | cut -d= -f2-)"
+    ```
+
+    `scripts/pg-restore.sh` does this by itself when `COMPOSE_FILE` is not set.
 
     PostgreSQL restarts once to turn on WAL archiving. A new `pg-backup` service then takes the first full backup.
   </Step>
@@ -174,19 +183,32 @@ PostgreSQL replays the archived WAL up to the moment you gave, then opens for wr
 
 <Warning>Everything written after that moment is removed from the live database. If you are not sure of the time, restore into a separate copy first and check it.</Warning>
 
+### Mark each regular backup in PostgreSQL
+
+To bring PostgreSQL back to exactly the moment of a [regular backup](/deployment/backup-restore) of the other stores, mark that moment in the WAL before you take the backup. Stop the application first, so nothing writes from then on, note the WAL location, make a restore point, and let `pgbackrest check` archive it:
+
+```bash
+docker compose stop pipeshub-ai
+docker compose exec -T postgres psql -U postgres -d pipeshub -Atc "select pg_current_wal_lsn()" > pg-restore-point.txt
+docker compose exec -T postgres psql -U postgres -d pipeshub -c "select pg_create_restore_point('regular-backup')"
+docker compose exec pg-backup pgbackrest check      # closes the WAL segment and waits until it is in the repository
+```
+
+Then take the regular backup as described there, and keep `pg-restore-point.txt` with it. A time does not work as well for this: recovery to a time stops at the first transaction committed after it, so with nothing committed after the backup the time cannot be reached at all.
+
 ### After losing the machine or its disk
 
-This needs an off-machine repository, set up before the loss (see [Choose where backups go](#turn-backups-on)): the default repository is a Docker volume on the lost disk.
+This needs an off-machine repository, set up before the loss (see [Choose where backups go](#turn-backups-on)): the default repository is a Docker volume on the lost disk. It also needs `pgbackrest.env`, which holds the repository's credentials and passphrase.
 
-On the new machine, bring back `.env`, `pgbackrest.env`, your uploaded files and the volumes of the stores outside PostgreSQL from your [regular backup](/deployment/backup-restore). Then, **before you start the stack**, restore PostgreSQL to the moment that backup was taken (when you stopped PipesHub for it), so every store shows the same moment:
+On the new machine, bring back `.env`, `pgbackrest.env`, your uploaded files and the volumes of the stores outside PostgreSQL from your regular backup. Then, **before you start the stack**, restore PostgreSQL to that backup's mark, so every store shows the same moment:
 
 ```bash
 docker compose build postgres                       # the PostgreSQL image is built locally, not pulled
-scripts/pg-restore.sh "<time of the regular backup>" --in-place
-docker compose up -d
+scripts/pg-restore.sh "lsn:$(cat pg-restore-point.txt)" --in-place
+./install.sh --no-pull                              # or docker compose up -d, with COMPOSE_FILE set as above
 ```
 
-Use `latest` (every archived change) only when nothing outside PostgreSQL would be left behind: every store on PostgreSQL and your files in object storage. Otherwise `latest` puts PostgreSQL ahead of Neo4j, Qdrant, Redis and the files. Starting the stack before the restore creates a new, empty database, whose archiving the repository refuses.
+`lsn:` stops recovery just after the restore point, which needs no later transaction. Use `latest` (every archived change) only when nothing outside PostgreSQL would be left behind: every store on PostgreSQL and your files in object storage. Otherwise `latest` puts PostgreSQL ahead of Neo4j, Qdrant, Redis and the files. Starting the stack before the restore creates a new, empty database, whose archiving the repository refuses.
 
 ## Recovery objectives
 

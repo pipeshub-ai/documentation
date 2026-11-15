@@ -21,9 +21,14 @@ A Docker Compose install keeps its data in Docker volumes named `<project>_<volu
 | `kafka_data`, `zookeeper_data`, `zookeeper_log` (`MESSAGE_BROKER=kafka`) | Queued messages |
 | `postgres_data` (the `postgres` Compose profile) | PostgreSQL |
 | `.env` file (always) | `SECRET_KEY` and database passwords |
+| `pgbackrest.env` file (PostgreSQL backups turned on) | The backup repository's credentials and encryption passphrase |
 
 <Warning>
 Back up `.env` with the volumes, and keep it as secret as the data. Stored settings are encrypted with `SECRET_KEY`, and the databases only accept the passwords they were created with. Volumes restored without the matching `.env` are not usable.
+</Warning>
+
+<Warning>
+If you turned on [PostgreSQL backups](/deployment/postgresql-backup), also keep `pgbackrest.env`: it holds the backup repository's credentials and the encryption passphrase, and without it an encrypted repository cannot be read after you lose the machine. The steps below copy it with the backup. Also keep a copy somewhere secure apart from both the machine and the backup repository, for example in a password manager.
 </Warning>
 
 If you run PipesHub on PostgreSQL, the method below covers `postgres_data` too. For continuous backups that restore to any moment, without stopping PipesHub, see [PostgreSQL backups and point-in-time restore](/deployment/postgresql-backup).
@@ -33,6 +38,10 @@ You do not need `pipeshub_hf_cache` (downloaded models) or `neo4j_logs`. The `sl
 ## Back up
 
 This method stops PipesHub so that every store is copied in a consistent state. It works for every backend. Plan for a few minutes of downtime.
+
+<Note>
+With [PostgreSQL backups](/deployment/postgresql-backup) turned on, first [mark the backup in PostgreSQL](/deployment/postgresql-backup#mark-each-regular-backup-in-postgresql), so that after losing the machine PostgreSQL can be restored to exactly this moment.
+</Note>
 
 ```bash
 cd ~/pipeshub                       # your install directory
@@ -52,6 +61,7 @@ for v in mongodb_data redis_data qdrant_storage pipeshub_data pipeshub_root_loca
 done
 cp .env "$BACKUP_DIR/env.backup"
 chmod 600 "$BACKUP_DIR/env.backup"
+[ -f pgbackrest.env ] && cp pgbackrest.env "$BACKUP_DIR/pgbackrest.env.backup" && chmod 600 "$BACKUP_DIR/pgbackrest.env.backup"
 
 ./install.sh --no-pull              # start again on the same images
 ```
@@ -77,6 +87,7 @@ BACKUP_DIR=~/pipeshub-backups/<timestamp>
 
 ./install.sh --stop
 cp "$BACKUP_DIR/env.backup" .env
+[ -f "$BACKUP_DIR/pgbackrest.env.backup" ] && cp "$BACKUP_DIR/pgbackrest.env.backup" pgbackrest.env && chmod 600 pgbackrest.env
 
 # Create any missing volumes for the profiles in .env, without starting anything
 docker compose -p "$PROJECT" create

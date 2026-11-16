@@ -8,7 +8,7 @@ PipesHub ranks **#1** on the EnterpriseRAG-Bench leaderboard with an overall sco
 
 ## What the benchmark is
 
-EnterpriseRAG-Bench is a retrieval benchmark for company internal knowledge, released by Onyx. It has **500 questions** over a corpus of about **500,000 documents** from nine kinds of company source. Teams run the 500 questions through their own system and submit the answers. The leaderboard is hosted on Hugging Face.
+EnterpriseRAG-Bench is a benchmark for answering questions from company internal knowledge, released by Onyx. It has **500 questions** over about **500,000 documents** (511,962) from nine kinds of company source: Slack, Gmail, Linear, Google Drive, HubSpot, Fireflies, GitHub, Jira and Confluence. Teams run the 500 questions through their own system and submit the answers. The leaderboard is hosted on Hugging Face.
 
 - [Leaderboard on Hugging Face](https://huggingface.co/spaces/onyx-dot-app/EnterpriseRAG-Bench-Leaderboard)
 - [Benchmark and harness on GitHub](https://github.com/onyx-dot-app/EnterpriseRAG-Bench)
@@ -23,6 +23,16 @@ EnterpriseRAG-Bench is a retrieval benchmark for company internal knowledge, rel
 | **Completeness** | 95.63 |
 | **Recall** | 96.33 |
 | **Invalid extra docs** | 0.4 |
+
+## What the scores mean
+
+Answers are graded by an AI judge (the paper uses GPT-5.4 at medium reasoning), using a gold answer written for each question.
+
+- **Correctness:** the share of answers that are broadly consistent with the gold answer. An answer that contradicts it, or gets a number wrong, does not count.
+- **Completeness:** the share of the gold answer's individual facts that the answer includes.
+- **Overall score:** for each question, the completeness score if the answer is correct and zero if it is not, averaged over all 500 questions.
+- **Recall:** the share of the documents that hold the answer which the system retrieved.
+- **Invalid extra docs:** how many retrieved documents were neither needed nor accepted as valid. Lower is better.
 
 ## How PipesHub compares
 

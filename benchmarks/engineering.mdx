@@ -8,7 +8,7 @@ PipesHub ran both of these tests itself and published the results as blog posts.
 
 ## Code graph accuracy
 
-PipesHub's code graph links functions, imports and classes across a repository, so agents can follow a call instead of grepping for it. The post [How accurate is your code graph? A benchmark of 4 tools](https://pipeshub.com/blog/code-graph-benchmark) (22 October 2026) compares PipesHub, Graphify, codebase-memory-mcp and CodeGraphContext on nine repositories. The reference was the language's SCIP indexer, scored on calls, imports and inheritance, on hand-written code only.
+PipesHub's code graph links functions, imports and classes across a repository, so agents can follow a call instead of grepping for it. The post [How accurate is your code graph? A benchmark of 4 tools](https://pipeshub.com/blog/code-graph-benchmark) (22 October 2026) compares PipesHub, Graphify, codebase-memory-mcp and CodeGraphContext on nine repositories. The reference was the language's own code indexer (SCIP), and each tool was scored on how many calls, imports and inheritance links it found correctly, on hand-written code only. **F1** is a single score from 0 to 100 that rewards finding the right links without adding wrong ones.
 
 | Measure | PipesHub | Rank |
 |---|---|---|
@@ -17,7 +17,7 @@ PipesHub's code graph links functions, imports and classes across a repository, 
 | Build time, a 29,195-file repository | 271 s (codebase-memory-mcp 110 s, Graphify 1,880 s) | 2nd of the 3 that reported |
 | Peak memory, same build | Within Neo4j's 3 GB limit (codebase-memory-mcp 5 GB, Graphify 10 GB) | Lowest of the 3 that reported |
 
-**Caveats.** The authors chose the nine repositories, and two are PipesHub's own code. The reference indexer misses reflection and dynamic dispatch, which affects every tool. The test ran on one machine. Higher graph accuracy did **not** give a significant improvement for an agent on SWE-bench Lite (90.3% with graph tools against 89.7% without, p = 0.80), and graph tools added about 44% more prompt tokens. The code is published at [pipeshub-ai/codegraph-bench](https://github.com/pipeshub-ai/codegraph-bench).
+**Caveats.** The authors chose the nine repositories, and two are PipesHub's own code. The reference indexer misses reflection and dynamic dispatch, which affects every tool. The test ran on one machine. Higher graph accuracy did **not** give a significant improvement for an agent on SWE-bench Lite (90.3% with graph tools against 89.7% without, a difference too small to be reliable), and graph tools added about 44% more prompt tokens. The code is published at [pipeshub-ai/codegraph-bench](https://github.com/pipeshub-ai/codegraph-bench).
 
 ## PDF parsing: pdfplumber and Docling
 

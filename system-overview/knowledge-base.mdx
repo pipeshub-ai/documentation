@@ -390,6 +390,7 @@ Some fields appear on `record` only in certain states:
 |-------|-----------------|
 | `retryNotBefore` | The record is `QUEUED` because its source is limiting how often PipesHub can read from it. The value is the earliest time, in epoch milliseconds, that indexing tries the record again, and `reason` says when indexing resumes. Ignore it when `indexingStatus` is anything other than `QUEUED`. |
 | `restoredAtTimestamp` | A file was brought back from the trash and queued to be indexed again. The value is when that last happened, in epoch milliseconds. |
+| `splitState`, `splitDone`, `splitTotal`, `splitFailed` | The file is a PDF indexed in parts (see [Large PDFs](/large-pdfs)). Read-only. `splitState` is `SPLITTING`, `INDEXING_PARTS`, `COMPLETED`, `PARTIAL` or `FAILED`; `splitDone`, `splitTotal` and `splitFailed` count parts that have finished, all parts, and failed parts. All four are `null` or absent for other records. `indexingStatus` is `COMPLETED` once the file's outline is indexed, so read `splitState` first when it is present. Reindexing a `PARTIAL` or `FAILED` file retries only its failed parts. Knowledge hub listings carry the same four fields on each node. |
 </Tab>
 </Tabs>
 </Accordion>

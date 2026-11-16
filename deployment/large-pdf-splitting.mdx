@@ -1,0 +1,78 @@
+---
+title: "Large PDF splitting"
+description: "Settings, memory behaviour, how to turn splitting off, and how to roll back before a downgrade"
+icon: "scissors"
+---
+
+The indexing service cuts a PDF of more than 500 pages into parts, and each part is indexed like a file of its own. This page is for administrators. For what users see, read [Large PDFs](/large-pdfs).
+
+## How it uses memory and slots
+
+- **The parent holds one heavy indexing slot only while it cuts the file.** The cut runs in a parse worker and takes seconds for a PDF of about 1,000 pages. Peak memory for the cut of a 166 MB, 17,000-page PDF was under 1 GiB in testing.
+- **Each part takes one heavy indexing slot and one heavy parse permit.** A part is at most 25 MiB by default, so it costs the same as any other large file. How many parts index at once is set by the indexing service's resource limits, not by the number of parts. On a small deployment parts index one at a time.
+- **The cut times out after 30 minutes** by default (`PDF_SPLIT_TIMEOUT_SECONDS`).
+- **A split adds to the stored data.** Each part PDF is stored next to the file until the file is deleted, and the service keeps two small collections of split records (`contentSplits` and `contentSplitParts`) in the graph database.
+
+## Settings
+
+Set these in `.env`, as described in [Applying a change](/deployment/environment-variables#applying-a-change). The defaults suit most deployments.
+
+<Note>
+The bundled `docker-compose.yml` doesn't pass these variables to the app container. Set them with a Compose override (`PIPESHUB_COMPOSE_OVERRIDES`), as for [other variables it doesn't pass](/deployment/environment-variables#redis-streams).
+</Note>
+
+| Variable | What it does |
+|---|---|
+| `PDF_SPLIT_ENABLED` | `false` stops new splits. See [Turn splitting off](#turn-splitting-off). Default: `true`. |
+| `PDF_SPLIT_MIN_PAGES` | A PDF with more pages than this is split. Default: `500`. |
+| `PDF_SPLIT_PART_PAGES` | Most pages one part owns. Default: the smaller of `500` and `VLM_OCR_MAX_PAGES`. |
+| `PDF_SPLIT_MAX_PART_BYTES` | A part estimated or cut larger than this is cut again, down to a single page. Default: `26214400` (25 MiB). |
+| `PDF_SPLIT_OVERLAP_PAGES` | Pages of the next part that each part also carries, so text across a page break is read together. `0` turns the overlap off. Default: `1`. |
+| `PDF_SPLIT_TIMEOUT_SECONDS` | Longest the cut of one file may take. Default: `1800`. |
+| `PDF_SPLIT_ROLLBACK`, `PDF_SPLIT_ROLLBACK_ORG` | Un-split every split file before a downgrade. See [Roll back](#roll-back-before-a-downgrade). Default: empty. |
+
+A value that isn't a valid number (or is below its minimum of `1`, or `0` for the overlap) is ignored with a warning in the indexing service's log, and the default is used.
+
+## Turn splitting off
+
+Set `PDF_SPLIT_ENABLED=false` and recreate the containers.
+
+- This only stops **new** splits. Large PDFs are then indexed whole, as in earlier versions, and may fail on memory or time limits.
+- A file that is already split stays split when its content doesn't change: a retry, a restore from the trash, and a forced reindex use its existing parts and never cut it again.
+- A file that is already split and whose content changes is indexed whole, and its old parts are removed.
+
+To remove existing splits, use the roll back below.
+
+## Roll back before a downgrade
+
+An older version knows nothing about parts. It would index each part as a file of its own and leave the parts' data behind. Before you move to a version without splitting, un-split every file.
+
+<Steps>
+  <Step title="Stop new splits and count">
+    Set `PDF_SPLIT_ENABLED=false` and `PDF_SPLIT_ROLLBACK=dry-run`. To limit it to one organization, also set `PDF_SPLIT_ROLLBACK_ORG` to its id. Recreate the containers. On each pass of the indexing service's recovery loop it logs a line like this, and changes nothing:
+
+    ```text
+    Split rollback (dry-run): 3 file(s) on this page, 0 un-split, 0 queued for whole indexing, 0 busy
+    ```
+  </Step>
+  <Step title="Apply">
+    Set `PDF_SPLIT_ROLLBACK=apply` and recreate the containers. Each pass takes one page of split files (up to 100). For each file it removes the parts (their points, stored records, PDFs and graph records) and the file's outline points, queues a whole-file index for every live record that holds the file, and then removes its split record. A part that is still being indexed holds its file back until the next pass (the `busy` count). A pass that stops half way is finished by the next one.
+
+    `apply` with `PDF_SPLIT_ENABLED` still `true` does nothing and logs an error, because the files it queues would be split again.
+  </Step>
+  <Step title="Wait for zero">
+    Wait until the log reports `Split rollback (apply): 0 file(s) on this page`. No split files are left, and it is safe to downgrade the image. While files index whole again, users see each of them as indexing, and a file over the old page limit may fail as it did before splitting.
+  </Step>
+</Steps>
+
+<Warning>
+Do not downgrade before the log reports `0 file(s) on this page`.
+</Warning>
+
+After the downgrade, remove `PDF_SPLIT_ROLLBACK` and `PDF_SPLIT_ROLLBACK_ORG` from `.env`. If you upgrade again later, a split file that the older version indexed whole is split again the next time it is indexed.
+
+## Related
+
+- [Large PDFs](/large-pdfs)
+- [Environment variables](/deployment/environment-variables)
+- [Backup and restore](/deployment/backup-restore)

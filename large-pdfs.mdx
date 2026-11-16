@@ -1,0 +1,91 @@
+---
+title: "Large PDFs"
+description: "How PipesHub indexes PDFs of more than 500 pages, what you see while it runs, and what to do when a part fails"
+icon: "file-pdf"
+---
+
+A very long PDF, such as a product manual or a bound report, is too big to index in one piece. PipesHub cuts a PDF of more than 500 pages into **parts** and indexes the parts side by side. You still work with one file: you upload it once, see it once, and search and chat cite it as the original.
+
+## What happens to a large PDF
+
+1. **Check.** After upload or sync, PipesHub counts the pages. A PDF of 500 pages or fewer is indexed whole, exactly as before.
+2. **Split.** A longer PDF is cut into parts of at most 500 pages and 25 MB each. A part that would be larger than 25 MB is cut again. Each part also carries the first page of the next one, so a passage that runs across a page break is read in one piece.
+3. **Index.** Each part is indexed as its own job, in the same queue as every other file. This keeps a single huge file from using all of the memory of the indexing service or running past its time limit.
+4. **Finish.** When every part is indexed, the file is **Completed**. Search and chat then cover the whole PDF.
+
+<Info>
+Parts are internal. They never appear in collections, search results, chat answers, or trash, and you can't open or delete one on its own. Deleting the file deletes everything indexed for it.
+</Info>
+
+The original file is not changed. Opening a citation shows the original PDF at the cited page, not a part.
+
+## What you see while it indexes
+
+In a collection, **All records**, and on the file's page, the status of a split file shows how far the parts have got:
+
+| Status | What it means | What to do |
+| --- | --- | --- |
+| **Preparing parts** | PipesHub is counting pages and cutting the file. | Wait. This takes seconds to a few minutes. |
+| **Indexing N of M parts** | N parts have finished out of M. Parts that already finished are searchable. | Wait. |
+| **Completed** | Every part is indexed. | Nothing. |
+| **Partly indexed** | Some parts failed. The rest are indexed and searchable, so search and chat find only what is in those parts. | Use **Retry failed parts**. |
+| **N of M parts failed** | Shown with **Partly indexed**, or alone when no part could be indexed. | Use **Retry failed parts**, after you fix the reason shown. |
+
+While a file is still **Indexing**, search and chat already use the parts that are done, so an answer can miss content from parts that are still queued.
+
+On a connector's **Overview** tab, a split file that isn't complete is counted by its parts' progress, not as **Completed**.
+
+## Retry failed parts
+
+When a split file is **Partly indexed** or has failed parts, its actions menu offers **Retry failed parts** in place of **Retry indexing**. While parts are still being prepared or indexed, the menu offers no retry. It indexes only the parts that failed. Parts that are already indexed are not read again. If you instead use **Force reindex** on a completed split file, PipesHub reindexes the file as usual.
+
+The usual reasons for a failed part are the same as for any file: the embedding model can't be reached, or a scanned part needs a model that can read images. See [Indexing status](/indexing-status#statuses-and-what-to-do).
+
+## Citations
+
+A citation on a split file names the original file and the page in the original, for example page 3,021 of a 17,000-page document. Opening it shows the original PDF at that page. Paragraph numbers in the viewer count through the whole file, not through a part.
+
+## Limits
+
+| Limit | Value |
+| --- | --- |
+| Pages above which a PDF is split | More than 500 |
+| Pages in one part | At most 500 |
+| Size of one part | At most 25 MB |
+| Overlap between parts | 1 page |
+| Size of the uploaded file | The configured [upload limit](/supported-file-formats#upload-size) still applies to the whole file |
+
+- Only PDFs are split. Other formats are indexed whole.
+- Splitting does not raise the upload limit. A file above it is refused before any splitting. An admin can change the limit; see [Upload size](/supported-file-formats#upload-size).
+- Parts use the same limited indexing slots as every other file, and on a deployment with little memory they index one at a time. A file of many parts can take a while, and the status shows progress throughout.
+- If a split file's content changes, it is cut again. Until its new parts finish, search covers only the content indexed so far.
+- A split file that you move to the trash keeps its parts, and **Restore** brings it back without cutting it again.
+
+Admins can change the thresholds or turn splitting off. See [Large PDF splitting](/deployment/large-pdf-splitting).
+
+## Reading a large PDF by page range
+
+<Note>
+This section describes page-range reading for the AI. It is part of a later change and may not be in your version yet.
+</Note>
+
+The AI in chat and in agents can read a large PDF by page range instead of reading all of it:
+
+- **`knowledgegraph__fetch_record`** takes an optional `pages` argument for one record, for example `"12"` or `"4000-4100"`. It returns those pages in order, with the original page numbers. The range must be inside the file's page count, and a range that is too long for one answer is cut at the pages that fit, with a note on how to ask for the next pages.
+- **`knowledgegraph__search`** takes `record_ids` with one record id, plus `pages`, to search only that page range of one file.
+
+Both follow the same access rules as any search: a file you can't read is answered as not available.
+
+## Chapter outline
+
+<Note>
+The outline is part of a later change and may not be in your version yet.
+</Note>
+
+When a split PDF has bookmarks, PipesHub keeps its chapter outline (up to 2,000 entries, 200 characters per title, 10 levels deep) with the file. A search for a chapter title finds the chapter and cites its page, and the outline helps the file's summary. A PDF with no bookmarks, or with broken ones, is indexed without an outline.
+
+## Related
+
+- [Indexing status](/indexing-status)
+- [Supported file formats](/supported-file-formats)
+- [Large PDF splitting](/deployment/large-pdf-splitting) for administrators

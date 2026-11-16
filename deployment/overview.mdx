@@ -67,13 +67,13 @@ The installer asks which graph database, message broker and key-value store to u
 |---|---|---|
 | Graph database | `DATA_STORE` | `neo4j` (or `arangodb`) |
 | Key-value store | `KV_STORE_TYPE` | `redis` (or `etcd`) |
-| Message broker | `MESSAGE_BROKER` | `kafka` on a full install, `redis` on slim |
+| Message broker | `MESSAGE_BROKER` | `redis` (Redis Streams) by default on every install type; `kafka` optional |
 
 The vector database is Qdrant, and the installer does not ask about it. The
 provider is chosen by `VECTOR_DB_TYPE`, which defaults to `qdrant` when unset,
 and the Docker Compose deployment does not set that variable.
 
-Kafka is worth choosing when you expect sustained high-volume indexing across many connectors. Redis Streams is simpler to run, and is what the slim deployment uses.
+Kafka is worth choosing when you expect sustained high-volume indexing across many connectors. Redis Streams is simpler to run, and is the default.
 
 ## Day-two operations
 

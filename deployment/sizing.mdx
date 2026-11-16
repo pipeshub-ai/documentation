@@ -1,0 +1,167 @@
+---
+title: "Sizing and capacity"
+description: "CPU, memory and disk for each deployment tier, how much memory the vector database needs, and what has been measured"
+icon: "gauge"
+---
+
+This page gives starting figures for CPU, memory and disk. They come from the defaults that ship with Docker Compose and the Helm chart, and from measurements of the vector database. They are not guarantees of throughput. Size from your own corpus and watch the stack under your own load. For what each service does, see [Reference architecture](/deployment/reference-architecture).
+
+## Docker Compose defaults
+
+The installer checks for 4 CPU cores and a 16 GB-class machine (8 GB for `eval`). See [System requirements](/deployment/system-requirements). Inside that machine, `docker-compose.yml` caps each container:
+
+| Container | Memory limit | Memory reservation | CPU limit / reservation | Setting |
+|---|---|---|---|---|
+| PipesHub app | 10 GB, plus swap up to 16 GB in total | none | none | `APP_MEMORY_LIMIT`, `APP_MEMSWAP_LIMIT` |
+| Qdrant | 6 GB | 2 GB | 4 / 2 | `QDRANT_MEMORY_LIMIT`, `QDRANT_MEMORY_RESERVATION` |
+| Neo4j | 3 GB (heap 1 to 2 GB, page cache 1 GB) | 2 GB | 4 / 2 | `NEO4J_MEMORY_LIMIT`, `NEO4J_HEAP_MAX`, `NEO4J_PAGECACHE` |
+| MongoDB | 2 GB (cache 1 GB) | 512 MB | none | `MONGO_MEMORY_LIMIT`, `MONGO_CACHE_GB` |
+| Redis | none | none | none | |
+
+The limits are caps against running out of memory, not reservations. They add up to more than 16 GB because the containers do not all reach their limits at the same time.
+
+On a fresh install, the installer sets `APP_MEMORY_LIMIT` from the machine's memory less 4 GB for the datastores and the operating system, between 6 GB and 32 GB. An `APP_MEMORY_LIMIT` you set yourself, or one already in `.env`, is kept. The app sizes its indexing and parsing concurrency from that limit, so raising it raises indexing throughput until CPU becomes the bound. See [Environment variables](/deployment/environment-variables#memory-and-databases).
+
+## Helm chart defaults
+
+Requests and limits per pod, from the chart's values files:
+
+| Pod | `values-local.yaml` | `values.yaml` (default) | `values-cloud.yaml` | `values-eks.yaml` |
+|---|---|---|---|---|
+| App | 1 × (0.5 CPU, 1 GiB) to (2 CPU, 6 GiB) | 2 to 6 × (4 CPU, 8 GiB) to (8 CPU, 16 GiB) | 2 to 10 × (2 CPU, 4 GiB) to (8 CPU, 8 GiB) | 2 to 4 × (2 CPU, 4 GiB) to (8 CPU, 8 GiB) |
+| Qdrant | 1 node, default size | 2 × (1 CPU, 2 GiB) to (2 CPU, 4 GiB) | 2 × (1 CPU, 4 GiB) to (2 CPU, 8 GiB) | 3 × 4 CPU, 8 GiB |
+| Neo4j | 1, default size | 1 × (1 CPU, 2 GiB) to (2 CPU, 4 GiB) | 1 × (1 CPU, 4 GiB) to (2 CPU, 8 GiB) | 1 × 4 CPU, 8 GiB |
+| Kafka, if used | 1 broker | 2 × (0.25 CPU, 512 MiB) to (0.5 CPU, 1 GiB) | 2 brokers | not used (Redis Streams) |
+
+Volume sizes in the default chart are 10 GiB for the shared app volume, Qdrant and Neo4j (plus 5 GiB of Neo4j logs), and 8 GiB for MongoDB. The EKS preset uses 100 GiB for Qdrant and Neo4j and 50 GiB for MongoDB. These are starting sizes. Vectors, the graph and stored files grow with your data.
+
+The Qdrant memory limit applies to each Qdrant pod. The chart passes it to the app so that the Services page can warn when the index outgrows it (see below).
+
+## How the app container uses CPU and memory
+
+The indexing service sizes itself from the CPU and memory limits of its own container or pod when it starts, unless you set `MAX_CONCURRENT_PARSING` or `MAX_CONCURRENT_INDEXING`. It then adjusts concurrency every 15 seconds between a floor and that ceiling, and backs off when memory use passes 70% and 80% of the limit.
+
+Documents fall into two groups:
+
+- **Heavy:** PDF, Word, PowerPoint, Excel, images, and any format it does not recognise. Layout analysis and OCR can take minutes of CPU each, and use about 1.5 GiB of memory per document being parsed.
+- **Light:** text, Markdown, HTML, CSV, JSON, YAML, source code, and the structured pages connectors send (such as Jira issues and Confluence pages). Most of their time is spent waiting on embedding and database writes.
+
+Ceilings with default settings and a local embedding model:
+
+| CPUs in the container | Heavy parses at once | Light parses at once | Heavy records in flight | Light records in flight |
+|---|---|---|---|---|
+| 4 | 3 | 18 | 6 | 18 |
+| 8 | 6 | 36 | 12 | 36 |
+| 16 | 14 | 68 | 28 | 68 |
+
+Heavy parsing starts at 2 at once on every host and grows one step at a time while memory stays below 70%. On a crowded container with less than 3 GiB free, it can stay at 1. With a local embedding model, up to 2 CPUs (at most a quarter of the container's CPUs) are held back from heavy parsing for embedding.
+
+Practical consequences:
+
+- A corpus with many PDFs, Office files or scans needs more memory per CPU than one that is mostly chat messages, tickets and wiki pages.
+- Images are cut to at most 2000 px on the long edge and 5 MB each, and at most 50 MB of images are kept per record. Very image-heavy pages still use more memory than text.
+- On Kubernetes, more app pods add indexing and query capacity. Connector sync runs as one worker process in each pod.
+
+## Vector database memory
+
+The figures in this section were measured by the PipesHub team on a Qdrant collection of 5.08 million points with 1536 dimensions, int8 scalar quantization, HNSW `m=16` and five keyword payload indexes. The source does not record the host hardware beyond the Qdrant memory limit, so treat the times as a comparison between memory limits rather than as a benchmark of a particular machine.
+
+Search stays fast while the parts of the index that every query reads fit in Qdrant's memory: the quantized vectors, the HNSW graph, the keyword index and the payload indexes. PipesHub keeps these memory-mapped on disk, so a large collection does not crash Qdrant. It makes search slower instead.
+
+```text
+memory needed ≈ points × (dimensions + 374 bytes) + 2 GiB
+```
+
+- **Points** are chunks, not records. One record usually becomes several points.
+- **Dimensions** depend on the embedding model: 1024 for the default local model (`BAAI/bge-large-en-v1.5`), 1536 for OpenAI `text-embedding-3-small`, 3072 for `text-embedding-3-large`.
+- **374 bytes per point** covers quantization overhead (4), the HNSW graph (about 60), the keyword index (about 50) and the payload indexes (about 260).
+- **2 GiB** is Qdrant's own process memory on a large collection.
+
+On the measured collection, the working set was about 11.5 GiB: 7.8 GiB of quantized vectors, 1.24 GiB of payload indexes, 0.28 GiB of HNSW graph, 0.23 GiB of keyword index and about 2 GiB for Qdrant itself. The full-precision vectors (31 GiB) and the whole collection on disk (46 GiB) do not decide search speed.
+
+### Memory needed by corpus size
+
+| Points (chunks) | 1024 dimensions | 1536 dimensions | 3072 dimensions |
+|---|---|---|---|
+| 100,000 | 2.1 GiB | 2.2 GiB | 2.3 GiB |
+| 500,000 | 2.7 GiB | 2.9 GiB | 3.6 GiB |
+| 1,000,000 | 3.3 GiB | 3.8 GiB | 5.2 GiB |
+| 2,000,000 | 4.6 GiB | 5.6 GiB | 8.4 GiB |
+| 5,000,000 | 8.5 GiB | 10.9 GiB | 18.0 GiB |
+| 10,000,000 | 15.0 GiB | 19.8 GiB | 34.1 GiB |
+| 20,000,000 | 28.0 GiB | 37.6 GiB | 66.2 GiB |
+
+### Points a memory limit holds
+
+| Qdrant memory limit | 1024 dimensions | 1536 dimensions | 3072 dimensions |
+|---|---|---|---|
+| 4 GiB | 1.5M points | 1.1M points | 0.6M points |
+| 6 GiB | 3.1M points | 2.2M points | 1.2M points |
+| 8 GiB | 4.6M points | 3.4M points | 1.9M points |
+| 12 GiB | 7.7M points | 5.6M points | 3.1M points |
+| 16 GiB | 10.7M points | 7.9M points | 4.4M points |
+
+The Docker Compose default of 6 GB holds about 3 million points at the default 1024 dimensions. Leave room for growth.
+
+With more than one Qdrant node, each node needs memory for the shards it holds. A collection with one shard sits whole on each node that holds a copy.
+
+### What happens below it
+
+Nothing fails. Search slows down, and slows down more as searches overlap. Semantic search stage only, on the 5.08 million-point collection that needs about 11.5 GiB:
+
+| Qdrant memory limit | One search at a time | Three at once | Six at once |
+|---|---|---|---|
+| 4 GiB | 2.28 s | 6.35 s | 14.7 s |
+| 12 GiB | 0.86 s | 1.44 s | not measured |
+
+At 4 GiB about 2 GiB was left for the page cache, and each new search read about 400 MB from disk.
+
+### Setting the limit and the warning
+
+- **Docker Compose:** set `QDRANT_MEMORY_LIMIT` in `.env` (for example `QDRANT_MEMORY_LIMIT=12G`) and recreate the containers with `docker compose up -d`.
+- **Helm:** set `qdrant.resources.limits.memory`.
+
+**Workspace → Services** shows a warning under the vector database when the estimated working set is larger than Qdrant's memory limit. It reports the current point count, and org admins can read the same report at `GET /api/v1/health/vector-db/memory`. There is no warning while the index is under 1 GiB. The warning never changes any service's health status.
+
+## Embedding model
+
+The embedding model sets the number of dimensions, which sets vector memory (above). It also decides where embedding CPU is spent:
+
+- **Local model (default):** `BAAI/bge-large-en-v1.5`, 1024 dimensions, runs on the app container's CPUs in the embedding server. The `slim` image downloads it on first use; the `latest` image has it built in.
+- **Hosted model:** embedding runs at the provider, so the app container needs less CPU for it, and vector memory follows that model's dimensions. See [AI models](/ai-models/overview).
+
+<Warning>
+Choose the embedding model before you index. PipesHub refuses to change it while the vector database holds data indexed with another model: remove the indexed documents first, change the model, then index again. With pgvector as the vector store, the model cannot be changed at all on an existing installation.
+</Warning>
+
+## Graph and document databases
+
+- **Neo4j:** the page cache holds the graph. When the graph outgrows it, graph queries read from disk; raise `NEO4J_PAGECACHE` first. Keep heap maximum plus page cache clearly below the container limit, because Neo4j also uses memory outside both. Transaction memory is capped at 70% of the heap maximum and shared by every running transaction, so a small heap limits concurrent large writes.
+- **MongoDB:** the WiredTiger cache is held at 1 GB in Docker Compose so it does not take half the machine's memory. Raise `MONGO_CACHE_GB` and `MONGO_MEMORY_LIMIT` together.
+
+The variables and their defaults are listed in [Environment variables](/deployment/environment-variables#memory-and-databases).
+
+## Disk
+
+The installer warns below 20 GB free, which is a floor, not a target. Plan for:
+
+- the vector collection, which on disk is several times its memory working set (46 GiB on disk for the 11.5 GiB working set above);
+- the graph and document databases;
+- stored files, when file storage is local disk rather than S3 or Azure Blob;
+- the images, and on the `slim` image the downloaded models.
+
+## What has been load-tested
+
+The repository includes load-testing tools for the query service (chat load, turn latency, CPU and memory per service) and for the connector service (records per second during sync, with indexing turned off, and whether a sync stalls the API). They are built for comparing two builds on the same hardware, and a single run varies by about ±10%.
+
+No capacity figures, such as users or questions per minute per CPU, or records indexed per hour, are published from these tools. The vector search times above are the only performance figures given on this page. Measure on your own hardware, with your own model provider and corpus, before you commit to a capacity.
+
+One measured figure is useful for monitoring: `GET /api/v1/health/services` checks every service on each call and took about 1.5 seconds in those tests. Do not poll it at a high rate.
+
+## Related
+
+- [Reference architecture](/deployment/reference-architecture)
+- [System requirements](/deployment/system-requirements)
+- [Kubernetes (Helm)](/deployment/kubernetes)
+- [Backup and restore](/deployment/backup-restore)
+- [Environment variables](/deployment/environment-variables)

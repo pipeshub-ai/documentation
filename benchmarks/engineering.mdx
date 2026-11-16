@@ -1,0 +1,36 @@
+---
+title: "Engineering benchmarks"
+description: "Benchmarks behind PipesHub's code search and PDF parsing: code-graph accuracy against three other tools, and pdfplumber against Docling"
+icon: "gauge-high"
+---
+
+PipesHub ran both of these tests itself and published the results as blog posts. They measure parts of the product, not end-to-end answer quality. For that, see [EnterpriseRAG-Bench](/benchmarks/enterprise-rag-bench) and [FRAMES](/benchmarks/frames).
+
+## Code graph accuracy
+
+PipesHub's code graph links functions, imports and classes across a repository, so agents can follow a call instead of grepping for it. The post [How accurate is your code graph? A benchmark of 4 tools](https://pipeshub.com/blog/code-graph-benchmark) (22 October 2026) compares PipesHub, Graphify, codebase-memory-mcp and CodeGraphContext on nine repositories. The reference was the language's SCIP indexer, scored on calls, imports and inheritance, on hand-written code only.
+
+| Measure | PipesHub | Rank |
+|---|---|---|
+| Relationship accuracy (F1) | Highest on 8 of 9 repositories (Graphify led excalidraw, 87.4 against 87.1) | 1st of 4 |
+| Accuracy after 7 code changes | 94.2 F1 (Graphify 84.2, codebase-memory-mcp 80.9, CodeGraphContext 25.5) | 1st of 4 |
+| Build time, a 29,195-file repository | 271 s (codebase-memory-mcp 110 s, Graphify 1,880 s) | 2nd of the 3 that reported |
+| Peak memory, same build | Within Neo4j's 3 GB limit (codebase-memory-mcp 5 GB, Graphify 10 GB) | Lowest of the 3 that reported |
+
+**Caveats.** The authors chose the nine repositories, and two are PipesHub's own code. The reference indexer misses reflection and dynamic dispatch, which affects every tool. The test ran on one machine. Higher graph accuracy did **not** give a significant improvement for an agent on SWE-bench Lite (90.3% with graph tools against 89.7% without, p = 0.80), and graph tools added about 44% more prompt tokens. The code is published at [pipeshub-ai/codegraph-bench](https://github.com/pipeshub-ai/codegraph-bench).
+
+## PDF parsing: pdfplumber and Docling
+
+PipesHub parses PDFs with pdfplumber and a layout model. The post [How we replaced Docling with pdfplumber](https://pipeshub.com/blog/pdf-parsing-benchmark-docling-pdfplumber) (23 October 2026) compares the two on 1,228 documents and 47,360 pages.
+
+| Measure | Docling | pdfplumber |
+|---|---|---|
+| Median time per page | 0.98 s | 0.48 s |
+| 95th percentile time per page | 4.05 s | 0.99 s |
+| Peak memory per worker (95th percentile) | 2.91 GB | 1.97 GB |
+| Share of PDF text kept | 0.943 | 0.977 |
+| Pages losing more than half their text | 2.9% | 1.2% |
+
+**Where Docling is better.** On human-labelled pages, Docling scored higher on figure recall (0.905 against 0.864), caption attachment (0.601 against 0.524), table structure (0.505 against 0.483) and, on a separate 1,068-table set, table recall (0.816 against 0.777).
+
+**Caveats.** The speed comparison used a 58-document development set on a shared machine, where runs can vary by about 30%. One of the test sets is 57% Chinese, which lowers text scores for both parsers.

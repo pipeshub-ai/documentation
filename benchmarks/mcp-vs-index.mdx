@@ -1,19 +1,19 @@
 ---
-title: "Direct MCP vs the PipesHub index"
-description: "The same Claude model answered 100 work questions using each app's own connector and then using one PipesHub index. The index found more facts, faster and for less"
+title: "Direct MCP servers vs the PipesHub index"
+description: "The same Claude model answered 100 work questions calling each app's own integration directly and then searching one PipesHub index. The index found more facts, faster and for less"
 icon: "scale-balanced"
 ---
 
 Many apps have their own MCP server. Is it better for an agent to call each app directly, or to search one index of all of them? PipesHub tested it with the same agent and the same questions. The index won on accuracy, speed and cost for all three Claude models.
 
-PipesHub ran this test itself. The full write-up is the blog post [Do AI agents need a company index? We tested it](https://pipeshub.com/blog/do-ai-agents-need-a-company-index) (October 2026). For how the two approaches differ, see [Connectors, MCP and Actions](/connectors-mcp-actions).
+PipesHub ran this test itself. The full write-up is the blog post [Do AI agents need a company index? We tested it](https://pipeshub.com/blog/do-ai-agents-need-a-company-index) (October 2026). For how the two approaches differ, see [Connectors, MCP servers and Actions](/connectors-mcp-actions).
 
 In plain words: the agent answered the same questions twice, once by calling each app one at a time and once by searching one index of all of them. "Facts found" is the share of the facts in the correct answer that the agent's answer contained.
 
 ## Setup
 
 - **The agent.** The same Claude model (Haiku, Sonnet or Opus) with the same instructions in both setups. PipesHub's own chat assistant was turned off, so only the way the agent looked things up changed.
-- **Each app directly.** The agent used each tool's official connector: Slack, Atlassian (Jira and Confluence) and GitHub.
+- **Each app directly.** The agent called each app's official integration live, not through PipesHub: Slack, Atlassian (Jira and Confluence) and GitHub. This is the "direct" setup in the comparison.
 - **The index.** The agent searched one PipesHub index covering Slack, Jira, GitHub, Confluence and Google Drive, then opened the records it found.
 - **The data.** One company's own data: about 13,000 Slack messages, 3,800 Jira tickets, 2,400 GitHub pull requests, plus Confluence pages and Google Drive files.
 - **The questions.** 100 everyday work questions, many needing two or three tools. Humans wrote each correct answer and a list of required facts. Two AI models graded every answer against that list and a third settled disagreements. The graders agreed on 95% of facts. Each setup ran every question twice.
@@ -45,5 +45,5 @@ With the index, the agent also made fewer lookups (for Sonnet, 11.8 down to 7.8 
 
 - **One company, 100 private questions, five tools.** The questions cannot be published. Results may differ for larger organizations or less technical work.
 - **AI graders with human-checked answer keys.** After an audit, 16 answer keys were fixed in a first round and 13 in a second, and both setups were regraded. The fixes moved the index's lead by no more than 2 points.
-- **Official connectors change.** Results reflect the connectors available on 19 October 2026.
+- **The apps' own integrations change.** Results reflect what Slack, Atlassian and GitHub offered on 19 October 2026.
 - **PipesHub builds the index it tested.** A later round is planned on public data with the questions, answer keys and test code published.

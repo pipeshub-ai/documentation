@@ -81,6 +81,8 @@ Add all the redirect URIs for the clients you plan to use:
 
 ### Customizing Default Scopes
 
+Two lists matter here, and they are not the same. **`MCP_SCOPES`** is the ceiling: the most any token on your instance may hold. **`scopes_supported`** in the discovery endpoint is the part of that ceiling the MCP tools actually use, and it is what clients such as Claude Code request. A scope that is in `MCP_SCOPES` but not in discovery, such as `openid`, `profile`, `email`, `conversation:write` and the `project:*` scopes, is allowed on a token but is not requested by an MCP client.
+
 The [`MCP_SCOPES`](https://github.com/pipeshub-ai/pipeshub-ai/blob/main/backend/env.template) environment variable is the most any personal access token or OAuth token on your instance may hold. The discovery endpoint, `/.well-known/oauth-protected-resource/mcp`, does not list all of it: its `scopes_supported` holds only the `MCP_SCOPES` entries that the MCP tools use. Clients such as Claude Code request every scope in that list, so check it before you grant scopes to an OAuth app:
 
 ```bash

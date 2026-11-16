@@ -4,6 +4,26 @@ description: "Short answers about deploying, upgrading and configuring PipesHub"
 icon: "question"
 ---
 
+## Concepts
+
+<AccordionGroup>
+  <Accordion title="What is the difference between Connectors, MCP and Actions?">
+    - **Connectors** sync content from an app into PipesHub's index. Search then runs on that copy, with the permissions the app recorded. A change appears after the next sync.
+    - **MCP** is a protocol. PipesHub is an MCP server, so clients such as Claude Code and Cursor can search your indexed content. Your agents can also call other MCP servers, live.
+    - **Actions** let an agent do something in an app, such as send a message or create a ticket. They run live, as the signed-in user.
+
+    See [Connectors, MCP and Actions](/connectors-mcp-actions) for a side-by-side table.
+  </Accordion>
+
+  <Accordion title="Why use a PipesHub connector when an app already has an MCP server?">
+    An app's own MCP server answers from that one app, live. A connector indexes the app into PipesHub, so a single search covers Slack, Drive, Jira, Confluence and more, with each record's permissions applied in one place. For a change from the last few minutes, or to post or create something, call the app directly. See [Direct MCP vs the PipesHub index](/benchmarks/mcp-vs-index) for the measured difference.
+  </Accordion>
+
+  <Accordion title="Does PipesHub index what an Action or an MCP server returns?">
+    No. Actions and MCP servers used inside an agent run live and PipesHub does not index their results. Connectors and uploaded files are what PipesHub indexes.
+  </Accordion>
+</AccordionGroup>
+
 ## Deployment
 
 <AccordionGroup>

@@ -6,8 +6,8 @@ icon: "diagram-project"
 
 PipesHub gives your people and your AI agents three ways to work with company apps. They are easy to mix up because they all touch the same apps, but they do different jobs.
 
-- **Connectors** copy content from an app into PipesHub's index, so it can be searched.
-- **MCP** is a protocol. PipesHub uses it in two directions: it exposes its index to outside AI clients, and it lets your agents call other MCP servers.
+- **Connectors** copy content from an app, such as Slack or Google Drive, into PipesHub, so you can search it all in one place.
+- **MCP** (Model Context Protocol) is a standard way for AI tools such as Claude Code or Cursor to connect to data and tools. PipesHub uses it in two directions: it lets outside AI tools search your company's content, and it lets your agents use tools from other MCP servers.
 - **Actions** let an agent do something in an app, such as send a message or create a ticket.
 
 ## The short version
@@ -17,26 +17,26 @@ PipesHub gives your people and your AI agents three ways to work with company ap
 | **What it does** | Syncs an app's content into PipesHub | Lets Claude Code, Cursor and other clients search and chat over your index | Gives an agent tools from another MCP server | Lets an agent act in an app |
 | **Where the data is** | Indexed in PipesHub (search index and knowledge graph) | The same PipesHub index | Stays on the remote server | Stays in the app |
 | **How fresh** | As fresh as the last sync (it runs on a schedule, not in real time) | As fresh as the index | Live on every call | Live on every call |
-| **Who can see what** | Source permissions are stored with each record and applied at search | Applied per user at search | Whatever the remote server's sign-in allows | Whatever the user's own sign-in to the app allows |
+| **Who can see what** | Where the app records permissions, PipesHub stores them with each record and applies them at search | Applied per user at search | Whatever the remote server's sign-in allows | Whatever the user's own sign-in to the app allows |
 | **Can it change things in the app** | No. It only reads. | Mostly no. Creating collections, uploading files and adding a web source need extra scopes. | Whatever the server offers | Yes |
 | **Set up under** | [Connectors](/connectors/overview) | [MCP Server](/mcp/overview) | [MCP servers in agents](/agent-guide/mcp-servers) | [Actions](/toolsets/overview) |
 
 ## Connectors: search a copy of your company's content
 
-A connector signs in to an app, reads its content and keeps a copy in PipesHub. The copy is indexed for search and linked in a knowledge graph. Each record keeps the permissions the app recorded, so a person sees only what the app already lets them see.
+A connector signs in to an app, reads its content and keeps a copy in PipesHub. The copy is indexed for search and linked in a knowledge graph. Where the app records who can see what, each record keeps those permissions, so a person sees only what the app already lets them see. A few connectors cannot read permissions. Each connector's page says how it handles them.
 
-Because search runs on the copy, one question can search Slack, Drive, Jira and Confluence together, and it does not call those apps at question time. The tradeoff is freshness: a change in the app shows up after the next sync. See [Connectors](/connectors/overview).
+Because search runs on the copy, one question can search Slack, Drive, Jira and Confluence together, and PipesHub does not need to call those apps when you ask. The tradeoff is freshness: a change in the app shows up after the next sync. See [Connectors](/connectors/overview).
 
 ## MCP: a protocol with two directions
 
-[MCP](https://modelcontextprotocol.io) (Model Context Protocol) is a standard way for an AI client to call tools. PipesHub uses it two ways.
+[MCP](https://modelcontextprotocol.io) lets an AI client call tools on a server. PipesHub uses it in two ways.
 
 - **PipesHub as an MCP server.** An outside client such as Claude Code or Cursor connects to PipesHub and calls tools like search and chat. They query the same index the connectors built, as the signed-in user, so permissions apply. Which tools a token is offered depends on its scopes. See [MCP Server](/mcp/overview) and [Tools reference](/mcp/tools).
 - **MCP servers in your agents.** An agent you build in PipesHub can call tools on another MCP server. Those calls run live against that server, and PipesHub does not index what comes back. See [MCP servers in agents](/agent-guide/mcp-servers).
 
 ## Actions: do things in an app
 
-An Action is a task an agent can run in an app, such as sending a Slack message, creating a Jira issue or adding a calendar event. Each person signs in to the app with their own account, so an agent acts with that person's access. Actions run live and do not index anything. See [Actions overview](/toolsets/overview) and [API actions](/agent-guide/api-actions).
+An Action is a task an agent can run in an app, such as sending a Slack message, creating a Jira issue or adding a calendar event. For Actions that use OAuth, each person signs in to the app with their own account, so the agent acts with that person's access. Actions run live and do not index anything. See [Actions overview](/toolsets/overview) and [API actions](/agent-guide/api-actions).
 
 ## A direct MCP server is not a connector
 

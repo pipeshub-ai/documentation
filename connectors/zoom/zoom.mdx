@@ -337,6 +337,11 @@ Each meeting is visible in PipesHub only to the people Zoom lists for that meeti
 - A person whose Zoom email has no matching PipesHub account gets no access until an account with that email exists.
 - Other people in your organization can't find the meeting, even though the connector reads every user's meeting history. Admin scopes let PipesHub read all meetings; they don't widen who can see them.
 - If the participant report can't be read for a meeting, that meeting is still synced with the host, alternative hosts and invitees.
+- Zoom lets a deleted account's email address be used by a new Zoom account. When that happens, the new account gets no access to meetings synced for the old one, and gets access to its own meetings as follows:
+  - The host is matched by Zoom user ID, so the new account keeps Owner access to the meetings it hosts.
+  - A participant who signed in to Zoom is matched by Zoom user ID from the participant report. If the same person joined more than once, the entry where they were signed in is used. This access needs the participant report: if the report can't be read for a meeting, no participant gets access from it. For an address that has moved, the new account then reaches that meeting only if it is the host.
+  - Alternative hosts, invitees and participants who joined without signing in are listed by email address only, and Zoom gives no user ID that tells the old account from the new one. For an address that has moved to a new account, these entries grant no access on their own.
+  - Participants are applied before alternative hosts and invitees, and an address already granted is not added again. So a person listed both as a signed-in participant and as an alternative host or invitee keeps access through the participant grant.
 
 ---
 

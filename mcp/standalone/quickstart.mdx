@@ -46,7 +46,7 @@ The rest of this page writes `pipeshub <command>`. With `uvx`, type `uvx pipeshu
 
 | You need | Why |
 |---|---|
-| **Docker** with the Compose plugin ([Docker Desktop](https://docs.docker.com/get-docker/) or Docker Engine) | PipesHub, its PostgreSQL database and a Neo4j graph database run as containers |
+| **Docker** with the Compose plugin ([Docker Desktop](https://docs.docker.com/get-docker/) or Docker Engine) | PipesHub and its PostgreSQL database run as containers. PostgreSQL holds everything: documents, the graph, vectors and settings |
 | **Node.js 20 or later**, only for the `npx` route | `npx` runs the setup command and the small bridge process your agent starts. The `uvx`, `pipx` and `pip` routes need no Node |
 | **A coding agent** | Claude Code, Cursor, Codex, Gemini CLI, Claude Desktop, Windsurf, VS Code, Zed or Cline |
 | **A git repository** (to index code) | Only files that git lists are indexed |
@@ -245,7 +245,7 @@ The entry holds no password or token. It starts the bridge, which uses the sign-
     - *'docker compose' is not available*: install the [Compose plugin](https://docs.docker.com/compose/install/).
     - *not running, or this user cannot reach it*: start Docker Desktop, or on Linux `sudo systemctl start docker` and make sure your user can run `docker info`.
 
-    `pipeshub dev status` prints the Docker check and whether the stack answers.
+    `pipeshub dev status` prints the Docker check, whether the stack answers, and the health of its database.
   </Accordion>
   <Accordion title="The port is busy">
     `docker compose up` fails if port 3000 is taken by something else. Choose another port:
@@ -261,6 +261,12 @@ The entry holds no password or token. It starts the bridge, which uses the sign-
 
     ```bash
     docker compose -p pipeshub-standalone logs pipeshub-slim
+    ```
+
+    Before the app starts, a one-time job brings the database schema up to date. If the app never starts, read that job's log too:
+
+    ```bash
+    docker compose -p pipeshub-standalone logs pipeshub-migrate
     ```
   </Accordion>
   <Accordion title="Indexing is stuck or never starts">

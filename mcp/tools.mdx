@@ -6,7 +6,7 @@ icon: "toolbox"
 
 Reference for the tools exposed by the PipesHub MCP server. These tools let an AI client (Cursor, Claude Code, Gemini CLI, Claude.ai, LibreChat, etc.) talk to PipesHub: search and chat over the org's indexed documents, look up people and groups, download files, and talk to configured PipesHub agents.
 
-The server exposes **eleven** tools: the seven below plus the four in [Filling a workspace](#filling-a-workspace). When the signed-in user has an indexed code repository and the token holds `code:read`, it also offers the ten [`pipeshub_code_*` tools](#code-graph-tools). Each tool wraps several lower-level API calls so the LLM gets a single, well-shaped response. This page follows the package's [TOOLS.md](https://github.com/pipeshub-ai/mcp-server/blob/main/TOOLS.md).
+The server exposes **eleven** tools: the seven below plus the four in [Filling a workspace](#filling-a-workspace). When the signed-in user has an indexed code repository and the token holds `code:read`, it also offers the twelve [`pipeshub_code_*` tools](#code-graph-tools). Each tool wraps several lower-level API calls so the LLM gets a single, well-shaped response. This page follows the package's [TOOLS.md](https://github.com/pipeshub-ai/mcp-server/blob/main/TOOLS.md).
 
 <Note>
   Searching and reading records (`pipeshub_search`, then `pipeshub_get_record_content`) is the recommended default for a client that can call tools. `pipeshub_chat` is optional: use it when the client cannot run its own search-and-read loop, when you want PipesHub's own assistant to write the answer, or to talk to a configured agent. On the local server, set `PIPESHUB_MCP_CHAT=off` to leave it (and `pipeshub_agents`) out.
@@ -215,13 +215,15 @@ Returns `{ connectorId, name, startUrl, maxPages, url }`. `url` opens the user's
 | `pipeshub_code_neighbours` | Find callers, callees, imports and inheritance of a file or symbol. |
 | `pipeshub_code_read` | Read indexed source: one symbol, or a line range. |
 | `pipeshub_code_path` | Show how symbol A reaches symbol B, hop by hop. |
-| `pipeshub_code_search` | Find code without knowing its file, by identifier, text or regex. |
+| `pipeshub_code_search` | Find code without knowing its file, by identifier, text or regex, or list the code that calls into a library. |
 | `pipeshub_code_semantic_search` | Find code by what it does when you do not know its names. Results are ranked by meaning. For a name you know, use `pipeshub_code_search`. |
 | `pipeshub_code_outline` | List a file's symbols with line ranges, no bodies. Read this before `pipeshub_code_read`. |
 | `pipeshub_code_impact` | See what changing a symbol can break. |
+| `pipeshub_code_impact_of_diff` | See what a unified diff (`git diff` output) can break: the symbols it changes, the files and tests that reach them, and direct callers no test reaches. |
+| `pipeshub_code_history` | See who changed a file and why: the indexed pull or merge requests that modified it, newest first. |
 | `pipeshub_code_entry_points` | Find where control enters a repo: routes, CLIs, jobs. |
 
-Cross-file call and import edges are resolved for Python, JavaScript, TypeScript and Java; other languages get calls matched by name. A `coverage` field in a result says when an answer may be incomplete, so confirm an empty result with `pipeshub_search`.
+Cross-file call and import edges are resolved through imports for Python, JavaScript, TypeScript, Java, Go, C#, PHP, Rust, C and C++; other languages get calls matched by name. A `coverage` field in a result says when an answer may be incomplete, so confirm an empty result with `pipeshub_search`.
 
 ## Required scopes
 

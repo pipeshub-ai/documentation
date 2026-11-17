@@ -6,7 +6,7 @@ tag: "Enterprise"
 ---
 
 <Info>
-  **Enterprise feature.** OAuth / OIDC sign-in is part of PipesHub Enterprise. The open-source edition removed it in [version 1.0](/changelog/platform/1.0.0), so you won't see this option there. To use it, [upgrade to PipesHub Enterprise](/contact-us).
+  **Enterprise feature.** OAuth / OIDC sign-in is part of PipesHub Enterprise. It isn't in the open-source edition. To use it, [upgrade to PipesHub Enterprise](/contact-us).
 </Info>
 
 # OAuth / OIDC Sign-in
@@ -113,6 +113,25 @@ Anyone who can sign in at your identity provider gets a PipesHub account the fir
 <Warning>
 Only use this method if your identity provider contains exactly the people who should have access. Don't use it with a shared directory, a provider that lets people register themselves, or a social login.
 </Warning>
+
+## Dex and group claims
+
+<AccordionGroup>
+  <Accordion title="Use Dex in front of other sign-in sources">
+    [Dex](https://dexidp.io) is an open-source OpenID Connect provider that signs people in through other sources, such as Active Directory, SAML, GitHub or Google. Add PipesHub to `staticClients` in the Dex config with the redirect URI from Step 1, then enter Dex's endpoints from `https://your-dex/.well-known/openid-configuration` in Step 2. Set **Scope** to `openid email profile groups` if you also want group claims.
+  </Accordion>
+  <Accordion title="Copy the provider's groups into PipesHub">
+    PipesHub can copy the `groups` list from the user info response into PipesHub groups each time someone signs in with OAuth. To turn it on, set `OAUTH_GROUP_SYNC_TRUST_IDP=true` in `.env` and restart PipesHub. Ask for `groups` in **Scope** if your provider needs it.
+
+    - Each group name becomes a PipesHub group with that name, created if needed, and the person is added to it.
+    - When a name leaves the list, the person is taken out of that group, but only if the sync created it. Groups made in PipesHub are never emptied, and roles don't change.
+    - If the response has no `groups` list, memberships stay as they are.
+
+    <Warning>
+      With this on, the provider decides who is a member. Someone removed in PipesHub is added back the next time they sign in, so remove people at the provider.
+    </Warning>
+  </Accordion>
+</AccordionGroup>
 
 ## Step 4: Test before you rely on it
 

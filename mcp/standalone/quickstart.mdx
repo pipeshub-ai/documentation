@@ -86,11 +86,11 @@ The entry starts the MCP bridge with `PIPESHUB_MCP_CHAT=off` in its environment,
 
 | Route | `command` | `args` |
 |---|---|---|
-| `npx` | `npx` | `-y`, `@pipeshub-ai/mcp@>=4.10.0`, `start`, `--server-url`, `http://127.0.0.1:3000` |
+| `npx` | `npx` | `-y`, `@pipeshub-ai/mcp@>=4.11.0`, `start`, `--server-url`, `http://127.0.0.1:3000` |
 | `uvx` | `uvx` | `--from`, `pipeshub>=0.1.0`, `pipeshub`, `start`, `--server-url`, `http://127.0.0.1:3000` |
 | `pipx` or `pip` | `pipeshub` when that is the `pipeshub` your `PATH` finds, otherwise the full path of the installed `pipeshub` script | `start`, `--server-url`, `http://127.0.0.1:3000` |
 
-The version floors matter: `npx` reuses any cached version that matches, and `@pipeshub-ai/mcp` releases before 4.10.0 have neither the bridge nor `index_workspace`. The entry sits under a different key per agent: `mcpServers` for Claude Code, Cursor, Windsurf, Gemini CLI, Claude Desktop and Cline, `servers` in VS Code's `mcp.json`, and `context_servers` in Zed's `settings.json`. Claude Code and VS Code entries also carry `"type": "stdio"`, Zed's `"source": "custom"`, and Cline's `"disabled": false` and `"autoApprove": []`. Codex gets the same command, arguments and environment as a `[mcp_servers.pipeshub]` table between `# >>> pipeshub` and `# <<< pipeshub` marker lines.
+The version floors matter: `npx` reuses any cached version that matches, and `@pipeshub-ai/mcp` releases before 4.11.0 have neither the bridge nor `index_workspace`. The entry sits under a different key per agent: `mcpServers` for Claude Code, Cursor, Windsurf, Gemini CLI, Claude Desktop and Cline, `servers` in VS Code's `mcp.json`, and `context_servers` in Zed's `settings.json`. Claude Code and VS Code entries also carry `"type": "stdio"`, Zed's `"source": "custom"`, and Cline's `"disabled": false` and `"autoApprove": []`. Codex gets the same command, arguments and environment as a `[mcp_servers.pipeshub]` table between `# >>> pipeshub` and `# <<< pipeshub` marker lines.
 
 | Agent | Config file that gets the entry |
 |---|---|
@@ -190,7 +190,7 @@ For the `npx` route, use the shape for your agent. An entry under the wrong key 
       "mcpServers": {
         "pipeshub": {
           "command": "npx",
-          "args": ["-y", "@pipeshub-ai/mcp@>=4.10.0", "start", "--server-url", "http://127.0.0.1:3000"],
+          "args": ["-y", "@pipeshub-ai/mcp@>=4.11.0", "start", "--server-url", "http://127.0.0.1:3000"],
           "env": { "PIPESHUB_MCP_CHAT": "off" }
         }
       }
@@ -206,7 +206,7 @@ For the `npx` route, use the shape for your agent. An entry under the wrong key 
         "pipeshub": {
           "type": "stdio",
           "command": "npx",
-          "args": ["-y", "@pipeshub-ai/mcp@>=4.10.0", "start", "--server-url", "http://127.0.0.1:3000"],
+          "args": ["-y", "@pipeshub-ai/mcp@>=4.11.0", "start", "--server-url", "http://127.0.0.1:3000"],
           "env": { "PIPESHUB_MCP_CHAT": "off" }
         }
       }
@@ -222,7 +222,7 @@ For the `npx` route, use the shape for your agent. An entry under the wrong key 
         "pipeshub": {
           "source": "custom",
           "command": "npx",
-          "args": ["-y", "@pipeshub-ai/mcp@>=4.10.0", "start", "--server-url", "http://127.0.0.1:3000"],
+          "args": ["-y", "@pipeshub-ai/mcp@>=4.11.0", "start", "--server-url", "http://127.0.0.1:3000"],
           "env": { "PIPESHUB_MCP_CHAT": "off" }
         }
       }
@@ -231,7 +231,7 @@ For the `npx` route, use the shape for your agent. An entry under the wrong key 
   </Tab>
 </Tabs>
 
-Keep the `@>=4.10.0` floor: without it, `npx` can start an older cached release that has no bridge.
+Keep the `@>=4.11.0` floor: without it, `npx` can start an older cached release that has no bridge.
 
 The entry holds no password or token. It starts the bridge, which uses the sign-in `login` stored. Only the PipesHub that issued that sign-in receives it.
 

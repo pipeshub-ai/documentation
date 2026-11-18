@@ -1,0 +1,301 @@
+---
+title: "Migrate to PostgreSQL"
+description: "Move an existing install's document store (users, organizations, sessions and the rest) from MongoDB to PostgreSQL, compare the two stores before you switch, and roll back if you need to"
+icon: "right-left"
+---
+
+The Node.js API keeps its documents in MongoDB unless `DOC_STORE` says otherwise: users, organizations, groups, sign-in settings, access tokens, OAuth apps, projects, conversations, notifications and file metadata. This page moves those documents into PostgreSQL on an install that already has data, and switches the API over.
+
+The guide moves only the document store. Search vectors, the graph (records, permissions, hierarchy) and the message queue stay where they are. See [Other stores](#other-stores).
+
+<Info>
+A new install can start on PostgreSQL directly and needs none of this: `PIPESHUB_COMPOSE_OVERRIDES=docker-compose.postgres-docstore.yml ./install.sh`.
+</Info>
+
+## Choose a path
+
+The migration tool ships in the PipesHub image as `node /app/backend/dist/scripts/docstore-migrate.js`. On Docker Compose, scripts in `deployment/docker-compose/scripts/` run it for you. It can move the data in two ways:
+
+| | Offline move | Online move |
+|---|---|---|
+| MongoDB | Any | A replica set (the move follows MongoDB's change stream). On Docker Compose, an override file provides one |
+| Downtime | The API is stopped while the data is copied and checked | MongoDB and the API restart once at the start, and writes pause for a few minutes during the switch |
+| Comparison before you switch | The tool checks every copied document | The API also runs in shadow mode (`DOC_STORE=shadow`) and compares real reads |
+| Compose command | `scripts/migrate-to-postgres.sh --offline` | `scripts/migrate-to-postgres.sh --online`, then `cutover` |
+
+The offline move is simpler. Choose the online move when the API cannot be stopped for the length of the copy.
+
+Every tool command prints a JSON report on standard output and progress lines on standard error. It exits `0` when it succeeds, `1` when it found problems or refused, and `2` on an error. `migrate-to-postgres.sh` runs two commands, so it prints two reports: the preflight, then the move.
+
+## Prerequisites
+
+- A checkout of the PipesHub repository at the release your install runs (the tag that matches `IMAGE_TAG` in `.env`). The schema job that builds the PostgreSQL tables is built from it, and the scripts and override files below are part of it.
+- The PostgreSQL passwords in `.env`. Installs made with a recent `install.sh` already have them. Otherwise add these lines, each a long random value of letters, digits and `. _ ~ -` only (for example `openssl rand -hex 16`):
+
+  ```bash
+  PG_ADMIN_PASSWORD=
+  PG_NODE_PASSWORD=
+  PG_CONNECTORS_PASSWORD=
+  PG_INDEXING_PASSWORD=
+  PG_QUERY_PASSWORD=
+  PG_KV_PASSWORD=
+  PG_JOBS_PASSWORD=
+  PG_MIGRATE_PASSWORD=
+  PG_BACKUP_PASSWORD=
+  ```
+
+- Free disk for PostgreSQL of about 1.4 times the size of the MongoDB data, for indexes, text search and the write-ahead log. Preflight works out the figure from MongoDB's data size and checks it against the free space of PostgreSQL's data volume.
+- For the online move: an oplog that covers the copy, the check and a day of following. Preflight warns when the oplog window is shorter than 24 hours.
+
+The commands below run from `deployment/docker-compose` in that checkout, with your install's `.env` copied next to `docker-compose.yml`. Docker Compose and the scripts take the project name from `COMPOSE_PROJECT_NAME` in `.env`, which installs made with `install.sh` already have. If yours has none, add `COMPOSE_PROJECT_NAME=pipeshub-ai` (or the name your install runs under).
+
+## 1. Back up
+
+Follow [Backup and restore](/deployment/backup-restore) and keep `.env` with the backup. The move does not change MongoDB's data, but a backup is the only way back from a mistake made by hand.
+
+## 2. Start PostgreSQL beside the existing stores
+
+Add the two PostgreSQL profiles to `COMPOSE_PROFILES` in `.env` (keep the profiles already there), for example:
+
+```bash
+COMPOSE_PROFILES=graph-neo4j,sandbox,postgres,postgres-migrate
+```
+
+Start PostgreSQL, its connection pooler, and the schema job:
+
+```bash
+docker compose up -d --build postgres pgbouncer pipeshub-migrate
+docker compose logs pipeshub-migrate     # ends with "migrate: done"; the job exits 0
+```
+
+The application keeps running on MongoDB. Nothing connects it to PostgreSQL yet.
+
+### What the scripts do for you
+
+- **`scripts/migrate-to-postgres.sh`** runs the move and **`scripts/rollback-to-mongo.sh`** runs the rollback. **`scripts/docstore-migrate.sh <command>`** runs any other tool command, such as `status`, `verify` or `cutover`, with the same connections.
+- **The import login.** The copy writes as its own PostgreSQL login, `pipeshub_import`, which can log in only during a move. The move and rollback scripts open it and close it again. While it is open, its generated password is kept in `.env` as `PG_IMPORT_PASSWORD`, so commands run from a second terminal can use it. PostgreSQL receives only a SCRAM verifier of the password. The password is removed from `.env` when the login is closed.
+- **Connections and secrets.** The scripts build the tool's PostgreSQL connections from the passwords in `.env`. They pass them to a one-off container of the PipesHub image through the environment, never on a command line, and never print them. MongoDB's address comes from the application's own environment. The tool runs as the same unprivileged user as the application.
+- **Re-runs** after a failed or interrupted run are safe.
+- **Another env file or project.** The scripts find the install the way `install.sh` does. For an env file other than `.env`, set `PIPESHUB_ENV_FILE`. To override the project name, set `PIPESHUB_PROJECT`. Extra compose files are read from `PIPESHUB_COMPOSE_OVERRIDES`.
+
+<Accordion title="Without Docker Compose">
+Run the same tool commands in a container of the PipesHub image, with the application's MongoDB settings and these variables:
+
+| Variable | Login |
+|---|---|
+| `PG_IMPORT_URL` | `postgresql://pipeshub_import:<import password>@<postgres host>:5432/pipeshub` (direct, not through the pooler) |
+| `PG_MIGRATE_URL` | `postgresql://pipeshub_migrate:<PG_MIGRATE_PASSWORD>@<postgres host>:5432/pipeshub` (direct) |
+| `PG_NODE_URL` | `postgresql://pipeshub_node_login:<PG_NODE_PASSWORD>@<pooler host>:6432/pipeshub` |
+| `MIGRATE_SCHEMA_COMMAND` | `none`: the schema job already built the tables |
+| `PG_DATA_DIR` | optional: a mount of PostgreSQL's data volume, so preflight can measure its free space |
+
+Open the import login for the length of the move with `ALTER ROLE pipeshub_import LOGIN PASSWORD '<password>'` (or `\password pipeshub_import` in `psql`, which sends only a hash), and close it afterwards with `ALTER ROLE pipeshub_import NOLOGIN`.
+</Accordion>
+
+## 3. Check before you copy
+
+```bash
+scripts/docstore-migrate.sh preflight
+```
+
+Preflight only reads. A `red` entry blocks the move and says why: for example a collection the tool cannot map, ids it cannot carry over, or too little disk. `yellow` entries are warnings, such as empty collections the tool does not copy.
+
+Two entries are expected at this point:
+- `target` is yellow, "the target was not inspected", because the import login is still closed. The move script runs preflight again with the login open.
+- On the offline path, `app_running` is red while the API is still connected to MongoDB. The move script stops the API first.
+
+## 4. Copy
+
+<Tabs>
+  <Tab title="Offline move">
+    One command stops the API, runs the preflight again, copies, checks every document, makes PostgreSQL the store, and closes the import login:
+
+    ```bash
+    scripts/migrate-to-postgres.sh --offline
+    ```
+
+    On success the report ends with `"stage": "done"` and "copied and verified; set DOC_STORE=postgres and start the application". MongoDB is then marked retired. Do not start the API on MongoDB again unless you [roll back](#roll-back): what it wrote there would not reach PostgreSQL.
+
+    If the copy or the check fails, the report names the stage and the differences. MongoDB stays the store and nothing is lost. Fix the cause, empty the copied tables with `scripts/migrate-to-postgres.sh --reset`, and run the move again.
+
+    Go on to step 6.
+  </Tab>
+  <Tab title="Online move">
+    On Docker Compose, the online move needs two override files from the checkout:
+    - `docker-compose.mongo-replica-set.yml` runs MongoDB as a one-member replica set;
+    - `docker-compose.docstore-shadow.yml` runs the API in shadow mode with the write fence on (step 5).
+
+    List both in `PIPESHUB_COMPOSE_OVERRIDES` in `.env`, after any files already there:
+
+    ```bash
+    PIPESHUB_COMPOSE_OVERRIDES=docker-compose.mongo-replica-set.yml:docker-compose.docstore-shadow.yml
+    ```
+
+    Then run:
+
+    ```bash
+    scripts/migrate-to-postgres.sh --online
+    ```
+
+    The script refuses, and names what is missing, if either file is not listed. Otherwise it does the following, in order:
+    1. Writes the replica set's key file in MongoDB's data volume. The file is readable only by MongoDB and is never printed.
+    2. Restarts MongoDB as a replica set and starts the replica set.
+    3. Restarts the API in shadow mode.
+    4. Opens the import login, runs the preflight, then copies, catches up and checks while the API keeps running.
+
+    The copy ends in `"stage": "online_ready"`. The script then keeps the follower running in the foreground. It applies every MongoDB change to PostgreSQL, so the copy stays a second or two behind. Leave it running until after the switch in step 6, and run the next commands in a second terminal. Ctrl+C stops the follower. The import login stays open, because the switch and the rollback still write as it.
+  </Tab>
+</Tabs>
+
+## 5. Compare in shadow mode (online move)
+
+In shadow mode the API keeps MongoDB as its store, reads it and writes it as before. It also repeats a sample of its reads on the PostgreSQL copy and compares the two answers. Users always get the MongoDB answer. A failed, slow or unreachable PostgreSQL only shows up in the counts, and nothing is ever written to PostgreSQL. The follower from step 4 keeps the copy current.
+
+`docker-compose.docstore-shadow.yml` sets these variables on the API. You can tune the four `DOC_STORE_SHADOW_*` values in `.env`:
+
+| Variable | Value |
+|---|---|
+| `DOC_STORE` | `shadow` |
+| `PG_NODE_URL` | the node login through the pooler |
+| `DOC_STORE_FENCE` | `on`. Every write first checks the store fence, which the switch in step 6 relies on |
+| `DOC_STORE_SHADOW_SAMPLE` | share of reads compared, `0` to `1` (default `0.1`) |
+| `DOC_STORE_SHADOW_SETTLE_MS` | wait before a difference is checked again (default `2000`) |
+| `DOC_STORE_SHADOW_TIMEOUT_MS` | longest wait for the PostgreSQL answer (default `2000`) |
+| `DOC_STORE_SHADOW_MAX_IN_FLIGHT` | most comparisons running at once (default `8`) |
+
+The API logs `document store: mongo, with shadow reads on postgres` when it starts. It starts in shadow mode before the copy is complete, so only judge differences logged after the copy reported `online_ready`. Use the API as usual for a while, so sign-in, people and groups, settings, tokens and projects are all read.
+
+### Read the differences
+
+A difference that is still there when checked again after `DOC_STORE_SHADOW_SETTLE_MS` is logged as a warning from the `DocStoreShadow` service:
+
+```text
+shadow read differs between MongoDB and PostgreSQL
+metadata: { "repo": "group", "method": "list", "differences": 6,
+            "fields": ["$.rows[0]._id", "..."], "ids": ["..."], "idsOnPostgres": ["..."] }
+```
+
+- `repo` and `method` name the read; `fields` lists where the answers differ (paths only, never values); `ids` and `idsOnPostgres` are the ids each store returned.
+- A difference on a record created or changed a moment earlier means the copy was behind. Examples are a record with `idsOnPostgres` empty, or a sign-in setting changed by a sign-in. Raise `DOC_STORE_SHADOW_SETTLE_MS` above the follower's lag (its `lagMs`).
+- Any other difference is something to investigate before you switch. Check every document changed since the last check, or all of them:
+
+  ```bash
+  scripts/docstore-migrate.sh verify --incremental
+  scripts/docstore-migrate.sh verify
+  ```
+
+- If you collect metrics, `docstore_shadow_reads_total{repo,result}` counts the comparisons by result: `equal`, `diff`, `timeout` and `error`.
+
+A clean shadow run and a clean `verify --incremental` are what the switch asks you to confirm.
+
+## 6. Switch the API to PostgreSQL
+
+<Tabs>
+  <Tab title="Offline move">
+    The copy already made PostgreSQL the store. Start the API with the document-store override, which sets `DOC_STORE=postgres` and the PostgreSQL logins:
+
+    ```bash
+    docker compose -f docker-compose.yml -f docker-compose.postgres-docstore.yml up -d pipeshub-ai
+    ```
+
+    To keep the override for later `install.sh` runs (upgrades, `--reconfigure`), add it to `.env`:
+
+    ```bash
+    PIPESHUB_COMPOSE_OVERRIDES=docker-compose.postgres-docstore.yml
+    ```
+  </Tab>
+  <Tab title="Online move">
+    With the follower still running and the API in shadow mode, run in the second terminal:
+
+    ```bash
+    scripts/docstore-migrate.sh cutover --dry-run --fence-armed --shadow-clean
+    scripts/docstore-migrate.sh cutover --fence-armed --shadow-clean
+    ```
+
+    - `--fence-armed` confirms that every API process runs with `DOC_STORE_FENCE=on`, and `--shadow-clean` confirms that shadow mode showed no difference. The cut refuses without them.
+    - The cut asks running chats to finish, makes MongoDB read-only, applies the last changes, checks them, and makes PostgreSQL the store. Writes pause for a few minutes. `--max-freeze` (seconds, default 600) bounds the pause.
+    - If any check fails, the cut puts MongoDB back as the writable store and changes nothing else. `scripts/docstore-migrate.sh unfreeze` does the same by hand if a cut was interrupted.
+
+    When it reports `"stage": "done"`:
+    1. Stop the follower with Ctrl+C.
+    2. In `PIPESHUB_COMPOSE_OVERRIDES`, replace the shadow override with the document-store override, keeping the replica set:
+
+       ```bash
+       PIPESHUB_COMPOSE_OVERRIDES=docker-compose.mongo-replica-set.yml:docker-compose.postgres-docstore.yml
+       ```
+
+    3. Restart the API on PostgreSQL. List every override file, so MongoDB stays a replica set:
+
+       ```bash
+       docker compose -f docker-compose.yml -f docker-compose.mongo-replica-set.yml -f docker-compose.postgres-docstore.yml up -d pipeshub-ai
+       ```
+
+    4. Start the reverse follower. It writes every PostgreSQL change back to MongoDB, so an online rollback stays possible. Ctrl+C stops it.
+
+       ```bash
+       scripts/docstore-migrate.sh reverse
+       ```
+  </Tab>
+</Tabs>
+
+The API logs `document store: postgres` when it starts. Sign in and check your data.
+
+### Close the import login
+
+The offline move and the rollback scripts close the import login themselves. After an online move, it stays open while the reverse follower may still need it. When you no longer need an online rollback, stop the reverse follower and close the login:
+
+```bash
+scripts/migrate-to-postgres.sh --close-login
+```
+
+`status` warns while the login is left open with no move running. Add the PostgreSQL data volume, `<project>_postgres_data`, to your backups. MongoDB's data stays as it was at the switch. Keep it until you no longer need a rollback.
+
+## Roll back
+
+| Situation | Command | Then |
+|---|---|---|
+| Offline move, before the API wrote anything to PostgreSQL | `scripts/rollback-to-mongo.sh` | Checks that MongoDB still matches PostgreSQL and makes MongoDB the store again. If the API has written to PostgreSQL, it refuses and says to use `--reverse` |
+| Offline move, after the API wrote to PostgreSQL | `scripts/rollback-to-mongo.sh --reverse` | Copies every document from PostgreSQL back over MongoDB, checks the copy, and makes MongoDB the store again |
+| Online move, with `reverse` running since the switch | `scripts/rollback-to-mongo.sh --online` | Writes pause while the last changes go back, then MongoDB is the store again and PostgreSQL is closed |
+
+The script opens the import login, stops the API (not with `--online`), rolls back, and closes the login. A rollback that cannot verify its copy refuses and leaves PostgreSQL the store. When an online rollback does not complete, the login stays open, because the reverse follower still writes as it. Close it later with `scripts/migrate-to-postgres.sh --close-login`.
+
+Then start the API on MongoDB, without the document-store override, and remove `docker-compose.postgres-docstore.yml` from `PIPESHUB_COMPOSE_OVERRIDES` in `.env`:
+
+```bash
+docker compose up -d pipeshub-ai                                               # after an offline move
+docker compose -f docker-compose.yml -f docker-compose.mongo-replica-set.yml up -d pipeshub-ai   # after an online move
+```
+
+To move again later, empty the earlier copy first with `scripts/migrate-to-postgres.sh --reset`. Otherwise preflight refuses with `target_not_empty`.
+
+## Other stores
+
+PipesHub can also keep its configuration, message queue, graph and search vectors in PostgreSQL. Moving the document store does not change them.
+
+| Setting | PostgreSQL value | Existing data |
+|---|---|---|
+| `KV_STORE_TYPE` | `postgres` | Copy the configuration first with `python -m app.scripts.kv_redis_to_postgres` (in the PipesHub image, from `/app/python`, with `PG_CORE_URL` set and the services stopped). Try `--dry-run` first |
+| `MESSAGE_BROKER` | `postgres` | Messages still queued in Redis or Kafka are not moved. Switch when the queues are empty |
+| `DATA_STORE` | `postgres` | Not copied. A switch starts with an empty graph |
+| `VECTOR_DB_TYPE` | `pgvector` | Not copied. Records need indexing again |
+
+`PIPESHUB_STORE=postgres` sets `KV_STORE_TYPE`, `MESSAGE_BROKER` and related settings to `postgres` wherever they are not set. See [Environment variables](/deployment/environment-variables).
+
+## Known limits
+
+- On the PostgreSQL message broker (`MESSAGE_BROKER=postgres`), stored-record retention stays paused: documents that later writes replaced are not purged yet. This will change in a future release.
+- On Docker Compose, the online move restarts MongoDB, as a replica set, and the API, in shadow mode, once at the start. Each restart is a short interruption.
+- Shadow mode compares a sample of the API's reads, and only while the API is not inside a write transaction. It never compares writes. `verify` is the full check.
+- Some differences between the stores are expected, and the tool accounts for them:
+  - the U+0000 character, which PostgreSQL text cannot hold, is removed;
+  - JSON key order is not kept;
+  - published outbox events (messages already delivered) are history and are not copied;
+  - empty collections the tool does not map are skipped.
+- The Kubernetes chart does not set `DOC_STORE` yet. On Kubernetes, set the variables on the API's deployment yourself.
+
+## Related
+
+- [Backup and restore](/deployment/backup-restore)
+- [Environment variables](/deployment/environment-variables)
+- [Upgrading to 1.0](/deployment/upgrade-to-1-0)

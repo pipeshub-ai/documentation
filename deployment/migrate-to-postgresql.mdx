@@ -258,7 +258,7 @@ scripts/migrate-to-postgres.sh --close-login
 | Offline move, after the API wrote to PostgreSQL | `scripts/rollback-to-mongo.sh --reverse` | Copies every document from PostgreSQL back over MongoDB, checks the copy, and makes MongoDB the store again |
 | Online move, with `reverse` running since the switch | `scripts/rollback-to-mongo.sh --online` | Writes pause while the last changes go back, then MongoDB is the store again and PostgreSQL is closed |
 
-The script opens the import login, stops the API (not with `--online`), rolls back, and closes the login. A rollback that cannot verify its copy refuses and leaves PostgreSQL the store.
+The script opens the import login, stops the API (not with `--online`), rolls back, and closes the login. A rollback that cannot verify its copy refuses and leaves PostgreSQL the store. When an online rollback does not complete, the login stays open, because the reverse follower still writes as it. Close it later with `scripts/migrate-to-postgres.sh --close-login`.
 
 Then start the API on MongoDB, without the document-store override, and remove `docker-compose.postgres-docstore.yml` from `PIPESHUB_COMPOSE_OVERRIDES` in `.env`:
 

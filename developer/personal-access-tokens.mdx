@@ -52,13 +52,13 @@ Click **New token**. The **New personal access token** panel opens:
 | Field | Required | Description |
 |-------|----------|-------------|
 | **Token name** | Yes | A label to help you recognize the token later (e.g. `Claude Desktop`, `CI script`), 1–100 characters. |
-| **Expiry** | Yes | `30 days`, `90 days`, `365 days` or `Never`. **30 days** is selected when the panel opens. |
+| **Expiry** | Yes | `7 days`, `30 days`, `90 days` or `365 days`. **30 days** is selected when the panel opens. |
 | **What can this token see?** | No | **Everything I can see** (includes sources you add later) or **Only what I pick** (whole sources, or spaces, folders or files inside one). The token never sees more than you can. |
-| **Scopes** | Yes | Which permissions the token carries, grouped by category. Every scope your instance offers (its `MCP_SCOPES` set) is selected when the panel opens; keep at least one. Use **Clear all** / **Select all** to toggle every scope at once. |
+| **Scopes** | Yes | Which permissions the token carries, grouped by category, from the scopes your instance offers (its `MCP_SCOPES` set). When the panel opens, only the scopes that read are selected, plus `semantic:write` (search needs it) and `openid`, `profile` and `email`. Tick the ones that change data, run agents or chat yourself. Use **Clear all** / **Select all** to toggle every scope at once; keep at least one. |
 
-<Warning>
-  A token with `Never` expiry has no automatic cutoff. Prefer a bounded expiry unless you have a specific, ongoing reason not to — you can always create a new token later.
-</Warning>
+<Note>
+  Every token expires. For CI jobs and long-running integrations, pick `365 days` and create a new token before it runs out. Tokens created as `Never` on earlier versions keep working until you revoke them.
+</Note>
 
 ### Step 3: Copy the token
 
@@ -118,7 +118,7 @@ It is **not** equivalent to being logged in. Session tokens skip scope checks en
 
 ## Manage your tokens
 
-The **Personal access tokens** page lists every active token you've created, with its name, scopes, creation date, expiry (`Never` shown as-is, not a literal date), and last-used time.
+The **Personal access tokens** page lists every active token you've created, with its name, scopes, creation date, expiry (a token created as `Never` on an earlier version shows `Never`, not a literal date), and last-used time.
 
 ### Revoke a token
 
@@ -210,8 +210,8 @@ Every endpoint in this table needs a signed-in session token. A PAT or OAuth acc
 | Field | Required | Description |
 |-------|----------|--------------|
 | `name` | Yes | 1–100 characters |
-| `scopes` | No | Defaults to your instance's full configured `MCP_SCOPES` set if omitted |
-| `expiryDays` | No | `30`, `90`, `365`, or `"never"`. Defaults to `30` if omitted |
+| `scopes` | No | 1–100 scope names. Defaults to your instance's full configured `MCP_SCOPES` set if omitted. An empty list gets **400 Bad Request** |
+| `expiryDays` | No | `7`, `30`, `90` or `365`. Defaults to `30` if omitted. Any other value, including `"never"`, gets **400 Bad Request** |
 
 **`DELETE /api/v1/personal-access-tokens/{tokenId}`** and **`DELETE .../admin/{tokenId}`**
 
@@ -238,7 +238,7 @@ Both accept an optional body:
 </Card>
 
 <Card title="Short default expiry" icon="clock">
-  New tokens default to 30 days. Choose `Never` deliberately, not by default.
+  New tokens default to 30 days and last at most 365 days, so a forgotten token stops working on its own.
 </Card>
 
 <Card title="Immediate revocation" icon="ban">
@@ -254,7 +254,10 @@ Both accept an optional body:
 <AccordionGroup>
 
 <Accordion title="What scopes can a personal access token have?">
-By default, a PAT gets your instance's full configured `MCP_SCOPES` set — the same scopes exposed to MCP clients (see [Customizing Default Scopes](/mcp/overview#customizing-default-scopes)). You can select a narrower set at creation time via the scope picker.
+Any subset of your instance's configured `MCP_SCOPES` set, the same scopes exposed to MCP clients (see [Customizing Default Scopes](/mcp/overview#customizing-default-scopes)). A token gets exactly the scopes it is created with:
+
+- **From the panel:** the scopes ticked when you click **Create token**. The panel opens with only the reading scopes ticked (see [Step 2](#step-2-create-a-new-token)).
+- **From the API:** the `scopes` you send to `POST /api/v1/personal-access-tokens`. If you leave `scopes` out, the token gets the full `MCP_SCOPES` set. An empty list is refused with **400 Bad Request**.
 </Accordion>
 
 <Accordion title="How is this different from a session token?">

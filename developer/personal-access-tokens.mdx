@@ -210,7 +210,7 @@ Every endpoint in this table needs a signed-in session token. A PAT or OAuth acc
 | Field | Required | Description |
 |-------|----------|--------------|
 | `name` | Yes | 1–100 characters |
-| `scopes` | No | Defaults to your instance's full configured `MCP_SCOPES` set if omitted |
+| `scopes` | No | Defaults to your instance's full configured `MCP_SCOPES` set if omitted or empty |
 | `expiryDays` | No | `7`, `30`, `90` or `365`. Defaults to `30` if omitted. Any other value, including `"never"`, gets **400 Bad Request** |
 
 **`DELETE /api/v1/personal-access-tokens/{tokenId}`** and **`DELETE .../admin/{tokenId}`**
@@ -254,7 +254,10 @@ Both accept an optional body:
 <AccordionGroup>
 
 <Accordion title="What scopes can a personal access token have?">
-By default, a PAT gets your instance's full configured `MCP_SCOPES` set — the same scopes exposed to MCP clients (see [Customizing Default Scopes](/mcp/overview#customizing-default-scopes)). You can select a narrower set at creation time via the scope picker.
+Any subset of your instance's configured `MCP_SCOPES` set, the same scopes exposed to MCP clients (see [Customizing Default Scopes](/mcp/overview#customizing-default-scopes)). A token gets exactly the scopes it is created with:
+
+- **From the panel:** the scopes ticked when you click **Create token**. The panel opens with only the reading scopes ticked (see [Step 2](#step-2-create-a-new-token)).
+- **From the API:** the `scopes` you send to `POST /api/v1/personal-access-tokens`. If you leave `scopes` out or send an empty list, the token gets the full `MCP_SCOPES` set.
 </Accordion>
 
 <Accordion title="How is this different from a session token?">

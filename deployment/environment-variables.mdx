@@ -132,6 +132,7 @@ Leave these unset unless you are tuning a known bottleneck. Empty values let the
 | `CONNECTOR_SYNC_MAX_CONCURRENT` | Most connector syncs running at once. Default: `8`. |
 | `CONNECTOR_SYNC_DELETE_STOP_WAIT_SEC` | How long a connector delete waits for its running sync to stop. Default: `15`. |
 | `MAX_TABLE_ROWS_FOR_LLM` | Table-row threshold for processing with the language model. Default: `1000`. |
+| `INDEXING_TABLE_ROW_BATCH_SIZE` | Table rows described per language-model call. If a call leaves out more than 10% of its rows, the batch is split in half and retried, down to 5 rows and within a per-table retry budget; rows still missing after that (or within the 10%) are indexed as plain `column: value` text. Lower this only if your model keeps dropping rows from large batches (more calls, each repeating the table summary). Values below `1` use the default; above `500` are capped. Default: `50`. |
 | `EXCEL_MAX_TABLE_ROWS_TO_INDEX` | Most rows indexed from one Excel table. Default: `20000`. |
 | `EXCEL_HEADER_GENERATION_SAMPLE_SCAN_LIMIT` | Rows scanned to generate Excel table headers. Default: `500`. |
 | `EMBEDDING_SERVER_MAX_CONCURRENCY`, `EMBEDDING_BATCH_CONCURRENCY` | `EMBEDDING_SERVER_MAX_CONCURRENCY` caps requests the bundled embedding server handles at once. `EMBEDDING_BATCH_CONCURRENCY` caps how many embedding batches indexing sends at once for one record (code default 5). Default: empty. |

@@ -65,6 +65,21 @@ PIPESHUB_DEPLOY_TYPE=full ./install.sh --version latest --no-pull
 
 After the install, set `HF_HUB_OFFLINE=1` and `TRANSFORMERS_OFFLINE=1` in `.env` and run `docker compose -p pipeshub-ai up -d`, so the model libraries do not try to reach the internet. See [Environment Variables](/deployment/environment-variables#air-gapped-hosts).
 
+## Models in the image
+
+The images carry the models the PDF parsers use, and load them by path from `/opt/docling-models`. They never download them from the Hugging Face Hub, so they work on a host with no internet:
+
+| Model | Used for |
+|---|---|
+| Docling layout model (`docling-project/docling-layout-heron`) | Page layout in the Docling PDF pipeline |
+| TableFormer `accurate` (`docling-project/docling-models`) | Table structure in the Docling PDF pipeline |
+| Heron ONNX layout model (`docling-project/docling-layout-heron-onnx`) | Table and figure detection in the PdfPlumber parser |
+
+- **Where they live.** `/opt/docling-models` is read-only and outside every volume, and the image sets `DOCLING_ARTIFACTS_PATH=/opt/docling-models`. An older `pipeshub_hf_cache` volume (mounted at `/root/.cache/huggingface`) can no longer hide the models after an upgrade, and Kubernetes needs no volume for them. Do not set `DOCLING_ARTIFACTS_PATH` yourself in `.env` or in Helm values.
+- **Image size.** The image grows by about 370 MiB, because the layout and TableFormer weights now ship in it. They used to be downloaded into the `pipeshub_hf_cache` volume at run time, so the total disk use of an install is about the same. An upgraded install keeps its old copy of the ONNX model in that volume. It is harmless and can stay.
+- **TableFormer `fast`.** The images bake only `accurate`, the default. `PDF_DOCLING_TABLE_MODE=fast` needs about 145 MB more, which is downloaded on first use. On a host with no internet, build your own image with the build argument `BUNDLE_TABLEFORMER_FAST=1` to include it. See [Development](/development) for building images.
+- **Other models.** `HF_HUB_OFFLINE` does not affect these models, since they are read by path. Models you choose in the UI, such as an embedding model, still use the Hugging Face cache.
+
 ## Choosing models
 
 An air-gapped deployment cannot reach a hosted model provider, so configure local ones:

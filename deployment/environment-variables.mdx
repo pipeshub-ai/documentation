@@ -185,7 +185,8 @@ Leave these unset unless you are tuning a known bottleneck. Empty values let the
 
 | Variable | What it does |
 |---|---|
-| `HF_HUB_OFFLINE`, `TRANSFORMERS_OFFLINE` | Set both to `1` on a host with no internet that already has the models, such as the `latest` image. Leave them empty on `slim`, which downloads the embedding model on first use. The Docling layout, TableFormer `accurate` and table-detector models are read from the image by path, so these variables do not affect them. The TableFormer `fast` weights are not in the standard images: with `PDF_DOCLING_TABLE_MODE=fast` they are not available offline, and the parser uses `accurate` with a warning unless you build an image with `BUNDLE_TABLEFORMER_FAST=1`. Default: empty. |
+| `PIPESHUB_OFFLINE` | `1` keeps every service off the internet: it turns telemetry off and sets the Hugging Face and LiteLLM offline switches, for each one you have not set yourself. The `slim` image has no local embedding model, so use `full` or an embedding service you can reach. See [Offline mode](/deployment/vendor/private#offline-mode). Default: empty (off). |
+| `HF_HUB_OFFLINE`, `TRANSFORMERS_OFFLINE` | `PIPESHUB_OFFLINE=1` sets both for you. To set them by hand, use `1` on a host with no internet that already has the models, such as the `latest` image. Leave them empty on `slim`, which downloads the embedding model on first use. The Docling layout, TableFormer `accurate` and table-detector models are read from the image by path, so these variables do not affect them. The TableFormer `fast` weights are not in the standard images: with `PDF_DOCLING_TABLE_MODE=fast` they are not available offline, and the parser uses `accurate` with a warning unless you build an image with `BUNDLE_TABLEFORMER_FAST=1`. Default: empty. |
 
 See [Private Cloud & On-Premises](/deployment/vendor/private).
 

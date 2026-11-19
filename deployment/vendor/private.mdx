@@ -23,7 +23,7 @@ curl -fsSL https://get.pipeshub.com/install | bash
 
 ## Air-gapped installation
 
-On a host with no internet access, use the `full` deployment type. Its image tag, `latest`, has the embedding model built in; the `slim` image downloads the model on first use and cannot do that offline. The `full` type uses Kafka as its message broker.
+On a host with no internet access, use the `full` deployment type and set `PIPESHUB_OFFLINE=1`. Its image tag, `latest`, has the embedding model built in; the `slim` image downloads the model on first use and cannot do that offline. The `full` type uses Kafka as its message broker.
 
 **On a machine that does have access,** download the deployment files for a release and save the images:
 
@@ -63,7 +63,41 @@ PIPESHUB_DEPLOY_TYPE=full ./install.sh --version latest --no-pull
 
 `--no-pull` tells the installer to use the images already present. `--version` must match the tag you saved; otherwise the installer looks for an image you do not have.
 
-After the install, set `HF_HUB_OFFLINE=1` and `TRANSFORMERS_OFFLINE=1` in `.env` and run `docker compose -p pipeshub-ai up -d`, so the model libraries do not try to reach the internet. See [Environment Variables](/deployment/environment-variables#air-gapped-hosts).
+After the install, set `PIPESHUB_OFFLINE=1` in `.env` and run `docker compose -p pipeshub-ai up -d`. See [Offline mode](#offline-mode).
+
+## Offline mode
+
+`PIPESHUB_OFFLINE=1` in `.env` makes the existing images run on a network with no route to the internet. There is no separate image, and an empty value (the default) changes nothing. When a container starts with the switch on, it sets each of the variables below for every service, unless you have already set that variable yourself, and logs one line naming what it set and what it kept:
+
+| Variable | Value | Effect |
+|---|---|---|
+| `TELEMETRY_COLLECTION_FLAG` | `false` | No telemetry is collected or sent, by the Node or the Python services. |
+| `HF_HUB_OFFLINE`, `TRANSFORMERS_OFFLINE`, `HF_DATASETS_OFFLINE` | `1` | Hugging Face libraries read the local cache only. |
+| `HF_HUB_DISABLE_TELEMETRY`, `DO_NOT_TRACK` | `1` | Libraries do not report usage. |
+| `LITELLM_LOCAL_MODEL_COST_MAP` | `True` | LiteLLM uses its bundled price list instead of fetching one. |
+
+A value you set in `.env` always wins. Values `1`, `true`, `yes` and `on` turn the switch on.
+
+**Already in the image, in every mode:**
+
+- The Docling and table-detector models (see [Models in the image](#models-in-the-image)).
+- The OpenAI `cl100k_base` token table used to count tokens, at `/opt/tiktoken` (found through `TIKTOKEN_CACHE_DIR`), so token counting does not download it.
+- The fonts and icons of the dashboard and of the API reference page. They are served by PipesHub itself, not from Google Fonts.
+
+**What you still have to provide:**
+
+- **An embedding model.** Only the `full` image (`latest`) carries one, `BAAI/bge-large-en-v1.5`. The `slim` image has no local embedding model and, in offline mode, cannot download one: if the built-in embedding model is selected, the embedding service logs one error saying so and every embedding request fails. Use the `full` image, or configure an embedding service your network can reach.
+- **A text-generation model** that the app container can reach, such as a local Ollama or a gateway.
+- **The images**, loaded onto the host or into a registry before you disconnect (`docker load`, or a mirror). The installer's pull and the Helm chart's image pulls need that registry.
+- **TableFormer `fast`**, if you want it. `PDF_DOCLING_TABLE_MODE=fast` needs weights that the image does not include. In offline mode, a missing `fast` model falls back to `accurate` and logs one warning. To use `fast`, build an image with `BUNDLE_TABLEFORMER_FAST=1`.
+
+The switch does not change connectors, hosted model providers or anything else that talks to a service by design: those need the network they talk to.
+
+<Warning>
+Check the `pipeshub_hf_cache` volume. It is mounted at `/root/.cache/huggingface` and keeps what it held when it was created. Docker does not refresh it from a newer image. An install that started on `slim` has an empty volume, and that volume hides the embedding model of the `full` image after you switch to it. Either recreate the volume (`docker compose down`, then `docker volume rm <project>_pipeshub_hf_cache`, then bring the stack up again), which also deletes any model you downloaded into it, or place the model you want in the volume yourself.
+</Warning>
+
+On Kubernetes, set `offline.enabled: true` in the Helm values. It sets `PIPESHUB_OFFLINE=1` on the app pods and on the parsing pods. See [Kubernetes (Helm)](/deployment/kubernetes#other-settings).
 
 ## Models in the image
 
@@ -92,7 +126,7 @@ Download the weights for your text-generation models on a connected machine befo
 
 ## Telemetry
 
-PipesHub collects usage telemetry by default. On an isolated network those requests simply fail and nothing breaks, but you can turn the collection off so the attempts stop: switch off **Data collection settings** under **Workspace → General**, or set `TELEMETRY_COLLECTION_FLAG=false` in `.env`.
+PipesHub collects usage telemetry by default. On an isolated network those requests simply fail and nothing breaks, but you can turn the collection off so the attempts stop: switch off **Data collection settings** under **Workspace → General**, or set `TELEMETRY_COLLECTION_FLAG=false` in `.env`. `PIPESHUB_OFFLINE=1` turns it off for you, unless you set the variable yourself.
 
 ## Certificates
 

@@ -1,0 +1,53 @@
+---
+title: "LlamaIndex"
+description: "Use PipesHub as a LlamaIndex LLM through its OpenAI-compatible API"
+icon: "/logo/llamaindex.png"
+---
+
+LlamaIndex's `OpenAILike` class talks to any OpenAI-compatible server. Use it rather than the `OpenAI` class, which only accepts model names it knows.
+
+## Before you start
+
+- A [personal access token](/developer/personal-access-tokens) with the `conversation:chat` scope.
+- A model id from `GET /api/v1/openai/models` (see [Models](/developer/openai-compatible-api#models)).
+
+```bash
+pip install llama-index-llms-openai-like
+export PIPESHUB_URL="https://your-pipeshub-instance.com"
+export PIPESHUB_TOKEN="phpat_..."
+```
+
+## Chat
+
+```python
+import os
+from llama_index.llms.openai_like import OpenAILike
+from llama_index.core.llms import ChatMessage
+
+llm = OpenAILike(
+    api_base=os.environ["PIPESHUB_URL"] + "/api/v1/openai",
+    api_key=os.environ["PIPESHUB_TOKEN"],
+    model="gpt-5",          # a model id from /models
+    is_chat_model=True,     # send requests to /chat/completions
+    context_window=128000,
+    timeout=300,            # the assistant may search for a while before it answers
+)
+
+reply = llm.chat([ChatMessage(role="user", content="How many weeks of parental leave does a primary caregiver get?")])
+print(reply.message.content)
+```
+
+```text Output
+A primary caregiver gets **20 weeks of fully paid parental leave** [1](https://your-pipeshub-instance.com/record/5b3e.../preview#blockIndex=6).
+```
+
+`llm.complete(...)`, `llm.stream_chat(...)` and their async versions work the same way.
+
+## What works
+
+| Feature | Works |
+|---|---|
+| `chat`, `complete`, `stream_chat`, `stream_complete` | Yes |
+| Query engines that only need an LLM to write the answer | Yes. PipesHub also searches its own knowledge for every answer |
+| Function-calling agents, structured outputs | No. PipesHub ignores client `tools` and `response_format` |
+| Embeddings | No. There is no `/embeddings` endpoint |

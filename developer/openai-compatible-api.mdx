@@ -118,7 +118,25 @@ The list is empty until an admin configures a chat model.
   </Tab>
 </Tabs>
 
-In other tools, pick the "OpenAI" or "OpenAI-compatible" provider and enter the three settings above. Chat apps such as Chatbox fetch the model list for you. In n8n, create an OpenAI credential with the base URL and token, then choose a model.
+In other tools, pick the "OpenAI" or "OpenAI-compatible" provider and enter the three settings above. Most fetch the model list for you.
+
+## Use it in other tools
+
+Step-by-step guides, with screenshots, for tools tested with PipesHub:
+
+<CardGroup cols={2}>
+  <Card title="Open WebUI" icon="/logo/open-webui.png" href="/developer/openai-compatible/open-webui">Chat UI, added as an OpenAI connection</Card>
+  <Card title="LibreChat" icon="/logo/librechat.svg" href="/developer/openai-compatible/librechat">Chat UI, added as a custom endpoint</Card>
+  <Card title="AnythingLLM" icon="/logo/anythingllm.png" href="/developer/openai-compatible/anythingllm">Workspaces on the Generic OpenAI provider</Card>
+  <Card title="n8n" icon="/logo/n8n.svg" href="/developer/openai-compatible/n8n">Workflows with the OpenAI Chat Model node</Card>
+  <Card title="Dify" icon="/logo/dify.svg" href="/developer/openai-compatible/dify">Apps on the OpenAI-API-compatible provider</Card>
+  <Card title="LangChain" icon="/logo/langchain.png" href="/developer/openai-compatible/langchain">`ChatOpenAI` with a base URL</Card>
+  <Card title="LlamaIndex" icon="/logo/llamaindex.png" href="/developer/openai-compatible/llamaindex">The `OpenAILike` LLM</Card>
+  <Card title="Vercel AI SDK" icon="/logo/vercel-ai-sdk.png" href="/developer/openai-compatible/vercel-ai-sdk">`@ai-sdk/openai` and `@ai-sdk/openai-compatible`</Card>
+  <Card title="LiteLLM" icon="/logo/litellm.png" href="/developer/openai-compatible/litellm">Python SDK and proxy</Card>
+</CardGroup>
+
+PipesHub's assistant runs its own tools and does not call tools for the client, so agent features that depend on tool calling (agent nodes, function calling, MCP tools in the client) don't work through this API. Plain chat does, everywhere.
 
 ---
 
@@ -210,6 +228,7 @@ Both endpoints accept `stream: true` and send OpenAI's server-sent events, so cl
 - **Fields PipesHub does not use** (`temperature`, `max_tokens`, `response_format`, `store`, ...) are accepted and ignored. So are `tools`, except a `file_search` tool on `/responses`, which limits the search to its vector stores.
 - **`usage` is `null`.** Token counts are not reported.
 - **Text and file ids only.** Images and inline file data (`file_data`, `file_url`) in messages are ignored.
+- **No text in angle brackets.** A message, instruction or tool definition that contains `<...>` (such as `<id>` or `List<String>`) is refused with `400`. Some clients put such text in their built-in prompts or tool definitions; the guides above say which settings to turn off.
 
 ## Errors
 

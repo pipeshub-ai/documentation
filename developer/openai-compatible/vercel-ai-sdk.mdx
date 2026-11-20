@@ -1,0 +1,81 @@
+---
+title: "Vercel AI SDK"
+description: "Use PipesHub as a model in the Vercel AI SDK"
+icon: "/logo/vercel-ai-sdk.png"
+---
+
+The AI SDK has two providers that work with PipesHub:
+
+- **`@ai-sdk/openai-compatible`** calls [Chat Completions](/developer/openai-compatible-api#chat-completions).
+- **`@ai-sdk/openai`** with a `baseURL` calls [Responses](/developer/openai-compatible-api#responses), and returns PipesHub's citations as `sources`.
+
+## Before you start
+
+- A [personal access token](/developer/personal-access-tokens) with the `conversation:chat` scope.
+- A model id from `GET /api/v1/openai/models` (see [Models](/developer/openai-compatible-api#models)).
+
+## Responses, with sources
+
+```bash
+npm install ai @ai-sdk/openai
+```
+
+```typescript
+import { createOpenAI } from "@ai-sdk/openai";
+import { generateText } from "ai";
+
+const pipeshub = createOpenAI({
+  baseURL: process.env.PIPESHUB_URL + "/api/v1/openai",
+  apiKey: process.env.PIPESHUB_TOKEN,
+});
+
+const { text, sources } = await generateText({
+  model: pipeshub("gpt-5"), // a model id from /models
+  prompt: "How many remote days per week are allowed?",
+});
+console.log(text);
+console.log(sources);
+```
+
+```text Output
+Employees may work remotely up to **3 days per week**. Tuesdays and Thursdays are team office days [1](https://your-pipeshub-instance.com/record/5b3e.../preview#blockIndex=10).
+[
+  {
+    type: 'source',
+    sourceType: 'url',
+    url: 'https://your-pipeshub-instance.com/record/5b3e...',
+    title: 'Northwind-Employee-Handbook'
+  }
+]
+```
+
+## Chat Completions
+
+```bash
+npm install ai @ai-sdk/openai-compatible
+```
+
+```typescript
+import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
+import { streamText } from "ai";
+
+const pipeshub = createOpenAICompatible({
+  name: "pipeshub",
+  baseURL: process.env.PIPESHUB_URL + "/api/v1/openai",
+  apiKey: process.env.PIPESHUB_TOKEN,
+});
+
+const result = streamText({ model: pipeshub("gpt-5"), prompt: "How many vacation days do full-time employees get?" });
+for await (const chunk of result.textStream) process.stdout.write(chunk);
+```
+
+The streamed text arrives in one chunk when the assistant finishes (see [Streaming](/developer/openai-compatible-api#streaming)). This provider does not read citation annotations, so `sources` is empty; the citation links stay in the text.
+
+## What works
+
+| Feature | Works |
+|---|---|
+| `generateText`, `streamText` | Yes |
+| `sources` | With `@ai-sdk/openai` (Responses) |
+| `tools`, `generateObject` | No. PipesHub ignores client `tools` and `response_format` |
+| `usage` | Not reported |

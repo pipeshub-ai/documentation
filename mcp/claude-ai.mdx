@@ -22,7 +22,7 @@ The **Add custom connector** dialog asks how Claude authenticates. Pick one:
 |---|---|---|
 | **Sign in now** (recommended) | Nothing. Claude registers itself with PipesHub. | Almost always. Each person signs in as themselves, so results follow their own permissions, and tokens refresh on their own. |
 | **No sign-in** with a request header | A [personal access token](/developer/personal-access-tokens) | Your own individual Claude account, when you'd rather not sign in through a browser. |
-| **Sign in now** with an OAuth app under **Advanced** | An OAuth app's Client ID and Client Secret | Dynamic client registration is turned off on your instance (`PIPESHUB_ENABLE_DCR=false`), or PipesHub is older than 1.2.0. |
+| **Sign in now** with your own OAuth app | An OAuth app's Client ID and Client Secret | Dynamic client registration is turned off on your instance (`PIPESHUB_ENABLE_DCR=false`), or PipesHub is older than 1.2.0. |
 
 **Sign in when needed** adds nothing here: PipesHub asks for sign-in on the first request, so it behaves like **Sign in now**.
 
@@ -102,7 +102,7 @@ For an **individual** Claude account, you can skip the browser sign-in and send 
     In Claude, open **Customize > Connectors**, click **+**, then **Add custom connector**. Enter a name and `PIPESHUB_INSTANCE_URL/mcp`.
   </Step>
   <Step title="Choose No sign-in and add the header">
-    Under **Authentication**, choose **No sign-in**. Under **Request headers**, set:
+    Under **Authentication**, choose **No sign-in**. Under **Request headers** (inside **Advanced** if the dialog shows everything on one screen), set:
     - **Header**: `authorization`
     - **Value**: `Bearer phpat_YOUR_TOKEN` — the word `Bearer`, one space, then the whole token. Claude sends the value exactly as you type it, and PipesHub ignores an `Authorization` header that doesn't start with `Bearer `.
     - Keep **Required** ticked.
@@ -125,7 +125,9 @@ Use this when dynamic client registration is off on your instance, or PipesHub i
     Create an OAuth app in PipesHub with the redirect URI `https://claude.ai/api/mcp/auth_callback`, and note its **Client ID** and **Client Secret**. See [MCP Server Overview](/mcp/overview#step-1-create-an-oauth-app).
   </Step>
   <Step title="Enter the credentials">
-    Add the custom connector as in [Sign in with your PipesHub account](#sign-in-with-your-pipeshub-account-recommended), choose **Sign in now**, then open **Advanced** and enter the **OAuth Client ID** and **OAuth Client Secret**.
+    Add the custom connector as in [Sign in with your PipesHub account](#sign-in-with-your-pipeshub-account-recommended) and choose **Sign in now**. Where you enter the credentials depends on the dialog's layout:
+    - **Two steps** (a **Continue** button after the URL): under **OAuth client**, choose **Use your own OAuth client**, then enter the client ID and client secret.
+    - **One screen**: open **Advanced** and enter the client ID and client secret there.
   </Step>
   <Step title="Add and sign in">
     Click **Add**, sign in, and approve the consent page in PipesHub.
@@ -138,7 +140,7 @@ Use this when dynamic client registration is off on your instance, or PipesHub i
   <Accordion title="Couldn't reach the server">
     Claude connects from Anthropic's servers, not from your browser. Check that the endpoint answers from the internet: `curl -X POST PIPESHUB_INSTANCE_URL/mcp` should return `401`, not a connection error or a challenge page.
 
-    If PipesHub sits behind a firewall, WAF or bot protection (for example Cloudflare), allow Anthropic's outbound range `160.79.104.0/21` for `/mcp`, `/.well-known/*` and `/api/v1/oauth2/*`.
+    If PipesHub sits behind a firewall, WAF or bot protection (for example Cloudflare), allow Anthropic's outbound ranges `160.79.104.0/21` and `153.61.208.0/20` for `/mcp`, `/.well-known/*` and `/api/v1/oauth2/*`. See [Anthropic's IP addresses](https://platform.claude.com/docs/en/api/ip-addresses) for the current list.
   </Accordion>
   <Accordion title="Sign-in fails before the PipesHub page opens">
     Dynamic client registration may be off on your instance. Ask an administrator to remove `PIPESHUB_ENABLE_DCR=false`, or [use an OAuth app](#use-an-oauth-app).

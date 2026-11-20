@@ -126,7 +126,7 @@ Leave these unset unless you are tuning a known bottleneck. Empty values let the
 | `UVICORN_WORKER_HEALTHCHECK_TIMEOUT_SECONDS` | Seconds a worker may stop answering before it is replaced. Default: `60`. |
 | `LOCAL_DOCLING_PARSE_WORKERS`, `PDF_OCR_DETECTION_WORKERS` | Local Docling and OCR-detection workers. Default: `1`. |
 | `ENABLE_PDFPLUMBER_PROCESSOR` | Read text PDFs with the local PdfPlumber parser. Default: `false`. |
-| `PDF_DOCLING_TABLE_MODE` | Docling table-structure model: `accurate` or `fast`. `fast` is quicker per table but can split a table with multi-line cells into extra rows. The image bakes only `accurate`, so `fast` downloads its weights on first use unless the image was built with `BUNDLE_TABLEFORMER_FAST=1`. Default: `accurate`. |
+| `PDF_DOCLING_TABLE_MODE` | Docling table-structure model: `accurate` or `fast`. `fast` is quicker per table but can split a table with multi-line cells into extra rows. The image bakes only `accurate`, so without its weights `fast` falls back to `accurate` with a warning, unless the image was built with `BUNDLE_TABLEFORMER_FAST=1`. Default: `accurate`. |
 | `PIPESHUB_DOCLING_MODELS_DIR` | Folder holding the Docling, TableFormer and table-detector models. The image sets it to `/opt/docling-models`, where they are baked in. Leave it alone in `.env` and Helm values, and do not set Docling's own `DOCLING_ARTIFACTS_PATH`. Default: set by the image. |
 | `PDF_DOCLING_MAX_PAGES` | Text PDFs longer than this go to PdfPlumber; `0` sends every text PDF there. Default: `30`. |
 | `PARSE_POOL_WORKERS` | Processes that parse large text, code and CSV files. Empty derives it from the CPU limit; `0` uses threads. Default: empty. |

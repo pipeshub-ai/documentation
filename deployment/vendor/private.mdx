@@ -89,7 +89,7 @@ A value you set in `.env` always wins. Values `1`, `true`, `yes` and `on` turn t
 - **An embedding model.** Only the `full` image (`latest`) carries one, `BAAI/bge-large-en-v1.5`. The `slim` image has no local embedding model and, in offline mode, cannot download one: if the built-in embedding model is selected, the embedding service logs one error saying so and every embedding request fails. Use the `full` image, or configure an embedding service your network can reach.
 - **A text-generation model** that the app container can reach, such as a local Ollama or a gateway.
 - **The images**, loaded onto the host or into a registry before you disconnect (`docker load`, or a mirror). The installer's pull and the Helm chart's image pulls need that registry.
-- **TableFormer `fast`**, if you want it. `PDF_DOCLING_TABLE_MODE=fast` needs weights that the image does not include. In offline mode, a missing `fast` model falls back to `accurate` and logs one warning. To use `fast`, build an image with `BUNDLE_TABLEFORMER_FAST=1`.
+- **TableFormer `fast`**, if you want it. `PDF_DOCLING_TABLE_MODE=fast` needs weights that the image does not include. A missing `fast` model falls back to `accurate` and logs one warning, online or offline. To use `fast`, build an image with `BUNDLE_TABLEFORMER_FAST=1`.
 
 The switch does not change connectors, hosted model providers or anything else that talks to a service by design: those need the network they talk to.
 

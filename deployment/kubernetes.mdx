@@ -120,6 +120,7 @@ Before upgrading to 1.0, read [Upgrading to 1.0](/deployment/upgrade-to-1-0). A 
 ## Other settings
 
 - **Telemetry:** `telemetry.collection.enabled: false` turns collection off.
+- **Air-gapped cluster:** `offline.enabled: true` sets `PIPESHUB_OFFLINE=1` on the app and parsing pods: no telemetry, and no Hugging Face or LiteLLM network calls. The `slim` image has no local embedding model, so use the `full` image or an embedding service the cluster can reach, and pull images from a registry the cluster can reach. Default: `false`. See [Offline mode](/deployment/vendor/private#offline-mode).
 - **Behind an ingress:** the client IP is read from one proxy hop when the ingress is enabled. Set `trustProxy` to change that.
 - **Coding sandbox:** `config.sandboxMode` is `docker` by default and needs a Docker daemon (`sandbox.dind.enabled=true` adds one as a sidecar), or set it to `e2b`. The `values-local.yaml` preset sets it to `local`, which runs generated code in the app pod with no container isolation. Use that preset for single-tenant development clusters only.
 - **External Redis:** set `redis.enabled=false` and `redis.external.*`. See the chart README for standalone and cluster modes.

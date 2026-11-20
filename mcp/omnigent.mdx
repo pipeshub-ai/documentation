@@ -9,7 +9,7 @@ icon: "/logo/omnigent.svg"
 Each person uses **their own** PipesHub [personal access token](/developer/personal-access-tokens), so results respect their own permissions. Never share one token across a team.
 
 <Note>
-  **Attach with a bearer token, not an OAuth app.** Cursor and Claude Code use a registered OAuth app with a static client ID and secret. Omnigent's MCP attach takes an `Authorization` header, and its browser-OAuth path relies on dynamic client registration, which is off on a PipesHub instance unless an administrator enables it (see [Dynamic Client Registration](/developer/oauth2#dynamic-client-registration)), so a PAT is the working credential here.
+  **Attach with a bearer token, not an OAuth app.** Cursor and Claude Code use a registered OAuth app with a static client ID and secret. Omnigent's MCP attach takes an `Authorization` header, and its browser-OAuth path relies on dynamic client registration, which is off on PipesHub instances older than 1.2.0 and on any instance where an administrator turned it off (see [Dynamic Client Registration](/developer/oauth2#dynamic-client-registration)), so a PAT is the credential that always works here.
 
   To be clear about identity: an OAuth app using the **authorization code** flow *does* run as the signed-in user, exactly like a PAT. A `client_credentials` token instead acts as the service account bound to the app. See [Unattended runs](#unattended-runs).
 </Note>

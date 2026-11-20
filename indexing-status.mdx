@@ -65,6 +65,24 @@ On a connector's **Overview** tab, **Reindex failed** retries every failed recor
 
 Files from a code repository (GitHub, GitLab) can't be reindexed one by one. Sync the connector instead.
 
+### Force reindex compared with a plain reindex
+
+Both actions index a file again, but they differ in what they reuse.
+
+| | Plain reindex (**Retry indexing**, **Start indexing**, **Reindex all**) | **Force reindex** |
+| --- | --- | --- |
+| Stored results | Reused when nothing changed. A file that was already parsed, described and embedded isn't paid for again. | Never reused. |
+| Parsing | Reuses the stored parse. | Parses the file again. |
+| Model calls | Only for what is missing or changed. | Every paid step runs again: text extraction and OCR, image and table descriptions, classification, entity extraction and embeddings. Each new result replaces the stored one. |
+| Embeddings | Reused when the content is unchanged. | Every block is embedded again. |
+| Search while it runs | The record stays searchable. | The record briefly leaves search while its blocks are embedded again, then returns when indexing finishes. |
+
+Use **Force reindex** when you don't trust what is stored: for example after you change an AI model or its settings and want the file processed with the new one, or when a file's results look wrong. Expect it to take as long as a first index and to use the same model calls, so it costs more than a plain reindex. For a file that only failed, use **Retry indexing**.
+
+<Note>
+Through the API, the single-record reindex request takes an optional `force` boolean. Only `true` forces a reindex. See the Reindex Record endpoint in the [Knowledge Base API](/system-overview/knowledge-base#api-endpoints).
+</Note>
+
 ## Data extraction with AI
 
 A connector's **Overview** tab shows **Data extraction with AI** with progress for each step:

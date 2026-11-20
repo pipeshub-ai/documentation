@@ -80,7 +80,8 @@ Four operations on records, selected by `mode`.
 | `startBlock`<br/>*number, optional* | `content` and `thread`. Continue reading from the block named in the previous part's `Next:` line. |
 | `startRecord`<br/>*number, optional* | `thread` only. Continue a long thread from this record, as the `Next:` line names it. |
 | `nodeId`<br/>*string, optional* | `navigate` only. Omit to list the top level: a flat listing of everything reachable. On a limited connection, see the note below. |
-| `page` / `limit`<br/>*number, optional* | `navigate` only. 1-based page, 50–200 children per page (default 50). |
+| `page` / `limit`<br/>*number, optional* | `navigate` only. 1-based page, 50–200 children per page (default 50). Page numbers stop at 50. |
+| `cursor`<br/>*string, optional* | `navigate` only. The cursor the previous page's `Next:` line names, copied exactly, with the same `nodeId` and `depth`. It reads on past page 50; `page` is then ignored. A total that reads "of at least N" stopped counting at a cap: keep following `Next:` rather than the number. See [Paging a navigate listing](/developer/api-reference#paging-a-navigate-listing). |
 | `depth`<br/>*number (1–3), optional* | `navigate` only. `2` or `3` flattens descendants into one call instead of one call per level. Default 1. |
 | `nodeTypes`<br/>*string[], optional* | `navigate` only. List only children of these node types, for example `["record", "folder"]`. |
 | `createdAfter` / `createdBefore`, `modifiedAfter` / `modifiedBefore`<br/>*string, optional* | `navigate` only. List only children created or last changed in their source within these dates. `YYYY-MM-DD` or an ISO 8601 datetime with a timezone offset. |

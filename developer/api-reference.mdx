@@ -94,6 +94,78 @@ curl -s -X POST "$PIPESHUB_URL/api/v1/agents/create" \
 
 </AccordionGroup>
 
+## Paging a navigate listing
+
+`GET /connectors/navigate` lists what is under a node of the knowledge graph (a source, record group, folder or record), or everything you can read when you send no `nodeId`. It needs `kb:read` or `connector:read`. Each response carries a `pagination` object:
+
+| Field | Meaning |
+| --- | --- |
+| `has_next` | `true` while more children follow. Keep paging until it is `false`. |
+| `next_cursor` | Send it back as `cursor` to get the next page. `null` on the last page, and on a root that pages by `page` only (see below). |
+| `total` | Children of the node, ignoring pagination. A lower bound when `total_capped` is `true`. |
+| `total_capped` | `true` when the listing stopped counting at a cap, so more children exist than `total` says. |
+| `page` | The page number you asked for. `null` on a page reached by `cursor`. |
+| `start_index` | 1-based position of the page's first row, when the listing reports it. |
+
+One root has no cursor: with no `nodeId`, a connected app whose limit names spaces, folders or files lists those items, and pages by `page` only. There, and on older servers that do not send `next_cursor`, ask for the next `page` while `has_next` is `true`.
+
+To read a large listing to its end, follow `next_cursor`, not `page`:
+
+- `page` numbers stop at 50. A higher `page` sent without a `cursor` returns `400`. A cursor goes on past that.
+- Send the cursor exactly as you received it, with the same `nodeId` and `depth`. The cursor chooses the page and keeps the filters and order of the first page, so `page` and the date and type filters of a cursor request are ignored.
+- A cursor works only for the user it was issued to, and only for the same node and sources. Any other cursor returns `400`. Start again from the first page without a `cursor`.
+- When `total_capped` is `true`, show the total as a lower bound, for example "10,000+" or "at least 10,000", and stop on `has_next`, not on the total. The rendered `text` field already says "of at least N". Older servers do not send `total_capped`; their `total` may also be a lower bound, so stop on `has_next` there too.
+
+```bash
+# Print every child's name under one node, page by page.
+NODE_ID="your-node-id"
+CURSOR=""
+PAGE=1
+while :; do
+  # A cursor request ignores `page`.
+  RESP=$(curl -sS --fail -G "$PIPESHUB_URL/api/v1/connectors/navigate" \
+    -H "Authorization: Bearer $PIPESHUB_TOKEN" \
+    --data-urlencode "nodeId=$NODE_ID" \
+    --data-urlencode "limit=200" \
+    --data-urlencode "page=$PAGE" \
+    ${CURSOR:+--data-urlencode "cursor=$CURSOR"}) || { echo "Request failed; the listing is incomplete." >&2; break; }
+  echo "$RESP" | jq -r '.rows[].name'
+  [ "$(echo "$RESP" | jq -r '.pagination.has_next')" = "true" ] || break
+  CURSOR=$(echo "$RESP" | jq -r '.pagination.next_cursor // empty')
+  # No cursor: this listing pages by number, up to page 50.
+  [ -n "$CURSOR" ] || PAGE=$((PAGE + 1))
+done
+```
+
+```python
+import os
+import requests
+
+url = os.environ["PIPESHUB_URL"] + "/api/v1/connectors/navigate"
+headers = {"Authorization": "Bearer " + os.environ["PIPESHUB_TOKEN"]}
+params = {"nodeId": "your-node-id", "limit": 200, "page": 1}
+
+while True:
+    page = requests.get(url, headers=headers, params=params, timeout=60)
+    page.raise_for_status()
+    body = page.json()
+    for row in body["rows"]:
+        print(row["name"])
+    pagination = body.get("pagination") or {}
+    if not pagination.get("has_next"):
+        break
+    if pagination.get("next_cursor"):
+        params["cursor"] = pagination["next_cursor"]
+    else:
+        # No cursor: this listing pages by number. Past page 50 the server returns 400.
+        params["page"] = pagination["page"] + 1
+
+total = pagination.get("total", 0)
+print(f"{total:,}+" if pagination.get("total_capped") else f"{total:,}", "children")
+```
+
+The [MCP server's](/mcp/tools) `pipeshub_get_record_content` tool pages the same way in `mode: "navigate"`: pass the `cursor` its `Next:` line names.
+
 ## Service APIs
 
 Each page below covers the endpoints of one PipesHub service.

@@ -79,7 +79,7 @@ Check these before you start:
 </Warning>
 
 <Warning>
-  **We recommend 9.3 or later.** Before 9.3, Confluence's REST API gives no way to tell an active user from a disabled one, so the connector links every user Confluence lists. On 9.1 and 9.2, a **disabled** account keeps reading what its groups and grants allow until the server runs 9.3 or later. Before 9.2.5 the same applies to accounts without the **Can use** global permission. From 9.2.5 the connector reads who holds **Can use** and links only them. From 9.3 it reads Confluence's list of active users, so disabled and unlicensed accounts get no access, and an account disabled later loses it on the next sync.
+  **We recommend 9.3 or later.** Before 9.3, Confluence's REST API gives no way to tell an active user from a disabled one, so the connector links every user Confluence lists. On 9.1 and 9.2, a **disabled** account keeps reading what its groups and grants allow until the server runs 9.3 or later. Before 9.2.5 the same applies to accounts without the **Can use** global permission. From 9.2.5 the connector reads who holds **Can use** and links only them. From 9.3 it reads Confluence's list of active users, so disabled and unlicensed accounts get no access, and an account disabled later loses it on the next sync that reads that list. Confluence's own API reference notes the list can be inaccurate while Confluence is reindexing, so after a reindex finishes, sync again.
 </Warning>
 
 ### Prerequisite: Email visibility
@@ -375,7 +375,7 @@ Each sync lists what the connector's account can see in every synced space, sepa
 **Some users are missing after a sync:**
 - Users are skipped when email addresses are hidden. Ask a Confluence administrator to make them visible, then sync again
 - Their permissions are kept in the meantime and move onto their account once they sync
-- From Confluence 9.3, disabled users and users without the **Can use** global permission are never linked, and a user who is disabled later loses their access on the next sync. From 9.2.5, users without **Can use** are not linked. On older versions, see the warning under prerequisites
+- From Confluence 9.3, disabled users and users without the **Can use** global permission are never linked, and a user who is disabled later loses their access on the next sync that reads Confluence's list of active users. That list can be inaccurate while Confluence is reindexing, so sync again once a reindex finishes. From 9.2.5, users without **Can use** are not linked. On older versions, see the warning under prerequisites
 
 **Nothing is syncing:**
 - Check that **Sync enabled** is on for the connector

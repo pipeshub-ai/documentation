@@ -69,7 +69,7 @@ Check these before you start:
 | Requirement | Detail |
 |-------------|--------|
 | **Deployment** | Confluence Data Center that PipesHub can reach over HTTPS |
-| **Version** | **Confluence Data Center 9.3 or later** for every user to get their access. 9.1 and 9.2 sync, but only the connector's own account gets access. See the warnings below |
+| **Version** | **Confluence Data Center 9.1 or later; 9.3 or later recommended.** See the warnings below |
 | **Base URL** | The root URL of your instance, such as `https://confluence.yourcompany.com`. Not a page URL like `/display/SPACE` |
 | **PAT support** | Personal Access Tokens need Confluence 7.9 or later. On older versions, use Basic Authentication |
 | **Admin account** | Use a Confluence administrator account so the connector can read every space, the full user list, and the audit log |
@@ -79,7 +79,7 @@ Check these before you start:
 </Warning>
 
 <Warning>
-  **On 9.1 and 9.2, users get no access yet.** Before 9.3, Confluence's REST API gives no way to tell an active user from a disabled one or from one without the **Can use** permission. It lists them all together. So that a disabled or unlicensed account never reads anything, the connector links none of the listed users on those versions. Only the Confluence account the connector signs in with is linked, so only the PipesHub user with that account's email address, and the person who set up the connector, see the synced content. Everyone else sees nothing from this connector until the server runs 9.3 or later. From 9.3 the connector reads Confluence's list of active users, and every active user with **Can use** gets their access on the next sync.
+  **We recommend 9.3 or later.** Before 9.3, Confluence's REST API gives no way to tell an active user from a disabled one, so the connector links every user Confluence lists. On 9.1 and 9.2, a **disabled** account keeps reading what its groups and grants allow until the server runs 9.3 or later. Before 9.2.5 the same applies to accounts without the **Can use** global permission. From 9.2.5 the connector reads who holds **Can use** and links only them. From 9.3 it reads Confluence's list of active users, so disabled and unlicensed accounts get no access, and an account disabled later loses it on the next sync.
 </Warning>
 
 ### Prerequisite: Email visibility
@@ -375,8 +375,7 @@ Each sync lists what the connector's account can see in every synced space, sepa
 **Some users are missing after a sync:**
 - Users are skipped when email addresses are hidden. Ask a Confluence administrator to make them visible, then sync again
 - Their permissions are kept in the meantime and move onto their account once they sync
-- Disabled users, and users without the **Can use** global permission, are never linked. A user who is disabled later loses their access on the next sync
-- On Confluence 9.1 and 9.2 no user is linked except the connector's own account (see the warning under prerequisites)
+- From Confluence 9.3, disabled users and users without the **Can use** global permission are never linked, and a user who is disabled later loses their access on the next sync. From 9.2.5, users without **Can use** are not linked. On older versions, see the warning under prerequisites
 
 **Nothing is syncing:**
 - Check that **Sync enabled** is on for the connector
@@ -412,7 +411,7 @@ Each sync runs these steps in order:
 
 | Step | Data Synced | Purpose |
 |------|-------------|---------|
-| 1 | Users | Sync active users with the **Can use** permission (9.3 and later). Users with no email address are skipped |
+| 1 | Users | Sync user profiles: active users with **Can use** from 9.3, users with **Can use** from 9.2.5, every listed user before that. Users with no email address are skipped |
 | 2 | Groups | Sync groups and who belongs to them |
 | 3 | Spaces | Sync spaces and their permissions |
 | 4 | Pages | For each space: content, view restrictions, attachments, and comments |
@@ -446,7 +445,7 @@ Each sync runs these steps in order:
 | Area | Confluence Cloud | Confluence Data Center |
 |---------|-----------------|------------------------|
 | REST API | v2 (`/wiki/api/v2`) | v1 only (`/rest/api`) |
-| Users | CQL search (`/rest/api/search/user`) | `GET /rest/api/admin/users/list/active`, from 9.3 |
+| Users | CQL search (`/rest/api/search/user`) | `GET /rest/api/admin/users/list/active` from 9.3; before that `GET /rest/api/user/list`, filtered by `GET /rest/api/permissions` from 9.2.5 |
 | Group members | Identified by ID | Identified by name |
 | Space permissions | `GET /wiki/api/v2/spaces/{id}/permissions`, paginated | `GET /rest/api/space/{key}/permissions`, one array, needs 9.1 or later |
 | Folders | Synced | Not available |

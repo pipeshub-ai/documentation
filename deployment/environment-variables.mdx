@@ -88,6 +88,7 @@ Each backend variable must agree with `COMPOSE_PROFILES`. A backend whose profil
 | `KV_STORE_TYPE` | Key-value store for configuration: `redis` or `etcd`. Default: `redis`. Profile: `kv-etcd` for `etcd`. |
 | `MESSAGE_BROKER` | Message broker: `redis` (Redis Streams) or `kafka`. Default: `redis`. Profile: `broker-kafka` for `kafka`. |
 | `VECTOR_COLLECTION_STRATEGY` | `single` puts all records in one Qdrant collection; `per_connector_type` uses one per connector type. Do not change it on an existing install: the services stop at startup. Default: `single`. |
+| `KH_BROWSE_MODE` | How the Knowledge Hub works out what to list when you open an app, folder or group, with `DATA_STORE=neo4j` only. `split` runs several small queries that Neo4j plans quickly. `legacy` runs the earlier single large query, which Neo4j can take from tens of seconds to minutes to plan. `shadow` answers with `legacy` and, for a sample of opens, also runs `split` in the background and logs counts of any differences. Set `legacy` only if you need the earlier behaviour back. An unknown value means `split`, with a warning in the log. `docker-compose.yml` does not pass it to the container, so set it with a Compose override (`PIPESHUB_COMPOSE_OVERRIDES`). Default: empty (`split`). |
 
 Other profiles: `sandbox` (coding sandbox; leave it out for `eval`), `search-searxng` (needs `SEARXNG_SECRET`) and `fetch-crawl4ai` (needs `CRAWL4AI_API_TOKEN`). See [Web Search](/web-search).
 
@@ -137,9 +138,40 @@ Leave these unset unless you are tuning a known bottleneck. Empty values let the
 | `EMBEDDING_SERVER_MAX_CONCURRENCY`, `EMBEDDING_BATCH_CONCURRENCY` | `EMBEDDING_SERVER_MAX_CONCURRENCY` caps requests the bundled embedding server handles at once. `EMBEDDING_BATCH_CONCURRENCY` caps how many embedding batches indexing sends at once for one record (code default 5). Default: empty. |
 | `EMBEDDING_SERVER_QUERY_RESERVED_SLOTS` | Embedding slots kept for search queries. Default: empty (1). |
 | `EMBEDDING_SERVER_MODEL_IDLE_SECONDS` | Seconds before an unused local embedding model is unloaded; `0` keeps it loaded. Default: empty (900). |
+| `EMBEDDING_SERVER_PRECISION` | How the bundled embedding server stores its model's weights: `auto` or `fp32` (32-bit), or `int8` (less memory, slightly slower). Changing it on an install that has indexed data needs a cleanup and reindex. See [Embedding weight precision](#embedding-weight-precision). Default: empty (`auto`, which is fp32). |
 | `PARSE_MAX_ORG_SHARE` | Share of a parse pool one organization may hold while another waits. Default: empty (0.5). |
 
 `env.template` also lists `GOVERNOR_*` and `INDEXING_SPLIT_LEASE_POOLS` resource-governor settings. Leave them empty.
+
+### Embedding weight precision
+
+`EMBEDDING_SERVER_PRECISION` applies only when embeddings are computed by PipesHub's bundled embedding server, as with the default model (`BAAI/bge-large-en-v1.5`). Hosted embedding providers are not affected.
+
+| Value | What it does |
+|---|---|
+| empty, `auto` or `fp32` | 32-bit weights, as before. `auto` currently always means fp32. |
+| `int8` | Stores the model's large weight matrices as 8-bit integers. On first start the server writes them once to a file next to the model cache, then uses that file. |
+
+Measured with `BAAI/bge-large-en-v1.5` on an x86-64 CPU:
+
+| | fp32 | int8 |
+|---|---|---|
+| Steady memory in use | 2,125 MB | 1,272 MB |
+| Encoding speed | | about 12 % slower |
+| Search results | | The top result changed for about 3.5 % of 1,498 test queries. Accuracy (whether the right document is first, or in the top 10) was unchanged within the measurement's margin. |
+
+Before it uses `int8`, the server checks that this CPU and its PyTorch build run it correctly. If they do not, or if the file cannot be written, it uses fp32 instead.
+
+Vectors from the two precisions are never mixed in one search index. Each index remembers the precision it was built with. If the embedding server later runs the other precision, indexing that writes vectors waits (nothing fails), and **Workspace > Services** shows a warning naming the setting to restore. To switch precision on an install that already has indexed data:
+
+1. Set `EMBEDDING_SERVER_PRECISION` and restart PipesHub (in Docker Compose, recreate the containers as in [Applying a change](#applying-a-change); in Kubernetes, pass it with `extraEnv`).
+2. In **Workspace > Connectors**, run **Clean up embeddings**, then **Reindex embeddings**.
+
+<Warning>
+**Clean up embeddings** deletes the whole search index for everyone. Search returns nothing until the reindex has finished, which can take hours on a large install. Records are not deleted, and the reindex works from stored content without downloading or parsing the sources again.
+</Warning>
+
+To go back without a reindex, set the value the index was built with again and restart.
 
 ## Search and answers
 
@@ -178,6 +210,21 @@ Leave these unset unless you are tuning a known bottleneck. Empty values let the
 | `WEB_FETCH_RENDER_JS` | `off` stops chat from rendering pages in the headless browser. Rendering is always off while `WEB_CONNECTOR_ALLOWED_HOSTS` is set. `docker-compose.yml` does not pass it to the container, so set it with a Compose override (`PIPESHUB_COMPOSE_OVERRIDES`). Default: empty. |
 | `SEARXNG_SECRET` | Required with the `search-searxng` profile. Default: empty. |
 | `CRAWL4AI_API_TOKEN` | Required with the `fetch-crawl4ai` profile. Default: empty. |
+
+## Services outside a container
+
+These two variables matter only when you start the PipesHub services yourself, outside Docker, for example under your own process supervisor. [Run without Docker](/deployment/native) sets them for you. Docker Compose does not pass them to the container, and inside a container the defaults are right.
+
+| Variable | What it does |
+|---|---|
+| `PIPESHUB_BIND_HOST` | The address every service listens on, for example `127.0.0.1` to accept connections from this computer only. Read by the Node API and every Python service. Default: empty (every interface). |
+| `PIPESHUB_BIND_PORT` | The port one Python service listens on. Set it per process, not globally: services that share one value would try to take the same port. A blank or malformed value counts as unset. Without it, each service uses its own port variable where it has one (`EMBEDDING_SERVER_PORT`, `PARSING_SERVICE_PORT`, `EXTRACTION_SERVICE_PORT`), else its usual port: query `8000`, connectors `8088`, indexing `8091`, embedding `8002`, docling `8081`, parsing `8092`, extraction `8093`. The Node API's port is `PORT` (default `3000`). |
+
+For example, to run the query service on loopback port 18000:
+
+```bash
+PIPESHUB_BIND_HOST=127.0.0.1 PIPESHUB_BIND_PORT=18000 python -m app.query_main
+```
 
 ## Air-gapped hosts
 

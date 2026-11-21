@@ -32,11 +32,12 @@ PipesHub has two Notion connectors. Both sync **pages**, **databases**, **commen
 
 | Connector | Where you set it up | Who can search the synced records |
 |-----------|---------------------|-----------------------------------|
-| **Notion** (team) | **Workspace settings → Connectors → Notion** | Every Notion workspace member PipesHub can map by email - **not** only the people a page is shared with in Notion |
+| **Notion** (team), **Everyone in the workspace** (default) | **Workspace settings → Connectors → Notion** | Every Notion workspace member PipesHub can map by email - **not** only the people a page is shared with in Notion |
+| **Notion** (team), **Each user, through their own Notion account** | **Workspace settings → Connectors → Notion** | Each person who connected their own Notion account, for the pages that account can open. People who have not connected see nothing from it. See [Per-user access](#per-user-access) |
 | **Notion Personal** | **Workspace settings → Your connectors → Notion Personal** | **Only you** (the person who created the connector) |
 
 <Warning>
-  **Team connector limitation:** Notion's API does not expose per-page sharing, so the team connector **does not follow Notion ACLs**. Anything it syncs becomes searchable by everyone in that Notion workspace (matched in PipesHub by email). Private or restricted pages you share with the integration are visible to those users in PipesHub, even if they could not open the page in Notion. Use **Notion Personal** if the content should be searchable only by you.
+  **Team connector limitation in the default mode:** Notion's API does not expose per-page sharing, so with **Everyone in the workspace** the team connector **does not follow Notion ACLs**. Anything it syncs becomes searchable by everyone in that Notion workspace (matched in PipesHub by email). Private or restricted pages you share with the integration are visible to those users in PipesHub, even if they could not open the page in Notion. Switch the connector to [per-user access](#per-user-access) so each person sees only the pages their own Notion account can open, or use **Notion Personal** if the content should be searchable only by you.
 </Warning>
 
 <Note>
@@ -61,7 +62,7 @@ The connector only sees content Notion granted it. **Configure records** in Pipe
 |--------|-------------------|---------------------|
 | **OAuth** (New connection → OAuth) | Yes - redirect path ends with `/Notion` | Yes - redirect path ends with `/Notion%20Personal` |
 | **Access token** (`ntn_...`) | Yes - same **New connection** dialog, **Access token** method | No |
-| **Personal access tokens** (Developer tools tab) | Not supported | Not supported |
+| **Personal access tokens** (Developer tools tab) | Not as the connector's own credential. With [per-user access](#per-user-access), each person can connect with their own | Not supported |
 
 In PipesHub the OAuth flow has three tabs: **Authenticate** (Redirect URL + client credentials), **Authorize** (sign in to Notion and pick pages), then **Configure records** (sync strategy and indexing).
 
@@ -303,14 +304,78 @@ The **team** connector can use an **Access token** (Internal Integration Secret)
 
 ---
 
+## Per-user access
+
+By default, everything the team connector syncs is searchable by every member of the Notion workspace. With per-user access, each person connects their own Notion account, and PipesHub shows them only the pages and databases that account lists. Notion Personal does not have this setting.
+
+### Turn it on
+
+1. Set up the team connector as above, with OAuth or an access token. Keep the **Read user information including email addresses** capability: PipesHub uses it to list the workspace's members.
+2. On **Configure records**, set **Who can see synced pages** to **Each user, through their own Notion account**, and save.
+3. Run a sync. The member list appears on the connector's **Overview** tab after it.
+4. Connect your own account: under **Connected users** on **Overview**, use **Connect** next to **Your account**. As an admin you are not in the people list; your own Notion account gives you access in the same way as everyone else's.
+5. Invite people: search the list by name or email, then use **Invite** on a person, or **Invite all** for everyone who has not connected yet.
+
+<Warning>
+After the switch, members who have not connected their own account no longer see any results from this connector. Pages the connector indexed while it was in **Everyone in the workspace** mode are taken out of search first, then indexed again for the people who can open them.
+</Warning>
+
+**Overview** shows how many people are connected ("N of M people connected") and how many need to reconnect. Each person in the list has a status:
+
+| Status | Meaning |
+|--------|---------|
+| **Connected** | Their own Notion account is connected |
+| **Needs to reconnect** | Notion refused their connection. They see nothing from the connector until they connect again |
+| **Invited** | Invited, not connected yet |
+| **Not invited** | In the Notion workspace, not invited yet |
+| **Asked not to be reminded** | They chose to stop reminders |
+| **No PipesHub account** | In the Notion workspace, but no PipesHub user has that email. Invite them to PipesHub first |
+
+Use **Remove** on a person to disconnect them. They stop seeing results from this connector until they connect again.
+
+### How people connect
+
+An invite arrives as an in-app notification with a **Connect** button, and as an email (when [SMTP](/smtp) is set up).
+
+- **Connector set up with OAuth:** **Connect** opens Notion's sign-in in a pop-up, with the connector's own OAuth app. Notion lists only pages the person has full access to. Sub-pages of a page they pick are included, also ones added later. To add more pages later, they sign in again.
+- **Connector set up with an access token:** **Connect** asks for a personal access token from the person's own Notion account. An integration secret (`ntn_...`) is refused, because it is not tied to a person.
+- **From the email:** the link takes the person to Notion's sign-in without opening PipesHub first. It works for 7 days and stops working once they have connected. On a connector without OAuth, it sends them to PipesHub to paste a token from the notification.
+
+PipesHub accepts a connection only when:
+
+- the Notion account's email is the same as the person's PipesHub email, and
+- the account belongs to the connector's Notion workspace.
+
+People who have not connected get reminders 3 and 10 days after the first invite, never within a day of the last one, unless they chose **Stop reminders**. **Invite all** skips anyone who was sent something in the last day, so pressing it twice does not send twice.
+
+### What each person can see
+
+- Each sync runs one pass per connected person with that person's own credential. A page or database reaches a person only when their own pass lists it. Access does not pass down from a parent page or from the workspace, because a Notion sub-page can be shared more narrowly than its parent.
+- File attachments follow their page.
+- A page or database that no connected person can open any more is removed from PipesHub, once every person's pass of a sync has completed.
+
+People lose access to everything from the connector when:
+
+- they disconnect, or an admin removes their connection;
+- Notion refuses their connection: they get one notice asking them to reconnect;
+- they are deactivated in PipesHub: their connection is kept for when they come back;
+- PipesHub has not completed a pass with their connection for 48 hours: access returns when one completes;
+- they are deleted from PipesHub: their connection, invite and links are deleted too.
+
+If one person's pass fails, the others still run, and that sync is marked incomplete.
+
+To turn per-user access off, set **Who can see synced pages** back to **Everyone in the workspace**. Synced pages are then searchable by every mapped workspace member again.
+
+---
+
 ## Access and permissions
 
-| | **Notion** (team) | **Notion Personal** |
-|--|-------------------|---------------------|
-| **Who can search** | All Notion workspace members PipesHub maps by email | Only the connector creator |
-| **Follows Notion page sharing / ACLs** | No. Notion's API does not expose per-page sharing | No per-page ACL either - but the only audience is you |
-| **User directory** | Synced so those members can be granted access | Not synced |
-| **How to widen or narrow content** | Share more or fewer pages with the connection (OAuth picker or internal **Content access**) | Same - only the pages you share during authorization |
+| | **Notion** (team), default | **Notion** (team), per-user | **Notion Personal** |
+|--|-------------------|---------------------|---------------------|
+| **Who can search** | All Notion workspace members PipesHub maps by email | Each connected person, for the pages their own account lists | Only the connector creator |
+| **Follows Notion page sharing / ACLs** | No. Notion's API does not expose per-page sharing | Yes, as far as each person's own Notion account shows it | No per-page ACL either - but the only audience is you |
+| **User directory** | Synced so those members can be granted access | Synced, so admins can see and invite members | Not synced |
+| **How to widen or narrow content** | Share more or fewer pages with the connection (OAuth picker or internal **Content access**) | Each person picks pages when they sign in with Notion; with a token, it is what Notion lists for that token | Same - only the pages you share during authorization |
 
 ---
 
@@ -330,14 +395,15 @@ A record is removed only when Notion confirms the page is gone or in the trash. 
 
 Other limits that come from the same Notion API:
 
-- **No per-page ACLs on the team connector.** See [Access and permissions](#access-and-permissions). Notion does not return who a page is shared with.
+- **No per-page ACLs on the team connector in the default mode.** Notion does not return who a page is shared with. Use [per-user access](#per-user-access) to show each person only what their own Notion account can open. See [Access and permissions](#access-and-permissions).
+- **Per-user syncs take longer.** Per-user access runs one pass per connected person, so a sync takes longer as more people connect.
 - **Not realtime.** There is no webhook-driven sync. Changes appear on the next scheduled run, a manual **Sync**, or a **Full sync**.
 - **Size limits.** Images added by URL are fetched up to **20 MB**, and files added by URL up to **100 MB**. Larger ones are not indexed.
 - **Only pages the connection can see.** Search never returns content you did not share with the integration.
 - **Rate limit.** Notion allows an average of about **3 requests per second** per connection on most plans (some paid plans allow more). Large pages need many block fetches, so the first sync of a big workspace can take a long time.
 - **Images are not separate files.** Inline images stay on the page (and may be inlined for indexing). **Index Files** covers file, video, PDF, and audio attachments - not image blocks.
 - **Users without email.** The team connector maps workspace members by email. A member who hides their email in Notion is not granted access, but keeps any access they already had. If Notion returns no email for anyone, the sync stops and asks you to enable the email capability.
-- **Personal access tokens** from Developer tools are not a supported auth method.
+- **Personal access tokens** from Developer tools are not a supported auth method for the connector itself. In per-user access, people can connect with their own.
 
 ---
 
@@ -391,7 +457,13 @@ PipesHub also sends a notification when a sync fails, and a warning when some pa
 
 **Everyone can see a private page (team)**
 
-- Expected for the team connector. It does not apply Notion page ACLs. Remove the page from the integration, or use **Notion Personal**.
+- Expected for the team connector in the default **Everyone in the workspace** mode. It does not apply Notion page ACLs. Switch to [per-user access](#per-user-access), remove the page from the integration, or use **Notion Personal**.
+
+**A member sees nothing from Notion (per-user access)**
+
+- They have not connected their own Notion account, or their status is **Needs to reconnect**. Check the people list on **Overview**, and use **Invite** or **Remind**.
+- Their Notion email must be the same as their PipesHub email, and their account must be in the connector's Notion workspace.
+- After someone connects, it can take a few minutes for their pages to appear in search.
 
 **Email / visibility**
 
@@ -455,13 +527,15 @@ PipesHub also sends a notification when a sync fails, and a warning when some pa
 
 Use **Notion Personal** for your own notes, private pages, or any content that should not be searchable by the rest of the workspace.
 
-Use the **team** connector when the workspace should share one searchable knowledge set - and only after you accept that **every mapped Notion member can search every page this instance syncs**.
+Use the **team** connector when the workspace should share one searchable knowledge set - and only after you accept that **every mapped Notion member can search every page this instance syncs**. To have the team connector show each person only what they can open in Notion, turn on [per-user access](#per-user-access).
 
 </Accordion>
 
 <Accordion title="Does the team connector honor Notion page permissions?">
 
-No. Notion's API does not expose who a page is shared with, so PipesHub cannot copy those ACLs. The team connector grants read access on the whole synced set to workspace members it can identify by email.
+Not in the default mode. Notion's API does not expose who a page is shared with, so PipesHub cannot copy those ACLs, and the team connector grants read access on the whole synced set to workspace members it can identify by email.
+
+With [per-user access](#per-user-access), each person connects their own Notion account, and PipesHub shows them only the pages that account lists.
 
 </Accordion>
 

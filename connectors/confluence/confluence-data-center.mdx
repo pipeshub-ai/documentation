@@ -69,13 +69,17 @@ Check these before you start:
 | Requirement | Detail |
 |-------------|--------|
 | **Deployment** | Confluence Data Center that PipesHub can reach over HTTPS |
-| **Version** | **Confluence Data Center 9.1 or later.** See the warning below |
+| **Version** | **Confluence Data Center 9.3 or later** for every user to get their access. 9.1 and 9.2 sync, but only the connector's own account gets access. See the warnings below |
 | **Base URL** | The root URL of your instance, such as `https://confluence.yourcompany.com`. Not a page URL like `/display/SPACE` |
 | **PAT support** | Personal Access Tokens need Confluence 7.9 or later. On older versions, use Basic Authentication |
 | **Admin account** | Use a Confluence administrator account so the connector can read every space, the full user list, and the audit log |
 
 <Warning>
   **You need Confluence Data Center 9.1 or later.** Space permissions were only added to the REST API in 9.1 ([CONFSERVER-78176](https://jira.atlassian.com/browse/CONFSERVER-78176)). On older versions the connector cannot read who is allowed to see a space. It logs an error in the connector service log and still syncs each space, but with no space permissions, so that content is hidden from every user. The connector does not stop and the PipesHub UI shows no warning. Upgrade to 9.1 or later before you set this up.
+</Warning>
+
+<Warning>
+  **On 9.1 and 9.2, users get no access yet.** Before 9.3, Confluence's REST API gives no way to tell an active user from a disabled one or from one without the **Can use** permission. It lists them all together. So that a disabled or unlicensed account never reads anything, the connector links none of the listed users on those versions. Only the Confluence account the connector signs in with is linked, so only the PipesHub user with that account's email address, and the person who set up the connector, see the synced content. Everyone else sees nothing from this connector until the server runs 9.3 or later. From 9.3 the connector reads Confluence's list of active users, and every active user with **Can use** gets their access on the next sync.
 </Warning>
 
 ### Prerequisite: Email visibility
@@ -371,6 +375,8 @@ Each sync lists what the connector's account can see in every synced space, sepa
 **Some users are missing after a sync:**
 - Users are skipped when email addresses are hidden. Ask a Confluence administrator to make them visible, then sync again
 - Their permissions are kept in the meantime and move onto their account once they sync
+- Disabled users, and users without the **Can use** global permission, are never linked. A user who is disabled later loses their access on the next sync
+- On Confluence 9.1 and 9.2 no user is linked except the connector's own account (see the warning under prerequisites)
 
 **Nothing is syncing:**
 - Check that **Sync enabled** is on for the connector
@@ -406,7 +412,7 @@ Each sync runs these steps in order:
 
 | Step | Data Synced | Purpose |
 |------|-------------|---------|
-| 1 | Users | Sync user profiles. Users with no email address are skipped |
+| 1 | Users | Sync active users with the **Can use** permission (9.3 and later). Users with no email address are skipped |
 | 2 | Groups | Sync groups and who belongs to them |
 | 3 | Spaces | Sync spaces and their permissions |
 | 4 | Pages | For each space: content, view restrictions, attachments, and comments |
@@ -426,20 +432,21 @@ Each sync runs these steps in order:
 
 ### How permissions work
 
-- **Space permissions** come from `GET /rest/api/space/{spaceKey}/permissions`, which needs Confluence Data Center 9.1 or later
-- **Page and blog restrictions** are read as effective view restrictions. Only real read restrictions change who can see a page. A restriction that only limits editing still lets people read the page based on the space permissions
-- **Public spaces** — if a space allows anonymous read access, it is treated as public and per-user permissions are skipped
+- **Space permissions** come from `GET /rest/api/space/{spaceKey}/permissions`, which needs Confluence Data Center 9.1 or later. Only the **View** permission opens a space. Someone who can add pages or comments but has no **View** permission doesn't see the space, in Confluence or in PipesHub
+- **Page and blog restrictions** are read from each page's own view restriction (`GET /rest/api/content/{id}/restriction/byOperation/read`, available from 9.1). A page restricted further up the tree stays restricted below it: a user has to pass every view restriction on the way down, as in Confluence. A restriction that only limits editing still lets people read the page based on the space permissions
+- **Spaces open to anonymous users** — Confluence shows a space with anonymous **View** permission to everyone who is logged in. In PipesHub it is open to the synced members of `confluence-users` and `confluence-administrators`, the groups that hold the **Can use** permission. It is never open to people without a Confluence account. If your site gives **Can use** through another group, or to individual users, those people don't see anonymous spaces in PipesHub
+- **Confluence administrators** — members of `confluence-administrators` can open every space and every page in Confluence, restricted ones included. They can read them in PipesHub too
 - **Unknown users** — permissions for users whose email is not known yet are held on a placeholder and moved to the real user once that user syncs
 - **Attachments and comments** of a restricted page are restricted the same way as the page. When the audit log reports a page becoming restricted, or opened up, its stored attachments and comments follow
 - **Groups** — a restriction that names a group only by its name is matched by name. A page restricted to a group PipesHub hasn't synced yet stays restricted, and the group's members get access once the group syncs and the page is read again
-- **Failed reads** — if a space's permissions, a group's members, or a page's restrictions can't be read for a temporary reason, PipesHub keeps what it already has. A page whose restrictions can't be read is skipped for that sync, while the rest of the space keeps syncing. The space's checkpoint doesn't move, so the next sync reads that window again and retries the page. A failed read never opens a page to its whole space and never removes access
+- **Failed reads** — if a space's permissions, a group's members, or a page's restrictions can't be read for a temporary reason, PipesHub keeps what it already has. A page whose restrictions can't be read is skipped for that sync, while the rest of the space keeps syncing. The space's checkpoint doesn't move, so the next sync reads that window again and retries the page. A full sync that couldn't read the user list, the groups, the spaces or a page listing removes nothing it didn't see. A failed read never opens a page to its whole space and never removes access
 
 ### How Data Center differs from Confluence Cloud
 
 | Area | Confluence Cloud | Confluence Data Center |
 |---------|-----------------|------------------------|
 | REST API | v2 (`/wiki/api/v2`) | v1 only (`/rest/api`) |
-| Users | CQL search (`/rest/api/search/user`) | `GET /rest/api/user/list` |
+| Users | CQL search (`/rest/api/search/user`) | `GET /rest/api/admin/users/list/active`, from 9.3 |
 | Group members | Identified by ID | Identified by name |
 | Space permissions | `GET /wiki/api/v2/spaces/{id}/permissions`, paginated | `GET /rest/api/space/{key}/permissions`, one array, needs 9.1 or later |
 | Folders | Synced | Not available |

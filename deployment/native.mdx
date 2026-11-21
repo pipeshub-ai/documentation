@@ -1,0 +1,147 @@
+---
+title: "Run without Docker"
+description: "The native bundle: PipesHub on one Linux or macOS computer, with PostgreSQL for every store and a launcher that starts and stops it"
+icon: "laptop"
+---
+
+The native bundle runs PipesHub on one computer without Docker. It holds its own PostgreSQL (with pgvector), Python, Node, the PipesHub services and the web app. A launcher, `pipeshub-native`, starts them all, waits until PipesHub is healthy and prints the address to open.
+
+<Warning>
+The native bundle is a preview. There is no release download yet, and the builds are not signed with a Developer ID or notarised. For a team or production install, use [Docker Compose](/deployment/overview) or [Kubernetes](/deployment/kubernetes).
+</Warning>
+
+## Platforms
+
+| Platform | Supported |
+|---|---|
+| Linux x64 | Yes. The CI build runs on glibc 2.28 or later: RHEL 8, Debian 10, Ubuntu 18.10 and later. |
+| macOS on Apple silicon (arm64) | Yes. Binaries carry an ad hoc signature only. |
+| Windows, Linux arm64, macOS on Intel | No |
+
+Disk: the bundle is about 5.7 GB unpacked (about 1.7 GB as a `.tar.gz`). The first indexing run downloads the embedding model into the data folder, about 2.5 GB more with the default model.
+
+## Get the bundle
+
+You can get the bundle in one of two ways.
+
+<Tabs>
+  <Tab title="Download a CI build">
+    The `native-bundle` workflow in the [pipeshub-ai repository](https://github.com/pipeshub-ai/pipeshub-ai/actions/workflows/native-bundle.yml) builds the bundle for both platforms. It starts each build for real, checks its health, stops it, and uploads the archive.
+
+    1. Open a successful run of the workflow.
+    2. Under **Artifacts**, download `pipeshub-native-linux-x64` or `pipeshub-native-darwin-arm64`.
+    3. The artifact holds `pipeshub-native-linux-x64.tar.gz` (or `-darwin-arm64.tar.gz`). Unpack it to get the `pipeshub-native` folder:
+
+       ```bash
+       tar -xzf pipeshub-native-linux-x64.tar.gz
+       ```
+
+    The workflow runs only when the bundle's own files change or when a maintainer starts it, and each run's archives are kept for 7 days. If no recent run has them, build the bundle yourself.
+  </Tab>
+  <Tab title="Build it yourself">
+    From a clone of the [pipeshub-ai repository](https://github.com/pipeshub-ai/pipeshub-ai), on the platform you want to run it on:
+
+    ```bash
+    deployment/native/bundle.sh "$PWD/out/pipeshub-native"
+    ```
+
+    Add `--archive "$PWD/out/pipeshub-native.tar.gz"` to also write an archive. To check the result, `deployment/native/smoke.sh "$PWD/out/pipeshub-native"` starts it into a fresh data folder, checks its health, stops it, starts it again, stops it and checks that nothing is left running.
+
+    The build needs a C compiler, `make`, `perl`, `flex`, `bison`, [uv](https://docs.astral.sh/uv/) (the version in `deployment/native/versions.env`) and a network connection. PostgreSQL, OpenSSL, pgvector and pg_textsearch are built from source, and Node and Python are downloaded. Each of those source archives and the Node download is checked against a SHA-256 checksum pinned in `versions.env`; uv checks the Python download itself.
+
+    A Linux build made on your own machine runs on Linux with the same or a newer glibc. The CI build uses glibc 2.28 so that it runs on older systems.
+  </Tab>
+</Tabs>
+
+## Start PipesHub
+
+<Tabs>
+  <Tab title="Downloaded bundle">
+    From the folder where you unpacked the archive:
+
+    ```bash
+    cd pipeshub-native
+    ./pipeshub-native start
+    ```
+  </Tab>
+  <Tab title="Bundle you built">
+    From the root of your clone, where `bundle.sh` wrote it:
+
+    ```bash
+    cd out/pipeshub-native
+    ./pipeshub-native start
+    ```
+  </Tab>
+</Tabs>
+
+The first start takes longer: it creates the database, sets up its logins and runs the schema migrations. When everything is up, the launcher prints the address:
+
+```text
+ready: http://127.0.0.1:41237 (12 s)
+```
+
+Open that address in a browser and create the first account, as on any new install. The launcher stays in the foreground. Press Ctrl+C to stop PipesHub.
+
+Every start runs the schema migrations, so a newer bundle started on the same data folder upgrades it. If any setup step fails, no service starts, and the launcher prints the step's log.
+
+### Commands
+
+| Command | What it does |
+|---|---|
+| `start` | Starts PipesHub and stays in the foreground until you stop it. `--detach` returns once PipesHub is ready and leaves it running. |
+| `stop` | Stops a running launcher and everything it started. It also ends anything left behind by a launcher that crashed. |
+| `status` | Whether PipesHub is running, its address and ports, and each service's process. |
+| `health` | Whether the API answers and PostgreSQL and every service are running. |
+
+Options for every command:
+
+- `--data-dir DIR` uses another data folder (see below).
+- `--json` prints one JSON object per line instead of text, for scripts.
+
+`start` also takes `--port-base N`, which picks ports by counting upward from `N` (1024 to 65000) instead of letting the system choose.
+
+Exit codes: `start` returns 0 when stopped on request (with `--detach`: when ready), 1 when start-up failed and 3 when a service died. `status` returns 0 when running and 3 when not. `health` returns 0 when healthy and 1 when not.
+
+```bash
+./pipeshub-native start --detach
+./pipeshub-native status
+./pipeshub-native stop
+```
+
+## Where data lives
+
+Nothing is written into the bundle folder. Everything PipesHub stores is in its data folder:
+
+| System | Default data folder |
+|---|---|
+| macOS | `~/Library/Application Support/PipesHub` |
+| Linux | `$XDG_DATA_HOME/pipeshub`, or `~/.local/share/pipeshub` when `XDG_DATA_HOME` is not set |
+
+Set `PIPESHUB_HOME` or pass `--data-dir` to use another folder. The folder is created on first start, readable by your user only. It holds:
+
+- `pgdata/`: the PostgreSQL database, which holds everything PipesHub keeps: records, search index, settings and accounts.
+- `logs/`: one log file per service.
+- `secrets.json`: the database passwords and signing secrets generated on first start, readable by your user only.
+- `home/`: the services' home folder, including the downloaded embedding model.
+- `run/`, `ports.json`, `launcher.json`, `launcher.lock`: the launcher's own state.
+
+<Warning>
+Keep `secrets.json` with `pgdata/`. The database was created with those passwords. If `secrets.json` is missing or cannot be read once the database exists, the launcher stops and says so rather than generating new ones.
+</Warning>
+
+To back up an install, stop it and copy the whole data folder. To start over, stop it and delete the data folder.
+
+## Limits
+
+- **This computer only.** Every service listens on `127.0.0.1`, so PipesHub cannot be reached from another device. For a shared install, use [Docker Compose](/deployment/overview).
+- **PostgreSQL for everything.** The bundle runs every store on its own PostgreSQL: documents, graph, vectors, settings and the message queue. You cannot point it at Neo4j, Qdrant, Redis or Kafka.
+- **A fixed web port.** The services' ports are kept from run to run while they are free. The web port never changes once the database exists, because the app's address is stored in its settings. If another program is using that port, `start` fails with `port_in_use`; stop that program and start again.
+- **One launcher per data folder.** A second `start` on the same data folder reports `already_running`. To run two copies, give each its own `--data-dir`.
+- **No Slack bot.** The bundle does not start the Slack bot.
+- **Unsigned builds.** macOS builds carry an ad hoc signature only. They are not signed with a Developer ID or notarised.
+
+## Related
+
+- [System requirements](/deployment/system-requirements)
+- [Deployment overview](/deployment/overview)
+- [Environment variables](/deployment/environment-variables)

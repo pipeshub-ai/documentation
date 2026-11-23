@@ -126,6 +126,8 @@ Leave these unset unless you are tuning a known bottleneck. Empty values let the
 | `UVICORN_WORKER_HEALTHCHECK_TIMEOUT_SECONDS` | Seconds a worker may stop answering before it is replaced. Default: `60`. |
 | `LOCAL_DOCLING_PARSE_WORKERS`, `PDF_OCR_DETECTION_WORKERS` | Local Docling and OCR-detection workers. Default: `1`. |
 | `ENABLE_PDFPLUMBER_PROCESSOR` | Read text PDFs with the local PdfPlumber parser. Default: `false`. |
+| `PDF_DOCLING_TABLE_MODE` | Docling table-structure model: `accurate` or `fast`. `fast` is quicker per table but can split a table with multi-line cells into extra rows. The image bakes only `accurate`, so without its weights `fast` falls back to `accurate` with a warning, unless the image was built with `BUNDLE_TABLEFORMER_FAST=1`. Default: `accurate`. |
+| `PIPESHUB_DOCLING_MODELS_DIR` | Folder holding the Docling, TableFormer and table-detector models. The image sets it to `/opt/docling-models`, where they are baked in. Leave it alone in `.env` and Helm values, and do not set Docling's own `DOCLING_ARTIFACTS_PATH`. Default: set by the image. |
 | `PDF_DOCLING_MAX_PAGES` | Text PDFs longer than this go to PdfPlumber; `0` sends every text PDF there. Default: `30`. |
 | `PARSE_POOL_WORKERS` | Processes that parse large text, code and CSV files. Empty derives it from the CPU limit; `0` uses threads. Default: empty. |
 | `CODE_FILE_MAX_SIZE_MB` | Largest code-repository file read as code or text. Default: empty (5). |
@@ -183,7 +185,8 @@ Leave these unset unless you are tuning a known bottleneck. Empty values let the
 
 | Variable | What it does |
 |---|---|
-| `HF_HUB_OFFLINE`, `TRANSFORMERS_OFFLINE` | Set both to `1` on a host with no internet that already has the models, such as the `latest` image. Leave them empty on `slim`, which downloads the embedding model on first use. Default: empty. |
+| `PIPESHUB_OFFLINE` | `1` keeps every service off the internet: it turns telemetry off and sets the Hugging Face and LiteLLM offline switches, for each one you have not set yourself. The `slim` image has no local embedding model, so use `full` or an embedding service you can reach. See [Offline mode](/deployment/vendor/private#offline-mode). Default: empty (off). |
+| `HF_HUB_OFFLINE`, `TRANSFORMERS_OFFLINE` | `PIPESHUB_OFFLINE=1` sets both for you. To set them by hand, use `1` on a host with no internet that already has the models, such as the `latest` image. Leave them empty on `slim`, which downloads the embedding model on first use. The Docling layout, TableFormer `accurate` and table-detector models are read from the image by path, so these variables do not affect them. The TableFormer `fast` weights are not in the standard images: with `PDF_DOCLING_TABLE_MODE=fast` they are not available offline, and the parser uses `accurate` with a warning unless you build an image with `BUNDLE_TABLEFORMER_FAST=1`. Default: empty. |
 
 See [Private Cloud & On-Premises](/deployment/vendor/private).
 

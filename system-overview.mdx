@@ -33,7 +33,7 @@ That path only works after your company data is already in those stores. In the 
 2. They publish new or changed records onto the **event bus**.
 3. **Indexing** parses the files, turns the text into vectors, and writes the knowledge graph and Qdrant.
 
-On a local machine, the event bus is **Redis Streams**. In a larger deployment, it is **Kafka**. The work the services do is the same in both cases; only the transport changes.
+By default, the event bus is **Redis Streams**; Kafka is an optional alternative. The work the services do is the same in both cases; only the transport changes.
 
 The diagram below shows that flow. Read it from top to bottom: who talks to PipesHub, then the API and the event bus, then Query, Indexing, and Connectors, then the data stores.
 
@@ -97,10 +97,10 @@ Auth, Storage, Mail, Config, Notifications, Crawling, and the connector manager 
 
 ### Event bus
 
-Connectors publish records onto the event bus, and Indexing consumes them. You choose the transport to match the size of the deployment:
+Connectors publish records onto the event bus, and Indexing consumes them. You choose the transport:
 
-- On a **local machine**, the event bus is Redis Streams (`MESSAGE_BROKER=redis`).
-- In a **larger deployment**, the event bus is Kafka (`MESSAGE_BROKER=kafka`).
+- By default, the event bus is Redis Streams (`MESSAGE_BROKER=redis`).
+- Optionally, the event bus is Kafka (`MESSAGE_BROKER=kafka`).
 
 Redis still runs in both cases. It is the cache, and by default it is also the encrypted configuration store.
 

@@ -39,6 +39,23 @@ Connectors publish records, and Indexing consumes them. That path is the **event
 
 The Python services stay the same. Only the transport between them changes.
 
+### Kafka topics for classification and named entities
+
+After a record is searchable, classification and named-entity extraction run as background stages (see [After a record is searchable](/system-overview#after-a-record-is-searchable)), each on its own topic:
+
+| Topic | Consumer group | Stage |
+|---|---|---|
+| `pipeline.classify` | `pipeline_classify_group` | Classification |
+| `pipeline.entities` | `pipeline_entities_group` | Named-entity extraction |
+
+The indexing service creates both topics when it starts, with `KAFKA_TOPIC_PARTITIONS` partitions (default `32`) and a replication factor of 1, the same way the Node.js API creates its topics. Add the two consumer groups to any Kafka lag dashboards.
+
+<Note>
+  Create both topics yourself before you upgrade if the indexing service's Kafka user is not allowed to create topics, or if your cluster needs more than one replica. If the topics cannot be created, records are still indexed and searchable, but classification and named entities wait. The indexing service keeps retrying in the background, and its `/health` shows `stages.publisher_bound: false` until it succeeds.
+</Note>
+
+Redis Streams needs no setup for these stages.
+
 ## Cache, configuration, and [Redis](https://redis.io/)
 
 Redis always runs. It can do three jobs, depending on how you deploy:

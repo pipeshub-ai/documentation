@@ -1,0 +1,78 @@
+---
+title: "LiteLLM"
+description: "Call PipesHub through LiteLLM, from the Python SDK or the LiteLLM proxy"
+icon: "/logo/litellm.png"
+---
+
+LiteLLM reaches any OpenAI-compatible server through its `openai/` provider prefix. Use it from Python, or add PipesHub to a LiteLLM proxy so every app behind the proxy can use it.
+
+## Before you start
+
+- A [personal access token](/developer/personal-access-tokens) with the `conversation:chat` scope.
+- A model id from `GET /api/v1/openai/models` (see [Models](/developer/openai-compatible-api#models)).
+
+## Python SDK
+
+```bash
+pip install litellm
+```
+
+```python
+import os, litellm
+
+reply = litellm.completion(
+    model="openai/gpt-5",  # "openai/" + a model id from /models
+    api_base=os.environ["PIPESHUB_URL"] + "/api/v1/openai",
+    api_key=os.environ["PIPESHUB_TOKEN"],
+    messages=[{"role": "user", "content": "How many weeks of parental leave does a primary caregiver get?"}],
+)
+print(reply.choices[0].message.content)
+```
+
+```text Output
+A primary caregiver gets **20 weeks of fully paid parental leave** [1](https://your-pipeshub-instance.com/record/5b3e.../preview#blockIndex=6).
+```
+
+`stream=True` works too.
+
+## LiteLLM proxy
+
+Add PipesHub to the proxy's `config.yaml`. The `model_name` is what clients of the proxy ask for:
+
+```yaml config.yaml
+model_list:
+  - model_name: pipeshub
+    litellm_params:
+      model: openai/gpt-5
+      api_base: https://your-pipeshub-instance.com/api/v1/openai
+      api_key: os.environ/PIPESHUB_TOKEN
+```
+
+```bash
+pip install 'litellm[proxy]'
+export PIPESHUB_TOKEN="phpat_..."
+export LITELLM_MASTER_KEY="sk-..."  # the proxy refuses to start without one
+litellm --config config.yaml
+```
+
+Clients of the proxy then call `model: "pipeshub"` with a LiteLLM key:
+
+```bash
+curl http://localhost:4000/v1/chat/completions \
+  -H "Authorization: Bearer $LITELLM_MASTER_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"model": "pipeshub", "messages": [{"role": "user", "content": "What is the home-office allowance?"}]}'
+```
+
+<Note>
+  PipesHub does not report token counts (`usage` is `null`), so LiteLLM records 0 tokens and no cost for these calls.
+</Note>
+
+## What works
+
+| Feature | Works |
+|---|---|
+| `completion`, `acompletion`, streaming | Yes |
+| Proxy routing, keys and rate limits | Yes |
+| Tool calling, `response_format` | No. PipesHub ignores them |
+| Token usage and cost tracking | No. `usage` is not reported |

@@ -1,0 +1,64 @@
+---
+title: "LangChain"
+description: "Use PipesHub as a LangChain chat model through its OpenAI-compatible API"
+icon: "/logo/langchain.png"
+---
+
+LangChain's `ChatOpenAI` takes a base URL, so PipesHub works as a chat model in any chain. Each answer comes from PipesHub's assistant with the model you pick, grounded in the knowledge the token's user can see.
+
+## Before you start
+
+- A [personal access token](/developer/personal-access-tokens) with the `conversation:chat` scope.
+- A model id from `GET /api/v1/openai/models` (see [Models](/developer/openai-compatible-api#models)).
+
+```bash
+pip install langchain-openai
+export PIPESHUB_URL="https://your-pipeshub-instance.com"
+export PIPESHUB_TOKEN="phpat_..."
+```
+
+## Chat
+
+```python
+import os
+from langchain_openai import ChatOpenAI
+
+llm = ChatOpenAI(
+    base_url=os.environ["PIPESHUB_URL"] + "/api/v1/openai",
+    api_key=os.environ["PIPESHUB_TOKEN"],
+    model="gpt-5",  # a model id from /models
+)
+
+print(llm.invoke("How many weeks of parental leave does a primary caregiver get?").content)
+```
+
+```text Output
+A primary caregiver gets **20 weeks of fully paid parental leave** [1](https://your-pipeshub-instance.com/record/5b3e.../preview#blockIndex=6).
+```
+
+The answer keeps PipesHub's citation links. `llm.stream(...)` works too; the text arrives in one chunk when the assistant finishes (see [Streaming](/developer/openai-compatible-api#streaming)).
+
+## Responses API
+
+Set `use_responses_api=True` to call PipesHub's [Responses](/developer/openai-compatible-api#responses) endpoint instead of Chat Completions:
+
+```python
+llm = ChatOpenAI(
+    base_url=os.environ["PIPESHUB_URL"] + "/api/v1/openai",
+    api_key=os.environ["PIPESHUB_TOKEN"],
+    model="gpt-5",
+    use_responses_api=True,
+)
+print(llm.invoke("How many remote days per week are allowed?").text)
+```
+
+## What works
+
+| Feature | Works |
+|---|---|
+| `invoke`, `batch`, `stream` and chains (`prompt \| llm \| parser`) | Yes |
+| Chat history in the messages | Yes, sent to the assistant as text ahead of the last message |
+| `bind_tools`, agents, `with_structured_output` | No. PipesHub ignores client `tools` and `response_format` |
+| `OpenAIEmbeddings` | No. There is no `/embeddings` endpoint; use the [Retrieval API](/developer/retrieval-api) to search |
+
+Each call starts a new PipesHub conversation, saved to the token user's chat history.

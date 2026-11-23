@@ -39,7 +39,7 @@ The installer asks for a deployment type, or reads it from `PIPESHUB_DEPLOY_TYPE
 
 By default, every type uses Redis as the key-value store and Neo4j as the graph database. The types differ in these ways:
 
-- **Message broker:** `full` uses Kafka. `slim` and `eval` use Redis Streams.
+- **Message broker:** every install type uses Redis Streams by default. Kafka is optional: set `MESSAGE_BROKER=kafka` and add the `broker-kafka` Compose profile.
 - **Coding sandbox:** `slim` and `full` have one. `eval` does not.
 - The `slim` image is smaller. It downloads the embedding model the first time it is needed, so that first start needs internet access.
 - The `latest` image has the embedding model built in. Use it where the host cannot reach the internet.

@@ -13,13 +13,14 @@ Every limit counts requests in a one-minute window.
 | General | Every API request. **Counted per:** client IP. The limit is checked before sign-in, so everyone behind one address (NAT, VPN, or a proxy without `TRUST_PROXY`) shares one count. **Default:** 2000 on Docker Compose, 1000 otherwise (`MAX_REQUESTS_PER_MINUTE`). |
 | Sign-in | Password, one-time code and password-reset requests. **Counted per:** signed-in user; else client IP plus the account named in the request. **Default:** 10 (`MAX_AUTH_REQUESTS_PER_MINUTE`). |
 | Sign-in, per IP | The same routes, across all accounts. **Counted per:** client IP. **Default:** 6 × the sign-in limit (60). Follows `MAX_AUTH_REQUESTS_PER_MINUTE`. |
+| Per address | Password-reset and sign-in-code requests, and email-change confirmations. **Counted per:** the email address the request is about, across all clients. **Default:** 60 (`ADDRESS_RATE_LIMIT_PER_MINUTE`). |
 | Sign-in page load | Starting a sign-in. **Counted per:** client IP. **Default:** 6 × the sign-in limit (60). Follows `MAX_AUTH_REQUESTS_PER_MINUTE`. |
 | Apps and tokens | OAuth apps, personal access tokens, service accounts and service tokens, and the OAuth token endpoints. **Counted per:** signed-in user; else client IP. **Default:** 1000 (`MAX_OAUTH_CLIENT_REQUESTS_PER_MINUTE`). |
 | Skill import | Importing skill packages. **Counted per:** signed-in user; else client IP. **Default:** 10, with no setting to change it. |
 
 Calls between PipesHub's own services are not counted.
 
-Every limit is kept in each API process. If you run several API replicas, each one counts on its own, so the effective limit can be up to that many times higher. If your load balancer sends a client's requests to the same replica (session affinity), that replica can return `429` after its own limit even when the others have capacity left.
+The per-address limit is shared by every API replica: its count is kept in Redis, or in PostgreSQL with `REDIS_MODE=postgres` (per process only with `REDIS_MODE=inprocess`). Every other limit is kept in each API process. If you run several API replicas, each one counts on its own, so the effective limit can be up to that many times higher. If your load balancer sends a client's requests to the same replica (session affinity), that replica can return `429` after its own limit even when the others have capacity left.
 
 Change a limit in `.env` and recreate the containers (Docker Compose), or set it in `extraEnv` in your Helm values and run `helm upgrade` (see [Kubernetes](/deployment/kubernetes#other-settings)). See [Environment variables](/deployment/environment-variables#rate-limits-and-proxies).
 
@@ -31,7 +32,9 @@ Behind one proxy (Nginx, Caddy, Traefik, a load balancer), set `TRUST_PROXY=1`, 
 
 ### The 429 response
 
-A request over a limit gets HTTP `429` with standard `RateLimit-*` headers and a `Retry-After` header in seconds:
+A request over a limit gets HTTP `429` with standard `RateLimit-*` headers and a `Retry-After` header in seconds. The per-address limit is different: a password-reset or sign-in-code request over it gets the usual reply and nothing is sent, so the reply never shows whether an account exists, and an email-change confirmation over it gets `429` with a `Retry-After` header only.
+
+The usual `429` body:
 
 ```json
 {

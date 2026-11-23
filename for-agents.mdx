@@ -116,6 +116,7 @@ The native shape is **remote MCP** over Streamable HTTP. No npm process is requi
 2. Auth as the **user**, not the app. Do **not** use `client_credentials` — that grant has no user identity, so permission filters collapse.
    - **Prefer a [personal access token](/developer/personal-access-tokens)** for a single user's own client. It is `Authorization: Bearer phpat_…`, minted by that user in **Workspace → Developer settings** (PipesHub 0.7.0+). Claude Code takes it directly: `claude mcp add --transport http pipeshub "$PIPESHUB_MCP_URL" --header 'Authorization: Bearer ${PIPESHUB_MCP_TOKEN}'` (single quotes, so the token is not written into its config), where `PIPESHUB_MCP_URL` is the URL from the token's paste block (it already ends in `/mcp`) — see [Claude Code](/mcp/claude-code). The [stdio bridge](/mcp/local-server) takes it as `--bearer-auth`.
    - **OAuth app** for shared or admin-managed setups: create an [OAuth app](/mcp/overview#step-1-create-an-oauth-app), then follow the client page. Cursor's `auth` object and Claude Code's `--client-id` are the OAuth paths, not PAT.
+   - **Only an email address?** [Agent sign-up](/developer/agent-registration) (`POST /api/v1/agent/identity`) gets a token once the person approves a code. Not in a release yet; check `agent_auth` in `/.well-known/oauth-authorization-server`.
 3. Client config — pick one:
 
 | Client | Guide |

@@ -572,6 +572,84 @@ To follow the sync, click the arrow on the connector's card. **Records status** 
 
 </Tabs>
 
+## Real-time updates
+
+In the Enterprise Edition, you can add an optional **Forge app** (the PipesHub app for Confluence) to the connector. By default the connector finds changes by syncing on a schedule. With the app, Confluence tells PipesHub the moment something changes. PipesHub then re-reads just that page, comment, or attachment, usually within seconds, instead of waiting for the next scheduled sync.
+
+<Info>
+  Real-time updates are an **addition**, not a replacement. The connector still signs in with OAuth or an API token and reads all content through the normal Confluence API. The scheduled sync keeps running as before. An event is only a hint that something changed: PipesHub never stores anything from the event itself, and the page is always re-read with the connector's own permissions and your sync filters.
+</Info>
+
+### What you need
+
+- A working Confluence Cloud connector (OAuth or API token).
+- A Confluence **site admin** to install the app once.
+- A PipesHub server that Atlassian can reach over **HTTPS** at a public URL. The app sends events from Atlassian's servers, so a server reachable only on your internal network will not receive them.
+
+### Set up
+
+1. **Install the app.** A site admin opens the PipesHub app install link (ask your PipesHub contact for it). Atlassian shows the permissions the app asks for. The admin approves them once for the site. The app never changes anything in Confluence. It requests write access to content and spaces only because Confluence sends trash and space-permission events just to apps that have it. The app asks for access to:
+   - Content such as pages and folders
+   - Comments
+   - Attachments
+   - Content restrictions (permissions)
+   - Spaces
+   - Users and groups
+2. **Point the app at your PipesHub server.** The app sends events to a URL that a site admin sets, so events go to your PipesHub and nowhere else. This step is required: until the URL is set the app sends nothing, and PipesHub will not let you turn real-time updates on (see [When you turn it on](#when-you-turn-it-on)).
+   1. Go to [admin.atlassian.com](https://admin.atlassian.com) and select your organization.
+   2. Under **Apps**, expand **Sites** and select the site the app is installed on.
+   3. Open **Connected apps**, then open the PipesHub app.
+   4. Open the **Data management** tab. Under **External data sharing**, the **PipesHub server** entry says it is connected to the default URL.
+   5. Edit that entry, enter the public HTTPS address of your PipesHub server (the address only, without a path), and approve the confirmation Atlassian shows.
+
+   PipesHub must be reachable at that address from the internet. Events arrive at `POST /api/v1/connectors/confluence/forge/events` on it.
+3. **Turn it on for the connector.** In the connector's sync settings in PipesHub, enable **Real-time change notifications** (off by default) and save. The setting is per connector instance, so each Confluence connector you want to update in real time needs it.
+
+### When you turn it on
+
+Once installed, the app checks in with your PipesHub server every five minutes. When you turn **Real-time change notifications** on, PipesHub checks that it has recently heard from the app on this connector's site. If it has not, the save is refused with one of these messages, and nothing in the save is stored:
+
+| Message says | What to do |
+| --- | --- |
+| The PipesHub app is not installed on your site | Install the app (step 1). |
+| The app on your site has not reached PipesHub yet | Set the server address (step 2). If you just did, wait five minutes for the first check-in and save again. |
+| PipesHub has not heard from its app on your site yet | Do steps 1 and 2. PipesHub could not ask Atlassian whether the app is installed, which is the case for OAuth connectors. |
+| PipesHub could not identify your site | Check the connector's site URL and sign-in. An OAuth connector that can reach several sites needs its site set. |
+
+To save your other changes without real-time updates, turn the setting off and save again. The check only runs when the setting is turned on, so saving a connector that already has it on is never refused.
+
+### What is updated in real time
+
+Page creates, edits, moves, archiving, trashing, and deletion; comments added, edited, or deleted; attachments added or removed; new folders; and changes to content restrictions (the item is re-read to pick up the new permissions). Everything still goes through the same filters, space scope, and indexing settings as a scheduled sync.
+
+### What still depends on the scheduled sync
+
+- **Folder deletions.** Confluence sends no event for them. They are removed at the next sync.
+- **Pages the app cannot see.** Edits on a page that is restricted away from the app produce no event. The scheduled sync picks them up.
+- **Lost events.** Delivery is not guaranteed. An event can occasionally be missed, and the scheduled sync catches up.
+- **Changes without an event**, such as items removed as part of a larger deletion.
+
+Keep your usual **Sync Interval**. It is what guarantees nothing is missed.
+
+### Check that it works
+
+1. Edit a page in a space the connector syncs.
+2. Open the page's record in PipesHub. The new content normally appears within a few seconds.
+
+Delivery is usually quick, but it is not instant and can take longer, so give it a minute before you assume it is not working.
+
+### Troubleshooting real-time updates
+
+- **Nothing happens after an edit.** Check that **Real-time change notifications** is on for this connector, the app is installed on this site, the server address is set in Atlassian, and the connector's space filters include the page.
+- **PipesHub answers `401`, or events are ignored.** The event could not be verified: it did not come from the PipesHub app, or the server clock is wrong. Events from a site that has no connector with the setting on are accepted and ignored.
+- **The endpoint is unreachable.** Confirm the URL entered in Atlassian is the public HTTPS address of PipesHub and that no firewall or proxy blocks `POST` requests to `/api/v1/connectors/confluence/forge/events`.
+- **App not installed.** Ask a site admin to install it (see step 1). Without the app, the connector works as before, on schedule.
+- **Setting off.** Events for a connector whose real-time setting is off are ignored.
+
+### Privacy
+
+The app sends only event metadata (what changed, the item ID, the space key, and who changed it as an Atlassian account ID) to your PipesHub server. It does not send page content. PipesHub reads content through the connector's normal OAuth or API-token login, with the same permissions as before.
+
 ## Supported Features
 
 The Confluence connector syncs the following data from your Confluence Cloud workspace:
@@ -734,7 +812,8 @@ Each sync lists what the connector's account can see in every synced space, sepa
 - A page moved without a new version gets its new parent and access
 
 ### Known limits
-- An attachment deleted without a page edit stays until the page changes or a full sync runs, because Confluence search doesn't return deleted content. Deleted comments behave the same way
+- An attachment deleted without a page edit stays until the page changes or a full sync runs, because Confluence search doesn't return deleted content. Deleted comments behave the same way. With [real-time updates](#real-time-updates) on, these deletions are applied within seconds, unless the event is lost
+- With real-time updates on, folder deletions, changes on pages the Forge app cannot see, and lost events are still found only by the scheduled sync. Events are hints: the regular sync keeps running
 - A page restricted to a group created during a sync gets that group's access when the page next changes
 - Atlassian returns at most 10,000 users from its user list. Users past that limit are not synced, and the sync notice says so
 

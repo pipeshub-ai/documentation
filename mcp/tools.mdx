@@ -4,7 +4,7 @@ description: "Tools exposed by the PipesHub MCP server"
 icon: "toolbox"
 ---
 
-Reference for the tools exposed by the PipesHub MCP server. These tools let an AI client (Cursor, Claude Code, Gemini CLI, Claude.ai, LibreChat, etc.) talk to PipesHub: search and chat over the org's indexed documents, look up people and groups, download files, and talk to configured PipesHub agents.
+Reference for the tools exposed by the PipesHub MCP server. These tools let an AI client (Cursor, Claude Code, Gemini CLI, Claude.ai, LibreChat, etc.) talk to PipesHub: search and chat over the org's indexed documents, look up people and teams, download files, and talk to configured PipesHub agents.
 
 The server exposes **eleven** tools: the seven below plus the four in [Filling a workspace](#filling-a-workspace). When the signed-in user has an indexed code repository and the token holds `code:read`, it also offers the ten [`pipeshub_code_*` tools](#code-graph-tools). Each tool wraps several lower-level API calls so the LLM gets a single, well-shaped response. This page follows the package's [TOOLS.md](https://github.com/pipeshub-ai/mcp-server/blob/main/TOOLS.md).
 
@@ -108,15 +108,17 @@ Stream the binary content of a single record. Use it when the user wants the act
 
 ## `pipeshub_directory`
 
-Look up people, groups, and teams. One tool with five `action`s.
+Look up people and teams. One tool with four `action`s.
 
 | Argument | Description |
 |---|---|
-| `action`<br/>*enum, required* | One of `whoami`, `list_users`, `get_user`, `list_groups`, `list_my_teams`. |
+| `action`<br/>*enum, required* | One of `whoami`, `list_users`, `get_user`, `list_my_teams`. |
 | `userId`<br/>*string, conditional* | Required when `action` is `get_user`. |
 | `page`<br/>*number, optional* | 1-based page number for `list_*` actions. |
 | `limit`<br/>*number (1–100), optional* | Items per page for `list_*` actions. |
-| `search`<br/>*string, optional* | Substring match against name / email. Used by `list_users` (including find-by-email). |
+| `search`<br/>*string, optional* | Substring match. `list_users` matches name or email (including find-by-email); `list_my_teams` matches team name. |
+
+The tool does not list user groups. `@pipeshub-ai/mcp` 4.11.0 removed the `list_groups` action: the route behind it is open to org admins only, so the tool no longer needs `usergroup:read`.
 
 ## `pipeshub_sources`
 
@@ -233,7 +235,7 @@ Cross-file call and import edges are resolved for Python, JavaScript, TypeScript
 | `kb:read`, `connector:read`, `config:read` | `pipeshub_sources`, `pipeshub_get_record_content`, `pipeshub_download_record`, `pipeshub_indexing_status` |
 | `kb:write`, `kb:upload` | `pipeshub_create_collection`, `pipeshub_upload` |
 | `connector:write`, `connector:sync` | `pipeshub_add_web_source` |
-| `user:read`, `team:read`, `usergroup:read` | `pipeshub_directory` |
+| `user:read`, `team:read` | `pipeshub_directory` |
 | `code:read` | The `pipeshub_code_*` tools |
 
 `offline_access` is not a tool scope: it lets the client keep a refresh token. See [Customizing Default Scopes](/mcp/overview#customizing-default-scopes).

@@ -548,7 +548,7 @@ After approval, the response is a normal token response. The token acts as the u
 
 PipesHub supports dynamic client registration (RFC 7591) at `POST /api/v1/oauth2/register`. It lets a client such as an MCP client create its own OAuth application without an administrator.
 
-Registration is **off by default**, because anyone who can reach the instance could register an application. While it is off, the endpoint returns `403` with `"error": "access_denied"`. An administrator turns it on by setting `PIPESHUB_ENABLE_DCR=true` on the backend.
+Registration is **on by default** from PipesHub 1.2.0. It is what lets [Claude.ai](/mcp/claude-ai) and other MCP clients connect without an OAuth app. Anyone who can reach the instance can register an application, though nobody gets a token until a person signs in and consents. To turn it off, an administrator sets `PIPESHUB_ENABLE_DCR=false` on the backend; the endpoint then returns `403` with `"error": "access_denied"`. Before 1.2.0 it was off unless `PIPESHUB_ENABLE_DCR=true`.
 
 ```bash
 curl -X POST https://your-pipeshub-instance.com/api/v1/oauth2/register \
@@ -591,7 +591,7 @@ The discovery document lists the authorization, token, userinfo, revocation and 
 |-------|--------------|
 | `device_authorization_endpoint` and the `device_code` grant type | The device grant is on (the default) |
 | `pipeshub_device_client_id` | The device grant is on and the instance has an organization |
-| `registration_endpoint` | `PIPESHUB_ENABLE_DCR=true` |
+| `registration_endpoint` | Dynamic client registration is on (the default; off with `PIPESHUB_ENABLE_DCR=false`) |
 
 The protected resource document for `/mcp` lists only the scopes the MCP tools use. See [MCP Server Overview](/mcp/overview).
 
@@ -706,7 +706,7 @@ The following table provides a quick reference for all OAuth 2.0 endpoints:
 | `/api/v1/oauth2/introspect` | `POST` | Inspect a token's validity and metadata |
 | `/api/v1/oauth2/userinfo` | `GET` | Retrieve user profile information (requires `openid` scope) |
 | `/api/v1/oauth2/device_authorization` | `POST` | Start the device flow |
-| `/api/v1/oauth2/register` | `POST` | Dynamic client registration (off by default) |
+| `/api/v1/oauth2/register` | `POST` | Dynamic client registration (on by default) |
 | `/.well-known/openid-configuration` | `GET` | OpenID Connect Discovery document |
 | `/.well-known/oauth-authorization-server` | `GET` | Authorization server metadata (RFC 8414) |
 | `/.well-known/oauth-protected-resource/mcp` | `GET` | Protected resource metadata for `/mcp` |

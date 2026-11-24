@@ -31,7 +31,7 @@ Claude Desktop can talk to the PipesHub MCP server, but there's one important ca
 If your PipesHub instance is served over HTTPS on a valid domain, Claude Desktop can connect to the remote MCP endpoint directly — no local setup, no npm packages. This is the same flow as [Claude.ai (Web)](/mcp/claude-ai).
 
 <Note>
-  Before you start, create an OAuth app in PipesHub and note your **Client ID** and **Client Secret**. See [MCP Server Overview](/mcp/overview#step-1-create-an-oauth-app).
+  On PipesHub 1.2.0 and later you don't need an OAuth app: choose **Sign in now** and Claude registers itself. The OAuth app step below is only for instances where dynamic client registration is off (`PIPESHUB_ENABLE_DCR=false`) or older versions. Custom connectors are shared with [Claude.ai](/mcp/claude-ai), which also covers using a personal access token.
 </Note>
 
 <Steps>
@@ -52,8 +52,8 @@ If your PipesHub instance is served over HTTPS on a valid domain, Claude Desktop
     ```
     For example: `https://app.pipeshub.com/mcp`.
   </Step>
-  <Step title="Enter OAuth credentials">
-    Click **Advanced settings** and enter your OAuth credentials:
+  <Step title="Choose how to sign in">
+    Under **Authentication**, choose **Sign in now**. Only if you need an OAuth app (see the note above), create one as described in [MCP Server Overview](/mcp/overview#step-1-create-an-oauth-app), then enter its credentials. In a two-step dialog (with a **Continue** button), choose **OAuth client > Use your own OAuth client**; in a one-screen dialog, open **Advanced**:
     - **OAuth Client ID**: `YOUR_CLIENT_ID`
     - **OAuth Client Secret**: `YOUR_CLIENT_SECRET`
 
@@ -78,7 +78,7 @@ Claude Desktop uses the same OAuth callback as the Claude web app:
 https://claude.ai/api/mcp/auth_callback
 ```
 
-Register this as an allowed redirect URI in your PipesHub OAuth app.
+If you use an OAuth app, register this as an allowed redirect URI in it.
 
 <Note>
   A custom connector needs PipesHub to be reachable from the public internet over HTTPS. If you only have a `localhost` instance, the connector flow won't work — use [Option 2](#option-2-local-stdio-bridge) instead.

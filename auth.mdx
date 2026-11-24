@@ -29,73 +29,51 @@ Admins manage sign-in methods under **Workspace settings** > **Authentication**.
 
 ## Available Authentication Methods
 
-<Tabs>
-  <Tab title="Password">
-    ## Password Authentication 
-    Traditional username and password authentication for your application.
+Methods tagged **Enterprise** are part of PipesHub Enterprise and aren't in the open-source edition. To use any of them, [upgrade to PipesHub Enterprise](/contact-us).
 
-    ### For more info, refer to [Password Configuration Guide](/auth/password).
+<CardGroup cols={2}>
+  <Card title="Password" icon="lock" href="/auth/password">
+    Sign in with an email and password. This is the simplest method to set up.
+  </Card>
+  <Card title="One-Time Password" icon="envelope" href="/auth/otp">
+    Sign in with a single-use code sent by email.
+  </Card>
+  <Card title="Google" icon="google" href="/auth/google">
+    Sign in with a Google account.
+  </Card>
+  <Card title="Microsoft" icon="microsoft" href="/auth/microsoft-azureAd">
+    Sign in with a Microsoft account.
+  </Card>
+  <Card title="SAML SSO" icon="user-lock" href="/auth/saml">
+    <Badge color="green">Enterprise</Badge>
 
+    Sign in through your company's identity provider using SAML.
+  </Card>
+  <Card title="OAuth / OIDC" icon="key" href="/auth/oauth">
+    <Badge color="green">Enterprise</Badge>
 
-    <Info>
-      Password authentication is the simplest to set up your app.
-    </Info>
+    Sign in through any OAuth 2.0 or OpenID Connect provider.
+  </Card>
+  <Card title="GitHub" icon="github" href="/auth/github">
+    <Badge color="green">Enterprise</Badge>
 
-  </Tab>
+    Sign in with a GitHub account.
+  </Card>
+  <Card title="Active Directory / LDAP" icon="server" href="/auth/ldap">
+    <Badge color="green">Enterprise</Badge>
 
-<Tab title="One-Time Password">
+    Sign in with a company Active Directory username and password.
+  </Card>
+  <Card title="SCIM User Provisioning" icon="users-gear" href="/auth/scim">
+    <Badge color="green">Enterprise</Badge>
 
-## One-Time Password (OTP)
-
-Single-use codes sent via email for secure, passwordless authentication.
-
-### For more info, refer to [OTP Configuration Guide](/auth/otp).
-
-</Tab>
-
-<Tab title="Google">
-
-## Google Authentication
-
-Allow users to sign in with their Google accounts using OAuth 2.0.
-
-Get credentials from Google Cloud console.
-
-### For more info, refer to [Google Configuration Guide](/auth/google).
-
-</Tab>
-
-<Tab title="Microsoft">
-## Microsoft Authentication
-
-Allow users to sign in with their Microsoft accounts using OAuth 2.0. Sign-in with Azure AD is part of Microsoft sign-in.
-
-### For more info, refer to [Microsoft Configuration Guide](/auth/microsoft-azureAd).
-
-</Tab>
-
-<Tab title="SAML SSO">
-  ## Enterprise single sign-on using Security Assertion Markup Language (SAML)
-
-  <Note>SAML SSO is available in the Enterprise edition only.</Note>
-
-### For more info, refer to [SAML SSO](/auth/saml).
-
-</Tab>
-
-<Tab title="OAuth / OIDC">
-  ## Sign in with any OAuth 2.0 or OpenID Connect provider
-
-  <Note>Generic OAuth / OIDC sign-in is available in the Enterprise edition only.</Note>
-
-### For more info, refer to [OAuth / OIDC](/auth/oauth).
-
-</Tab>
-</Tabs>
+    Add, update and remove users automatically from Okta or Microsoft Entra ID.
+  </Card>
+</CardGroup>
 
 ## How sign-in protects accounts
 
-These rules apply whichever methods you turn on.
+These rules describe the open-source edition. In PipesHub Enterprise, sign-in says the account is blocked once it locks. Active Directory has [its own limit](/auth/ldap#sign-in-protection).
 
 - **Only the methods you allow.** Sign-in accepts only a method your organization has turned on. In a sign-in with more than one step (for example, a password and then a code sent by email), each step accepts only the methods listed for that step, so the second step can't be skipped by entering the password again.
 - **The same person at every step.** Every step must be completed by the same account. A step completed with a different account (for example, a colleague's Google sign-in) is refused with *"This step was completed with a different account than the step before it. Start again from the sign-in page and use the same account for every step."*
@@ -103,12 +81,12 @@ These rules apply whichever methods you turn on.
 - **Locking after repeated failures.** After ten wrong passwords or codes in a row (passwords and codes count together), the account is locked for 24 hours and then unlocks by itself. The account owner is emailed when the lock is applied. While the lock lasts, sign-in shows the ordinary "incorrect" message, even for the right password or code, because a different message would tell a stranger that the account exists. The lock email is the only place the owner learns about it.
 
 <Note>
-  Sign-in steps are set up through the API (`POST /api/v1/orgAuthConfig/updateAuthMethod`); the settings page saves a single step.
+  Sign-in steps are set up through the API (`POST /api/v1/orgAuthConfig/updateAuthMethod`); the settings page saves a single step. In PipesHub Enterprise, sign-in has one step: a policy with more than one step is refused.
 </Note>
 
-## SAML SSO and OAuth / OIDC
+## Moving from SAML or OAuth to the open-source edition
 
-**SAML SSO** and **generic OAuth / OIDC** sign-in are available in the Enterprise edition only. The open-source edition offers password, one-time password, Google and Microsoft sign-in. Azure AD sign-in is part of Microsoft sign-in.
+**SAML SSO** and **OAuth / OIDC** sign-in are PipesHub Enterprise features. The open-source edition offers password, one-time password, Google and Microsoft sign-in. Azure AD sign-in is part of Microsoft sign-in.
 
 If you move from an edition that had SAML or OAuth turned on to the open-source edition:
 

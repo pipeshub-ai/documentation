@@ -92,6 +92,38 @@ Run the same tool commands in a container of the PipesHub image, with the applic
 Open the import login for the length of the move with `ALTER ROLE pipeshub_import LOGIN PASSWORD '<password>'` (or `\password pipeshub_import` in `psql`, which sends only a hash), and close it afterwards with `ALTER ROLE pipeshub_import NOLOGIN`.
 </Accordion>
 
+### Give the API a MongoDB user of its own (recommended)
+
+After the switch, MongoDB must take no more writes from the API: anything written there would never reach PostgreSQL. Every API process checks the store fence before it writes, and the fence refuses once MongoDB is retired. To have MongoDB itself refuse those writes too, the API needs a MongoDB user of its own. The tool then takes that user's write role away at the switch and gives it back if you roll back.
+
+By default the API signs in with MongoDB's administrator login (`MONGO_USERNAME`), which the tool also uses and cannot take away. Do this once, before the move:
+
+1. Add a password for the new user to `.env`:
+
+   ```bash
+   echo "MONGO_APP_PASSWORD=$(openssl rand -hex 16)" >> .env
+   ```
+
+2. Create the user, with read and write access to the API's database only (`es`, or your `MONGO_DB_NAME`). The password reaches the container through the environment, not the command line:
+
+   ```bash
+   MONGO_APP_PASSWORD="$(sed -n 's/^MONGO_APP_PASSWORD=//p' .env)" docker compose exec -T -e MONGO_APP_PASSWORD mongodb mongosh --quiet mongodb://localhost:27017/admin --eval '
+     db.auth(process.env.MONGO_INITDB_ROOT_USERNAME, process.env.MONGO_INITDB_ROOT_PASSWORD);
+     db.createUser({ user: "pipeshub_app", pwd: process.env.MONGO_APP_PASSWORD, roles: [{ role: "readWrite", db: "es" }] })'
+   ```
+
+3. Add `docker-compose.mongo-app-user.yml` to `PIPESHUB_COMPOSE_OVERRIDES` in `.env`, after any files already there, and restart the API with it:
+
+   ```bash
+   PIPESHUB_COMPOSE_OVERRIDES=docker-compose.mongo-app-user.yml
+   ```
+
+   ```bash
+   docker compose -f docker-compose.yml -f docker-compose.mongo-app-user.yml up -d pipeshub-ai
+   ```
+
+The override signs the API in as `pipeshub_app` and gives the migration tool the administrator login as `MIGRATE_MONGO_URI`. Keep it in `PIPESHUB_COMPOSE_OVERRIDES` in every override list below, and add `-f docker-compose.mongo-app-user.yml` to each `docker compose -f …` command below. Without Docker Compose, set the API's `MONGO_URI` to the new user and the tool's `MIGRATE_MONGO_URI` to an administrator login.
+
 ## 3. Check before you copy
 
 ```bash
@@ -114,7 +146,7 @@ Two entries are expected at this point:
     scripts/migrate-to-postgres.sh --offline
     ```
 
-    On success the report ends with `"stage": "done"` and "copied and verified; set DOC_STORE=postgres and start the application". MongoDB is then marked retired. Do not start the API on MongoDB again unless you [roll back](#roll-back): what it wrote there would not reach PostgreSQL.
+    On success the report ends with `"stage": "done"` and "copied and verified; set DOC_STORE=postgres and start the application". MongoDB is then marked retired, and the write role of the API's own MongoDB user, if it has one, is taken away ([MongoDB after the switch](#mongodb-after-the-switch)). Do not start the API on MongoDB again unless you [roll back](#roll-back): what it wrote there would not reach PostgreSQL.
 
     If the copy or the check fails, the report names the stage and the differences. MongoDB stays the store and nothing is lost. Fix the cause, empty the copied tables with `scripts/migrate-to-postgres.sh --reset`, and run the move again.
 
@@ -214,6 +246,7 @@ A clean shadow run and a clean `verify --incremental` are what the switch asks y
 
     - `--fence-armed` confirms that every API process runs with `DOC_STORE_FENCE=on`, and `--shadow-clean` confirms that shadow mode showed no difference. The cut refuses without them.
     - The cut asks running chats to finish, makes MongoDB read-only, applies the last changes, checks them, and makes PostgreSQL the store. Writes pause for a few minutes. `--max-freeze` (seconds, default 600) bounds the pause.
+    - Background work pauses by itself while writes pause (the fence is on): the API's message consumers take no new message and the outbox sends nothing, so no message is used up on a refused write. Messages wait in the queue and are handled once the API runs on PostgreSQL (or on MongoDB again, if the cut is aborted).
     - If any check fails, the cut puts MongoDB back as the writable store and changes nothing else. `scripts/docstore-migrate.sh unfreeze` does the same by hand if a cut was interrupted.
 
     When it reports `"stage": "done"`:
@@ -240,6 +273,16 @@ A clean shadow run and a clean `verify --incremental` are what the switch asks y
 
 The API logs `document store: postgres` when it starts. Sign in and check your data.
 
+### MongoDB after the switch
+
+The switch retires MongoDB: every API process that still uses it has its writes refused by the store fence. The switch also takes the built-in write roles on the API's database (`readWrite`, `dbOwner`) from every MongoDB user except the tool's own login, and grants `read` instead. The report lists what it did under `mongoAppWrites`:
+
+- `revoked`: the users and roles taken away, for example `pipeshub_app@admin: readWrite on es`. MongoDB answers their writes with error 13 (`Unauthorized`).
+- `stillWrite`: users MongoDB still lets write, such as an administrator login. When the API signs in with the tool's login (no [user of its own](#give-the-api-a-mongodb-user-of-its-own-recommended)), it is listed here and only the fence refuses its writes. The report's message says so.
+- `error`: the roles could not be changed, for example when the tool's login may not manage users. The switch itself is done; revoke the role by hand with `db.revokeRolesFromUser` as the message says.
+
+A rollback gives the roles back before it makes MongoDB the store again.
+
 ### Close the import login
 
 The offline move and the rollback scripts close the import login themselves. After an online move, it stays open while the reverse follower may still need it. When you no longer need an online rollback, stop the reverse follower and close the login:
@@ -258,7 +301,7 @@ scripts/migrate-to-postgres.sh --close-login
 | Offline move, after the API wrote to PostgreSQL | `scripts/rollback-to-mongo.sh --reverse` | Copies every document from PostgreSQL back over MongoDB, checks the copy, and makes MongoDB the store again |
 | Online move, with `reverse` running since the switch | `scripts/rollback-to-mongo.sh --online` | Writes pause while the last changes go back, then MongoDB is the store again and PostgreSQL is closed |
 
-The script opens the import login, stops the API (not with `--online`), rolls back, and closes the login. A rollback that cannot verify its copy refuses and leaves PostgreSQL the store. When an online rollback does not complete, the login stays open, because the reverse follower still writes as it. Close it later with `scripts/migrate-to-postgres.sh --close-login`.
+The script opens the import login, stops the API (not with `--online`), rolls back, gives the API's MongoDB user back the write roles the switch took, and closes the login. If a role cannot be given back, the report's message gives the `grantRolesToUser` command to run before you start the API. A rollback that cannot verify its copy refuses and leaves PostgreSQL the store. When an online rollback does not complete, the login stays open, because the reverse follower still writes as it. Close it later with `scripts/migrate-to-postgres.sh --close-login`.
 
 Then start the API on MongoDB, without the document-store override, and remove `docker-compose.postgres-docstore.yml` from `PIPESHUB_COMPOSE_OVERRIDES` in `.env`:
 
@@ -292,6 +335,7 @@ PipesHub can also keep its configuration, message queue, graph and search vector
   - JSON key order is not kept;
   - published outbox events (messages already delivered) are history and are not copied;
   - empty collections the tool does not map are skipped.
+- When the API signs in with MongoDB's administrator login, MongoDB itself cannot refuse its writes after the switch; only the store fence does. Give the API [a user of its own](#give-the-api-a-mongodb-user-of-its-own-recommended) to have both.
 - The Kubernetes chart does not set `DOC_STORE` yet. On Kubernetes, set the variables on the API's deployment yourself.
 
 ## Related

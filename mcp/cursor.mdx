@@ -6,7 +6,7 @@ icon: "/logo/cursor.svg"
 
 ## Plugin
 
-The PipesHub plugin for Cursor adds PipesHub's remote MCP server (at the URL you set, signed in with OAuth; no token goes in Cursor's config), the PipesHub documentation search server, the PipesHub skill, and `setup`, `ask` and `index` commands ([indexing a repository](/mcp/coding-agent-plugins#index-this-repository)). It is not yet listed in Cursor's public marketplace.
+The PipesHub plugin for Cursor adds PipesHub's remote MCP server (at the URL you set, signed in with OAuth; no token goes in Cursor's config), the PipesHub documentation search server, the PipesHub skill, and `setup`, `ask` and `index` commands (`index` needs PipesHub's local runtime; see [Local mode and indexing](/mcp/coding-agent-plugins#local-mode-and-indexing)). It is not yet listed in Cursor's public marketplace.
 
 1. A Cursor team admin imports the repository as a team marketplace: Dashboard → Plugins & MCPs → Team Marketplaces → Add Marketplace → Import from Repo, with `https://github.com/pipeshub-ai/mcp-server` (the repository root).
 2. Each developer installs **PipesHub** from Customize, unless the admin sets it Default On or Required.
@@ -16,8 +16,6 @@ The PipesHub plugin for Cursor adds PipesHub's remote MCP server (at the URL you
 <Note>
   Cursor signs in by registering itself with PipesHub (dynamic client registration). PipesHub v1.1.0 and older have it off unless `PIPESHUB_ENABLE_DCR=true` is set; later releases have it on unless `PIPESHUB_ENABLE_DCR=false`. With it off, Authenticate fails with 403 `dynamic client registration is disabled`: use the [OAuth app](#oauth-app) setup below instead.
 </Note>
-
-The `index` command uploads with the `pipeshub` CLI, which has its own sign-in: `npx -y -p @pipeshub-ai/mcp pipeshub login`.
 
 To configure Cursor by hand instead, use one of the options below.
 

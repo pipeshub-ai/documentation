@@ -1,65 +1,55 @@
 ---
 title: "Use PipesHub in Claude Code, Codex and Cursor"
-description: "Install the PipesHub plugin in your coding agent, point it at PipesHub Cloud or a PipesHub on your computer, and index the repository you work in"
+description: "Install the PipesHub plugin in your coding agent and connect it to PipesHub Cloud or your own PipesHub server"
 icon: "plug"
 ---
 
-Three thin plugins, all from the `pipeshub-ai/mcp-server` repository. Each adds the PipesHub MCP server and the PipesHub skill to your coding agent, so it can search and cite your team's documents, tickets and chat, and, once you index it, the code of the repository you work in.
+There are three thin plugins, all in the `pipeshub-ai/mcp-server` repository. Each one adds the PipesHub MCP server and the PipesHub skill to your coding agent, so the agent can search and cite your team's documents, tickets and chat.
 
 | | Claude Code | Codex CLI | Cursor |
 | --- | --- | --- | --- |
-| Install | `claude plugin marketplace add pipeshub-ai/mcp-server`, then `claude plugin install pipeshub@pipeshub` | `codex plugin marketplace add pipeshub-ai/mcp-server`, then `codex plugin add pipeshub@pipeshub` | A team admin imports the repository as a team marketplace; see [Cursor](/mcp/cursor#plugin) |
-| PipesHub Cloud or your own server | `/pipeshub:setup cloud` (a personal access token in `PIPESHUB_MCP_TOKEN`) | `pipeshub login`, then `pipeshub mcp install --client codex` | set **PipesHub MCP URL**, then **Authenticate** (OAuth); the `setup` command walks through it |
-| PipesHub on this computer | `/pipeshub:setup local` | `npx @pipeshub-ai/standalone init --local --client codex` | `npx @pipeshub-ai/standalone init --local --client cursor` |
-| Index this repository | `/pipeshub:index` | ask Codex to index the repository, or run `npx @pipeshub-ai/standalone index` | `index` command, or `npx @pipeshub-ai/standalone index` |
+| Install | `claude plugin marketplace add pipeshub-ai/mcp-server`, then `claude plugin install pipeshub@pipeshub` | `codex plugin marketplace add pipeshub-ai/mcp-server`, then open `/plugins` in Codex and install **PipesHub** | A team admin imports the repository as a team marketplace; see [Cursor](/mcp/cursor#plugin) |
+| Connect to PipesHub Cloud or your own server | `/pipeshub:setup cloud` (a personal access token in `PIPESHUB_MCP_TOKEN`) | `pipeshub login`, then `pipeshub mcp install --client codex` | Set **PipesHub MCP URL**, then click **Authenticate** (OAuth). The `setup` command walks you through it |
 
-<Note>
-  The local commands (`init --local`, `index`, `uninstall`) come from the `@pipeshub-ai/standalone` package. The `pipeshub` command that `npm i -g @pipeshub-ai/mcp` installs (see [pipeshub CLI](/mcp/cli)) does not have them, and both packages name their command `pipeshub`. Run them through `npx @pipeshub-ai/standalone` as shown, or check that `pipeshub --help` lists `index [path]` before you type `pipeshub` directly.
-</Note>
+## Local mode and indexing
 
-## PipesHub on this computer
+The plugins also have commands for running PipesHub on this computer and for indexing the repository you work in: `/pipeshub:setup local` and `/pipeshub:index` in Claude Code, and `index` in Cursor. These commands need PipesHub's local runtime, the `@pipeshub-ai/standalone` package, which **is not available on npm**.
 
-`init --local` starts PipesHub with Docker (or uses the one already running), signs the CLI in on this computer, adds a `pipeshub` MCP server and a short instruction file to each coding agent it finds, and indexes the git repository you run it in. It needs Docker and Node.js 20 or later.
+The `pipeshub` command that `npm i -g @pipeshub-ai/mcp` installs (see [pipeshub CLI](/mcp/cli)) has no `init --local` or `index` command. Without the local runtime, these plugin commands stop and say that it is missing.
 
-```bash
-npx @pipeshub-ai/standalone init --local                 # every agent it finds
-npx @pipeshub-ai/standalone init --local --client codex  # only Codex
-```
+To use PipesHub on your own computer today:
 
-The sign-in stays in the CLI's own credential file (`~/.config/pipeshub/credentials.json`, mode 0600). No token is written into an agent's config. `npx @pipeshub-ai/standalone uninstall` removes what `init --local` added.
+1. Run PipesHub yourself with Docker. See [self-hosting PipesHub](/for-agents-local-demo).
+2. Connect the plugin to it as your own server, as shown in the table above.
 
-## Index this repository
-
-```bash
-npx @pipeshub-ai/standalone index          # this repository
-npx @pipeshub-ai/standalone index --watch  # keep the index current while you work
-```
-
-`index` sends the repository's tracked and untracked files to the PipesHub the CLI is signed in to. It respects `.gitignore`, skips binary and very large files, and never sends files that usually hold secrets, such as `.env` files and private keys. It prints progress and waits until the repository is indexed. After that the agent's `pipeshub_code_*` tools answer where something is defined, what calls it and what a change would affect, and cite file paths and line ranges.
-
-Pushing a repository needs the `code:write` scope on the sign-in or token the CLI uses. The PipesHub that `init --local` starts allows it for the CLI's sign-in. On another server, `code:write` must be in that server's `MCP_SCOPES`; see the code scopes in [OAuth 2.0](/developer/oauth2).
+Pushing a local repository to be indexed needs the `code:write` scope ("Push local repositories to be indexed into the code graph"). That scope is not in the default `MCP_SCOPES`, so personal access tokens and CLI sign-ins cannot hold it until whoever runs the server adds it to `MCP_SCOPES` ([environment variables](/deployment/environment-variables)). The code tools themselves (`pipeshub_code_*`) need `code:read`; see [MCP tools](/mcp/tools#code-graph-tools).
 
 ## Claude Code
 
 The plugin adds the MCP server, the PipesHub skill, and three commands:
 
-- `/pipeshub:setup [cloud|local]` checks the Cloud connection, or sets up PipesHub on this computer.
-- `/pipeshub:index [path]` indexes the current repository. It first checks where the CLI would send the files and asks you when that is not this computer.
+- `/pipeshub:setup [cloud|local]`: `cloud` checks the connection to PipesHub Cloud or to your own server; `local` needs the local runtime (see [Local mode and indexing](#local-mode-and-indexing)).
+- `/pipeshub:index [path]` needs the local runtime (see [Local mode and indexing](#local-mode-and-indexing)).
 - `/pipeshub:ask <question>` answers from PipesHub, with citations.
 
-In Cloud mode the plugin reads `PIPESHUB_MCP_TOKEN` and, for your own server, `PIPESHUB_MCP_URL` from your shell; see [Claude Code](/mcp/claude-code#plugin). In local mode, `/pipeshub:setup local` adds a separate `pipeshub` server to Claude Code. The plugin's Cloud server then shows as failed without a token; turn it off in `/mcp`.
-
-If npm cannot provide the local runtime, `/pipeshub:setup local` and `/pipeshub:index` say so and point to [self-hosting PipesHub](/for-agents-local-demo) instead.
+The plugin reads `PIPESHUB_MCP_TOKEN` from your shell. For your own server it also reads `PIPESHUB_MCP_URL`. See [Claude Code](/mcp/claude-code#plugin).
 
 ## Codex CLI
 
-Codex installs the plugin from the repository's marketplace file. It adds the PipesHub skill and a `pipeshub` MCP server at `http://localhost:3000/mcp`, the address of PipesHub on this computer.
+Codex installs the plugin from the repository's marketplace file. It adds the PipesHub skill and a `pipeshub` MCP server at `http://localhost:3000/mcp`, which is the address of a PipesHub you run on this computer with Docker.
 
-For PipesHub Cloud or your company's server, run `pipeshub mcp install --client codex` (see [Codex CLI](/mcp/codex)). The `pipeshub` entry it writes to `~/.codex/config.toml` takes the place of the plugin's. `npx @pipeshub-ai/standalone init --local --client codex` writes the same kind of entry for the local PipesHub, and also adds a PipesHub section to `~/.codex/AGENTS.md`.
+For PipesHub Cloud or your company's server, run `pipeshub mcp install --client codex` (see [Codex CLI](/mcp/codex)). The `pipeshub` entry it writes to `~/.codex/config.toml` replaces the plugin's entry.
 
 ## Cursor
 
-The plugin adds PipesHub's remote MCP server (set its URL under **Configure**, then sign in with OAuth), the PipesHub documentation search server, the skill, and the `setup`, `ask` and `index` commands. See [Cursor](/mcp/cursor#plugin) for the install. With `npx @pipeshub-ai/standalone init --local --client cursor --project`, `init` also writes a `.cursor/rules/pipeshub.mdc` rule into the repository.
+The plugin adds:
+
+- PipesHub's remote MCP server. Set its URL under **Configure**, then sign in with OAuth.
+- The PipesHub documentation search server.
+- The PipesHub skill.
+- The `setup`, `ask` and `index` commands. `index` needs the local runtime (see [Local mode and indexing](#local-mode-and-indexing)).
+
+See [Cursor](/mcp/cursor#plugin) for how to install it.
 
 ## Related
 

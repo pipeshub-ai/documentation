@@ -1,0 +1,100 @@
+---
+title: "Granular permissions"
+description: "Limit what a personal access token, OAuth app or service token can see. The limit only removes access. It never gives any."
+icon: "filter"
+---
+
+**Granular permissions** limit what a token or app can search and read. You pick sources, spaces, folders or files, and the token or app sees only those.
+
+The limit is a **filter, not a grant**. It can hide things. It never shows anything that the identity behind the request cannot already see.
+
+---
+
+## The rule
+
+A token or app sees an item only when **both** of these are true:
+
+1. The item is in the limit you picked.
+2. The identity that the token or app acts as can already see the item.
+
+If either check fails, the item is left out. Nobody gets an error. The item is simply not in the results.
+
+### Example
+
+You create an OAuth app and pick two Confluence pages, **A** and **B**. Alex can see page A but not page B. Alex signs in to the app.
+
+| Page | In the app's limit | Alex can see it | Alex sees it through the app |
+|------|--------------------|-----------------|------------------------------|
+| A | Yes | Yes | **Yes** |
+| B | Yes | No | **No** |
+| C | No | Yes | **No** |
+
+The app does not give Alex page B. It also hides page C, which Alex can see in PipesHub but which you did not pick.
+
+<Tip>
+  If someone says a connected app is missing results, check both: is the item in the app's limit, **and** can that person see it in PipesHub?
+</Tip>
+
+---
+
+## Who the identity is
+
+The second check uses the identity the token or app acts as. That identity is different for each kind of credential:
+
+| Credential | Acts as | So the limit filters |
+|------------|---------|----------------------|
+| [Personal access token](/developer/personal-access-tokens) | You, the person who created it | What you can see |
+| [OAuth app](/developer/oauth2) with **Authorization Code** | Each person who signs in to the app | What that person can see. Two people can get different results from the same app |
+| [OAuth app](/developer/oauth2) with **Client Credentials** | The service account the app is bound to | What the service account can see |
+| [Service token](/developer/service-accounts#limit-what-a-token-can-see) | Its service account | What the service account can see |
+
+This matters most for OAuth apps. You pick the items, but the app acts as **other people**. Each of them sees only the overlap between your picks and their own access.
+
+---
+
+## What you can pick
+
+When you choose **Only what I pick**, you can pick:
+
+- A whole source, for example a connector such as Confluence or Google Drive
+- A space, folder or collection inside a source
+- Single files or pages
+
+You can pick up to **50 items**. To cover more, pick a whole source or a folder instead of each file in it.
+
+**Everything** (the default) means no limit. The token or app sees everything its identity can see, including sources added later.
+
+---
+
+## Where to set it
+
+| Credential | Where | Can you change it later? |
+|------------|-------|--------------------------|
+| Personal access token | **What can this token see?** when you [create the token](/developer/personal-access-tokens#step-2-create-a-new-token) | Yes. [Change access](/developer/personal-access-tokens#change-what-a-token-can-see) applies from the token's next request |
+| OAuth app | The **Granular permissions** tab when you [create the app](/developer/oauth2#step-6-choose-what-the-app-can-see) | Yes, on the same tab when you manage the app. See [Changing an OAuth app's limit](#changing-an-oauth-apps-limit) |
+| Service token | **What can this token see?** when you [create the token](/developer/service-accounts#create-a-token) | Yes. **Change access** applies from the token's next request |
+
+<Note>
+  Limits on service tokens are available in the Enterprise edition only.
+</Note>
+
+### Changing an OAuth app's limit
+
+An OAuth app's limit is copied into each token when a person connects the app. So a change works like this:
+
+- **You narrow the limit.** PipesHub revokes the app's existing tokens. Each person connects again and gets the new, smaller limit.
+- **You widen the limit.** Existing tokens keep working with the old limit. A person gets the new items the next time they connect the app.
+
+### What people see when they connect
+
+When an OAuth app has a limit, the consent screen tells the person signing in. For example: *"Release Bot can see only 2 items its creator picked, and only the ones you can see."*
+
+---
+
+## When access changes
+
+The filter is checked again on each request. So:
+
+- If a person or service account **loses** access to a picked item, the token or app loses it too.
+- If they **gain** access to a picked item, the token or app can see it from the next request.
+- A token or app can never change its own limit. Only a signed-in person can, from the PipesHub UI.

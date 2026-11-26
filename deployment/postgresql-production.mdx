@@ -142,7 +142,7 @@ After the first copy, `VACUUM` makes the space of the rewritten rows reusable. A
 </Steps>
 
 <Note>
-A release can bring a new revision of the PostgreSQL image (the tag `pipeshubai/postgres:<PG_MAJOR>-<PG_IMAGE_REV>`, for example `18-1` to `18-2` when the image gained the backup metrics). The first `docker compose up -d` after updating builds the new image and briefly recreates `postgres`, `pgbouncer` and `pg-backup`; the data volume is kept. If `pg-backup` logs `STALE IMAGE` and stays unhealthy, its image predates the backup metrics: run `docker compose build pg-backup`, then `docker compose up -d`.
+A release can bring a new revision of the PostgreSQL image (the tag `pipeshubai/postgres:<PG_MAJOR>-<PG_IMAGE_REV>`, for example `18-1` to `18-2` when the image gained the backup metrics). The first `docker compose up -d` after updating builds the new image and briefly recreates `postgres`, `pgbouncer` and `pg-backup`; the data volume is kept. If `pg-backup` logs `STALE IMAGE` and stays unhealthy, its image predates the backup metrics: run `docker compose build postgres` (the `postgres` service builds the image `pg-backup` runs), then `docker compose up -d`.
 </Note>
 
 `PG_MAJOR` (17 or 18) is fixed for a data volume. Moving to another PostgreSQL major version is not an in-place upgrade: dump the database from the old stack and load it into a new volume.

@@ -27,7 +27,7 @@ This stack is for **new** installs. An install that already runs MongoDB, Qdrant
 
 - Give PostgreSQL the memory and disk for your data (see [Sizing](#sizing)). The Compose defaults (a 4 GB container with 1 GB of `shared_buffers`) suit a trial, not production.
 - Turn on [backups with point-in-time restore](#backups-and-point-in-time-restore), and back up `.env`.
-- Turn on the [metrics exporters](#monitoring) and the alerts below.
+- Turn on the [metrics exporters](#monitoring) and load the [alert rules](#alerts).
 - Keep enough free disk for the next upgrade (see [Upgrades](#upgrades)).
 
 ## Sizing
@@ -147,29 +147,87 @@ After the first copy, `VACUUM` makes the space of the rewritten rows reusable. A
 
 Turn on continuous backups with `docker-compose.postgres-backup.yml`: a scheduled backup plus every change archived as it happens, so you can restore the database to any moment the backups cover. Set it up as described in [PostgreSQL backups and point-in-time restore](/deployment/postgresql-backup), and send the backups off the machine.
 
+The backup service publishes metrics on port 9188 (see [Monitoring](#monitoring)), and the [backup alerts](#alerts) fire when backups fail, fall behind their schedule, or leave a gap in the archived WAL.
+
 With the PostgreSQL-only stack, everything PipesHub stores in a database is in PostgreSQL, so one restore brings back documents, graph, vectors, configuration and queues together. Uploaded files (local disk, S3 or Azure Blob) and `.env` are not in PostgreSQL: back them up as described in [Backup and restore](/deployment/backup-restore).
 
 ## Monitoring
 
-The opt-in `postgres-metrics` profile adds two Prometheus exporters: one for the server (port 9187) and one for PgBouncer (port 9127). They log in as `pipeshub_monitor`, a login that reads PostgreSQL's statistics and no data. The installer writes its password (`PG_MONITOR_PASSWORD`) into `.env`.
+PipesHub ships three Prometheus scrape targets for the PostgreSQL stack, and alert rules that read them.
+
+| Target (Prometheus job) | Port | What it reports | Turned on by |
+|---|---|---|---|
+| `postgres-exporter` | 9187 | The server: connections, transactions, WAL and archiving, replication, vacuum, transaction-ID age, database size | The `postgres-metrics` profile |
+| `pgbouncer-exporter` | 9127 | The connection pooler: waiting clients, the oldest wait, connections per pool | The `postgres-metrics` profile |
+| `pg-backup` | 9188 | Backups: when the newest full and incremental backups finished, the schedule, the last attempt, whether the repository can be read, WAL dropped that no backup covers | `docker-compose.postgres-backup.yml` (see [Backups](#backups-and-point-in-time-restore)) |
+
+All three ports are published on `127.0.0.1` only, and the metrics are served over plain HTTP without authentication. To let a Prometheus on another host reach them, set `PG_METRICS_BIND` in `.env` to an address on a private network. `PG_EXPORTER_PORT`, `PGBOUNCER_EXPORTER_PORT` and `PG_BACKUP_EXPORTER_PORT` change the host ports.
+
+The two exporters log in as `pipeshub_monitor`, a login that reads PostgreSQL's statistics and no data. The installer generates its password (`PG_MONITOR_PASSWORD`) with the other database passwords and writes it to `.env`. An `.env` written by an older installer gets the password once, the next time you run `./install.sh` (also with `--upgrade`); a value already in `.env` is kept. The `postgres` service creates the login the next time it starts.
 
 <Steps>
   <Step title="Turn the exporters on">
-    Add `postgres-metrics` to `COMPOSE_PROFILES` in `.env` and run `./install.sh` again. The ports listen on `127.0.0.1` only. To let a Prometheus on another host reach them, set `PG_METRICS_BIND` to an address on a private network; the metrics are served without authentication.
+    Add `postgres-metrics` to `COMPOSE_PROFILES` in `.env` and run `./install.sh` again.
   </Step>
-  <Step title="Scrape them">
+  <Step title="Turn backups on">
+    The `pg-backup` target and the backup alerts come with `docker-compose.postgres-backup.yml`. Without it, no backup is taken, and the `PgBackupMetricsMissing` alert says so.
+  </Step>
+  <Step title="Scrape the targets and load the alert rules">
+    The rules are in [`deployment/monitoring/prometheus/postgres.rules.yml`](https://github.com/pipeshub-ai/pipeshub-ai/blob/main/deployment/monitoring/prometheus/postgres.rules.yml). With your own Prometheus, keep the job names below: the rules use them to tell which target is down.
+
     ```yaml
+    rule_files:
+      - postgres.rules.yml
     scrape_configs:
-      - job_name: pipeshub-postgres
+      - job_name: postgres-exporter
+        scrape_timeout: 15s
         static_configs:
-          - targets: ["<host>:9187", "<host>:9127"]
+          - targets: ["<host>:9187"]
+      - job_name: pgbouncer-exporter
+        static_configs:
+          - targets: ["<host>:9127"]
+      - job_name: pg-backup
+        static_configs:
+          - targets: ["<host>:9188"]
     ```
+
+    The Compose monitoring overlay does this for you: add `docker-compose.monitoring-postgres.yml` after `docker-compose.monitoring.yml`, and its Prometheus scrapes the three targets on the Compose network and loads the rules. The [Compose PostgreSQL README](https://github.com/pipeshub-ai/pipeshub-ai/blob/main/deployment/docker-compose/postgres/README.md) has the command.
   </Step>
 </Steps>
 
-### Key metrics and suggested alerts
+### Alerts
 
-| Metric | What it tells you | Suggested alert |
+Each rule has a `severity` label, `warning` or `critical`. The thresholds are starting points; tune them for your install.
+
+| Alert | Fires when |
+|---|---|
+| `PostgresExporterDown` (critical) | The server or pooler exporter has not answered a scrape for 5 minutes, so no other alert can fire for it |
+| `PostgresDown`, `PgBouncerDown` (critical) | An exporter cannot connect to the server or the pooler for 1 minute: it is down, or the monitoring login cannot sign in |
+| `PostgresConnectionsNearMax` (warning), `PostgresConnectionsExhausted` (critical) | Client connections use more than 80 % / 95 % of what `max_connections` allows |
+| `PgBouncerClientsWaiting` (warning) | A client has waited 2 seconds or more for a database connection, for 2 minutes. PgBouncer drops a client after 5 seconds and its request fails |
+| `PgBouncerServerPoolSaturated`, `PgBouncerClientConnectionsNearMax` (warning) | 90 % of the pooler's server connections to a database, or 80 % of its client connections, are in use |
+| `PostgresWalArchiveFailing` (warning), `PostgresWalArchiveStalled` (critical) | WAL archiving keeps failing for 10 minutes, or nothing was archived for an hour while it fails |
+| `PostgresWalPilingUp` (warning) | `pg_wal` holds more than twice `max_wal_size` for 15 minutes |
+| `PostgresReplicaLagging`, `PostgresReplicaNotStreaming` (warning) | A replica is more than 5 minutes behind, or has received no streamed WAL from its primary for 5 minutes (a replica without a replication slot also fires this one) |
+| `PostgresLongRunningTransaction`, `PostgresIdleInTransaction` (warning) | A transaction has been open for over an hour, or a session sits idle inside a transaction open for over 5 minutes |
+| `PostgresDeadlocksRising` (warning) | More than 5 deadlocks in 15 minutes |
+| `PostgresTxidWraparoundNear` (warning), `PostgresTxidWraparoundImminent` (critical) | A database is 1 billion / 1.5 billion transaction IDs past its oldest unfrozen row. Near 2.1 billion, PostgreSQL refuses writes |
+| `PostgresDeadTuplesHigh`, `PostgresAutovacuumRunningLong`, `PostgresAutovacuumOff` (warning) | A table keeps over 30 % dead rows for an hour, an autovacuum runs for over 6 hours, or autovacuum is off |
+| `PostgresDatabaseGrowingFast` (warning) | A database over 1 GiB grew by more than half in a day |
+| `PgBackupMetricsMissing` (critical) | The `pg-backup` target has not answered a scrape for 15 minutes: the service is down, or backups are not set up |
+| `PgBackupTooOld` (warning at 1.5 times the schedule, critical at 3 times) | The newest full backup is older than `PG_BACKUP_FULL_DAYS` allows (label `schedule="full"`), or the newest backup of any type is older than `PG_BACKUP_INCR_HOURS` allows (`schedule="any"`) |
+| `PgBackupNoFullBackup` (critical) | The backup service started more than 1.5 times `PG_BACKUP_FULL_DAYS` ago and no full backup has finished, so there is nothing to restore |
+| `PgBackupFailing` (warning) | The last backup attempt failed and none has succeeded for 15 minutes |
+| `PgBackupRepositoryUnreadable` (warning) | The backup repository could not be read for 15 minutes |
+| `PgBackupWalGap` (critical) | The server dropped WAL that no backup covers, because the archive queue was full. A point-in-time restore cannot cross the gap until the next full backup, which `pg-backup` starts at once, finishes |
+
+Statement timeouts have no alert: PostgreSQL does not count them separately, so look for them in the server log.
+
+### Key metrics
+
+These are the server and pooler metrics most worth a dashboard panel.
+
+| Metric | What it tells you | What to look for |
 |---|---|---|
 | `pg_up`, `pgbouncer_up` | The exporter reached the server or the pooler | `== 0` for a few minutes: the database or pooler is down, or the monitoring login cannot sign in |
 | `pgbouncer_pools_client_waiting_connections`, `pgbouncer_pools_client_maxwait_seconds` | Clients waiting for a database connection, and how long the oldest has waited | Waiting clients that stay above 0 and a growing wait: the pool is too small or queries are slow |

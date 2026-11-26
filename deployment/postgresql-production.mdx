@@ -1,0 +1,248 @@
+---
+title: "PostgreSQL in production"
+description: "Size, upgrade, back up and monitor a Docker Compose install that keeps its data in PostgreSQL"
+icon: "server"
+---
+
+This page is for running the PostgreSQL-based Docker Compose install in production. It covers how much disk and memory to give PostgreSQL, what happens during the first copy of the typed graph and how long it takes, how to upgrade, back up and restore, and what to monitor.
+
+The figures on this page come from our load tests on a generated dataset. Your records, permissions and embedding model are different, so treat the figures as a starting point and measure your own install as it grows.
+
+## The PostgreSQL-only stack
+
+A new install can keep every store in one PostgreSQL database: documents, the knowledge graph, vectors (pgvector), configuration, the message queue and the crawl scheduler. MongoDB, Qdrant, Redis, Neo4j and Kafka are not started at all. Run the installer from a repository checkout (Docker Compose 2.24.4 or later):
+
+```bash
+cd deployment/docker-compose
+PIPESHUB_COMPOSE_OVERRIDES=docker-compose.postgres-only.yml ./install.sh
+```
+
+The installer writes a random password for every database login into `.env`, and saves the override so that `--stop`, `--upgrade` and `--uninstall` keep using it. The stack starts in this order: `postgres`, then `pgbouncer` (the connection pooler), then `pipeshub-migrate` (applies the database schema and must exit `0`), then the two maintenance workers `pipeshub-placement` and `pipeshub-fold`, and the app.
+
+<Note>
+This stack is for **new** installs. An install that already runs MongoDB, Qdrant, Redis or Neo4j keeps them: the override copies no data. The [Compose PostgreSQL README](https://github.com/pipeshub-ai/pipeshub-ai/blob/main/deployment/docker-compose/postgres/README.md) describes every service and setting.
+</Note>
+
+## Before you go live
+
+- Give PostgreSQL the memory and disk for your data (see [Sizing](#sizing)). The Compose defaults (a 4 GB container with 1 GB of `shared_buffers`) suit a trial, not production.
+- Turn on [backups with point-in-time restore](#backups-and-point-in-time-restore), and back up `.env`.
+- Turn on the [metrics exporters](#monitoring) and load the [alert rules](#alerts).
+- Keep enough free disk for the next upgrade (see [Upgrades](#upgrades)).
+
+## Sizing
+
+### Disk
+
+| What | Measured in our tests |
+|---|---|
+| Database, about 1.1 million records | About 22 GB |
+| Database, 11.8 million records (21.9 million graph nodes, 93.6 million graph edges, 5.3 million search chunks) | About 186 GB: 123 GB of graph, 62.5 GB of search data (vectors, their text and the keyword index) |
+| Typed graph (`kg` schema), on top of the above | About 4.5 GB per million records |
+| Write-ahead log (WAL) | Up to `max_wal_size`, which we set to 4 GB at 1 million records and 16 GB at 10 million |
+
+The tests used 1024-dimension embeddings. A larger model takes more space per chunk.
+
+- **Typed graph.** With the graph in PostgreSQL, PipesHub keeps a second, typed copy of it in the `kg` schema to answer listings and access checks quickly. For 10.5 million records it took about 53 GB. The first copy rewrites each row about 2.4 times on average (the copy, then the passes that add listing and access data), and the old row versions take space until `VACUUM` marks it free for reuse. The 4.5 GB per million records above was measured with that space still in use, so plan for it.
+- **WAL.** PostgreSQL keeps up to `max_wal_size` of WAL (default 1 GB) and keeps those files after a busy period ends: our 10-million-record run held 16 GB of WAL on disk until we lowered `max_wal_size`, restarted PostgreSQL and let it cycle out the old files. With backups on, WAL also waits on disk until it has been archived. Leave room for it on the same volume.
+- **Free space.** When the volume fills up, writes fail, and PostgreSQL shuts down if it cannot write WAL. Watch free space on the host and keep a margin above the next copy and the WAL.
+
+### Memory
+
+PostgreSQL reads fastest from data already in memory: `shared_buffers` (its own cache) plus the operating system's file cache. The PostgreSQL documentation suggests `shared_buffers` at 25 % of the memory of a dedicated database server as a starting point. `effective_cache_size` allocates nothing; it tells the planner how much of the data is likely cached, so set it to the memory PostgreSQL can use for both caches.
+
+What we tested with:
+
+| Records | Memory for PostgreSQL | `shared_buffers` | `effective_cache_size` | `maintenance_work_mem` | Result |
+|---|---|---|---|---|---|
+| About 1 million | 16 GB, 8 CPU cores | 4 GB | 10 GB | 1 GB | Our reference setup |
+| About 10 million in one install | 64 GB, 16 CPU cores | 16 GB | 48 GB | 4 GB | Correct, but the working set (about 185 GB of graph and search data plus the typed graph) no longer fit in memory. Knowledge Hub views whose queries take 20-200 ms from memory took 0.7-1.2 s for one user and up to 9 s with 16 users at once |
+
+So for a large install, give PostgreSQL more memory, or expect slower Knowledge Hub views. Search vectors also need memory to build their index: building the index for 4.7 million chunks needed about 4.45 GB of `maintenance_work_mem`. With 4 GB it spilled to disk and took 25-29 minutes; set it to about 1 GB per million chunks if you have the memory.
+
+On Docker Compose, set the container's memory and `shared_buffers` in `.env`, then run `./install.sh` again (a value you set is kept across `--reconfigure` and `--upgrade`):
+
+```bash
+PG_MEMORY_LIMIT=16G      # the postgres container's memory limit (default 4G)
+PG_SHARED_BUFFERS=4GB    # about a quarter of PG_MEMORY_LIMIT (default 1GB)
+PG_SHM=2g                # /dev/shm for parallel index builds (default 1g)
+```
+
+Set the others once with `ALTER SYSTEM` as the administrator. They are stored in the data volume and survive restarts:
+
+```bash
+docker exec -it pipeshub-ai-postgres-1 psql -U postgres -d pipeshub -c "ALTER SYSTEM SET effective_cache_size = '12GB'" \
+  -c "ALTER SYSTEM SET maintenance_work_mem = '1GB'" -c "ALTER SYSTEM SET max_wal_size = '4GB'" -c "SELECT pg_reload_conf()"
+```
+
+Replace `pipeshub-ai` with your project name if it differs (`COMPOSE_PROJECT_NAME` in `.env`). `shared_buffers` and `max_connections` are passed on the server's command line, so `ALTER SYSTEM` does not change them; use `.env` for `shared_buffers`.
+
+### Large installs
+
+We tested one install with 10.5 million records. Every access check was correct, and record lookups, code tools, record details and the Knowledge Hub sidebar were as fast as at 1 million or faster. Other operations were slower at that size: All Records and filters by name, the trash, connector statistics and listing sources over MCP. A search limited to one source of several million records could come back empty when it ran out of time. If one install will hold well over a million records, test with your own data before you go live.
+
+## The first copy of the typed graph
+
+When an install that already has data first runs a release with the typed graph, the connectors service copies the graph into it in the background, source by source. A later release that changes the typed graph's format copies it again the same way. A new, empty install has nothing to copy.
+
+### How long it takes
+
+| Records | Time in our tests |
+|---|---|
+| About 1 million | About 1 hour (63 minutes on the 8-core, 16 GB setup above; 77 minutes on the 16-core setup while a 10.5-million-record copy shared the server) |
+| 10.5 million | 4 hours 36 minutes of copying: every record was copied by 2 hours 55 minutes, then the access data was set at about 1,900 to 2,300 records per second, and each source was checked against the graph |
+
+Sources are copied side by side, so a small source is ready long before a large one. In the 10.5-million-record test, sources with up to 300,000 records were ready within 70 minutes, a source of 1 million records after 2 hours 11 minutes, and the largest (3.5 million records) at the end.
+
+### What users see meanwhile
+
+- **Search, chat and access checks keep working and give the same answers.** Until a source's copy has been checked against the graph, PipesHub answers for it from the graph directly, which is slower but correct. In our tests, with the copy partly done and after it finished, no user was shown a record they could not open, and none missed one they could.
+- **Knowledge Hub** can show *Preparing this source… Its items will show here in a moment.* for a source whose copy is not finished, and lists its items once it is.
+- Each source switches to the typed graph on its own, once its copy has been checked.
+
+### Watch the progress
+
+Each source has a state in `kg.projection_state`. Count them as the administrator:
+
+```bash
+docker exec -it pipeshub-ai-postgres-1 psql -U postgres -d pipeshub \
+  -c "SELECT mode, count(*) FROM kg.projection_state WHERE app_sk <> 0 GROUP BY mode"
+```
+
+| `mode` | Meaning |
+|---|---|
+| `legacy` | Not copied yet. Answered from the graph directly. |
+| `shadow` | Copied and checked against the graph. Still answered from the graph. |
+| `enforce` | Answered from the typed graph. |
+
+A source that has no row yet has not started. The copy is done when every source is at `enforce`. The connectors service logs `kg worker started` when the copy and its upkeep start, and a warning naming a source that differed from the graph (it stays on the slower path and is copied again) or that could not be switched; read them with `docker logs pipeshub-ai-pipeshub-ai-1`.
+
+After the first copy, `VACUUM` makes the space of the rewritten rows reusable. Autovacuum does this on its own; to do it at once, run `VACUUM kg.records;` as the administrator (about 8 minutes at 10.5 million records).
+
+## Upgrades
+
+<Steps>
+  <Step title="Back up">
+    Take a backup you can restore before you upgrade: see [Backups and point-in-time restore](#backups-and-point-in-time-restore). Also copy `.env`.
+  </Step>
+  <Step title="Check free disk">
+    An upgrade that copies the typed graph needs about 4.5 GB per million records, plus `max_wal_size`, plus your usual margin. Check the volume's free space first.
+  </Step>
+  <Step title="Upgrade">
+    ```bash
+    cd deployment/docker-compose
+    ./install.sh --upgrade
+    ```
+
+    `pipeshub-migrate` runs before the app starts. It upgrades the schema in one transaction: if it fails, it changes nothing, and the app does not start. Read its output with `docker logs pipeshub-ai-pipeshub-migrate-1`. Exit code `4` means the database failed a safety check; the reported problems say what.
+  </Step>
+  <Step title="Watch">
+    Follow the [typed graph's progress](#watch-the-progress) if the release copies it, and the database's [metrics](#monitoring): disk, WAL, long-running transactions and pooler waits.
+  </Step>
+</Steps>
+
+<Note>
+A release can bring a new revision of the PostgreSQL image (the tag `pipeshubai/postgres:<PG_MAJOR>-<PG_IMAGE_REV>`, for example `18-1` to `18-2` when the image gained the backup metrics). The first `docker compose up -d` after updating builds the new image and briefly recreates `postgres`, `pgbouncer` and `pg-backup`; the data volume is kept. If `pg-backup` logs `STALE IMAGE` and stays unhealthy, its image predates the backup metrics: run `docker compose build postgres` (the `postgres` service builds the image `pg-backup` runs), then `docker compose up -d`.
+</Note>
+
+`PG_MAJOR` (17 or 18) is fixed for a data volume. Moving to another PostgreSQL major version is not an in-place upgrade: dump the database from the old stack and load it into a new volume.
+
+## Backups and point-in-time restore
+
+Turn on continuous backups with `docker-compose.postgres-backup.yml`: a scheduled backup plus every change archived as it happens, so you can restore the database to any moment the backups cover. Set it up as described in [PostgreSQL backups and point-in-time restore](/deployment/postgresql-backup), and send the backups off the machine.
+
+The backup service publishes metrics on port 9188 (see [Monitoring](#monitoring)), and the [backup alerts](#alerts) fire when backups fail, fall behind their schedule, or leave a gap in the archived WAL.
+
+With the PostgreSQL-only stack, everything PipesHub stores in a database is in PostgreSQL, so one restore brings back documents, graph, vectors, configuration and queues together. Uploaded files (local disk, S3 or Azure Blob) and `.env` are not in PostgreSQL: back them up as described in [Backup and restore](/deployment/backup-restore).
+
+## Monitoring
+
+PipesHub ships three Prometheus scrape targets for the PostgreSQL stack, and alert rules that read them.
+
+| Target (Prometheus job) | Port | What it reports | Turned on by |
+|---|---|---|---|
+| `postgres-exporter` | 9187 | The server: connections, transactions, WAL and archiving, replication, vacuum, transaction-ID age, database size | The `postgres-metrics` profile |
+| `pgbouncer-exporter` | 9127 | The connection pooler: waiting clients, the oldest wait, connections per pool | The `postgres-metrics` profile |
+| `pg-backup` | 9188 | Backups: when the newest full and incremental backups finished, the schedule, the last attempt, whether the repository can be read, WAL dropped that no backup covers | `docker-compose.postgres-backup.yml` (see [Backups](#backups-and-point-in-time-restore)) |
+
+All three ports are published on `127.0.0.1` only, and the metrics are served over plain HTTP without authentication. To let a Prometheus on another host reach them, set `PG_METRICS_BIND` in `.env` to an address on a private network. `PG_EXPORTER_PORT`, `PGBOUNCER_EXPORTER_PORT` and `PG_BACKUP_EXPORTER_PORT` change the host ports.
+
+The two exporters log in as `pipeshub_monitor`, a login that reads PostgreSQL's statistics and no data. The installer generates its password (`PG_MONITOR_PASSWORD`) with the other database passwords and writes it to `.env`. An `.env` written by an older installer gets the password once, the next time you run `./install.sh` (also with `--upgrade`); a value already in `.env` is kept. The `postgres` service creates the login the next time it starts.
+
+<Steps>
+  <Step title="Turn the exporters on">
+    Add `postgres-metrics` to `COMPOSE_PROFILES` in `.env` and run `./install.sh` again.
+  </Step>
+  <Step title="Turn backups on">
+    The `pg-backup` target and the backup alerts come with `docker-compose.postgres-backup.yml`. Without it, no backup is taken, and the `PgBackupMetricsMissing` alert says so.
+  </Step>
+  <Step title="Scrape the targets and load the alert rules">
+    The rules are in [`deployment/monitoring/prometheus/postgres.rules.yml`](https://github.com/pipeshub-ai/pipeshub-ai/blob/main/deployment/monitoring/prometheus/postgres.rules.yml). With your own Prometheus, keep the job names below: the rules use them to tell which target is down.
+
+    ```yaml
+    rule_files:
+      - postgres.rules.yml
+    scrape_configs:
+      - job_name: postgres-exporter
+        scrape_timeout: 15s
+        static_configs:
+          - targets: ["<host>:9187"]
+      - job_name: pgbouncer-exporter
+        static_configs:
+          - targets: ["<host>:9127"]
+      - job_name: pg-backup
+        static_configs:
+          - targets: ["<host>:9188"]
+    ```
+
+    The Compose monitoring overlay does this for you: add `docker-compose.monitoring-postgres.yml` after `docker-compose.monitoring.yml`, and its Prometheus scrapes the three targets on the Compose network and loads the rules. The [Compose PostgreSQL README](https://github.com/pipeshub-ai/pipeshub-ai/blob/main/deployment/docker-compose/postgres/README.md) has the command.
+  </Step>
+</Steps>
+
+### Alerts
+
+Each rule has a `severity` label, `warning` or `critical`. The thresholds are starting points; tune them for your install.
+
+| Alert | Fires when |
+|---|---|
+| `PostgresExporterDown` (critical) | The server or pooler exporter has not answered a scrape for 5 minutes, so no other alert can fire for it |
+| `PostgresDown`, `PgBouncerDown` (critical) | An exporter cannot connect to the server or the pooler for 1 minute: it is down, or the monitoring login cannot sign in |
+| `PostgresConnectionsNearMax` (warning), `PostgresConnectionsExhausted` (critical) | Client connections use more than 80 % / 95 % of what `max_connections` allows |
+| `PgBouncerClientsWaiting` (warning) | A client has waited 2 seconds or more for a database connection, for 2 minutes. PgBouncer drops a client after 5 seconds and its request fails |
+| `PgBouncerServerPoolSaturated`, `PgBouncerClientConnectionsNearMax` (warning) | 90 % of the pooler's server connections to a database, or 80 % of its client connections, are in use |
+| `PostgresWalArchiveFailing` (warning), `PostgresWalArchiveStalled` (critical) | WAL archiving keeps failing for 10 minutes, or nothing was archived for an hour while it fails |
+| `PostgresWalPilingUp` (warning) | `pg_wal` holds more than twice `max_wal_size` for 15 minutes |
+| `PostgresReplicaLagging`, `PostgresReplicaNotStreaming` (warning) | A replica is more than 5 minutes behind, or has received no streamed WAL from its primary for 5 minutes (a replica without a replication slot also fires this one) |
+| `PostgresLongRunningTransaction`, `PostgresIdleInTransaction` (warning) | A transaction has been open for over an hour, or a session sits idle inside a transaction open for over 5 minutes |
+| `PostgresDeadlocksRising` (warning) | More than 5 deadlocks in 15 minutes |
+| `PostgresTxidWraparoundNear` (warning), `PostgresTxidWraparoundImminent` (critical) | A database is 1 billion / 1.5 billion transaction IDs past its oldest unfrozen row. Near 2.1 billion, PostgreSQL refuses writes |
+| `PostgresDeadTuplesHigh`, `PostgresAutovacuumRunningLong`, `PostgresAutovacuumOff` (warning) | A table keeps over 30 % dead rows for an hour, an autovacuum runs for over 6 hours, or autovacuum is off |
+| `PostgresDatabaseGrowingFast` (warning) | A database over 1 GiB grew by more than half in a day |
+| `PgBackupMetricsMissing` (critical) | The `pg-backup` target has not answered a scrape for 15 minutes: the service is down, or backups are not set up |
+| `PgBackupTooOld` (warning at 1.5 times the schedule, critical at 3 times) | The newest full backup is older than `PG_BACKUP_FULL_DAYS` allows (label `schedule="full"`), or the newest backup of any type is older than `PG_BACKUP_INCR_HOURS` allows (`schedule="any"`) |
+| `PgBackupNoFullBackup` (critical) | The backup service started more than 1.5 times `PG_BACKUP_FULL_DAYS` ago and no full backup has finished, so there is nothing to restore |
+| `PgBackupFailing` (warning) | The last backup attempt failed and none has succeeded for 15 minutes |
+| `PgBackupRepositoryUnreadable` (warning) | The backup repository could not be read for 15 minutes |
+| `PgBackupWalGap` (critical) | The server dropped WAL that no backup covers, because the archive queue was full. A point-in-time restore cannot cross the gap until the next full backup, which `pg-backup` starts at once, finishes |
+
+Statement timeouts have no alert: PostgreSQL does not count them separately, so look for them in the server log.
+
+### Key metrics
+
+These are the server and pooler metrics most worth a dashboard panel.
+
+| Metric | What it tells you | What to look for |
+|---|---|---|
+| `pg_up`, `pgbouncer_up` | The exporter reached the server or the pooler | `== 0` for a few minutes: the database or pooler is down, or the monitoring login cannot sign in |
+| `pgbouncer_pools_client_waiting_connections`, `pgbouncer_pools_client_maxwait_seconds` | Clients waiting for a database connection, and how long the oldest has waited | Waiting clients that stay above 0 and a growing wait: the pool is too small or queries are slow |
+| `pgbouncer_pools_server_active_connections` | Server connections in use per pool | Close to the pool size for long periods |
+| `pg_stat_activity_count` (by `state`) | Connections by state | `idle in transaction` that stays above 0: a client holds a transaction open |
+| `pg_long_running_transactions_oldest_timestamp_seconds` | Age of the oldest open transaction | Minutes long outside an upgrade: it holds back `VACUUM` and grows the tables |
+| `pg_database_size_bytes{datname="pipeshub"}` | Size of the database | Growth that would fill the volume before your next check, especially before an upgrade |
+| `pg_wal_size_bytes` | Size of the write-ahead log on disk | Well above `pg_settings_max_wal_size_bytes` for long: WAL is not being recycled or archived |
+| `pg_stat_user_tables_n_dead_tup`, `pg_stat_user_tables_last_autovacuum` (by `schemaname`, `relname`) | Old row versions waiting for `VACUUM`, and when autovacuum last ran on a table | Dead rows that keep growing on a large table (for example `kg.records` after the first copy) while autovacuum does not run |
+| `pg_database_wraparound_age_datfrozenxid_seconds` | Transaction-ID age of the oldest unfrozen row (a count, despite the name) | Approaching `pg_settings_autovacuum_freeze_max_age`: autovacuum is not keeping up |
+| `pg_stat_database_deadlocks` | Deadlocks detected | Any increase |
+| `pg_stat_database_blks_hit`, `pg_stat_database_blks_read` | Reads served from `shared_buffers` against reads from disk | A falling hit ratio as data grows: PostgreSQL needs more memory (see [Memory](#memory)) |
+
+Also watch the host: free space on the volume that holds Docker's data, and the `postgres` container's memory against `PG_MEMORY_LIMIT`.

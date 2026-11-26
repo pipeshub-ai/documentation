@@ -85,7 +85,7 @@ This grant type supports **PKCE (Proof Key for Code Exchange)**, which is requir
 
 The **Client Credentials** grant is designed for server-to-server communication where no user interaction is involved. The application authenticates directly using its client ID and client secret.
 
-An application that allows this grant must be bound to a **service account** when it is created. Its tokens act as that service account, so they see only what the service account can access. Only an organization admin can create such an application, and the service account must be enabled in the same organization.
+An application that allows this grant must be bound to a **service account** when it is created. Its tokens act as that service account, so they see only what the service account can access. See [Service accounts](/developer/service-accounts) to create one. Only an organization admin can create such an application, and the service account must be enabled in the same organization.
 
 **When to use:**
 - Background services or automation scripts
@@ -287,7 +287,23 @@ The API still calls actions toolsets, so these scopes are named `toolset:*`.
 
 Only organization admins can register these scopes on an application: `org:write`, `org:admin`, `user:invite`, `user:delete`, `usergroup:write`, `team:write`, `config:write`, `crawl:write` and `crawl:delete`.
 
-### Step 6: Save and Store Credentials
+### Step 6: Choose What the App Can See
+
+Open the **Granular permissions** tab. It sets which knowledge the app can search and read:
+
+- **Everything each user can see** (the default). Includes sources added later.
+- **Only what I pick.** Pick whole sources, or spaces, folders or files inside one, up to 50 items.
+
+<Frame>
+  <img className="block dark:hidden" src="/images/developer/oauth2/oauth2_granular_permissions.png" alt="Granular permissions tab with Only what I pick selected and two collections picked" />
+  <img className="hidden dark:block" src="/images/developer/oauth2/oauth2_granular_permissions-dark.png" alt="Granular permissions tab with Only what I pick selected and two collections picked" />
+</Frame>
+
+<Note>
+  The limit only removes access. It never gives any. With **Authorization Code**, the app acts as each person who signs in, so each person sees only the items that you picked **and** that they can already see. With **Client Credentials**, no person signs in: the app sees only the items that you picked **and** that its service account can see. See [Granular permissions](/developer/granular-permissions).
+</Note>
+
+### Step 7: Save and Store Credentials
 
 After submitting the form, PipesHub generates a unique **Client ID** and **Client Secret** for your application.
 

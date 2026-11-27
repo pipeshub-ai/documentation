@@ -31175,7 +31175,7 @@ paths:
           console.log(await response.text());
       - lang: go
         label: Go
-        source: "// Not in the Go SDK yet: plain HTTP request.\npackage main\n\nimport (\n\t\"fmt\"\n\t\"io\"\n\t\"net/http\"\n\t\"net/url\"\n)\n\nfunc main() {\n\treq, err := http.NewRequest(\"GET\", \"https://app.pipeshub.com/api/v1/oauth2/authorize\", nil)\n\tif err != nil {\n\t\tpanic(err)\n\t}\n\tquery := url.Values{}\n\tquery.Set(\"response_type\", \"code\")\n\tquery.Set(\"client_id\", \"<string>\")\n\tquery.Set(\"redirect_uri\", \"<string>\")\n\tquery.Set(\"scope\", \"openid profile email read:records\")\n\tquery.Set(\"state\", \"<string>\")\n\treq.URL.RawQuery = query.Encode()\n\treq.Header.Set(\"Authorization\", \"Bearer <token>\")\n\n\tres, err := http.DefaultClient.Do(req)\n\tif err != nil {\n\t\tpanic(err)\n\t}\n\tdefer res.Body.Close()\n\n\tout, err := io.ReadAll(res.Body)\n\tif err != nil {\n\t\tpanic(err)\n\t}\n\tfmt.Println(string(out))\n}\n"
+        source: "// Not in the Go SDK yet: plain HTTP request.\npackage main\n\nimport (\n\t\"fmt\"\n\t\"io\"\n\t\"net/http\"\n\t\"net/url\"\n)\n\nfunc main() {\n\treq, err := http.NewRequest(\"GET\", \"https://app.pipeshub.com/api/v1/oauth2/authorize\", nil)\n\tif err != nil {\n\t\tpanic(err)\n\t}\n\tquery := url.Values{}\n\tquery.Add(\"response_type\", \"code\")\n\tquery.Add(\"client_id\", \"<string>\")\n\tquery.Add(\"redirect_uri\", \"<string>\")\n\tquery.Add(\"scope\", \"openid profile email read:records\")\n\tquery.Add(\"state\", \"<string>\")\n\treq.URL.RawQuery = query.Encode()\n\treq.Header.Set(\"Authorization\", \"Bearer <token>\")\n\n\tres, err := http.DefaultClient.Do(req)\n\tif err != nil {\n\t\tpanic(err)\n\t}\n\tdefer res.Body.Close()\n\n\tout, err := io.ReadAll(res.Body)\n\tif err != nil {\n\t\tpanic(err)\n\t}\n\tfmt.Println(string(out))\n}\n"
       x-mint:
         href: /api-reference/oauth-provider/oauth-authorize
     post:
@@ -31644,7 +31644,7 @@ paths:
           console.log(await response.text());
       - lang: go
         label: Go
-        source: "// Not in the Go SDK yet: plain HTTP request.\npackage main\n\nimport (\n\t\"fmt\"\n\t\"io\"\n\t\"net/http\"\n\t\"net/url\"\n)\n\nfunc main() {\n\treq, err := http.NewRequest(\"GET\", \"https://app.pipeshub.com/api/v1/service-account-delegations\", nil)\n\tif err != nil {\n\t\tpanic(err)\n\t}\n\tquery := url.Values{}\n\tquery.Set(\"serviceAccountId\", \"<string>\")\n\treq.URL.RawQuery = query.Encode()\n\treq.Header.Set(\"Authorization\", \"Bearer <token>\")\n\n\tres, err := http.DefaultClient.Do(req)\n\tif err != nil {\n\t\tpanic(err)\n\t}\n\tdefer res.Body.Close()\n\n\tout, err := io.ReadAll(res.Body)\n\tif err != nil {\n\t\tpanic(err)\n\t}\n\tfmt.Println(string(out))\n}\n"
+        source: "// Not in the Go SDK yet: plain HTTP request.\npackage main\n\nimport (\n\t\"fmt\"\n\t\"io\"\n\t\"net/http\"\n\t\"net/url\"\n)\n\nfunc main() {\n\treq, err := http.NewRequest(\"GET\", \"https://app.pipeshub.com/api/v1/service-account-delegations\", nil)\n\tif err != nil {\n\t\tpanic(err)\n\t}\n\tquery := url.Values{}\n\tquery.Add(\"serviceAccountId\", \"<string>\")\n\treq.URL.RawQuery = query.Encode()\n\treq.Header.Set(\"Authorization\", \"Bearer <token>\")\n\n\tres, err := http.DefaultClient.Do(req)\n\tif err != nil {\n\t\tpanic(err)\n\t}\n\tdefer res.Body.Close()\n\n\tout, err := io.ReadAll(res.Body)\n\tif err != nil {\n\t\tpanic(err)\n\t}\n\tfmt.Println(string(out))\n}\n"
       x-mint:
         href: /api-reference/oauth-provider/list-service-account-delegations
     post:
@@ -31978,7 +31978,7 @@ paths:
           console.log(await response.text());
       - lang: go
         label: Go
-        source: "// Not in the Go SDK yet: plain HTTP request.\npackage main\n\nimport (\n\t\"fmt\"\n\t\"io\"\n\t\"net/http\"\n\t\"net/url\"\n)\n\nfunc main() {\n\treq, err := http.NewRequest(\"DELETE\", \"https://app.pipeshub.com/api/v1/service-account-delegations/{subjectUserId}\", nil)\n\tif err != nil {\n\t\tpanic(err)\n\t}\n\tquery := url.Values{}\n\tquery.Set(\"serviceAccountId\", \"<string>\")\n\treq.URL.RawQuery = query.Encode()\n\treq.Header.Set(\"Authorization\", \"Bearer <token>\")\n\n\tres, err := http.DefaultClient.Do(req)\n\tif err != nil {\n\t\tpanic(err)\n\t}\n\tdefer res.Body.Close()\n\n\tout, err := io.ReadAll(res.Body)\n\tif err != nil {\n\t\tpanic(err)\n\t}\n\tfmt.Println(string(out))\n}\n"
+        source: "// Not in the Go SDK yet: plain HTTP request.\npackage main\n\nimport (\n\t\"fmt\"\n\t\"io\"\n\t\"net/http\"\n\t\"net/url\"\n)\n\nfunc main() {\n\treq, err := http.NewRequest(\"DELETE\", \"https://app.pipeshub.com/api/v1/service-account-delegations/{subjectUserId}\", nil)\n\tif err != nil {\n\t\tpanic(err)\n\t}\n\tquery := url.Values{}\n\tquery.Add(\"serviceAccountId\", \"<string>\")\n\treq.URL.RawQuery = query.Encode()\n\treq.Header.Set(\"Authorization\", \"Bearer <token>\")\n\n\tres, err := http.DefaultClient.Do(req)\n\tif err != nil {\n\t\tpanic(err)\n\t}\n\tdefer res.Body.Close()\n\n\tout, err := io.ReadAll(res.Body)\n\tif err != nil {\n\t\tpanic(err)\n\t}\n\tfmt.Println(string(out))\n}\n"
       x-mint:
         href: /api-reference/oauth-provider/revoke-service-account-delegation
   /oauth2/token:
@@ -41504,7 +41504,7 @@ paths:
           console.log(await response.text());
       - lang: go
         label: Go
-        source: "// Not in the Go SDK yet: plain HTTP request.\npackage main\n\nimport (\n\t\"fmt\"\n\t\"io\"\n\t\"net/http\"\n\t\"net/url\"\n)\n\nfunc main() {\n\treq, err := http.NewRequest(\"GET\", \"https://app.pipeshub.com/api/v1/service-tokens\", nil)\n\tif err != nil {\n\t\tpanic(err)\n\t}\n\tquery := url.Values{}\n\tquery.Set(\"serviceAccountId\", \"<string>\")\n\treq.URL.RawQuery = query.Encode()\n\treq.Header.Set(\"Authorization\", \"Bearer <token>\")\n\n\tres, err := http.DefaultClient.Do(req)\n\tif err != nil {\n\t\tpanic(err)\n\t}\n\tdefer res.Body.Close()\n\n\tout, err := io.ReadAll(res.Body)\n\tif err != nil {\n\t\tpanic(err)\n\t}\n\tfmt.Println(string(out))\n}\n"
+        source: "// Not in the Go SDK yet: plain HTTP request.\npackage main\n\nimport (\n\t\"fmt\"\n\t\"io\"\n\t\"net/http\"\n\t\"net/url\"\n)\n\nfunc main() {\n\treq, err := http.NewRequest(\"GET\", \"https://app.pipeshub.com/api/v1/service-tokens\", nil)\n\tif err != nil {\n\t\tpanic(err)\n\t}\n\tquery := url.Values{}\n\tquery.Add(\"serviceAccountId\", \"<string>\")\n\treq.URL.RawQuery = query.Encode()\n\treq.Header.Set(\"Authorization\", \"Bearer <token>\")\n\n\tres, err := http.DefaultClient.Do(req)\n\tif err != nil {\n\t\tpanic(err)\n\t}\n\tdefer res.Body.Close()\n\n\tout, err := io.ReadAll(res.Body)\n\tif err != nil {\n\t\tpanic(err)\n\t}\n\tfmt.Println(string(out))\n}\n"
       x-mint:
         href: /api-reference/service-tokens/list-service-tokens
     post:
@@ -41844,7 +41844,7 @@ paths:
           console.log(await response.text());
       - lang: go
         label: Go
-        source: "// Not in the Go SDK yet: plain HTTP request.\npackage main\n\nimport (\n\t\"fmt\"\n\t\"io\"\n\t\"net/http\"\n\t\"net/url\"\n)\n\nfunc main() {\n\treq, err := http.NewRequest(\"DELETE\", \"https://app.pipeshub.com/api/v1/service-tokens/{tokenId}\", nil)\n\tif err != nil {\n\t\tpanic(err)\n\t}\n\tquery := url.Values{}\n\tquery.Set(\"serviceAccountId\", \"<string>\")\n\treq.URL.RawQuery = query.Encode()\n\treq.Header.Set(\"Authorization\", \"Bearer <token>\")\n\n\tres, err := http.DefaultClient.Do(req)\n\tif err != nil {\n\t\tpanic(err)\n\t}\n\tdefer res.Body.Close()\n\n\tout, err := io.ReadAll(res.Body)\n\tif err != nil {\n\t\tpanic(err)\n\t}\n\tfmt.Println(string(out))\n}\n"
+        source: "// Not in the Go SDK yet: plain HTTP request.\npackage main\n\nimport (\n\t\"fmt\"\n\t\"io\"\n\t\"net/http\"\n\t\"net/url\"\n)\n\nfunc main() {\n\treq, err := http.NewRequest(\"DELETE\", \"https://app.pipeshub.com/api/v1/service-tokens/{tokenId}\", nil)\n\tif err != nil {\n\t\tpanic(err)\n\t}\n\tquery := url.Values{}\n\tquery.Add(\"serviceAccountId\", \"<string>\")\n\treq.URL.RawQuery = query.Encode()\n\treq.Header.Set(\"Authorization\", \"Bearer <token>\")\n\n\tres, err := http.DefaultClient.Do(req)\n\tif err != nil {\n\t\tpanic(err)\n\t}\n\tdefer res.Body.Close()\n\n\tout, err := io.ReadAll(res.Body)\n\tif err != nil {\n\t\tpanic(err)\n\t}\n\tfmt.Println(string(out))\n}\n"
       x-mint:
         href: /api-reference/service-tokens/revoke-service-token
   /teams:
@@ -69329,7 +69329,7 @@ paths:
           console.log(await response.text());
       - lang: go
         label: Go
-        source: "// Not in the Go SDK yet: plain HTTP request.\npackage main\n\nimport (\n\t\"fmt\"\n\t\"io\"\n\t\"net/http\"\n\t\"net/url\"\n)\n\nfunc main() {\n\treq, err := http.NewRequest(\"GET\", \"https://app.pipeshub.com/api/v1/connectors/{connectorId}/permissions/explain\", nil)\n\tif err != nil {\n\t\tpanic(err)\n\t}\n\tquery := url.Values{}\n\tquery.Set(\"userId\", \"<string>\")\n\tquery.Set(\"recordId\", \"<string>\")\n\treq.URL.RawQuery = query.Encode()\n\treq.Header.Set(\"Authorization\", \"Bearer <token>\")\n\n\tres, err := http.DefaultClient.Do(req)\n\tif err != nil {\n\t\tpanic(err)\n\t}\n\tdefer res.Body.Close()\n\n\tout, err := io.ReadAll(res.Body)\n\tif err != nil {\n\t\tpanic(err)\n\t}\n\tfmt.Println(string(out))\n}\n"
+        source: "// Not in the Go SDK yet: plain HTTP request.\npackage main\n\nimport (\n\t\"fmt\"\n\t\"io\"\n\t\"net/http\"\n\t\"net/url\"\n)\n\nfunc main() {\n\treq, err := http.NewRequest(\"GET\", \"https://app.pipeshub.com/api/v1/connectors/{connectorId}/permissions/explain\", nil)\n\tif err != nil {\n\t\tpanic(err)\n\t}\n\tquery := url.Values{}\n\tquery.Add(\"userId\", \"<string>\")\n\tquery.Add(\"recordId\", \"<string>\")\n\treq.URL.RawQuery = query.Encode()\n\treq.Header.Set(\"Authorization\", \"Bearer <token>\")\n\n\tres, err := http.DefaultClient.Do(req)\n\tif err != nil {\n\t\tpanic(err)\n\t}\n\tdefer res.Body.Close()\n\n\tout, err := io.ReadAll(res.Body)\n\tif err != nil {\n\t\tpanic(err)\n\t}\n\tfmt.Println(string(out))\n}\n"
       x-mint:
         href: /api-reference/connector-instances/explain-connector-record-access
   /connectors/{connectorId}/permissions/status:
@@ -84332,7 +84332,7 @@ paths:
           console.log(await response.text());
       - lang: go
         label: Go
-        source: "// Not in the Go SDK yet: plain HTTP request.\npackage main\n\nimport (\n\t\"fmt\"\n\t\"io\"\n\t\"net/http\"\n\t\"net/url\"\n)\n\nfunc main() {\n\treq, err := http.NewRequest(\"GET\", \"https://app.pipeshub.com/api/v1/api-toolsets/oauth/callback\", nil)\n\tif err != nil {\n\t\tpanic(err)\n\t}\n\tquery := url.Values{}\n\tquery.Set(\"code\", \"<string>\")\n\tquery.Set(\"state\", \"<string>\")\n\treq.URL.RawQuery = query.Encode()\n\treq.Header.Set(\"Authorization\", \"Bearer <token>\")\n\n\tres, err := http.DefaultClient.Do(req)\n\tif err != nil {\n\t\tpanic(err)\n\t}\n\tdefer res.Body.Close()\n\n\tout, err := io.ReadAll(res.Body)\n\tif err != nil {\n\t\tpanic(err)\n\t}\n\tfmt.Println(string(out))\n}\n"
+        source: "// Not in the Go SDK yet: plain HTTP request.\npackage main\n\nimport (\n\t\"fmt\"\n\t\"io\"\n\t\"net/http\"\n\t\"net/url\"\n)\n\nfunc main() {\n\treq, err := http.NewRequest(\"GET\", \"https://app.pipeshub.com/api/v1/api-toolsets/oauth/callback\", nil)\n\tif err != nil {\n\t\tpanic(err)\n\t}\n\tquery := url.Values{}\n\tquery.Add(\"code\", \"<string>\")\n\tquery.Add(\"state\", \"<string>\")\n\treq.URL.RawQuery = query.Encode()\n\treq.Header.Set(\"Authorization\", \"Bearer <token>\")\n\n\tres, err := http.DefaultClient.Do(req)\n\tif err != nil {\n\t\tpanic(err)\n\t}\n\tdefer res.Body.Close()\n\n\tout, err := io.ReadAll(res.Body)\n\tif err != nil {\n\t\tpanic(err)\n\t}\n\tfmt.Println(string(out))\n}\n"
       x-mint:
         href: /api-reference/api-toolsets/handle-api-toolset-oauth-callback
   /skills:
@@ -87256,7 +87256,7 @@ paths:
           console.log(await response.text());
       - lang: go
         label: Go
-        source: "// Not in the Go SDK yet: plain HTTP request.\npackage main\n\nimport (\n\t\"fmt\"\n\t\"io\"\n\t\"net/http\"\n\t\"net/url\"\n)\n\nfunc main() {\n\treq, err := http.NewRequest(\"GET\", \"https://app.pipeshub.com/api/v1/skills/{name}/resource\", nil)\n\tif err != nil {\n\t\tpanic(err)\n\t}\n\tquery := url.Values{}\n\tquery.Set(\"path\", \"<string>\")\n\treq.URL.RawQuery = query.Encode()\n\treq.Header.Set(\"Authorization\", \"Bearer <token>\")\n\n\tres, err := http.DefaultClient.Do(req)\n\tif err != nil {\n\t\tpanic(err)\n\t}\n\tdefer res.Body.Close()\n\n\tout, err := io.ReadAll(res.Body)\n\tif err != nil {\n\t\tpanic(err)\n\t}\n\tfmt.Println(string(out))\n}\n"
+        source: "// Not in the Go SDK yet: plain HTTP request.\npackage main\n\nimport (\n\t\"fmt\"\n\t\"io\"\n\t\"net/http\"\n\t\"net/url\"\n)\n\nfunc main() {\n\treq, err := http.NewRequest(\"GET\", \"https://app.pipeshub.com/api/v1/skills/{name}/resource\", nil)\n\tif err != nil {\n\t\tpanic(err)\n\t}\n\tquery := url.Values{}\n\tquery.Add(\"path\", \"<string>\")\n\treq.URL.RawQuery = query.Encode()\n\treq.Header.Set(\"Authorization\", \"Bearer <token>\")\n\n\tres, err := http.DefaultClient.Do(req)\n\tif err != nil {\n\t\tpanic(err)\n\t}\n\tdefer res.Body.Close()\n\n\tout, err := io.ReadAll(res.Body)\n\tif err != nil {\n\t\tpanic(err)\n\t}\n\tfmt.Println(string(out))\n}\n"
       x-mint:
         href: /api-reference/skills/get-skill-resource
     put:
@@ -87510,7 +87510,7 @@ paths:
           console.log(await response.text());
       - lang: go
         label: Go
-        source: "// Not in the Go SDK yet: plain HTTP request.\npackage main\n\nimport (\n\t\"fmt\"\n\t\"io\"\n\t\"net/http\"\n\t\"net/url\"\n)\n\nfunc main() {\n\treq, err := http.NewRequest(\"DELETE\", \"https://app.pipeshub.com/api/v1/skills/{name}/resource\", nil)\n\tif err != nil {\n\t\tpanic(err)\n\t}\n\tquery := url.Values{}\n\tquery.Set(\"path\", \"<string>\")\n\treq.URL.RawQuery = query.Encode()\n\treq.Header.Set(\"Authorization\", \"Bearer <token>\")\n\n\tres, err := http.DefaultClient.Do(req)\n\tif err != nil {\n\t\tpanic(err)\n\t}\n\tdefer res.Body.Close()\n\n\tout, err := io.ReadAll(res.Body)\n\tif err != nil {\n\t\tpanic(err)\n\t}\n\tfmt.Println(string(out))\n}\n"
+        source: "// Not in the Go SDK yet: plain HTTP request.\npackage main\n\nimport (\n\t\"fmt\"\n\t\"io\"\n\t\"net/http\"\n\t\"net/url\"\n)\n\nfunc main() {\n\treq, err := http.NewRequest(\"DELETE\", \"https://app.pipeshub.com/api/v1/skills/{name}/resource\", nil)\n\tif err != nil {\n\t\tpanic(err)\n\t}\n\tquery := url.Values{}\n\tquery.Add(\"path\", \"<string>\")\n\treq.URL.RawQuery = query.Encode()\n\treq.Header.Set(\"Authorization\", \"Bearer <token>\")\n\n\tres, err := http.DefaultClient.Do(req)\n\tif err != nil {\n\t\tpanic(err)\n\t}\n\tdefer res.Body.Close()\n\n\tout, err := io.ReadAll(res.Body)\n\tif err != nil {\n\t\tpanic(err)\n\t}\n\tfmt.Println(string(out))\n}\n"
       x-mint:
         href: /api-reference/skills/remove-skill-resource
   /oauth/registry:
@@ -92243,7 +92243,7 @@ paths:
           console.log(await response.text());
       - lang: go
         label: Go
-        source: "// Not in the Go SDK yet: plain HTTP request.\npackage main\n\nimport (\n\t\"fmt\"\n\t\"io\"\n\t\"net/http\"\n\t\"net/url\"\n)\n\nfunc main() {\n\treq, err := http.NewRequest(\"GET\", \"https://app.pipeshub.com/api/v1/configurationManager/ai-models/download-progress\", nil)\n\tif err != nil {\n\t\tpanic(err)\n\t}\n\tquery := url.Values{}\n\tquery.Set(\"model\", \"BAAI/bge-m3\")\n\treq.URL.RawQuery = query.Encode()\n\treq.Header.Set(\"Authorization\", \"Bearer <token>\")\n\n\tres, err := http.DefaultClient.Do(req)\n\tif err != nil {\n\t\tpanic(err)\n\t}\n\tdefer res.Body.Close()\n\n\tout, err := io.ReadAll(res.Body)\n\tif err != nil {\n\t\tpanic(err)\n\t}\n\tfmt.Println(string(out))\n}\n"
+        source: "// Not in the Go SDK yet: plain HTTP request.\npackage main\n\nimport (\n\t\"fmt\"\n\t\"io\"\n\t\"net/http\"\n\t\"net/url\"\n)\n\nfunc main() {\n\treq, err := http.NewRequest(\"GET\", \"https://app.pipeshub.com/api/v1/configurationManager/ai-models/download-progress\", nil)\n\tif err != nil {\n\t\tpanic(err)\n\t}\n\tquery := url.Values{}\n\tquery.Add(\"model\", \"BAAI/bge-m3\")\n\treq.URL.RawQuery = query.Encode()\n\treq.Header.Set(\"Authorization\", \"Bearer <token>\")\n\n\tres, err := http.DefaultClient.Do(req)\n\tif err != nil {\n\t\tpanic(err)\n\t}\n\tdefer res.Body.Close()\n\n\tout, err := io.ReadAll(res.Body)\n\tif err != nil {\n\t\tpanic(err)\n\t}\n\tfmt.Println(string(out))\n}\n"
       x-mint:
         href: /api-reference/ai-models-providers/stream-embedding-download-progress
   /configurationManager/web-search:

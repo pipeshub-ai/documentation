@@ -194,6 +194,8 @@ try {
     console.log(error.statusCode, error.data$.error.code, error.data$.error.message);
   } else if (error instanceof errors.PipeshubError) {
     console.log(error.statusCode, error.body);
+  } else {
+    throw error; // connection failures and anything else
   }
 }
 ```
@@ -208,6 +210,8 @@ case errors.As(err, &apiErr):
 	log.Println(apiErr.Error_.Code, apiErr.Error_.Message)
 case errors.As(err, &other):
 	log.Println(other.StatusCode, other.Body)
+case err != nil:
+	log.Fatal(err) // connection failures and anything else
 }
 ```
 </CodeGroup>

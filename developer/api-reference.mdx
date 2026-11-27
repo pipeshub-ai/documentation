@@ -1,27 +1,29 @@
 ---
 title: "API reference"
-description: "Base URL, authentication, common request bodies and the reference pages for each PipesHub service API."
+description: "Base URL, authentication and errors for the PipesHub API, with a page for every endpoint and examples in cURL, Python, TypeScript and Go."
 icon: "server"
 ---
 
 New to the API? Start with the [API Quickstart](/developer/api-quickstart).
 
+The sidebar lists every endpoint of the latest PipesHub release, grouped by service. Each endpoint page shows its request and response with examples in cURL, Python, TypeScript and Go. When the [SDKs](/developer/sdks) cover the endpoint, the examples use the SDKs and the endpoint has an **SDK** badge in the sidebar; when they don't, the examples call the HTTP API directly.
+
 ## Using the API
 
 - **Base URL:** your instance URL followed by `/api/v1`, for example `https://your-pipeshub-instance.com/api/v1`.
 - **Authentication:** send `Authorization: Bearer <token>` with a [personal access token](/developer/personal-access-tokens) or an [OAuth 2.0](/developer/oauth2) access token.
-- **Full reference:** every instance serves an interactive API reference at `/api/v1/docs`. Use it for every endpoint, field and response. The OpenAPI spec is the [OpenAPI file](https://github.com/pipeshub-ai/pipeshub-ai/blob/main/backend/nodejs/apps/src/modules/api-docs/pipeshub-openapi.yaml) on GitHub.
+- **Your instance's reference:** every instance also serves its own API reference at `/api/v1/docs`, which matches the version it runs. Check it if your instance is older than the latest release. The OpenAPI spec is the [OpenAPI file](https://github.com/pipeshub-ai/pipeshub-ai/blob/main/backend/nodejs/apps/src/modules/api-docs/pipeshub-openapi.yaml) on GitHub.
 - **Errors:** an error response has an `error` object with `code`, `message` and `requestId`. A missing or invalid token returns `401`; a token without the required scope returns `403`.
 
 ## Common request bodies
 
-These examples cover the first calls most integrations make. Field names come from the OpenAPI spec; see it for the optional fields.
+These examples cover the first calls most integrations make. Each one links to the endpoint's page for the optional fields.
 
 <AccordionGroup>
 
 <Accordion title="Create a knowledge base: POST /knowledgeBase">
 
-Needs `kb:write`. `kbName` is required.
+Needs `kb:write`. `kbName` is required. [Endpoint reference](/api-reference/knowledge-base/create-knowledge-base).
 
 ```bash
 curl -s -X POST "$PIPESHUB_URL/api/v1/knowledgeBase" \
@@ -34,7 +36,7 @@ curl -s -X POST "$PIPESHUB_URL/api/v1/knowledgeBase" \
 
 <Accordion title="Create a folder: POST /knowledgeBase/{kbId}/folder">
 
-Needs `kb:write`. `folderName` is required.
+Needs `kb:write`. `folderName` is required. [Endpoint reference](/api-reference/knowledge-base/create-folder).
 
 ```bash
 curl -s -X POST "$PIPESHUB_URL/api/v1/knowledgeBase/KB_ID/folder" \
@@ -47,7 +49,7 @@ curl -s -X POST "$PIPESHUB_URL/api/v1/knowledgeBase/KB_ID/folder" \
 
 <Accordion title="Upload files: POST /knowledgeBase/{kbId}/upload">
 
-Needs `kb:upload`. A `multipart/form-data` request. Send each file as a `files` part (up to 1000 per request). Records are named after their files.
+Needs `kb:upload`. A `multipart/form-data` request. [Endpoint reference](/api-reference/knowledge-base/upload-records). Send each file as a `files` part (up to 1000 per request). Records are named after their files.
 
 The response streams progress as server-sent events: one `file:succeeded` or `file:failed` event per file with its `recordId`, then a `done` event with a `summary` of `total`, `succeeded` and `failed`.
 
@@ -62,7 +64,7 @@ curl -s -X POST "$PIPESHUB_URL/api/v1/knowledgeBase/KB_ID/upload" \
 
 <Accordion title="Start a conversation: POST /conversations/create">
 
-Needs `conversation:chat`. `query` is required. Use `POST /conversations/stream` with a `chatMode` to stream the answer instead; see the [API Quickstart](/developer/api-quickstart).
+Needs `conversation:chat`. `query` is required. [Endpoint reference](/api-reference/conversations/create-conversation). Use `POST /conversations/stream` with a `chatMode` to stream the answer instead; see the [API Quickstart](/developer/api-quickstart).
 
 ```bash
 curl -s -X POST "$PIPESHUB_URL/api/v1/conversations/create" \
@@ -75,7 +77,7 @@ curl -s -X POST "$PIPESHUB_URL/api/v1/conversations/create" \
 
 <Accordion title="Create an agent: POST /agents/create">
 
-Needs `agent:write`. `name` is required.
+Needs `agent:write`. `name` is required. [Endpoint reference](/api-reference/agents/create-agent).
 
 The default `MCP_SCOPES` does not include `agent:write`, so a personal access token cannot hold it and this call returns `403`. Add `agent:write` to `MCP_SCOPES` on the backend before you create the token. See [Personal Access Tokens](/developer/personal-access-tokens).
 
@@ -94,60 +96,98 @@ curl -s -X POST "$PIPESHUB_URL/api/v1/agents/create" \
 
 </AccordionGroup>
 
-## Service APIs
+## Services
 
-Each page below covers the endpoints of one PipesHub service.
+The sidebar has a group for each service. Each section below links to the first endpoint of each part of the service.
+
+{/* GENERATED: services. build_sdk_docs.py rewrites this part; edit the script, not the page. */}
 
 ### Authentication
 
-<Card title="Authentication API" icon="lock" href="/system-overview/authentication">
-  Sign in, manage sessions and tokens, and configure sign-in methods.
-</Card>
+User authentication, authorization, and session management.
 
-### Configuration manager
+[User Account](/api-reference/user-account/init-auth) · [Organization Auth Config](/api-reference/organization-auth-config/get-auth-methods) · [Personal Access Tokens](/api-reference/personal-access-tokens/list-personal-access-tokens) (18 endpoints, 14 in the [SDKs](/developer/sdks#what-the-sdks-cover))
 
-<Card title="Configuration Manager API" icon="gear" href="/system-overview/configuration-manager">
-  Read and update platform settings, such as storage, databases, AI models and sign-in providers.
-</Card>
+### OAuth App Management
 
-### Connector manager
+OAuth 2.0 authorization server, app registration, and OpenID Connect.
 
-<Card title="Connector Manager API" icon="key" href="/system-overview/connector-manager">
-  Configure connectors and manage their OAuth sign-in and tokens.
-</Card>
+[OAuth Provider](/api-reference/oauth-provider/oauth-authorize) · [OAuth Apps](/api-reference/oauth-apps/list-oauth-apps) · [OpenID Connect](/api-reference/open-id-connect/oauth-user-info) (40 endpoints, 15 in the [SDKs](/developer/sdks#what-the-sdks-cover))
 
-### Crawling manager
+### User Management
 
-<Card title="Crawling Manager API" icon="robot" href="/system-overview/crawling-manager">
-  Schedule connector sync jobs, and pause, resume, remove and check them.
-</Card>
+Users, service accounts, teams, groups, organizations, and notifications.
 
-### Enterprise search
+[Users](/api-reference/users/get-users-health) · [Service Accounts](/api-reference/service-accounts/list-service-accounts) · [Service Tokens](/api-reference/service-tokens/list-service-tokens) · [Teams](/api-reference/teams/create-team) · [Organizations](/api-reference/organizations/check-org-exists) · [User Groups](/api-reference/user-groups/get-all-user-groups) · [Notifications](/api-reference/notifications/list-in-app-notifications) (69 endpoints, 1 in the [SDKs](/developer/sdks#what-the-sdks-cover))
 
-<Card title="Enterprise Search API" icon="magnifying-glass" href="/system-overview/enterprise-search">
-  Run conversations and searches, manage agents, and share, archive and rate chats.
-</Card>
+### Knowledge Base
 
-### Knowledge base
+Knowledge bases, folders, records, and permissions.
 
-<Card title="Knowledge Base API" icon="database" href="/system-overview/knowledge-base">
-  Manage knowledge bases, folders and records, upload files and reindex them.
-</Card>
+[Knowledge Base](/api-reference/knowledge-base/list-knowledge-bases) · [Permissions](/api-reference/permissions/list-kb-permissions) · [Connector](/api-reference/connector/get-record-content) (33 endpoints, 24 in the [SDKs](/developer/sdks#what-the-sdks-cover))
 
-### Mail service
+### Artifacts
 
-<Card title="Mail Service API" icon="envelope" href="/system-overview/mail-service">
-  Send email through your SMTP settings and manage templates.
-</Card>
+Generated artifacts, with preview, download, and versions.
 
-### Storage service
+[Artifacts](/api-reference/artifacts/list-artifacts) (7 endpoints, 0 in the [SDKs](/developer/sdks#what-the-sdks-cover))
 
-<Card title="Storage Service API" icon="hard-drive" href="/system-overview/storage">
-  Upload, download and version files in local storage, Amazon S3 or Azure Blob Storage.
-</Card>
+### Enterprise Search
 
-### User management
+Conversational AI, semantic search, and code graphs.
 
-<Card title="User Management API" icon="users" href="/system-overview/user-management">
-  Manage users, organizations, user groups and teams, and invite people.
-</Card>
+[Conversations](/api-reference/conversations/create-conversation) · [Projects](/api-reference/projects/list-projects) · [Code Graph](/api-reference/code-graph/list-code-graph-repos) · [Semantic Search](/api-reference/semantic-search/retrieve) · [Conversational Speech](/api-reference/conversational-speech/transcribe-chat-audio) (71 endpoints, 26 in the [SDKs](/developer/sdks#what-the-sdks-cover))
+
+### Agents
+
+Custom AI agents, agent templates, and skills.
+
+[Agents](/api-reference/agents/list-agents) · [Skills](/api-reference/skills/list-skills) (55 endpoints, 23 in the [SDKs](/developer/sdks#what-the-sdks-cover))
+
+### Connector Manager
+
+Third-party integrations, OAuth flows, and data synchronization.
+
+[Connector Registry](/api-reference/connector-registry/get-connector-registry) · [Connector Instances](/api-reference/connector-instances/list-connector-instances) · [Connector Configuration](/api-reference/connector-configuration/get-connector-config) · [Connector Control](/api-reference/connector-control/toggle-connector) · [Connector OAuth](/api-reference/connector-oauth/get-oauth-authorization-url) · [Connector Filters](/api-reference/connector-filters/get-connector-filters) · [OAuth Configuration](/api-reference/oauth-configuration/list-toolset-oauth-configs) (58 endpoints, 28 in the [SDKs](/developer/sdks#what-the-sdks-cover))
+
+### Toolsets
+
+Toolsets that give agents actions in other apps or your own REST APIs.
+
+[Toolset Registry](/api-reference/toolset-registry/list-toolset-registry) · [Toolset Instances](/api-reference/toolset-instances/create-toolset) · [Toolset Configuration](/api-reference/toolset-configuration/get-toolset-config) · [Toolset OAuth](/api-reference/toolset-oauth/get-toolset-oauth-url) · [API Toolsets](/api-reference/api-toolsets/validate-api-toolset-spec) (47 endpoints, 0 in the [SDKs](/developer/sdks#what-the-sdks-cover))
+
+### MCP Servers
+
+External MCP servers that agents and users connect to.
+
+[MCP Server Catalog](/api-reference/mcp-server-catalog/list-mcp-catalog) · [MCP Server Instances](/api-reference/mcp-server-instances/get-my-mcp-servers) · [MCP Server Credentials](/api-reference/mcp-server-credentials/authenticate-mcp-instance) · [MCP Server OAuth](/api-reference/mcp-server-oauth/get-mcp-oauth-authorization-url) · [MCP Servers for Agents](/api-reference/mcp-servers-for-agents/get-agent-mcp-servers) (31 endpoints, 0 in the [SDKs](/developer/sdks#what-the-sdks-cover))
+
+### MCP
+
+The PipesHub MCP endpoint at /mcp.
+
+[MCP](/api-reference/mcp/get-mcp-access-policy) (5 endpoints, 0 in the [SDKs](/developer/sdks#what-the-sdks-cover))
+
+### Configuration Manager
+
+System-wide configuration management.
+
+[Storage Configuration](/api-reference/storage-configuration/get-storage-config) · [SMTP Configuration](/api-reference/smtp-configuration/get-smtp-config) · [Authentication Configuration](/api-reference/authentication-configuration/get-microsoft-auth-config) · [Platform Settings](/api-reference/platform-settings/get-platform-settings) · [AI Models Providers](/api-reference/ai-models-providers/list-configured-models-open-ai) · [Configuration Manager](/api-reference/configuration-manager/get-slack-bot-configs) · [Public URLs](/api-reference/public-urls/get-frontend-public-url) · [Web Search](/api-reference/web-search/get-web-search-providers) · [Metrics Collection](/api-reference/metrics-collection/get-metrics-collection) (96 endpoints, 2 in the [SDKs](/developer/sdks#what-the-sdks-cover))
+
+### Crawling Manager
+
+Data crawling job scheduling and monitoring.
+
+[Crawling Jobs](/api-reference/crawling-jobs/get-crawling-job-status) (8 endpoints, 0 in the [SDKs](/developer/sdks#what-the-sdks-cover))
+
+### Health
+
+Health of the deployment, and the build that it runs.
+
+[Health](/api-reference/health/get-health) (3 endpoints, 0 in the [SDKs](/developer/sdks#what-the-sdks-cover))
+
+### Other
+
+[Local Repositories](/api-reference/local-repositories/list-local-repos) (7 endpoints, 0 in the [SDKs](/developer/sdks#what-the-sdks-cover))
+
+{/* END GENERATED: services */}

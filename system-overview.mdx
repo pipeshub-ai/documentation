@@ -73,11 +73,7 @@ The API is a Node.js process built with Express. The web app, REST and SDK clien
 
 On a default Docker install, this is the only Node process. It listens on port 3000 and serves the built Next.js files, `/api`, and `/mcp`. If you run from source during development, the Next.js dev server is typically on port 3001 and Express is on port 3000. Helm exposes this combined Node service on port 3001.
 
-If you need the HTTP reference for a specific area:
-
-- [User management](/system-overview/user-management)
-- [Knowledge base](/system-overview/knowledge-base)
-- [Enterprise search](/system-overview/enterprise-search)
+Every endpoint the API serves is in the [API reference](/developer/api-reference), grouped by service.
 
 ## How work is done
 
@@ -87,13 +83,13 @@ Auth, Storage, Mail, Config, Notifications, Crawling, and the connector manager 
 
 | Module | What it does |
 | --- | --- |
-| [Auth](/system-overview/authentication) | Signs people in with password, OTP, Google, or Microsoft. |
-| [Storage](/system-overview/storage) | Stores file bytes on disk, S3, or Azure Blob. |
-| [Config](/system-overview/configuration-manager) | Holds encrypted settings that the other services read. |
-| [Mail](/system-overview/mail-service) | Sends outbound email such as invites and one-time codes. |
+| [Auth](/developer/api-reference#authentication) | Signs people in with password, OTP, Google, or Microsoft. |
+| Storage | Stores file bytes on disk, S3, or Azure Blob. |
+| [Config](/developer/api-reference#configuration-manager) | Holds encrypted settings that the other services read. |
+| [Mail](/smtp) | Sends outbound email such as invites and one-time codes. |
 | Notifications | Sends in-app and email alerts. |
-| [Crawling](/system-overview/crawling-manager) | Schedules when connectors run. |
-| [Connector manager](/system-overview/connector-manager) | Stores encrypted connector configuration and forwards the browser's OAuth redirects (`/oauth/authorize` and `/oauth/callback`) to the Python connectors service. |
+| [Crawling](/developer/api-reference#crawling-manager) | Schedules when connectors run. |
+| [Connector manager](/developer/api-reference#connector-manager) | Stores encrypted connector configuration and forwards the browser's OAuth redirects (`/oauth/authorize` and `/oauth/callback`) to the Python connectors service. |
 
 ### Event bus
 
@@ -129,7 +125,7 @@ Each box along the bottom of the diagram holds a different kind of state. The ta
 | **Graph** | Records, people, and the relationships between them (the knowledge graph). | Neo4j (`DATA_STORE=neo4j`). ArangoDB is the other option. The same features work on either; services go through a graph abstraction. |
 | **Vectors** | Embedded chunks used for similarity search. | Qdrant (`VECTOR_DB_TYPE=qdrant`). |
 | **Documents** | Sessions, file metadata, and other application state. | MongoDB. |
-| **Files** | The bytes of uploaded files and files pulled in by connectors. | Local disk, S3, or Azure Blob. See [storage](/system-overview/storage). |
+| **Files** | The bytes of uploaded files and files pulled in by connectors. | Local disk, S3, or Azure Blob. See [files](/system-overview/external-services#files). |
 | **Redis** | Cache, the default encrypted configuration store, and Redis Streams when Redis is the event bus. | Always running. |
 | **etcd** | An alternative store for encrypted configuration. | Started when you set `KV_STORE_TYPE=etcd` (Compose profile `kv-etcd`). |
 

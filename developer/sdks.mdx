@@ -1,132 +1,261 @@
 ---
 title: "SDKs"
-description: "Install the Python, TypeScript and Go SDKs, sign in with a personal access token, and see which parts of the API each SDK covers"
-icon: "cube"
+description: "Official PipesHub SDKs for Python, TypeScript and Go: install one, connect to your instance, search your company's knowledge and ask questions from your code."
+icon: "cubes"
 ---
 
-PipesHub has SDKs for Python, TypeScript and Go. They are generated from the PipesHub OpenAPI spec and cover the parts of the API most apps need: knowledge bases, chat, search, agents and connectors. For everything else, call the REST API directly. See [API Reference](/developer/api-reference).
+PipesHub has official SDKs for **Python**, **TypeScript** and **Go**. Each one wraps the [PipesHub API](/developer/api-reference) with typed requests and responses, so your editor completes method names and fields and catches mistakes before you run the code. The SDKs also handle authentication, retries, streaming responses and file uploads for you.
+
+The three SDKs are generated from the same API specification as the [API reference](/developer/api-reference), share version numbers, and offer the same methods under each language's naming style.
+
+<CardGroup cols={3}>
+  <Card title="Python" icon="python" href="https://pypi.org/project/pipeshub-sdk/">
+    `pipeshub-sdk` on PyPI. Python 3.10 or later, with sync and async clients.
+  </Card>
+  <Card title="TypeScript" icon="js" href="https://www.npmjs.com/package/@pipeshub-ai/sdk">
+    `@pipeshub-ai/sdk` on npm. Works in Node.js, Bun, Deno and the browser.
+  </Card>
+  <Card title="Go" icon="golang" href="https://pkg.go.dev/github.com/pipeshub-ai/pipeshub-sdk-go/v2">
+    `github.com/pipeshub-ai/pipeshub-sdk-go/v2`, a Go module.
+  </Card>
+</CardGroup>
 
 ## Install
 
-<Tabs>
-  <Tab title="Python">
-    ```bash
-    pip install pipeshub-sdk
-    ```
-    Needs Python 3.10 or later.
-  </Tab>
-  <Tab title="TypeScript">
-    ```bash
-    npm add @pipeshub-ai/sdk
-    ```
-  </Tab>
-  <Tab title="Go">
-    ```bash
-    go get github.com/pipeshub-ai/pipeshub-sdk-go/v2@latest
-    ```
-    From 2.0.0 the Go module path ends in `/v2`. See [Versions](#versions).
-  </Tab>
-</Tabs>
+<CodeGroup>
+```bash Python
+pip install pipeshub-sdk
+```
 
-## Connect with a personal access token
+```bash TypeScript
+npm add @pipeshub-ai/sdk
+```
 
-Create a [personal access token](/developer/personal-access-tokens) and pass it as the bearer token. Set the server URL to your instance URL followed by `/api/v1`.
+```bash Go
+go get github.com/pipeshub-ai/pipeshub-sdk-go/v2
+```
+</CodeGroup>
 
-<Tabs>
-  <Tab title="Python">
-    ```python
-    import os
-    from pipeshub_sdk import Pipeshub, models
+## Connect to PipesHub
 
-    with Pipeshub(
-        server_url="https://your-pipeshub-instance.com/api/v1",
-        security=models.Security(bearer_auth=os.environ["PIPESHUB_BEARER_AUTH"]),
-    ) as pipeshub:
-        res = pipeshub.knowledge_base.list_knowledge_bases(page=1, limit=20)
-        print(res)
-    ```
-  </Tab>
-  <Tab title="TypeScript">
-    ```typescript
-    import { Pipeshub } from "@pipeshub-ai/sdk";
+Every request needs a token. Create a [personal access token](/developer/personal-access-tokens) in PipesHub, or get an access token from an [OAuth 2.0 app](/developer/oauth2), and put it in an environment variable:
 
-    const pipeshub = new Pipeshub({
-      serverURL: "https://your-pipeshub-instance.com/api/v1",
-      security: { bearerAuth: process.env.PIPESHUB_BEARER_AUTH },
-    });
+```bash
+export PIPESHUB_BEARER_AUTH="<your token>"
+```
 
-    const result = await pipeshub.knowledgeBase.listKnowledgeBases({});
-    console.log(result);
-    ```
-  </Tab>
-  <Tab title="Go">
-    ```go
-    package main
+Then create a client. It connects to PipesHub Cloud (`https://app.pipeshub.com/api/v1`) by default. For a self-hosted instance, pass your instance's URL followed by `/api/v1`:
 
-    import (
-        "context"
-        "log"
-        "os"
+<CodeGroup>
+```python Python
+import os
+from pipeshub_sdk import Pipeshub, models
 
-        pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go/v2"
-        "github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/components"
-        "github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/operations"
-    )
+pipeshub = Pipeshub(
+    server_url="https://pipeshub.example.com/api/v1",  # leave out for PipesHub Cloud
+    security=models.Security(bearer_auth=os.environ["PIPESHUB_BEARER_AUTH"]),
+)
+```
 
-    func main() {
-        s := pipeshub.New(
-            pipeshub.WithServerURL("https://your-pipeshub-instance.com/api/v1"),
-            pipeshub.WithSecurity(components.Security{
-                BearerAuth: pipeshub.Pointer(os.Getenv("PIPESHUB_BEARER_AUTH")),
-            }),
-        )
+```typescript TypeScript
+import { Pipeshub } from "@pipeshub-ai/sdk";
 
-        res, err := s.KnowledgeBase.ListKnowledgeBases(context.Background(), operations.ListKnowledgeBasesRequest{})
-        if err != nil {
-            log.Fatal(err)
-        }
-        log.Println(res)
-    }
-    ```
-  </Tab>
-</Tabs>
+const pipeshub = new Pipeshub({
+  serverURL: "https://pipeshub.example.com/api/v1", // leave out for PipesHub Cloud
+  security: { bearerAuth: process.env["PIPESHUB_BEARER_AUTH"] ?? "" },
+});
+```
 
-<Note>
-  If you leave out `security`, the Python SDK reads the token from the `PIPESHUB_BEARER_AUTH` environment variable. OAuth 2.0 access tokens work the same way. See [OAuth 2.0](/developer/oauth2).
-</Note>
+```go Go
+import (
+	"os"
 
-## What the SDKs cover
+	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go/v2"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/components"
+)
 
-Each SDK exposes one namespace per area. The names below are the TypeScript names; Python uses `snake_case` (`knowledge_base`) and Go uses `PascalCase` (`KnowledgeBase`).
+s := pipeshub.New(
+	pipeshub.WithServerURL("https://pipeshub.example.com/api/v1"), // leave out for PipesHub Cloud
+	pipeshub.WithSecurity(components.Security{
+		BearerAuth: pipeshub.Pointer(os.Getenv("PIPESHUB_BEARER_AUTH")),
+	}),
+)
+```
+</CodeGroup>
 
-| Area | Namespaces |
-| --- | --- |
-| Knowledge bases and records | `knowledgeBase`, `knowledgeHub` |
-| Chat | `conversations` |
-| Search and retrieval | `semanticSearch`, `webSearch` |
-| Agents | `agents` |
-| Connectors | `connector`, `connectorRegistry`, `connectorInstances`, `connectorConfiguration`, `connectorControl`, `connectorFilters`, `connectorOAuth` |
-| AI models | `aiModelsProviders` |
-| Users and organizations | `userAccount`, `organizations`, `organizationAuthConfig` |
-| Tokens and OAuth | `personalAccessTokens`, `oAuthApps`, `oAuthProvider`, `oAuthConfiguration`, `openIDConnect` |
+The examples below use this client. The token decides what the calls can see: results only include content the token's user has access to, and each method needs the scope listed on its endpoint page.
 
-The SDKs do not cover the rest of the API, for example skills, actions (`/api/v1/toolsets`; the API still calls them toolsets), MCP servers, projects, artifacts, notifications, service accounts, user and group administration, and the configuration manager. Call those endpoints over HTTP with the same token. Every instance serves its full reference at `https://<your-instance>/api/v1/docs`.
+## Basic usage
 
-The Python SDK also ships retrievers for LangChain and LlamaIndex (`pip install "pipeshub-sdk[langchain]"` or `"pipeshub-sdk[llamaindex]"`).
+### Search your company's knowledge
+
+`retrieve` returns the passages that best match a query, each with its record and a citation link. It is the call most RAG apps and agents start with. See [Retrieval API](/developer/retrieval-api) for filters and how results are ranked.
+
+<CodeGroup>
+```python Python
+res = pipeshub.semantic_search.retrieve(query="How do we roll back a canary deploy?", limit=5)
+
+for chunk in res.chunks:
+    print(chunk.record.name, chunk.citation.url)
+    print(chunk.text)
+```
+
+```typescript TypeScript
+const { chunks } = await pipeshub.semanticSearch.retrieve({
+  query: "How do we roll back a canary deploy?",
+  limit: 5,
+});
+
+for (const chunk of chunks) {
+  console.log(chunk.record.name, chunk.citation.url);
+  console.log(chunk.text);
+}
+```
+
+```go Go
+res, err := s.SemanticSearch.Retrieve(ctx, components.RetrieveRequest{
+	Query: "How do we roll back a canary deploy?",
+	Limit: pipeshub.Int64(5),
+})
+if err != nil {
+	log.Fatal(err)
+}
+
+for _, chunk := range res.RetrieveResponse.Chunks {
+	if chunk.Citation.URL != nil {
+		log.Println("Source:", *chunk.Citation.URL)
+	}
+	log.Println(chunk.Text)
+}
+```
+</CodeGroup>
+
+### Ask a question
+
+`createConversation` starts a chat, waits for PipesHub to answer from your company's knowledge, and returns the conversation. The last message is the answer, and its `citations` list the sources.
+
+<CodeGroup>
+```python Python
+res = pipeshub.conversations.create_conversation(query="What is our on-call rotation?")
+
+messages = res.result.conversation.messages or []
+print(messages[-1].content)
+```
+
+```typescript TypeScript
+const { result } = await pipeshub.conversations.createConversation({
+  query: "What is our on-call rotation?",
+});
+
+const answer = result.conversation.messages?.at(-1);
+console.log(answer?.content);
+```
+
+```go Go
+res, err := s.Conversations.CreateConversation(ctx, components.CreateConversationRequest{
+	Query: "What is our on-call rotation?",
+})
+if err != nil {
+	log.Fatal(err)
+}
+
+messages := res.CreateConversationResponse.Conversation.Messages
+if answer := messages[len(messages)-1]; answer.Content != nil {
+	log.Println(*answer.Content)
+}
+```
+</CodeGroup>
+
+To show the answer while it is being written, use `streamChat` instead. Streaming methods return the server-sent events as they arrive: loop over them with `for` in Python, `for await` in TypeScript, and `Next()` and `Value()` in Go.
+
+### Handle errors
+
+A failed request raises an error that carries the HTTP status and the API's error body. The body has a machine-readable `code`, a `message` and a `requestId` to quote in a bug report. See [Rate limits and API errors](/additional-resources/rate-limits-and-errors) for what each status means.
+
+<CodeGroup>
+```python Python
+from pipeshub_sdk import errors
+
+try:
+    res = pipeshub.semantic_search.retrieve(query="quarterly revenue")
+except errors.ErrorResponse as e:
+    print(e.status_code, e.data.error.code, e.data.error.message)
+except errors.PipeshubError as e:
+    print(e.status_code, e.body)
+```
+
+```typescript TypeScript
+import * as errors from "@pipeshub-ai/sdk/models/errors";
+
+try {
+  await pipeshub.semanticSearch.retrieve({ query: "quarterly revenue" });
+} catch (error) {
+  if (error instanceof errors.ErrorResponse) {
+    console.log(error.statusCode, error.data$.error.code, error.data$.error.message);
+  } else if (error instanceof errors.PipeshubError) {
+    console.log(error.statusCode, error.body);
+  }
+}
+```
+
+```go Go
+_, err := s.SemanticSearch.Retrieve(ctx, components.RetrieveRequest{Query: "quarterly revenue"})
+
+var apiErr *apierrors.ErrorResponse
+var other *apierrors.APIError
+switch {
+case errors.As(err, &apiErr):
+	log.Println(apiErr.Error_.Code, apiErr.Error_.Message)
+case errors.As(err, &other):
+	log.Println(other.StatusCode, other.Body)
+}
+```
+</CodeGroup>
+
+The SDKs do not retry failed calls unless you ask them to. Pass a retry configuration (backoff with a maximum elapsed time) to the client to retry every call, or to a single call. Retries apply to `429`, `500`, `502`, `503` and `504` responses. See the SDK's README for the options.
+
+### Use with AI frameworks
+
+The SDKs include ready-made integrations that feed PipesHub search results to a model:
+
+- **Python:** retrievers for LangChain and LlamaIndex. Install them with `pip install "pipeshub-sdk[langchain]"` or `pip install "pipeshub-sdk[llamaindex]"`.
+- **TypeScript:** `pipeshubRetrieveTool` from `@pipeshub-ai/sdk/integrations/ai-sdk`, a search tool for the [Vercel AI SDK](https://ai-sdk.dev) 5 and later.
+
+## Every method: the API reference
+
+The [API reference](/developer/api-reference) is the detailed guide for each SDK method. Each SDK method calls one API endpoint, and that endpoint's page shows the call in **Python**, **TypeScript** and **Go** next to cURL, with every parameter, the response fields, the errors it can return and the scope your token needs.
+
+<Card title="Open the API reference" icon="code" href="/developer/api-reference" horizontal>
+  Find an endpoint in the sidebar or with search, then pick your SDK in the code example.
+</Card>
+
+### What the SDKs cover
+
+Every endpoint page in the API reference has a Python, TypeScript and Go example next to cURL. Endpoints the SDKs cover have an **SDK** badge in the sidebar, and their examples use the SDKs. For the other endpoints, the examples call the HTTP API directly with the same token, and their first line says the SDK doesn't cover the endpoint yet.
 
 ## Versions
 
-| SDK | Package | Latest release |
-| --- | --- | --- |
-| Python | [`pipeshub-sdk`](https://pypi.org/project/pipeshub-sdk/) | 2.0.1 |
-| TypeScript | [`@pipeshub-ai/sdk`](https://www.npmjs.com/package/@pipeshub-ai/sdk) | 2.0.1 |
-| Go | `github.com/pipeshub-ai/pipeshub-sdk-go/v2` | v2.0.1 |
+The three SDKs are released together with the same version number. These docs describe the latest release. The changes in each release are on the releases page of each SDK: [Python](https://github.com/pipeshub-ai/pipeshub-sdk-python/releases), [TypeScript](https://github.com/pipeshub-ai/pipeshub-sdk-typescript/releases), [Go](https://github.com/pipeshub-ai/pipeshub-sdk-go/releases).
 
-What changed from 1.7.0 to 2.0.0:
-
-- **Retrieval.** `semanticSearch.retrieve` (`POST /api/v1/retrieve`, see [Retrieval API](/developer/retrieval-api)) was added.
+<Accordion title="Upgrading from 1.x to 2.x">
+- **Retrieval.** `semanticSearch.retrieve` was added.
 - **Connectors.** The `connectorRegistry`, `connectorInstances`, `connectorConfiguration`, `connectorControl`, `connectorFilters`, `connectorOAuth` and `oAuthConfiguration` namespaces were added.
 - **Projects.** The `projects` namespace was removed. Check your code for it before you upgrade.
 - **Go module path.** The Go module moved to `github.com/pipeshub-ai/pipeshub-sdk-go/v2`. Update your imports.
+</Accordion>
 
-Source code: [Python](https://github.com/pipeshub-ai/pipeshub-sdk-python), [TypeScript](https://github.com/pipeshub-ai/pipeshub-sdk-typescript), [Go](https://github.com/pipeshub-ai/pipeshub-sdk-go).
+## Source code
+
+Each SDK's README on GitHub covers the rest of its options, such as async clients, custom HTTP clients, timeouts and debug logging.
+
+<CardGroup cols={3}>
+  <Card title="Python SDK" icon="github" href="https://github.com/pipeshub-ai/pipeshub-sdk-python">
+    pipeshub-ai/pipeshub-sdk-python
+  </Card>
+  <Card title="TypeScript SDK" icon="github" href="https://github.com/pipeshub-ai/pipeshub-sdk-typescript">
+    pipeshub-ai/pipeshub-sdk-typescript
+  </Card>
+  <Card title="Go SDK" icon="github" href="https://github.com/pipeshub-ai/pipeshub-sdk-go">
+    pipeshub-ai/pipeshub-sdk-go
+  </Card>
+</CardGroup>

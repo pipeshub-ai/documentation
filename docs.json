@@ -41,36 +41,12 @@
         "group": "System Overview",
         "pages": [
           "system-overview",
-          {
-            "group": "PipesHub Services",
-            "pages": [
-              "system-overview/authentication",
-              "system-overview/configuration-manager",
-              "system-overview/connector-manager",
-              "system-overview/crawling-manager",
-              "system-overview/enterprise-search",
-              "system-overview/knowledge-base",
-              "system-overview/mail-service",
-              "system-overview/storage",
-              "system-overview/user-management"
-            ]
-          },
-          {
-            "group": "External Services",
-            "pages": [
-              "system-overview/external-services"
-            ]
-          },
-          {
-            "group": "Internal Services",
-            "pages": [
-              "system-overview/internal-services"
-            ]
-          }
+          "system-overview/external-services",
+          "system-overview/internal-services"
         ]
       },
       {
-        "group": "Authentication",
+        "group": "Sign-in methods",
         "pages": [
           "auth",
           {
@@ -385,12 +361,911 @@
         "group": "Developer",
         "pages": [
           "developer/api-quickstart",
+          "developer/sdks",
           "developer/oauth2",
           "developer/personal-access-tokens",
           "developer/retrieval-api",
-          "developer/sdks",
-          "developer/api-reference",
           "developer/getting-started"
+        ]
+      },
+      {
+        "group": "API reference",
+        "openapi": "api-reference/openapi.yaml",
+        "pages": [
+          "developer/api-reference",
+          {
+            "group": "Authentication",
+            "icon": "lock",
+            "pages": [
+              {
+                "group": "User Account",
+                "pages": [
+                  "POST /userAccount/initAuth",
+                  "POST /userAccount/authenticate",
+                  "POST /userAccount/login/otp/generate",
+                  "POST /userAccount/password/forgot",
+                  "POST /userAccount/logout/manual",
+                  "GET /userAccount/password/status",
+                  "POST /userAccount/password/setup/email",
+                  "POST /userAccount/password/reset"
+                ]
+              },
+              {
+                "group": "Organization Auth Config",
+                "pages": [
+                  "GET /orgAuthConfig/authMethods",
+                  "GET /orgAuthConfig/signInRemoval",
+                  "POST /orgAuthConfig/updateAuthMethod",
+                  "POST /orgAuthConfig"
+                ]
+              },
+              {
+                "group": "Personal Access Tokens",
+                "pages": [
+                  "GET /personal-access-tokens",
+                  "POST /personal-access-tokens",
+                  "GET /personal-access-tokens/scopes",
+                  "DELETE /personal-access-tokens/{tokenId}",
+                  "GET /personal-access-tokens/admin",
+                  "DELETE /personal-access-tokens/admin/{tokenId}"
+                ]
+              }
+            ]
+          },
+          {
+            "group": "OAuth App Management",
+            "icon": "key",
+            "pages": [
+              {
+                "group": "OAuth Provider",
+                "pages": [
+                  "GET /oauth2/authorize",
+                  "POST /oauth2/authorize",
+                  "GET /agent-activity",
+                  "GET /service-account-delegations/capability",
+                  "GET /service-account-delegations",
+                  "POST /service-account-delegations",
+                  "GET /service-account-delegations/events",
+                  "DELETE /service-account-delegations/{subjectUserId}",
+                  "POST /oauth2/token",
+                  "POST /oauth2/revoke",
+                  "POST /oauth2/introspect",
+                  "POST /oauth2/register",
+                  "POST /oauth2/device_authorization",
+                  "POST /oauth2/device/verify",
+                  "POST /oauth2/device/consent",
+                  "POST /agent/identity",
+                  "POST /agent/identity/claim",
+                  "POST /agent/identity/claim/verify",
+                  "POST /agent/identity/claim/complete",
+                  "GET /agent/registrations",
+                  "DELETE /agent/registrations/{id}"
+                ]
+              },
+              {
+                "group": "OAuth Apps",
+                "pages": [
+                  "GET /oauth-clients",
+                  "POST /oauth-clients",
+                  "GET /oauth-clients/scopes",
+                  "GET /oauth-clients/{appId}",
+                  "PUT /oauth-clients/{appId}",
+                  "DELETE /oauth-clients/{appId}",
+                  "POST /oauth-clients/{appId}/regenerate-secret",
+                  "POST /oauth-clients/{appId}/suspend",
+                  "POST /oauth-clients/{appId}/activate",
+                  "GET /oauth-clients/{appId}/tokens",
+                  "POST /oauth-clients/{appId}/revoke-all-tokens",
+                  "PUT /oauth-clients/{appId}/token-identity"
+                ]
+              },
+              {
+                "group": "OpenID Connect",
+                "pages": [
+                  "GET /oauth2/userinfo",
+                  "GET /.well-known/openid-configuration",
+                  "GET /.well-known/oauth-authorization-server",
+                  "GET /.well-known/jwks.json",
+                  "GET /.well-known/oauth-protected-resource/mcp",
+                  "GET /auth.md",
+                  "GET /.well-known/auth.md"
+                ]
+              }
+            ]
+          },
+          {
+            "group": "User Management",
+            "icon": "user",
+            "pages": [
+              {
+                "group": "Users",
+                "pages": [
+                  "GET /users/health",
+                  "GET /users",
+                  "POST /users",
+                  "GET /users/{id}",
+                  "PUT /users/{id}",
+                  "DELETE /users/{id}",
+                  "GET /users/{id}/email",
+                  "PATCH /users/{id}/email",
+                  "GET /users/dp",
+                  "PUT /users/dp",
+                  "DELETE /users/dp",
+                  "POST /users/bulk/invite",
+                  "POST /users/bulk/invite/upload",
+                  "POST /users/{id}/resend-invite",
+                  "GET /users/graph/list",
+                  "PUT /users/{id}/unblock",
+                  "GET /users/fetch/with-groups",
+                  "POST /users/by-ids",
+                  "PATCH /users/{id}/fullname",
+                  "PATCH /users/{id}/firstName",
+                  "PATCH /users/{id}/lastName",
+                  "PATCH /users/{id}/designation",
+                  "GET /users/{id}/adminCheck",
+                  "GET /users/me/role"
+                ]
+              },
+              {
+                "group": "Service Accounts",
+                "pages": [
+                  "GET /service-accounts",
+                  "POST /service-accounts",
+                  "GET /service-accounts/{id}",
+                  "PATCH /service-accounts/{id}",
+                  "DELETE /service-accounts/{id}"
+                ]
+              },
+              {
+                "group": "Service Tokens",
+                "pages": [
+                  "GET /service-tokens",
+                  "POST /service-tokens",
+                  "GET /service-tokens/scopes",
+                  "DELETE /service-tokens/{tokenId}"
+                ]
+              },
+              {
+                "group": "Teams",
+                "pages": [
+                  "POST /teams",
+                  "GET /teams/user/teams",
+                  "GET /teams/{teamId}",
+                  "PUT /teams/{teamId}",
+                  "DELETE /teams/{teamId}",
+                  "GET /teams/{teamId}/users"
+                ]
+              },
+              {
+                "group": "Organizations",
+                "pages": [
+                  "GET /org/exists",
+                  "GET /org/health",
+                  "GET /org",
+                  "POST /org",
+                  "PUT /org",
+                  "DELETE /org",
+                  "GET /org/logo",
+                  "PUT /org/logo",
+                  "DELETE /org/logo",
+                  "GET /org/onboarding-status",
+                  "PUT /org/onboarding-status"
+                ]
+              },
+              {
+                "group": "User Groups",
+                "pages": [
+                  "GET /userGroups",
+                  "POST /userGroups",
+                  "GET /userGroups/{groupId}",
+                  "PUT /userGroups/{groupId}",
+                  "DELETE /userGroups/{groupId}",
+                  "POST /userGroups/add-users",
+                  "POST /userGroups/remove-users",
+                  "GET /userGroups/users/{userId}",
+                  "GET /userGroups/{groupId}/users",
+                  "GET /userGroups/stats/list",
+                  "GET /userGroups/health"
+                ]
+              },
+              {
+                "group": "Notifications",
+                "pages": [
+                  "GET /notifications",
+                  "GET /notifications/stats",
+                  "PATCH /notifications/read-all",
+                  "PATCH /notifications/{id}/read",
+                  "PATCH /notifications/{id}/unread",
+                  "PATCH /notifications/{id}/archive",
+                  "PATCH /notifications/{id}/unarchive",
+                  "DELETE /notifications/{id}"
+                ]
+              }
+            ]
+          },
+          {
+            "group": "Knowledge Base",
+            "icon": "book",
+            "pages": [
+              {
+                "group": "Knowledge Base",
+                "pages": [
+                  "GET /knowledgeBase",
+                  "POST /knowledgeBase",
+                  "GET /knowledgeBase/{kbId}",
+                  "PUT /knowledgeBase/{kbId}",
+                  "DELETE /knowledgeBase/{kbId}",
+                  "GET /knowledgeBase/record/{recordId}",
+                  "PUT /knowledgeBase/record/{recordId}",
+                  "DELETE /knowledgeBase/record/{recordId}",
+                  "POST /knowledgeBase/record/{recordId}/restore",
+                  "POST /knowledgeBase/records/restore",
+                  "GET /knowledgeBase/{kbId}/trash",
+                  "GET /knowledgeBase/stream/record/{recordId}",
+                  "POST /knowledgeBase/{kbId}/folder",
+                  "POST /knowledgeBase/{kbId}/folder/{folderId}/subfolder",
+                  "PUT /knowledgeBase/{kbId}/folder/{folderId}",
+                  "DELETE /knowledgeBase/{kbId}/folder/{folderId}",
+                  "POST /knowledgeBase/{kbId}/upload",
+                  "GET /knowledgeBase/limits",
+                  "GET /knowledgeBase/demo-data/status",
+                  "PUT /knowledgeBase/demo-data/preference",
+                  "PUT /knowledgeBase/demo-data/workspace",
+                  "POST /knowledgeBase/reindex/record/{recordId}",
+                  "POST /knowledgeBase/reindex/record-group/{recordGroupId}",
+                  "PUT /knowledgeBase/{kbId}/record/{recordId}/move",
+                  "GET /knowledgeBase/knowledge-hub/nodes",
+                  "GET /knowledgeBase/knowledge-hub/nodes/{parentType}/{parentId}"
+                ]
+              },
+              {
+                "group": "Permissions",
+                "pages": [
+                  "GET /knowledgeBase/{kbId}/permissions",
+                  "POST /knowledgeBase/{kbId}/permissions",
+                  "PUT /knowledgeBase/{kbId}/permissions",
+                  "DELETE /knowledgeBase/{kbId}/permissions"
+                ]
+              },
+              {
+                "group": "Connector",
+                "pages": [
+                  "GET /connectors/record/{recordId}/content",
+                  "GET /connectors/navigate",
+                  "GET /connectors/record/lookup"
+                ]
+              }
+            ]
+          },
+          {
+            "group": "Artifacts",
+            "icon": "image",
+            "pages": [
+              "GET /artifacts",
+              "GET /artifacts/{artifactId}",
+              "DELETE /artifacts/{artifactId}",
+              "GET /artifacts/{artifactId}/versions",
+              "GET /artifacts/{artifactId}/permissions",
+              "POST /artifacts/{artifactId}/share",
+              "POST /artifacts/{artifactId}/unshare"
+            ]
+          },
+          {
+            "group": "Enterprise Search",
+            "icon": "magnifying-glass",
+            "pages": [
+              {
+                "group": "Conversations",
+                "pages": [
+                  "POST /conversations/create",
+                  "POST /conversations/stream",
+                  "POST /conversations/attachments/upload",
+                  "DELETE /conversations/attachments/{recordId}",
+                  "GET /conversations",
+                  "GET /conversations/show/archives",
+                  "GET /conversations/show/archives/search",
+                  "GET /conversations/{conversationId}",
+                  "DELETE /conversations/{conversationId}",
+                  "POST /conversations/{conversationId}/messages",
+                  "POST /conversations/{conversationId}/messages/stream",
+                  "POST /conversations/{conversationId}/share",
+                  "PATCH /conversations/{conversationId}/title",
+                  "PATCH /conversations/{conversationId}/archive",
+                  "PATCH /conversations/{conversationId}/unarchive",
+                  "PATCH /conversations/{conversationId}/pin",
+                  "PATCH /conversations/{conversationId}/unpin",
+                  "POST /conversations/{conversationId}/compare/branch",
+                  "GET /conversations/{conversationId}/compare",
+                  "POST /conversations/{conversationId}/compare/choose",
+                  "POST /conversations/{conversationId}/message/{messageId}/regenerate",
+                  "POST /conversations/{conversationId}/message/{messageId}/fork",
+                  "POST /conversations/{conversationId}/cancel",
+                  "POST /conversations/{conversationId}/message/{messageId}/feedback",
+                  "POST /conversations/{conversationId}/unshare",
+                  "PUT /conversations/{conversationId}/project",
+                  "PATCH /conversations/{conversationId}/project-visibility"
+                ]
+              },
+              {
+                "group": "Projects",
+                "pages": [
+                  "GET /projects",
+                  "POST /projects",
+                  "GET /projects/{projectId}",
+                  "PATCH /projects/{projectId}",
+                  "DELETE /projects/{projectId}",
+                  "POST /projects/{projectId}/archive",
+                  "POST /projects/{projectId}/unarchive",
+                  "POST /projects/{projectId}/pin",
+                  "POST /projects/{projectId}/unpin",
+                  "GET /projects/{projectId}/conversations",
+                  "POST /projects/{projectId}/knowledge-base",
+                  "GET /projects/{projectId}/members",
+                  "PUT /projects/{projectId}/members",
+                  "DELETE /projects/{projectId}/members/{memberUserId}"
+                ]
+              },
+              {
+                "group": "Code Graph",
+                "pages": [
+                  "GET /code-graph/repos",
+                  "POST /code-graph/search",
+                  "POST /code-graph/semantic-search",
+                  "POST /code-graph/read",
+                  "POST /code-graph/outline",
+                  "POST /graph/expand",
+                  "POST /graph/resolve",
+                  "POST /graph/revalidate"
+                ]
+              },
+              {
+                "group": "Semantic Search",
+                "pages": [
+                  "POST /retrieve",
+                  "GET /search",
+                  "POST /search",
+                  "DELETE /search",
+                  "GET /search/{searchId}",
+                  "DELETE /search/{searchId}",
+                  "PATCH /search/{searchId}/archive",
+                  "PATCH /search/{searchId}/unarchive",
+                  "PATCH /search/{searchId}/share",
+                  "PATCH /search/{searchId}/unshare",
+                  "POST /search/grep",
+                  "POST /search/entities",
+                  "POST /search/entities/neighbors",
+                  "GET /search/entities/capabilities",
+                  "POST /search/entities/records",
+                  "POST /search/entities/co-mentioned",
+                  "POST /search/records/by-person",
+                  "POST /search/records/by-value",
+                  "POST /search/records/by-entities"
+                ]
+              },
+              {
+                "group": "Conversational Speech",
+                "pages": [
+                  "POST /chat/transcribe",
+                  "POST /chat/speak",
+                  "GET /chat/speech/capabilities"
+                ]
+              }
+            ]
+          },
+          {
+            "group": "Agents",
+            "icon": "microchip",
+            "pages": [
+              {
+                "group": "Agents",
+                "pages": [
+                  "GET /agents",
+                  "POST /agents/create",
+                  "GET /agents/{agentKey}",
+                  "PUT /agents/{agentKey}",
+                  "DELETE /agents/{agentKey}",
+                  "GET /agents/conversations/show/archives",
+                  "GET /agents/{agentKey}/conversations/show/archives",
+                  "POST /agents/{agentKey}/conversations/attachments/upload",
+                  "DELETE /agents/{agentKey}/conversations/attachments/{recordId}",
+                  "POST /agents/{agentKey}/conversations/stream",
+                  "POST /agents/{agentKey}/conversations/{conversationId}/messages/stream",
+                  "POST /agents/{agentKey}/conversations/{conversationId}/message/{messageId}/regenerate",
+                  "POST /agents/{agentKey}/conversations/{conversationId}/message/{messageId}/fork",
+                  "POST /agents/{agentKey}/conversations/{conversationId}/cancel",
+                  "POST /agents/{agentKey}/conversations/{conversationId}/message/{messageId}/feedback",
+                  "POST /agents/{agentKey}/conversations/{conversationId}/messages",
+                  "POST /agents/{agentKey}/conversations/{conversationId}/archive",
+                  "POST /agents/{agentKey}/conversations/{conversationId}/unarchive",
+                  "PATCH /agents/{agentKey}/conversations/{conversationId}/title",
+                  "POST /agents/{agentKey}/conversations/{conversationId}/share",
+                  "POST /agents/{agentKey}/conversations/{conversationId}/unshare",
+                  "PUT /agents/{agentKey}/conversations/{conversationId}/project",
+                  "PATCH /agents/{agentKey}/conversations/{conversationId}/project-visibility",
+                  "GET /agents/{agentKey}/conversations/{conversationId}",
+                  "DELETE /agents/{agentKey}/conversations/{conversationId}",
+                  "GET /agents/{agentKey}/conversations",
+                  "POST /agents/{agentKey}/conversations",
+                  "GET /agents/web-search-usage/{provider}",
+                  "GET /agents/model-usage/{model_key}"
+                ]
+              },
+              {
+                "group": "Skills",
+                "pages": [
+                  "GET /skills",
+                  "POST /skills",
+                  "GET /skills/categories",
+                  "GET /skills/search",
+                  "GET /skills/candidates/pending",
+                  "POST /skills/candidates/{candidateId}/approve",
+                  "POST /skills/candidates/{candidateId}/reject",
+                  "POST /skills/import/npm/preview",
+                  "POST /skills/import/url/preview",
+                  "POST /skills/import/upload/preview",
+                  "POST /skills/import/finalize",
+                  "GET /skills/{name}",
+                  "PUT /skills/{name}",
+                  "DELETE /skills/{name}",
+                  "GET /skills/{name}/export",
+                  "PATCH /skills/{name}/body",
+                  "POST /skills/{name}/deprecate",
+                  "POST /skills/{name}/disable",
+                  "POST /skills/{name}/enable",
+                  "GET /skills/{name}/usage",
+                  "GET /skills/{name}/versions",
+                  "GET /skills/{name}/versions/{version}",
+                  "POST /skills/{name}/rollback",
+                  "GET /skills/{name}/resource",
+                  "PUT /skills/{name}/resource",
+                  "DELETE /skills/{name}/resource"
+                ]
+              }
+            ]
+          },
+          {
+            "group": "Connector Manager",
+            "icon": "code",
+            "pages": [
+              {
+                "group": "Connector Registry",
+                "pages": [
+                  "GET /connectors/registry",
+                  "GET /connectors/registry/{connectorType}/schema",
+                  "POST /connectors/registry/{connectorType}/test-connection",
+                  "GET /connectors/network/egress-ips"
+                ]
+              },
+              {
+                "group": "Connector Instances",
+                "pages": [
+                  "GET /connectors",
+                  "POST /connectors",
+                  "GET /connectors/active",
+                  "GET /connectors/inactive",
+                  "GET /connectors/configured",
+                  "GET /connectors/agents/active",
+                  "GET /connectors/{connectorId}",
+                  "DELETE /connectors/{connectorId}",
+                  "GET /connectors/{connectorId}/stats",
+                  "GET /connectors/{connectorId}/permissions/explain",
+                  "GET /connectors/{connectorId}/permissions/status",
+                  "GET /connectors/user-access/mine",
+                  "GET /connectors/{connectorId}/user-access",
+                  "POST /connectors/{connectorId}/user-access",
+                  "DELETE /connectors/{connectorId}/user-access",
+                  "GET /connectors/{connectorId}/user-access/oauth/authorize",
+                  "GET /connectors/{connectorId}/user-access/users",
+                  "DELETE /connectors/{connectorId}/user-access/users/{userId}",
+                  "GET /connectors/{connectorId}/user-access/roster",
+                  "POST /connectors/{connectorId}/user-access/invites",
+                  "POST /connectors/{connectorId}/user-access/reminders",
+                  "POST /connectors/user-access/link/info",
+                  "POST /connectors/user-access/link/authorize",
+                  "POST /connectors/user-access/link/complete",
+                  "POST /connectors/user-access/link/opt-out",
+                  "PATCH /connectors/{connectorId}/permissions/filter",
+                  "POST /connectors/{connectorId}/reindex",
+                  "POST /connectors/{connectorId}/resync",
+                  "POST /connectors/{connectorId}/sync/stop",
+                  "PUT /connectors/{connectorId}/name"
+                ]
+              },
+              {
+                "group": "Connector Configuration",
+                "pages": [
+                  "GET /connectors/{connectorId}/config",
+                  "PUT /connectors/{connectorId}/config",
+                  "PUT /connectors/{connectorId}/config/auth",
+                  "PUT /connectors/{connectorId}/config/filters-sync"
+                ]
+              },
+              {
+                "group": "Connector Control",
+                "pages": [
+                  "POST /connectors/{connectorId}/toggle",
+                  "POST /connectors/vector-store/cleanup",
+                  "POST /connectors/vector-store/reindex"
+                ]
+              },
+              {
+                "group": "Connector OAuth",
+                "pages": [
+                  "GET /connectors/{connectorId}/oauth/authorize",
+                  "GET /connectors/oauth/callback",
+                  "POST /connectors/getTokenFromCode"
+                ]
+              },
+              {
+                "group": "Connector Filters",
+                "pages": [
+                  "GET /connectors/{connectorId}/filters",
+                  "POST /connectors/{connectorId}/filters",
+                  "GET /connectors/{connectorId}/filters/{filterKey}/options"
+                ]
+              },
+              {
+                "group": "OAuth Configuration",
+                "pages": [
+                  "GET /toolsets/oauth-configs/{toolsetType}",
+                  "PUT /toolsets/oauth-configs/{toolsetType}/{oauthConfigId}",
+                  "DELETE /toolsets/oauth-configs/{toolsetType}/{oauthConfigId}",
+                  "GET /oauth/registry",
+                  "GET /oauth/registry/{connectorType}",
+                  "GET /oauth",
+                  "GET /oauth/{connectorType}",
+                  "POST /oauth/{connectorType}",
+                  "GET /oauth/{connectorType}/{configId}",
+                  "PUT /oauth/{connectorType}/{configId}",
+                  "DELETE /oauth/{connectorType}/{configId}"
+                ]
+              }
+            ]
+          },
+          {
+            "group": "Toolsets",
+            "icon": "wrench",
+            "pages": [
+              {
+                "group": "Toolset Registry",
+                "pages": [
+                  "GET /toolsets/registry",
+                  "GET /toolsets/registry/{toolsetType}/schema"
+                ]
+              },
+              {
+                "group": "Toolset Instances",
+                "pages": [
+                  "POST /toolsets",
+                  "GET /toolsets/configured",
+                  "GET /toolsets/{toolsetId}/status",
+                  "POST /toolsets/{toolsetId}/reauthenticate",
+                  "GET /toolsets/my-toolsets",
+                  "GET /toolsets/agents/{agentKey}",
+                  "POST /toolsets/agents/{agentKey}/instances/{instanceId}/authenticate",
+                  "PUT /toolsets/agents/{agentKey}/instances/{instanceId}/credentials",
+                  "DELETE /toolsets/agents/{agentKey}/instances/{instanceId}/credentials",
+                  "POST /toolsets/agents/{agentKey}/instances/{instanceId}/reauthenticate",
+                  "GET /toolsets/instances",
+                  "POST /toolsets/instances",
+                  "GET /toolsets/instances/{instanceId}",
+                  "PUT /toolsets/instances/{instanceId}",
+                  "DELETE /toolsets/instances/{instanceId}",
+                  "POST /toolsets/instances/{instanceId}/authenticate",
+                  "PUT /toolsets/instances/{instanceId}/credentials",
+                  "DELETE /toolsets/instances/{instanceId}/credentials",
+                  "POST /toolsets/instances/{instanceId}/reauthenticate",
+                  "GET /toolsets/instances/{instanceId}/status",
+                  "GET /toolsets/instances/{instanceId}/tool-rules",
+                  "PUT /toolsets/instances/{instanceId}/tool-rules"
+                ]
+              },
+              {
+                "group": "Toolset Configuration",
+                "pages": [
+                  "GET /toolsets/{toolsetId}/config",
+                  "POST /toolsets/{toolsetId}/config",
+                  "PUT /toolsets/{toolsetId}/config",
+                  "DELETE /toolsets/{toolsetId}/config"
+                ]
+              },
+              {
+                "group": "Toolset OAuth",
+                "pages": [
+                  "GET /toolsets/{toolsetId}/oauth/authorize",
+                  "GET /toolsets/oauth/callback",
+                  "GET /toolsets/agents/{agentKey}/instances/{instanceId}/oauth/authorize",
+                  "GET /toolsets/instances/{instanceId}/oauth/authorize"
+                ]
+              },
+              {
+                "group": "API Toolsets",
+                "pages": [
+                  "POST /api-toolsets/validate",
+                  "GET /api-toolsets/instances",
+                  "POST /api-toolsets/instances",
+                  "GET /api-toolsets/instances/{instanceId}",
+                  "PUT /api-toolsets/instances/{instanceId}",
+                  "DELETE /api-toolsets/instances/{instanceId}",
+                  "GET /api-toolsets/instances/{instanceId}/config",
+                  "PUT /api-toolsets/instances/{instanceId}/credentials",
+                  "DELETE /api-toolsets/instances/{instanceId}/credentials",
+                  "PUT /api-toolsets/instances/{instanceId}/shared-credentials",
+                  "DELETE /api-toolsets/instances/{instanceId}/shared-credentials",
+                  "GET /api-toolsets/instances/{instanceId}/shared-credentials/oauth/authorize",
+                  "POST /api-toolsets/instances/{instanceId}/test",
+                  "GET /api-toolsets/instances/{instanceId}/oauth/authorize",
+                  "GET /api-toolsets/oauth/callback"
+                ]
+              }
+            ]
+          },
+          {
+            "group": "MCP Servers",
+            "icon": "server",
+            "pages": [
+              {
+                "group": "MCP Server Catalog",
+                "pages": [
+                  "GET /mcp-servers/catalog",
+                  "GET /mcp-servers/catalog/{typeId}"
+                ]
+              },
+              {
+                "group": "MCP Server Instances",
+                "pages": [
+                  "GET /mcp-servers/my-mcp-servers",
+                  "GET /mcp-servers/logos",
+                  "GET /mcp-servers/instances",
+                  "POST /mcp-servers/instances",
+                  "GET /mcp-servers/instances/{instanceId}",
+                  "PUT /mcp-servers/instances/{instanceId}",
+                  "DELETE /mcp-servers/instances/{instanceId}",
+                  "PUT /mcp-servers/instances/{instanceId}/logo",
+                  "DELETE /mcp-servers/instances/{instanceId}/logo",
+                  "GET /mcp-servers/instances/{instanceId}/tools",
+                  "GET /mcp-servers/instances/{instanceId}/my-tool-rules",
+                  "PUT /mcp-servers/instances/{instanceId}/my-tool-rules"
+                ]
+              },
+              {
+                "group": "MCP Server Credentials",
+                "pages": [
+                  "POST /mcp-servers/instances/{instanceId}/authenticate",
+                  "PUT /mcp-servers/instances/{instanceId}/credentials",
+                  "DELETE /mcp-servers/instances/{instanceId}/credentials",
+                  "POST /mcp-servers/instances/{instanceId}/auto-authenticate",
+                  "POST /mcp-servers/instances/{instanceId}/reauthenticate"
+                ]
+              },
+              {
+                "group": "MCP Server OAuth",
+                "pages": [
+                  "GET /mcp-servers/instances/{instanceId}/oauth/authorize",
+                  "POST /mcp-servers/instances/{instanceId}/oauth/refresh",
+                  "GET /mcp-servers/instances/{instanceId}/oauth-config",
+                  "PUT /mcp-servers/instances/{instanceId}/oauth-config",
+                  "POST /mcp-servers/oauth/discover",
+                  "GET /mcp-servers/oauth/callback"
+                ]
+              },
+              {
+                "group": "MCP Servers for Agents",
+                "pages": [
+                  "GET /mcp-servers/agents/{agentKey}",
+                  "POST /mcp-servers/agents/{agentKey}/instances/{instanceId}/authenticate",
+                  "PUT /mcp-servers/agents/{agentKey}/instances/{instanceId}/credentials",
+                  "DELETE /mcp-servers/agents/{agentKey}/instances/{instanceId}/credentials",
+                  "POST /mcp-servers/agents/{agentKey}/instances/{instanceId}/reauthenticate",
+                  "GET /mcp-servers/agents/{agentKey}/instances/{instanceId}/oauth/authorize"
+                ]
+              }
+            ]
+          },
+          {
+            "group": "MCP",
+            "icon": "layer-group",
+            "pages": [
+              "GET /configurationManager/mcp/access",
+              "PUT /configurationManager/mcp/access",
+              "GET /configurationManager/mcp/access/tools",
+              "GET /mcp",
+              "POST /mcp"
+            ]
+          },
+          {
+            "group": "Configuration Manager",
+            "icon": "gear",
+            "pages": [
+              {
+                "group": "Storage Configuration",
+                "pages": [
+                  "GET /configurationManager/storageConfig",
+                  "POST /configurationManager/storageConfig"
+                ]
+              },
+              {
+                "group": "SMTP Configuration",
+                "pages": [
+                  "GET /configurationManager/smtpConfig",
+                  "POST /configurationManager/smtpConfig",
+                  "DELETE /configurationManager/smtpConfig",
+                  "PUT /configurationManager/smtpConfig/enabled",
+                  "GET /configurationManager/smtpConfig/status"
+                ]
+              },
+              {
+                "group": "Authentication Configuration",
+                "pages": [
+                  "GET /configurationManager/authConfig/microsoft",
+                  "POST /configurationManager/authConfig/microsoft",
+                  "GET /configurationManager/authConfig/google",
+                  "POST /configurationManager/authConfig/google"
+                ]
+              },
+              {
+                "group": "Platform Settings",
+                "pages": [
+                  "GET /configurationManager/platform/settings",
+                  "POST /configurationManager/platform/settings",
+                  "GET /configurationManager/platform/feature-flags/available",
+                  "GET /configurationManager/platform/feature-flags/effective",
+                  "GET /configurationManager/secretReveal",
+                  "GET /configurationManager/prompts/system",
+                  "PUT /configurationManager/prompts/system"
+                ]
+              },
+              {
+                "group": "AI Models Providers",
+                "pages": [
+                  "GET /models",
+                  "GET /models/{modelId}",
+                  "GET /openai/models",
+                  "GET /openai/models/{modelId}",
+                  "POST /openai/chat/completions",
+                  "POST /openai/responses",
+                  "GET /openai/files",
+                  "POST /openai/files",
+                  "GET /openai/files/{fileId}",
+                  "DELETE /openai/files/{fileId}",
+                  "GET /openai/files/{fileId}/content",
+                  "GET /openai/vector_stores",
+                  "POST /openai/vector_stores",
+                  "GET /openai/vector_stores/{vectorStoreId}",
+                  "POST /openai/vector_stores/{vectorStoreId}",
+                  "DELETE /openai/vector_stores/{vectorStoreId}",
+                  "GET /openai/vector_stores/{vectorStoreId}/files",
+                  "POST /openai/vector_stores/{vectorStoreId}/files",
+                  "GET /openai/vector_stores/{vectorStoreId}/files/{fileId}",
+                  "DELETE /openai/vector_stores/{vectorStoreId}/files/{fileId}",
+                  "POST /openai/vector_stores/{vectorStoreId}/file_batches",
+                  "GET /openai/vector_stores/{vectorStoreId}/file_batches/{batchId}",
+                  "POST /openai/vector_stores/{vectorStoreId}/file_batches/{batchId}/cancel",
+                  "GET /openai/vector_stores/{vectorStoreId}/file_batches/{batchId}/files",
+                  "GET /openai/organization/projects",
+                  "GET /openai/organization/projects/{projectId}",
+                  "GET /configurationManager/ai-models/{modelType}",
+                  "GET /configurationManager/ai-models/available/{modelType}",
+                  "POST /configurationManager/ai-models/discover",
+                  "POST /configurationManager/ai-models/providers/batch",
+                  "PUT /configurationManager/ai-models/connections/{connectionId}/credentials",
+                  "PUT /configurationManager/ai-models/connections/{connectionId}/identity-forwarding",
+                  "GET /configurationManager/ai-models/identity-policy",
+                  "PUT /configurationManager/ai-models/identity-policy",
+                  "POST /configurationManager/ai-models/identity/preview",
+                  "POST /configurationManager/ai-models/providers",
+                  "PUT /configurationManager/ai-models/providers/{modelType}/{modelKey}",
+                  "DELETE /configurationManager/ai-models/providers/{modelType}/{modelKey}",
+                  "PUT /configurationManager/ai-models/default/{modelType}/{modelKey}",
+                  "POST /configurationManager/ai-models/prepare-model",
+                  "GET /configurationManager/ai-models/download-progress",
+                  "GET /configurationManager/ai-models/registry",
+                  "GET /configurationManager/ai-models/registry/capabilities",
+                  "GET /configurationManager/ai-models/registry/{providerId}/schema"
+                ]
+              },
+              {
+                "group": "Configuration Manager",
+                "pages": [
+                  "GET /configurationManager/slack-bot",
+                  "POST /configurationManager/slack-bot",
+                  "PUT /configurationManager/slack-bot/{configId}",
+                  "DELETE /configurationManager/slack-bot/{configId}",
+                  "PATCH /configurationManager/metricsCollection/pushInterval",
+                  "PATCH /configurationManager/metricsCollection/serverUrl",
+                  "GET /configurationManager/aiModelsConfig",
+                  "POST /configurationManager/aiModelsConfig",
+                  "GET /configurationManager/ai-models",
+                  "GET /configurationManager/ai-models/roles",
+                  "PUT /configurationManager/ai-models/roles",
+                  "GET /configurationManager/connectors/atlassian/config",
+                  "POST /configurationManager/connectors/atlassian/config",
+                  "GET /configurationManager/connectors/onedrive/config",
+                  "POST /configurationManager/connectors/onedrive/config",
+                  "GET /configurationManager/connectors/sharepoint/config",
+                  "POST /configurationManager/connectors/sharepoint/config",
+                  "GET /configurationManager/connectors/googleWorkspaceOauthConfig",
+                  "POST /configurationManager/connectors/googleWorkspaceOauthConfig",
+                  "GET /configurationManager/connectors/googleWorkspaceCredentials",
+                  "POST /configurationManager/connectors/googleWorkspaceCredentials"
+                ]
+              },
+              {
+                "group": "Public URLs",
+                "pages": [
+                  "GET /configurationManager/frontendPublicUrl",
+                  "POST /configurationManager/frontendPublicUrl",
+                  "GET /configurationManager/public/desktopFrontendUrl",
+                  "GET /configurationManager/connectorPublicUrl",
+                  "POST /configurationManager/connectorPublicUrl"
+                ]
+              },
+              {
+                "group": "Web Search",
+                "pages": [
+                  "GET /configurationManager/web-search",
+                  "PUT /configurationManager/web-search/settings",
+                  "POST /configurationManager/web-search/providers",
+                  "PUT /configurationManager/web-search/providers/{providerKey}",
+                  "DELETE /configurationManager/web-search/providers/{providerKey}",
+                  "PUT /configurationManager/web-search/default/{providerKey}"
+                ]
+              },
+              {
+                "group": "Metrics Collection",
+                "pages": [
+                  "GET /configurationManager/metricsCollection",
+                  "PUT /configurationManager/metricsCollection/toggle"
+                ]
+              }
+            ]
+          },
+          {
+            "group": "Crawling Manager",
+            "icon": "clock",
+            "pages": [
+              {
+                "group": "Crawling Jobs",
+                "pages": [
+                  "GET /crawlingManager/{connector}/{connectorId}/schedule",
+                  "POST /crawlingManager/{connector}/{connectorId}/schedule",
+                  "DELETE /crawlingManager/{connector}/{connectorId}/remove",
+                  "GET /crawlingManager/schedule/all",
+                  "DELETE /crawlingManager/schedule/all",
+                  "POST /crawlingManager/{connector}/{connectorId}/pause",
+                  "POST /crawlingManager/{connector}/{connectorId}/resume",
+                  "GET /crawlingManager/stats"
+                ]
+              }
+            ]
+          },
+          {
+            "group": "Health",
+            "icon": "heart-pulse",
+            "pages": [
+              "GET /health",
+              "GET /health/vector-db/memory",
+              "GET /health/services"
+            ]
+          },
+          {
+            "group": "Other",
+            "icon": "ellipsis",
+            "pages": [
+              {
+                "group": "Local Repositories",
+                "pages": [
+                  "GET /local-repos",
+                  "GET /local-repos/{repoKey}",
+                  "PUT /local-repos/{repoKey}",
+                  "DELETE /local-repos/{repoKey}",
+                  "POST /local-repos/{repoKey}/manifest",
+                  "PUT /local-repos/{repoKey}/files",
+                  "POST /local-repos/{repoKey}/commit"
+                ]
+              }
+            ]
+          }
         ]
       },
       {
@@ -460,14 +1335,46 @@
     }
   },
   "redirects": [
-    {"source": "/connectors/microsoft-365/one-note", "destination": "/connectors/overview", "permanent": true},
-    {"source": "/connectors/microsoft-365/teams", "destination": "/connectors/overview", "permanent": true},
-    {"source": "/connectors/airtable/airtable", "destination": "/connectors/overview", "permanent": true},
-    {"source": "/connectors/box", "destination": "/connectors/box/box", "permanent": true},
-    {"source": "/connectors/azure/azureblob", "destination": "/connectors/azure-blob/azure-blob", "permanent": true},
-    {"source": "/connectors/nextcloud", "destination": "/connectors/nextcloud/nextcloud", "permanent": true},
-    {"source": "/connectors/web", "destination": "/connectors/web/web", "permanent": true},
-    {"source": "/connectors/cifs/cifs", "destination": "/connectors/overview", "permanent": true},
+    {
+      "source": "/connectors/microsoft-365/one-note",
+      "destination": "/connectors/overview",
+      "permanent": true
+    },
+    {
+      "source": "/connectors/microsoft-365/teams",
+      "destination": "/connectors/overview",
+      "permanent": true
+    },
+    {
+      "source": "/connectors/airtable/airtable",
+      "destination": "/connectors/overview",
+      "permanent": true
+    },
+    {
+      "source": "/connectors/box",
+      "destination": "/connectors/box/box",
+      "permanent": true
+    },
+    {
+      "source": "/connectors/azure/azureblob",
+      "destination": "/connectors/azure-blob/azure-blob",
+      "permanent": true
+    },
+    {
+      "source": "/connectors/nextcloud",
+      "destination": "/connectors/nextcloud/nextcloud",
+      "permanent": true
+    },
+    {
+      "source": "/connectors/web",
+      "destination": "/connectors/web/web",
+      "permanent": true
+    },
+    {
+      "source": "/connectors/cifs/cifs",
+      "destination": "/connectors/overview",
+      "permanent": true
+    },
     {
       "source": "/additional-resources/changelog",
       "destination": "/changelog/platform",
@@ -572,6 +1479,51 @@
       "source": "/workspace/prompts",
       "destination": "/custom-instructions",
       "permanent": true
+    },
+    {
+      "source": "/system-overview/authentication",
+      "destination": "/developer/api-reference#authentication",
+      "permanent": true
+    },
+    {
+      "source": "/system-overview/configuration-manager",
+      "destination": "/developer/api-reference#configuration-manager",
+      "permanent": true
+    },
+    {
+      "source": "/system-overview/connector-manager",
+      "destination": "/developer/api-reference#connector-manager",
+      "permanent": true
+    },
+    {
+      "source": "/system-overview/crawling-manager",
+      "destination": "/developer/api-reference#crawling-manager",
+      "permanent": true
+    },
+    {
+      "source": "/system-overview/enterprise-search",
+      "destination": "/developer/api-reference#enterprise-search",
+      "permanent": true
+    },
+    {
+      "source": "/system-overview/knowledge-base",
+      "destination": "/developer/api-reference#knowledge-base",
+      "permanent": true
+    },
+    {
+      "source": "/system-overview/user-management",
+      "destination": "/developer/api-reference#user-management",
+      "permanent": true
+    },
+    {
+      "source": "/system-overview/mail-service",
+      "destination": "/smtp",
+      "permanent": true
+    },
+    {
+      "source": "/system-overview/storage",
+      "destination": "/system-overview/external-services#files",
+      "permanent": true
     }
   ],
   "logo": {
@@ -607,5 +1559,15 @@
       "Do not use OAuth client_credentials for user-facing agents (no user identity). Prefer a personal access token or an OAuth app with the user's login.",
       "Never print, log, or ask anyone to paste a PipesHub token."
     ]
+  },
+  "api": {
+    "examples": {
+      "languages": [
+        "curl",
+        "python",
+        "typescript",
+        "go"
+      ]
+    }
   }
 }

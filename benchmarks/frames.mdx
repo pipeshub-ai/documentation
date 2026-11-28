@@ -1,0 +1,54 @@
+---
+title: "FRAMES"
+description: "PipesHub's agent loop scored 92.7% on Google's FRAMES multi-hop benchmark, against 78.9% for the best of 18 RAG pipelines"
+icon: "route"
+---
+
+On Google's **FRAMES** benchmark, PipesHub's agent loop answered **92.7%** of 824 multi-hop questions correctly. The best traditional RAG pipeline tested answered **78.9%**.
+
+PipesHub ran this test itself. The full write-up is the blog post [Agent Loop vs Traditional RAG: 92.7% vs 78.9% on FRAMES](https://pipeshub.com/blog/agentic-rag-vs-traditional-rag-frames-benchmark) (1 October 2026).
+
+In plain words: some questions need facts from several articles. A normal RAG pipeline searches once. PipesHub's agent loop searches, reads and searches again, and it answered far more of these questions correctly.
+
+## Setup
+
+- **Benchmark.** FRAMES, 824 questions that each need several Wikipedia articles to answer. The questions were split into 200 for development and 624 held out. Fixes were tuned on the development set only.
+- **Corpus.** 12,441 Wikipedia articles, frozen at 15 October 2024: the 2,517 articles the questions need plus about 10,000 distractors.
+- **Same models for every system.** The answering model was gpt-5.6-luna at high reasoning effort. The embedding model was text-embedding-3-small.
+- **Grading.** Two AI graders, Claude Sonnet 5 using the FRAMES paper's grading prompt, and Gemini 3.8 Flash.
+- **Reference points.** A closed-book run (no documents) and an oracle run (the exact articles given).
+
+## Results on all 824 questions
+
+| System | Accuracy | Grounded | Median latency | Cost per question |
+|---|---|---|---|---|
+| Closed book | 64.9% | n/a | 7 s | $0.0030 |
+| Naive RAG (dense, top 50) | 36.3% | 27.7% | 7 s | $0.0014 |
+| Hybrid search | 43.3% | 36.8% | 8 s | $0.0018 |
+| Hybrid + reranker | 46.2% | 39.7% | 9 s | $0.0019 |
+| Hybrid + query expansion | 73.4% | 67.5% | 17 s | $0.0019 |
+| Hybrid + expansion + small-to-big (best pipeline) | 78.9% | 73.2% | 27 s | $0.0056 |
+| **PipesHub agent loop** | **92.7%** | **84.0%** | 22 s | $0.0167 |
+| Oracle (exact articles) | 93.0% | 90.0% | 3 s | $0.0049 |
+
+**Grounded** means correct and supported by text the system actually read. The agent loop's 95% confidence interval for accuracy is 90.9% to 94.4%. On the 624 held-out questions it scored 92.3%, against 78.7% for the best pipeline.
+
+## The gap grows with the number of hops
+
+| Articles a question needs | Best pipeline | PipesHub agent loop |
+|---|---|---|
+| 2 | 87% | 93% |
+| 5 or more | 62% | 90% |
+
+## What it costs
+
+The agent loop is more expensive per question ($0.0167, against $0.0056 for the best pipeline) and has a long tail: its 95th percentile latency was 134 s. Questions it answered in one or two model calls (64% of them) were correct 95% of the time at a median of 8 to 19 s.
+
+## Caveats
+
+- **Self-reported.** PipesHub built the agent loop and ran the test. The post lists only six of the 18 pipelines. The full board is in the open-source repository.
+- **Not comparable to other published numbers.** Google Research reported 90.1% for agentic RAG on FRAMES in June 2026, with a different model, corpus and grader.
+- **Latency was measured on one laptop** that was running other jobs.
+- **Azure's content filter refused 38 pipeline answers.** Those were re-asked through OpenAI's endpoint, which refused none.
+
+See also [Direct MCP servers vs the PipesHub index](/benchmarks/mcp-vs-index).

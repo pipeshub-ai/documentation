@@ -21,6 +21,7 @@ Use a PAT when you want to connect something to PipesHub programmatically — mo
 | **Acts as** | You, the creator | With `authorization_code`, the person who approved the app. With `client_credentials`, a **service account** an admin picks when creating the app; the app cannot be saved without one |
 | **Who can create one** | Any org member | Any org member. Only an admin can create an app that uses `client_credentials` |
 | **Setup** | One click, no redirect URIs | Register an app, configure redirect URIs and grant types |
+| **Limit what it can see** | You pick when you create it, and can [change it later](#change-what-a-token-can-see) without replacing the token | The app's creator picks for everyone who connects it |
 | **Best for** | Personal scripts, MCP clients, quick integrations | Third-party apps, multi-user integrations, machine-to-machine services |
 
 If you're connecting your own tooling and want it to see exactly what you can see, use a PAT. If you're building something other people in the org will authorize separately, use an [OAuth 2.0 app](/developer/oauth2).
@@ -52,13 +53,13 @@ Click **New token**. The **New personal access token** panel opens:
 | Field | Required | Description |
 |-------|----------|-------------|
 | **Token name** | Yes | A label to help you recognize the token later (e.g. `Claude Desktop`, `CI script`), 1–100 characters. |
-| **Expiry** | Yes | `30 days`, `90 days`, `365 days` or `Never`. **30 days** is selected when the panel opens. |
-| **What can this token see?** | No | **Everything I can see** (includes sources you add later) or **Only what I pick** (whole sources, or spaces, folders or files inside one). The token never sees more than you can. |
+| **Expiry** | Yes | `7 days`, `30 days`, `90 days` or `365 days`. **30 days** is selected when the panel opens. |
+| **What can this token see?** | No | **Everything I can see** (includes sources you add later) or **Only what I pick** (whole sources, or spaces, folders or files inside one). The token never sees more than you can. You can [change this later](#change-what-a-token-can-see). |
 | **Scopes** | Yes | Which permissions the token carries, grouped by category. Every scope your instance offers (its `MCP_SCOPES` set) is selected when the panel opens; keep at least one. Use **Clear all** / **Select all** to toggle every scope at once. |
 
-<Warning>
-  A token with `Never` expiry has no automatic cutoff. Prefer a bounded expiry unless you have a specific, ongoing reason not to — you can always create a new token later.
-</Warning>
+<Note>
+  Every new token expires. Pick the shortest expiry that fits how you'll use it; you can always create a new token later. Tokens created before expiry became required keep the expiry they were created with.
+</Note>
 
 ### Step 3: Copy the token
 
@@ -118,7 +119,32 @@ It is **not** equivalent to being logged in. Session tokens skip scope checks en
 
 ## Manage your tokens
 
-The **Personal access tokens** page lists every active token you've created, with its name, scopes, creation date, expiry (`Never` shown as-is, not a literal date), and last-used time.
+The **Personal access tokens** page lists every active token you've created, with its name, what it can see, scopes, creation date, expiry, and last-used time. An older token created without an expiry shows `Never`.
+
+### Change what a token can see
+
+You can narrow or widen what a token can see at any time. The token keeps working with the same secret, so nothing that uses it needs updating.
+
+<Frame>
+  <img className="block dark:hidden" src="/images/product/developer/personal-access-token-change-access.png" alt="Change access panel for the Claude Desktop token, limited to two picked collections" />
+  <img className="hidden dark:block" src="/images/product/developer/personal-access-token-change-access-dark.png" alt="Change access panel for the Claude Desktop token, limited to two picked collections" />
+</Frame>
+
+<Steps>
+  <Step title="Open Change access">
+    On the **Personal access tokens** page, click the **Change access** icon next to the token. On a phone, tap **Change access** on the token's card.
+  </Step>
+  <Step title="Pick what the token can see">
+    Choose **Everything I can see**, or **Only what I pick** and select whole sources, or spaces, folders or files inside one. **Save** turns on once your choice differs from the current one.
+  </Step>
+  <Step title="Save">
+    Click **Save**. The change applies from the token's next request. The confirmation has an **Undo** button if you change your mind.
+  </Step>
+</Steps>
+
+<Note>
+  A token can never change its own access. Only you can, signed in to PipesHub. The token still never sees more than you can: if you lose access to a source, so does the token.
+</Note>
 
 ### Revoke a token
 
@@ -188,6 +214,7 @@ Both endpoints are for organization admins only. A non-admin gets `403` with the
 |----------|--------|-------------|
 | `/api/v1/personal-access-tokens` | `POST` | Create a new personal access token |
 | `/api/v1/personal-access-tokens` | `GET` | List your own active tokens |
+| `/api/v1/personal-access-tokens/{tokenId}` | `PATCH` | Change what one of your own tokens can see |
 | `/api/v1/personal-access-tokens/{tokenId}` | `DELETE` | Revoke one of your own tokens |
 | `/api/v1/personal-access-tokens/scopes` | `GET` | List the scopes available to grant, grouped by category |
 | `/api/v1/personal-access-tokens/admin` | `GET` | **Admin only.** List every active token in the org, paginated |
@@ -203,7 +230,12 @@ Every endpoint in this table needs a signed-in session token. A PAT or OAuth acc
 {
   "name": "Claude Desktop",
   "scopes": ["kb:read", "semantic:write"],
-  "expiryDays": 30
+  "expiryDays": 30,
+  "knowledgeLimit": {
+    "apps": ["3f1c2a4e-9b7d-4c1a-8e2f-5a6b7c8d9e0f"],
+    "recordGroups": [],
+    "records": []
+  }
 }
 ```
 
@@ -211,7 +243,22 @@ Every endpoint in this table needs a signed-in session token. A PAT or OAuth acc
 |-------|----------|--------------|
 | `name` | Yes | 1–100 characters |
 | `scopes` | No | Defaults to your instance's full configured `MCP_SCOPES` set if omitted |
-| `expiryDays` | No | `30`, `90`, `365`, or `"never"`. Defaults to `30` if omitted |
+| `expiryDays` | No | `7`, `30`, `90` or `365`. Defaults to `30` if omitted |
+| `knowledgeLimit` | No | What the token can see. `apps` are whole sources and collections, `recordGroups` are spaces, drives or projects, and `records` are folders or files (with everything under them), all by id. Name between 1 and 50 ids in all. Omit it for everything you can see |
+
+**`PATCH /api/v1/personal-access-tokens/{tokenId}`**
+
+```json
+{
+  "knowledgeLimit": {
+    "apps": [],
+    "recordGroups": [],
+    "records": ["8a7b6c5d-4e3f-4a1b-9c8d-7e6f5a4b3c2d"]
+  }
+}
+```
+
+`knowledgeLimit` is required: send a limit in the same shape as above, or `null` to let the token see everything you can. The response is `{ "token": { ... } }`, the token as it appears in your token list. A token that is revoked, expired or not yours returns `404`.
 
 **`DELETE /api/v1/personal-access-tokens/{tokenId}`** and **`DELETE .../admin/{tokenId}`**
 
@@ -238,7 +285,11 @@ Both accept an optional body:
 </Card>
 
 <Card title="Short default expiry" icon="clock">
-  New tokens default to 30 days. Choose `Never` deliberately, not by default.
+  New tokens default to 30 days, and every new token expires.
+</Card>
+
+<Card title="Limit what it can see" icon="filter">
+  Keep a token to the sources it needs. You can narrow or widen it later without replacing it.
 </Card>
 
 <Card title="Immediate revocation" icon="ban">
@@ -255,6 +306,10 @@ Both accept an optional body:
 
 <Accordion title="What scopes can a personal access token have?">
 By default, a PAT gets your instance's full configured `MCP_SCOPES` set — the same scopes exposed to MCP clients (see [Customizing Default Scopes](/mcp/overview#customizing-default-scopes)). You can select a narrower set at creation time via the scope picker.
+</Accordion>
+
+<Accordion title="Do I need to update my tools after changing what a token can see?">
+No. The token and its secret stay the same. The new access applies from the token's next request, so an MCP client or script keeps working and simply sees the sources you picked. A chat or agent answer that is already being written when you save finishes with the access it started with.
 </Accordion>
 
 <Accordion title="How is this different from a session token?">

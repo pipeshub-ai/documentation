@@ -4,6 +4,30 @@ description: "Short answers about deploying, upgrading and configuring PipesHub"
 icon: "question"
 ---
 
+## Concepts
+
+<AccordionGroup>
+  <Accordion title="What is the difference between Connectors, MCP servers and Actions?">
+    - **Connectors** sync content from an app into PipesHub's index. Search then runs on that copy, with the permissions the app recorded. A change appears after the next sync.
+    - **MCP servers** are outside services, such as Atlassian Rovo or Notion, that offer tools over the Model Context Protocol. Your agents call them live, and PipesHub does not index the results.
+    - **Actions** let an agent do something in an app, such as send a message or create a ticket. They run live, as the signed-in user.
+
+    See [Connectors, MCP servers and Actions](/connectors-mcp-actions) for a side-by-side table.
+  </Accordion>
+
+  <Accordion title="Is PipesHub's own MCP server the same as the MCP servers I add to agents?">
+    No. They work in opposite directions. **MCP servers in agents** are outside services that PipesHub calls, such as Notion. **PipesHub's own MCP server** is how an outside AI tool, such as Claude Code or Cursor, connects to PipesHub to search your indexed content. You set them up in different places: [MCP servers in agents](/agent-guide/mcp-servers) and [MCP Server](/mcp/overview).
+  </Accordion>
+
+  <Accordion title="Why use a PipesHub connector when an app already has an MCP server?">
+    An app's own MCP server answers from that one app, live. A connector indexes the app into PipesHub, so a single search covers Slack, Drive, Jira, Confluence and more, with each record's permissions applied in one place. For a change from the last few minutes, or to post or create something, call the app directly. See [Direct MCP servers vs the PipesHub index](/benchmarks/mcp-vs-index) for the measured difference.
+  </Accordion>
+
+  <Accordion title="Does PipesHub index what an Action or an MCP server returns?">
+    No. Actions and MCP servers used inside an agent run live and PipesHub does not index their results. Connectors and uploaded files are what PipesHub indexes.
+  </Accordion>
+</AccordionGroup>
+
 ## Deployment
 
 <AccordionGroup>

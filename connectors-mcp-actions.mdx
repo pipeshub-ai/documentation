@@ -1,0 +1,77 @@
+---
+title: "Connectors, MCP servers and Actions"
+description: "What a connector, an MCP server and an Action each do in PipesHub, how they differ, and when to use which"
+icon: "diagram-project"
+---
+
+PipesHub gives your people and your AI agents three ways to work with company apps. They are easy to mix up because they touch the same apps, but each does a different job.
+
+- **Connectors** copy content from an app, such as Slack or Google Drive, into PipesHub, so you can search it all in one place.
+- **MCP servers** are outside services, such as Atlassian Rovo, Notion or GitHub, that offer tools over the Model Context Protocol (MCP). You add them to PipesHub and your agents call their tools live.
+- **Actions** let an agent do something in an app, such as send a message or create a ticket.
+
+<Info>
+  This page is about MCP servers that PipesHub **uses**. PipesHub is also an MCP server itself, so tools such as Claude Code and Cursor can connect **to** it. That is a separate feature, described [below](#pipeshubs-own-mcp-server-a-different-thing).
+</Info>
+
+## The short version
+
+| | Connectors | MCP servers | Actions |
+|---|---|---|---|
+| **What it does** | Syncs an app's content into PipesHub | Gives an agent the tools of an outside MCP server | Lets an agent act in an app |
+| **Examples** | Slack, Google Drive, Jira, Confluence | Atlassian Rovo, Notion, GitHub, Slack | Send a Slack message, create a Jira issue |
+| **Where the data is** | Indexed in PipesHub (search index and knowledge graph) | Stays on the remote server | Stays in the app |
+| **How fresh** | As fresh as the last sync (it runs on a schedule, not in real time) | Live on every call | Live on every call |
+| **Who can see what** | Where the app records permissions, PipesHub stores them with each record and applies them at search | Whatever the server's sign-in allows | Whatever the user's own sign-in to the app allows |
+| **Can it change things in the app** | No. It only reads. | Whatever the server offers | Yes |
+| **Set up under** | [Connectors](/connectors/overview) | [MCP servers in agents](/agent-guide/mcp-servers) | [Actions](/toolsets/overview) |
+
+## Connectors: search a copy of your company's content
+
+A connector signs in to an app, reads its content and keeps a copy in PipesHub. The copy is indexed for search and linked in a knowledge graph. Where the app records who can see what, each record keeps those permissions, so a person sees only what the app already lets them see. A few connectors cannot read permissions. Each connector's page says how it handles them.
+
+Because search runs on the copy, one question can search Slack, Drive, Jira and Confluence together, and PipesHub does not need to call those apps when you ask. The tradeoff is freshness: a change in the app shows up after the next sync. See [Connectors](/connectors/overview).
+
+## MCP servers: live tools from outside services
+
+An MCP server is an outside service that offers tools over the [Model Context Protocol](https://modelcontextprotocol.io). The catalog includes Atlassian Rovo, Notion, GitHub, Linear, Slack, Box and others, and you can add your own. Once a server is added and you have signed in, your agents can call its tools in chat.
+
+Every call goes to that server at that moment. PipesHub does not copy or index what comes back. An admin can add team servers for everyone, and any user can add servers of their own. See [MCP servers in agents](/agent-guide/mcp-servers).
+
+## Actions: do things in an app
+
+An Action is a task an agent can run in an app, such as sending a Slack message, creating a Jira issue or adding a calendar event. For Actions that use OAuth, each person signs in to the app with their own account, so the agent acts with that person's access. Actions run live and do not index anything. See [Actions overview](/toolsets/overview) and [API actions](/agent-guide/api-actions).
+
+## An outside MCP server is not a connector
+
+An app's own MCP server and a PipesHub connector can both put that app's information in front of an AI agent, but they work differently:
+
+- **Each call goes to one app.** A question that spans Slack, Jira and Drive needs several tool calls, one app at a time. A PipesHub index answers it with one search.
+- **The agent reads more.** With only live calls, the agent makes more lookups and reads more text before it can answer.
+- **Permissions are the server's own.** With the index, PipesHub applies each record's stored permissions in one place.
+
+For a change from the last few minutes, or to post or create something, calling the app live is the right tool. For searching what your company knows, an index is faster and cheaper, as PipesHub's own test shows. See [Direct MCP servers vs the PipesHub index](/benchmarks/mcp-vs-index).
+
+## PipesHub's own MCP server: a different thing
+
+The three features above bring apps **into** PipesHub. PipesHub's own MCP server goes the other way: it lets an outside AI tool such as Claude Code, Cursor or Claude Desktop connect **to** PipesHub and search your company's content from there.
+
+- It searches the same index your connectors built, as the signed-in user, so permissions apply.
+- Which tools a token is offered depends on its scopes.
+- You set it up under [MCP Server](/mcp/overview). The tools are listed in the [Tools reference](/mcp/tools).
+
+It is not one of the three features compared above, and you do not add it under **MCP servers**.
+
+## Which one should I use?
+
+| I want to… | Use |
+|---|---|
+| Ask a question that needs several apps | [Connectors](/connectors/overview), then chat or search |
+| Let an agent call tools from another service, such as Notion or Atlassian Rovo | An [MCP server in agents](/agent-guide/mcp-servers) |
+| Make an agent post, create or update something in an app | An [Action](/toolsets/overview) |
+| Give Claude Code or Cursor my company's knowledge | [PipesHub's own MCP server](/mcp/overview) |
+| See what changed in the last minute | A live MCP server or Action, since an index is a copy |
+
+<Note>
+  Actions are called toolsets in a few places in the API and in the code. In the product and in these docs they are Actions.
+</Note>
